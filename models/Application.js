@@ -2,11 +2,11 @@ function Application(app, _id, cb) {
 
 	var id = null;
 	var name = '';
-	var apiKey = null;
+	var apiKeys = [];
 
 	app.get('database').Couchbase.bucket.get('blg.application.'+_id, (function(err, res) {
 		var result = JSON.parse(res.value);
-		this.apiKey = result.key;
+		this.apiKeys = result.keys;
 
 		cb(err, res);
 	}).bind(this));

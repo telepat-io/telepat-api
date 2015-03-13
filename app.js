@@ -25,7 +25,7 @@ db.Couchbase.bucket = db.Couchbase.openBucket(ds.couchbase.bucket);
 db.Couchbase.bucket.on('connect', function() {
 	async.series([
 		function(cb) {
-			db.Couchbase.bucket.upsert('blg.application.1', JSON.stringify({"name": "Test app", "key": "1bc29b36f623ba82aaf6724fd3b16718"}), cb);
+			db.Couchbase.bucket.upsert('blg.application.1', JSON.stringify({"name": "Test app", "keys": ["1bc29b36f623ba82aaf6724fd3b16718"]}), cb);
 		},
 		function(cb) {
 			app.dbApp = new App.Application(app, 1, cb);
@@ -34,8 +34,6 @@ db.Couchbase.bucket.on('connect', function() {
 		if (err) {
 			console.log(err.message);
 		}
-
-		var apiKey = app.dbApp.get('apiKey');
 
 		app.use(logger('dev'));
 		app.use(bodyParser.json());
@@ -49,13 +47,19 @@ db.Couchbase.bucket.on('connect', function() {
 			else if (req.get('X-BLGREQ-SIGN') == undefined)
 				res.status(401).send(JSON.stringify({status: 401, message: {content: "Unauthorized. Required authorization header not present."}}));
 			else {
-				clientHash = crypto.createHash('sha256').update(req.get('X-BLGREQ-SIGN')).digest('hex').toLowerCase();
-				serverHash = crypto.createHash('sha256').update(apiKey).digest('hex').toLowerCase();
+				var clientHash = req.get('X-BLGREQ-SIGN');
+				var serverHash = null;
+				var apiKeys = app.dbApp.get('apiKeys');
 
-				if (clientHash != serverHash)
-					res.status(401).send(JSON.stringify({status: 401, message: {content: "Unauthorized. API key is not valid."}}));
-				else
-					next();
+				async.detect(apiKeys, function(item ,cb) {
+					serverHash = crypto.createHash('sha256').update(item).digest('hex').toLowerCase();
+					cb(serverHash === clientHash);
+				}, function(result) {
+					if (result)
+						next();
+					else
+						res.status(401).send(JSON.stringify({status: 401, message: {content: "Unauthorized. API key is not valid."}}));
+				});
 			}
 		});
 
