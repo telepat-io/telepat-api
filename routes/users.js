@@ -4,7 +4,6 @@ var router = express.Router();
 /* GET users listing. */
 router.all('/', function(req, res, next) {
 	try {
-		res.set('Content-type', 'application/json');
 		res.send(JSON.stringify(req.body));
 	}
 	catch (e) {

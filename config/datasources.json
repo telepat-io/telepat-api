@@ -1,6 +1,6 @@
 {
   "couchbase": {
-	"host": "100.72.48.21",
+	"host": "blg-couch.cloudapp.net",
 	"bucket": "default"
   }
 }

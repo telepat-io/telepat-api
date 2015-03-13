@@ -1,15 +1,23 @@
-exports.Application = function(_id) {
+function Application(app, _id, cb) {
 
 	var id = null;
 	var name = '';
-	var apiKeys = {};
+	var apiKey = null;
 
-	app.database.Couchbase.bucket.get(_id, function(err, result) {
+	app.get('database').Couchbase.bucket.get('blg.application.'+_id, (function(err, res) {
+		var result = JSON.parse(res.value);
+		this.apiKey = result.key;
 
-	});
-
+		cb(err, res);
+	}).bind(this));
 };
 
-Application.prototype.functionName = function() {
+Application.prototype.get = function(key) {
+	if (this.hasOwnProperty(key))
+		return this[key];
 
+	return null;
 };
+
+
+module.exports.Application = Application;
