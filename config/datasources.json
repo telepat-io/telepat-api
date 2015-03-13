@@ -1,0 +1,6 @@
+{
+  "couchbase": {
+	"host": "100.72.48.21",
+	"bucket": "default"
+  }
+}
