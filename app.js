@@ -4,7 +4,7 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var cb = require('couchbase');
-var App = require('./models/Application');
+var App = require('octopus-models-api').Application;
 var crypto = require('crypto');
 var async = require('async');
 
@@ -28,7 +28,7 @@ db.Couchbase.bucket.on('connect', function() {
 			db.Couchbase.bucket.upsert('blg.application.1', JSON.stringify({"name": "Test app", "keys": ["1bc29b36f623ba82aaf6724fd3b16718"]}), cb);
 		},
 		function(cb) {
-			app.dbApp = new App.Application(app, 1, cb);
+			app.dbApp = new App.Application(db.Couchbase.bucket, 1, cb);
 		}
 	], function(err, results) {
 		if (err) {
@@ -41,13 +41,13 @@ db.Couchbase.bucket.on('connect', function() {
 		app.use(cookieParser());
 
 		app.use(function(req, res, next) {
-			res.set('Content-type', 'application/json');
+			res.type('application/json');
 			if (req.get('Content-type') !== 'application/json')
 				res.status(415).send(JSON.stringify({status: 415, message: {content: "Request content type must pe application/json."}}));
 			else if (req.get('X-BLGREQ-SIGN') == undefined)
 				res.status(401).send(JSON.stringify({status: 401, message: {content: "Unauthorized. Required authorization header not present."}}));
 			else {
-				var clientHash = req.get('X-BLGREQ-SIGN');
+				var clientHash = req.get('X-BLGREQ-SIGN').toLowerCase();
 				var serverHash = null;
 				var apiKeys = app.dbApp.get('apiKeys');
 
