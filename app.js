@@ -76,33 +76,186 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 					 *
 					 * }
 				 */
-				app.post('subscribe/'+ m.toLowerCase(), function(req, res, next) {
+				app.post('/subscribe/'+ mdl.toLowerCase(), function(req, res, next) {
 					var id = req.body.id;
+					var context = req.body.context;
+					/**
+					 * {
+					 * 		event: id,	(parent)
+					 * 		user: id
+					 *
+					 * }
+					 */
+					var filters = req.body.filters;
 
+					if (!context)
+						res.status(400).json({status: 400, message: "Requested context is not provided."}).end();
 					//ia-le pe toate
-					/*if(!id) {
-						Models.Model.getAll
+					else if(!id) {
+						if (filters) {
+							for (var rel in app.ModelsConfig[mdl].belongsTo) {
+								var parentModelId = filters[app.ModelsConfig[mdl].belongsTo[rel].parentModel];
+								if (parentModelId !== undefined) {
+									var parentModel = app.ModelsConfig[mdl].belongsTo[rel].parentModel;
+
+									Models.Model.lookup(mdl, context, filters.user, {model: parentModel, id: parentModelId}, function(err, results) {
+										if (!results) {
+											res.json({status: 200, message: {}}).end();
+										} else {
+											results = results.slice(0, 10);
+
+											Models.Model.multiGet(mdl, results, context, function(err, results1) {
+												res.json({status: 200, message: results1}).end();
+											});
+										}
+									});
+								}
+							}
+						} else {
+							Models.Model.getAll(mdl, context, function(err, results) {
+								res.json({status: 200, message: results}).end();
+							});
+						}
 					} else {
+						Models.Model.get(mdl, id, context, function(err, results) {
+							var message = {};
+							message[id] = results.value;
 
-					}*/
-
-					/*var model = Models.Model.get(mdl, app, function(err, result) {
-						if (err)
-							return next(err);
-
-
-
-						res.json(result.value).end();
-					});*/
+							res.json({status: 200, message: message}).end();
+						});
+					}
 				});
 
-				app.post('create/'+ m.toLowerCase(), function(req, res, next) {
+				app.post('/create/'+ m.toLowerCase(), function(req, res, next) {
 
 				});
 
 			})(m);
 		}
 	}
+
+	app.post('/testroute/get', function(req, res, next) {
+		var id = req.body.id;
+		var context = req.body.context;
+		var model = req.body.model;
+
+		new Models.Model(model, id, context, function(err, results) {
+			if(err) return next(err);
+
+			res.json(results);
+		});
+	});
+
+	app.post('/testroute/getAll', function(req, res, next) {
+		var id = req.body.id;
+		var context = req.body.context;
+		var model = req.body.model;
+
+		Models.Model.getAll(model, context, function(err, results) {
+			if(err) return next(err);
+
+			res.json(results);
+		});
+	});
+
+	app.post('/testroute/lookup', function(req, res, next) {
+		var id = req.body.id;
+		var context = req.body.context;
+		var model = req.body.model;
+		var user_id = req.body.user_id;
+		var parent = req.body.parent;
+
+		Models.Model.lookup(model, context, user_id, parent, function(err, results) {
+			if(err) return next(err);
+
+			res.json(results);
+		});
+	});
+
+	app.post('/testroute/delete', function(req, res, next) {
+		var id = req.body.id;
+		var context = req.body.context;
+		var model = req.body.model;
+		var user_id = req.body.user_id;
+		var parent = req.body.parent;
+
+		Models.Model.getAll(model, context, id, user_id, parent, function(err, results) {
+			if(err) return next(err);
+
+			res.json(results);
+		});
+	});
+
+	app.post('/testroute/delete', function(req, res, next) {
+		var id = req.body.id;
+		var context = req.body.context;
+		var model = req.body.model;
+		var user_id = req.body.user_id;
+		var parent = req.body.parent;
+
+		Models.Model.getAll(model, context, id, user_id, parent, function(err, results) {
+			if(err) return next(err);
+
+			res.json(results);
+		});
+	});
+
+	app.post('/testroute/count', function(req, res, next) {
+		var id = req.body.id;
+		var context = req.body.context;
+		var model = req.body.model;
+		var user_id = req.body.user_id;
+		var parent = req.body.parent;
+
+		Models.Model.count(model, function(err, results) {
+			if(err) return next(err);
+
+			res.json(results);
+		});
+	});
+
+	app.post('/testroute/delete', function(req, res, next) {
+		var id = req.body.id;
+		var context = req.body.context;
+		var model = req.body.model;
+		var user_id = req.body.user_id;
+		var parent = req.body.parent;
+
+		Models.Model.delete(model, context, id, user_id, parent, function(err, results) {
+			if(err) return next(err);
+
+			res.json(results);
+		});
+	});
+
+	app.post('/testroute/create', function(req, res, next) {
+		var props = req.body.props;
+		var context = req.body.context;
+		var model = req.body.model;
+		var user_id = req.body.user_id;
+		var parent = req.body.parent;
+
+		Models.Model.getAll(model, context, props, user_id, parent, function(err, results) {
+			if(err) return next(err);
+
+			res.json(results);
+		});
+	});
+
+	app.post('/testroute/update', function(req, res, next) {
+		var id = req.body.id;
+		var props = req.body.props;
+		var context = req.body.context;
+		var model = req.body.model;
+		var user_id = req.body.user_id;
+		var parent = req.body.parent;
+
+		Models.Model.getAll(model, context, props, user_id, parent, function(err, results) {
+			if(err) return next(err);
+
+			res.json(results);
+		});
+	});
 
 	app.post('/get/contexts', function(req, res, next) {
 		var id = req.body.id;
@@ -201,6 +354,14 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 		}
 
 
+	});
+});
+
+db.Couchbase.bucket.on('error', function ErrorConnect(error) {
+	console.error('Could not connect to '+ds.couchbase.host+': '+error.toString()+' ('+error.code+')');
+	app.use(function(req, res) {
+		res.type('application/json');
+		res.status(500).json({status: 500, message: "Server failed to connect to database."});
 	});
 });
 
