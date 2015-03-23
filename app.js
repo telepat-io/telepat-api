@@ -7,6 +7,7 @@ var cb = require('couchbase');
 var Models = require('octopus-models-api');
 var crypto = require('crypto');
 var async = require('async');
+var kafka = require('kafka-node');
 
 var app = express();
 
@@ -126,7 +127,15 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 					}
 				});
 
+				app.post('/unsubscribe/'+ m.toLowerCase(), function(req, res, next) {
+
+				});
+
 				app.post('/create/'+ m.toLowerCase(), function(req, res, next) {
+
+				});
+
+				app.put('/update/'+ m.toLowerCase(), function(req, res, next) {
 
 				});
 
@@ -142,7 +151,7 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 		new Models.Model(model, id, context, function(err, results) {
 			if(err) return next(err);
 
-			res.json(results);
+			res.json(results).end();
 		});
 	});
 
@@ -154,7 +163,7 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 		Models.Model.getAll(model, context, function(err, results) {
 			if(err) return next(err);
 
-			res.json(results);
+			res.json(results).end();
 		});
 	});
 
@@ -164,53 +173,12 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 		var model = req.body.model;
 		var user_id = req.body.user_id;
 		var parent = req.body.parent;
+		var key = req.body.answerKey;
 
-		Models.Model.lookup(model, context, user_id, parent, function(err, results) {
+		Models.Model.lookupWithKey(model, context, key, user_id, parent, function(err, results) {
 			if(err) return next(err);
 
-			res.json(results);
-		});
-	});
-
-	app.post('/testroute/delete', function(req, res, next) {
-		var id = req.body.id;
-		var context = req.body.context;
-		var model = req.body.model;
-		var user_id = req.body.user_id;
-		var parent = req.body.parent;
-
-		Models.Model.getAll(model, context, id, user_id, parent, function(err, results) {
-			if(err) return next(err);
-
-			res.json(results);
-		});
-	});
-
-	app.post('/testroute/delete', function(req, res, next) {
-		var id = req.body.id;
-		var context = req.body.context;
-		var model = req.body.model;
-		var user_id = req.body.user_id;
-		var parent = req.body.parent;
-
-		Models.Model.getAll(model, context, id, user_id, parent, function(err, results) {
-			if(err) return next(err);
-
-			res.json(results);
-		});
-	});
-
-	app.post('/testroute/count', function(req, res, next) {
-		var id = req.body.id;
-		var context = req.body.context;
-		var model = req.body.model;
-		var user_id = req.body.user_id;
-		var parent = req.body.parent;
-
-		Models.Model.count(model, function(err, results) {
-			if(err) return next(err);
-
-			res.json(results);
+			res.json(results).end();
 		});
 	});
 
@@ -224,7 +192,49 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 		Models.Model.delete(model, context, id, user_id, parent, function(err, results) {
 			if(err) return next(err);
 
-			res.json(results);
+			res.json(results).end();
+		});
+	});
+
+	app.post('/testroute/delete', function(req, res, next) {
+		var id = req.body.id;
+		var context = req.body.context;
+		var model = req.body.model;
+		var user_id = req.body.user_id;
+		var parent = req.body.parent;
+
+		Models.Model.getAll(model, context, id, user_id, parent, function(err, results) {
+			if(err) return next(err);
+
+			res.json(results).end();
+		});
+	});
+
+	app.post('/testroute/count', function(req, res, next) {
+		var id = req.body.id;
+		var context = req.body.context;
+		var model = req.body.model;
+		var user_id = req.body.user_id;
+		var parent = req.body.parent;
+
+		Models.Model.count(model, function(err, results) {
+			if(err) return next(err);
+
+			res.json(results).end();
+		});
+	});
+
+	app.post('/testroute/delete', function(req, res, next) {
+		var id = req.body.id;
+		var context = req.body.context;
+		var model = req.body.model;
+		var user_id = req.body.user_id;
+		var parent = req.body.parent;
+
+		Models.Model.delete(model, context, id, user_id, parent, function(err, results) {
+			if(err) return next(err);
+
+			res.json(results).end();
 		});
 	});
 
@@ -238,7 +248,7 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 		Models.Model.getAll(model, context, props, user_id, parent, function(err, results) {
 			if(err) return next(err);
 
-			res.json(results);
+			res.json(results).end();
 		});
 	});
 
@@ -253,7 +263,7 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 		Models.Model.getAll(model, context, props, user_id, parent, function(err, results) {
 			if(err) return next(err);
 
-			res.json(results);
+			res.json(results).end();
 		});
 	});
 
@@ -278,36 +288,6 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 			});
 		}
 	});
-
-	/*app.post('/event/:id', function(req, res, next) {
-	 var ev = new Models.Event(db.Couchbase.bucket, req.params.id, function(err, result) {
-	 if (err) next();
-
-	 res.json({status: 200, content: ev.toObject()}).end();
-	 });
-	 });
-	 app.post('/event/:id/answers', function(req, res, next) {
-	 var ev = new Models.Event(db.Couchbase.bucket, req.params.id, function(err, result) {
-	 if (err)  {
-	 next(err);
-
-	 return;
-	 }
-
-	 Models.Event.getAllAnswers(ev.get('id'), function(err, results) {
-	 if (err) {
-	 next(err);
-	 return ;
-	 }
-
-	 res.json({status: 200, content: results.value}).end();
-	 });
-	 });
-	 });*/
-
-	/*app.use(function(req, res, next) {
-
-	});*/
 
 	// error handlers
 	// catch 404 and forward to error handler
@@ -344,17 +324,6 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 		}));
 	});
 
-	async.series([
-		function(cb) {
-
-		}
-	], function(err, results) {
-		if (err) {
-			console.log(err.message);
-		}
-
-
-	});
 });
 
 db.Couchbase.bucket.on('error', function ErrorConnect(error) {
