@@ -181,10 +181,12 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 						res.status(400).json({status: 400, message: "Requested context is not provided."}).end();
 					else {
 						Models.Subscription.remove(context, deviceId, {model: app.ModelsConfig[mdl].namespace, id: id}, filters, function(err, results) {
-							console.log(err);
-							if (err) return next(err);
-
-							res.status(200).json({status: 200, message: "Subscription removed"}).end();
+							if (err && err.code == cb.errors.keyNotFound)
+								res.status(404).json({status: 404, message: "Subscription not found"}).end();
+							else if (err)
+								return next(err);
+							else
+								res.status(200).json({status: 200, message: "Subscription removed"}).end();
 						});
 					}
 				});
