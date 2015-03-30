@@ -74,13 +74,6 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 	for (var m in app.ModelsConfig) {
 		if (app.ModelsConfig.hasOwnProperty(m) && m != 'Application' && m != 'Context') {
 			(function(mdl) {
-				/**
-				 * {
-					 * 		id: 1, //id of the model
-					 * 		user_id: 1,
-					 *
-					 * }
-				 */
 				app.post('/subscribe/'+ mdl.toLowerCase(), function(req, res, next) {
 					var id = req.body.id;
 					var context = req.body.context;
@@ -128,7 +121,16 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 							},
 							//finally, add subscription
 							function(result, callback) {
-								Models.Subscription.add(context, deviceId, {model: app.ModelsConfig[mdl].namespace, id: id}, filters, callback);
+								var parent = {};
+								var user = null;
+								if (filters) {
+									parent.model = Object.keys(filters)[0];
+									parent.id = filters[Object.keys(filters)[0]];
+								}
+								if (filters.user)
+									user = filters.user;
+
+								Models.Subscription.add(context, deviceId, {model: app.ModelsConfig[mdl].namespace, id: id}, user, parent,  callback);
 							}
 						], function(err, result) {
 							if (err)
