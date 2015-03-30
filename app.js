@@ -11,6 +11,8 @@ var kafka = require('kafka-node');
 
 var app = express();
 
+app.set('port', process.env.PORT || 3000);
+
 app.set('datasources', require('./config/datasources'));
 app.ModelsConfig = Models.getModels();
 
@@ -20,8 +22,10 @@ app.set('database', {
 });
 db = app.get('database');
 db.Couchbase.bucket = db.Couchbase.openBucket(ds.couchbase.bucket);
+db.Couchbase.stateBucket = db.Couchbase.openBucket(ds.couchbase.stateBucket);
 
 Models.Application.setBucket(db.Couchbase.bucket);
+Models.Application.setStateBucket(db.Couchbase.stateBucket);
 Models.Model.load(app);
 app.applications = {};
 
@@ -80,10 +84,13 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 				app.post('/subscribe/'+ mdl.toLowerCase(), function(req, res, next) {
 					var id = req.body.id;
 					var context = req.body.context;
+					var deviceId = req.body.device_id;
+					var userId = req.body.user_id;
+					var userToken = req.body.user_token;
 					/**
 					 * {
-					 * 		event: id,	(parent)
-					 * 		user: id
+					 * 		parent: {model: event, id: 1}
+					 * 		user: 1
 					 *
 					 * }
 					 */
@@ -91,44 +98,95 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 
 					if (!context)
 						res.status(400).json({status: 400, message: "Requested context is not provided."}).end();
+					else if (!deviceId)
+						res.status(400).json({status: 400, message: "Requested deviceID is not provided."}).end();
 					//ia-le pe toate
-					else if(!id) {
-						if (filters) {
-							for (var rel in app.ModelsConfig[mdl].belongsTo) {
-								var parentModelId = filters[app.ModelsConfig[mdl].belongsTo[rel].parentModel];
-								if (parentModelId !== undefined) {
-									var parentModel = app.ModelsConfig[mdl].belongsTo[rel].parentModel;
+					else {
+						async.waterfall([
+							//see if device exists
+							function(callback) {
+								Models.Subscription.getDevice(deviceId, function(err, results) {
+									if (err) {
+										if (err.code == 13) {
+											return callback(null, false);
+										} else
+											return callback(err, null);
+									}
 
-									Models.Model.lookup(mdl, context, filters.user, {model: parentModel, id: parentModelId}, function(err, results) {
-										if (!results) {
-											res.json({status: 200, message: {}}).end();
-										} else {
-											results = results.slice(0, 10);
+									callback(null, results);
+								});
+							},
+							//create it if it doesn't
+							function(deviceResult, callback) {
+								if (deviceResult === false) {
+									Models.Subscription.addDevice({id: deviceId, user_id: userId, user_token: userToken}, function(err, result) {
+										callback(err, null);
+									});
+								} else {
+									callback(null, null);
+								}
+							},
+							//finally, add subscription
+							function(result, callback) {
+								Models.Subscription.add(context, deviceId, {model: app.ModelsConfig[mdl].namespace, id: id}, filters, callback);
+							}
+						], function(err, result) {
+							if (err)
+								return next(err);
 
-											Models.Model.multiGet(mdl, results, context, function(err, results1) {
-												res.json({status: 200, message: results1}).end();
+							if(!id) {
+								if (filters) {
+									for (var rel in app.ModelsConfig[mdl].belongsTo) {
+										var parentModelId = filters[app.ModelsConfig[mdl].belongsTo[rel].parentModel];
+										if (parentModelId !== undefined) {
+											var parentModel = app.ModelsConfig[mdl].belongsTo[rel].parentModel;
+
+											Models.Model.lookup(mdl, context, filters.user, {model: parentModel, id: parentModelId}, function(err, results) {
+												if (!results) {
+													res.json({status: 200, message: {}}).end();
+												} else {
+													results = results.slice(0, 10);
+
+													Models.Model.multiGet(mdl, results, context, function(err, results1) {
+														res.json({status: 200, message: results1}).end();
+													});
+												}
 											});
 										}
+									}
+								} else {
+									Models.Model.getAll(mdl, context, function(err, results) {
+										res.json({status: 200, message: results}).end();
 									});
 								}
-							}
-						} else {
-							Models.Model.getAll(mdl, context, function(err, results) {
-								res.json({status: 200, message: results}).end();
-							});
-						}
-					} else {
-						Models.Model.get(mdl, id, context, function(err, results) {
-							var message = {};
-							message[id] = results.value;
+							} else {
+								new Models.Model(mdl, id, context, function(err, results) {
+									var message = {};
+									message[id] = results.value;
 
-							res.json({status: 200, message: message}).end();
+									res.json({status: 200, message: message}).end();
+								});
+							}
 						});
 					}
 				});
 
 				app.post('/unsubscribe/'+ m.toLowerCase(), function(req, res, next) {
+					var id = req.body.id;
+					var context = req.body.context;
+					var deviceId = req.body.device_id;
+					var filters = req.body.filters;
 
+					if (!context)
+						res.status(400).json({status: 400, message: "Requested context is not provided."}).end();
+					else {
+						Models.Subscription.remove(context, deviceId, {model: app.ModelsConfig[mdl].namespace, id: id}, filters, function(err, results) {
+							console.log(err);
+							if (err) return next(err);
+
+							res.status(200).json({status: 200, message: "Subscription removed"}).end();
+						});
+					}
 				});
 
 				app.post('/create/'+ m.toLowerCase(), function(req, res, next) {
@@ -333,5 +391,7 @@ db.Couchbase.bucket.on('error', function ErrorConnect(error) {
 		res.status(500).json({status: 500, message: "Server failed to connect to database."});
 	});
 });
+
+
 
 module.exports = app;
