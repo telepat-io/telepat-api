@@ -123,9 +123,9 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 							function(result, callback) {
 								var parent = {};
 								var user = null;
-								if (filters) {
-									parent.model = Object.keys(filters)[0];
-									parent.id = filters[Object.keys(filters)[0]];
+								if (filters.parent) {
+									parent.model = app.ModelsConfig[filters.parent.name].namespace;
+									parent.id = filters.parent.id;
 								}
 								if (filters.user)
 									user = filters.user;
@@ -139,7 +139,7 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 							if(!id) {
 								if (filters) {
 									for (var rel in app.ModelsConfig[mdl].belongsTo) {
-										var parentModelId = filters[app.ModelsConfig[mdl].belongsTo[rel].parentModel];
+										var parentModelId = filters[app.ModelsConfig[mdl].belongsTo[rel].parentModel+'_id'];
 										if (parentModelId !== undefined) {
 											var parentModel = app.ModelsConfig[mdl].belongsTo[rel].parentModel;
 
@@ -173,7 +173,7 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 					}
 				});
 
-				app.post('/unsubscribe/'+ m.toLowerCase(), function(req, res, next) {
+				app.post('/unsubscribe/'+ mdl.toLowerCase(), function(req, res, next) {
 					var id = req.body.id;
 					var context = req.body.context;
 					var deviceId = req.body.device_id;
@@ -193,12 +193,58 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 					}
 				});
 
-				app.post('/create/'+ m.toLowerCase(), function(req, res, next) {
+				app.post('/create/'+ mdl.toLowerCase(), function(req, res, next) {
+					var context = req.body.context;
+					var content = req.body.content;
+					var parent = null;
 
+					for (var r in app.ModelsConfig[mdl].belongsTo) {
+						if (req.body.content[app.ModelsConfig[mdl].belongsTo[r]+'_id'])
+							parent = {model: mdl, id: req.body.content[app.ModelsConfig[mdl].belongsTo[r]+'_id']};
+					}
+
+					Models.Model.create(mdl, context, content, content.user_id, parent, function(err, results) {
+						if (err) return next(err);
+
+						res.status(201).json({status: 201, message: results});
+					});
 				});
 
-				app.put('/update/'+ m.toLowerCase(), function(req, res, next) {
+				app.post('/update/'+ mdl.toLowerCase(), function(req, res, next) {
+					var context = req.body.context;
+					var content = req.body.content;
+					var user_id = req.body.user_id;
+					var id = req.body.id;
+					var parent = null;
 
+					for (var r in app.ModelsConfig[mdl].belongsTo) {
+						if (req.body.content[app.ModelsConfig[mdl].belongsTo[r]+'_id'])
+							parent = {model: mdl, id: req.body.content[app.ModelsConfig[mdl].belongsTo[r]+'_id']};
+					}
+
+					Models.Model.update(mdl, context, id, content, user_id, parent, function(err, results) {
+						if (err && err.code == cb.errors.keyNotFound)
+							res.status(404).json({status: 404, message: 'Item not found'}).end();
+						else if (err)
+							return next(err);
+						else
+							res.status(200).json({status: 200, message: 'Updated'});
+					});
+				});
+
+				app.post('/delete/'+mdl.toLowerCase(), function(req, res, next) {
+					var id = req.body.id;
+					//var userId = req.body.user_id;
+					var context = req.body.context;
+
+					Models.Model.delete(mdl, context, id, function(err, results) {
+						if (err && err.code == cb.errors.keyNotFound)
+							res.status(404).json({status: 404, message: 'Item not found'}).end();
+						else if (err)
+							next(err);
+						else
+							res.status(200).json({status: 200, message: "Deleted"}).end();
+					});
 				});
 
 			})(m);
