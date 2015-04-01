@@ -13,6 +13,22 @@ var app = express();
 
 app.set('port', process.env.PORT || 3000);
 
+app.kafkaConfig = require('./config/kafka.json');
+app.kafkaClient = new kafka.Client(app.kafkaConfig.host+':'+app.kafkaConfig.port+'/', app.kafkaConfig.clientName);
+app.kafkaProducer = new kafka.HighLevelProducer(app.kafkaClient);
+
+app.kafkaClient.on('error', function(err) {
+	console.log(err)
+});
+
+app.kafkaClient.on('state', function (state) {
+	console.log(state);
+});
+
+app.kafkaProducer.on('error', function(err) {
+	console.log(err)
+});
+
 app.set('datasources', require('./config/datasources'));
 app.ModelsConfig = Models.getModels();
 
@@ -206,29 +222,61 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 					Models.Model.create(mdl, context, content, content.user_id, parent, function(err, results) {
 						if (err) return next(err);
 
-						res.status(201).json({status: 201, message: results});
+						app.kafkaProducer.send([{
+							topic: 'aggregation',
+							messages: [JSON.stringify({
+								operation: 'add',
+								object: results,
+								applicationId: req.get('X-BLGREQ-APPID')
+							})],
+							attributes: 1
+						}], function(err) {
+							if (err) return next(err);
+
+							res.status(201).json({status: 201, message: results}).end();
+						});
 					});
 				});
 
 				app.post('/update/'+ mdl.toLowerCase(), function(req, res, next) {
 					var context = req.body.context;
-					var content = req.body.content;
-					var user_id = req.body.user_id;
+					var patch = req.body.patch;
 					var id = req.body.id;
 					var parent = null;
 
-					for (var r in app.ModelsConfig[mdl].belongsTo) {
+					/*for (var r in app.ModelsConfig[mdl].belongsTo) {
 						if (req.body.content[app.ModelsConfig[mdl].belongsTo[r]+'_id'])
 							parent = {model: mdl, id: req.body.content[app.ModelsConfig[mdl].belongsTo[r]+'_id']};
+					}*/
+
+					if (! (patch instanceof Array)) {
+						var error = new Error('Patch must be an array');
+						error.status = 400;
+
+						return next(error);
 					}
 
-					Models.Model.update(mdl, context, id, content, user_id, parent, function(err, results) {
+					Models.Model.update(mdl, context, id, patch, parent, function(err, results) {
 						if (err && err.code == cb.errors.keyNotFound)
 							res.status(404).json({status: 404, message: 'Item not found'}).end();
 						else if (err)
 							return next(err);
-						else
-							res.status(200).json({status: 200, message: 'Updated'});
+						else {
+							app.kafkaProducer.send([{
+								topic: 'aggregation',
+								messages: [JSON.stringify({
+									op: 'edit',
+									object: patch,
+									applicationId: req.get('X-BLGREQ-APPID')
+								})],
+								attributes: 1
+							}], function(err) {
+								if (err) return next(err);
+
+								res.status(200).json({status: 200, message: 'Updated'}).end();
+							});
+						}
+
 					});
 				});
 
@@ -242,8 +290,21 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 							res.status(404).json({status: 404, message: 'Item not found'}).end();
 						else if (err)
 							next(err);
-						else
-							res.status(200).json({status: 200, message: "Deleted"}).end();
+						else {
+							app.kafkaProducer.send([{
+								topic: 'aggregation',
+								messages: [JSON.stringify({
+									op: 'delete',
+									object: {id: id, type: mdl},
+									applicationId: req.get('X-BLGREQ-APPID')
+								})],
+								attributes: 1
+							}], function(err) {
+								if (err) return next(err);
+
+								res.status(200).json({status: 200, message: 'Deleted'}).end();
+							});
+						}
 					});
 				});
 
@@ -441,7 +502,5 @@ db.Couchbase.bucket.on('error', function ErrorConnect(error) {
 		res.status(500).json({status: 500, message: "Server failed to connect to database."});
 	});
 });
-
-
 
 module.exports = app;
