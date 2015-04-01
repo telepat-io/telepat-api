@@ -15,7 +15,7 @@
     "jade": "~1.9.2",
     "kafka-node": "^0.2.24",
     "morgan": "~1.5.1",
-    "private-repo": "git+http://razvan@freshweb.ro:7990/scm/bel/octopus-models-lib.git#develop",
+    "private-repo": "git+http://freshweb.ro:7990/scm/bel/octopus-models-lib.git#develop",
     "serve-favicon": "~2.2.0"
   }
 }
