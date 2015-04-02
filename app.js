@@ -128,52 +128,102 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 							function(result, callback) {
 								var parent = {};
 								var user = null;
-								if (filters.parent) {
+								if (filters && filters.parent) {
 									parent.model = app.ModelsConfig[filters.parent.name].namespace;
 									parent.id = filters.parent.id;
 								}
-								if (filters.user)
+								if (filters && filters.user)
 									user = filters.user;
 
 								Models.Subscription.add(context, deviceId, {model: app.ModelsConfig[mdl].namespace, id: id}, user, parent,  callback);
+							},
+							function(result, callback) {
+								if(!id) {
+									if (filters) {
+										for (var rel in app.ModelsConfig[mdl].belongsTo) {
+											var parentModelId = filters[app.ModelsConfig[mdl].belongsTo[rel].parentModel+'_id'];
+											if (parentModelId !== undefined) {
+												var parentModel = app.ModelsConfig[mdl].belongsTo[rel].parentModel;
+
+												Models.Model.lookup(mdl, context, filters.user, {model: parentModel, id: parentModelId}, function(err, results) {
+													if (!results) {
+														callback(err, results);
+													} else {
+														results = results.slice(0, 10);
+
+														Models.Model.multiGet(mdl, results, context, callback);
+													}
+												});
+											}
+										}
+									} else {
+										Models.Model.getAll(mdl, context, function(err, results) {
+											if (err) return callback(err, null);
+
+											if(!id) {
+												if (filters) {
+													for (var rel in app.ModelsConfig[mdl].belongsTo) {
+														var parentModelId = filters[app.ModelsConfig[mdl].belongsTo[rel].parentModel+'_id'];
+														if (parentModelId !== undefined) {
+															var parentModel = app.ModelsConfig[mdl].belongsTo[rel].parentModel;
+
+															Models.Model.lookup(mdl, context, filters.user, {model: parentModel, id: parentModelId}, function(err, results) {
+																if (!results) {
+																	callback(err, results);
+																} else {
+																	results = results.slice(0, 10);
+
+																	Models.Model.multiGet(mdl, results, context, callback);
+																}
+															});
+														}
+													}
+												} else {
+													Models.Model.getAll(mdl, context, callback);
+												}
+											} else {
+												new Models.Model(mdl, id, context, function(err, results) {
+													if (err) return callback(err, null);
+
+													var message = {};
+													message[id] = results.value;
+
+													callback(null, message);
+												});
+											}
+										});
+									}
+								} else {
+									new Models.Model(mdl, id, context, function(err, results) {
+										if (err) return callback(err, null);
+
+										var message = {};
+										message[id] = results.value;
+
+										callback(null, message)
+									});
+								}
+							},
+							function(results, callback) {
+								app.kafkaProducer.send([{
+									topic: 'track',
+									messages: [JSON.stringify({
+										op: 'sub',
+										object: {id: id, context: context, device_id: deviceId, user_id: userId, filters: filters},
+										applicationId: req.get('X-BLGREQ-APPID')
+									})],
+									attributes: 0
+								}], function(err, data) {
+									if (err) return callback(err, null);
+
+									callback(err, results);
+								});
 							}
 						], function(err, result) {
 							if (err)
 								return next(err);
 
-							if(!id) {
-								if (filters) {
-									for (var rel in app.ModelsConfig[mdl].belongsTo) {
-										var parentModelId = filters[app.ModelsConfig[mdl].belongsTo[rel].parentModel+'_id'];
-										if (parentModelId !== undefined) {
-											var parentModel = app.ModelsConfig[mdl].belongsTo[rel].parentModel;
-
-											Models.Model.lookup(mdl, context, filters.user, {model: parentModel, id: parentModelId}, function(err, results) {
-												if (!results) {
-													res.json({status: 200, message: {}}).end();
-												} else {
-													results = results.slice(0, 10);
-
-													Models.Model.multiGet(mdl, results, context, function(err, results1) {
-														res.json({status: 200, message: results1}).end();
-													});
-												}
-											});
-										}
-									}
-								} else {
-									Models.Model.getAll(mdl, context, function(err, results) {
-										res.json({status: 200, message: results}).end();
-									});
-								}
-							} else {
-								new Models.Model(mdl, id, context, function(err, results) {
-									var message = {};
-									message[id] = results.value;
-
-									res.json({status: 200, message: message}).end();
-								});
-							}
+							res.json({status: 200, message: result}).end();
 						});
 					}
 				});
@@ -187,13 +237,39 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 					if (!context)
 						res.status(400).json({status: 400, message: "Requested context is not provided."}).end();
 					else {
-						Models.Subscription.remove(context, deviceId, {model: app.ModelsConfig[mdl].namespace, id: id}, filters, function(err, results) {
-							if (err && err.code == cb.errors.keyNotFound)
-								res.status(404).json({status: 404, message: "Subscription not found"}).end();
-							else if (err)
-								return next(err);
-							else
-								res.status(200).json({status: 200, message: "Subscription removed"}).end();
+						async.waterfall([
+							function(callback) {
+								Models.Subscription.remove(context, deviceId, {model: app.ModelsConfig[mdl].namespace, id: id}, filters, function(err, results) {
+									if (err && err.code == cb.errors.keyNotFound) {
+										var error = new Error('Subscription not found');
+										error.status = 404;
+
+										callback(error, null);
+									}	else if (err)
+										callback(err, null);
+									else
+										callback(null, {status: 200, message: "Subscription removed"});
+								});
+							},
+							function(result, callback) {
+								app.kafkaProducer.send([{
+									topic: 'track',
+									messages: [JSON.stringify({
+										op: 'unsub',
+										object: {id: id, context: context, device_id: deviceId, filters: filters},
+										applicationId: req.get('X-BLGREQ-APPID')
+									})],
+									attributes: 0
+								}], function(err, data) {
+									if (err) return callback(err, null);
+
+									callback(err, result);
+								});
+							}
+						], function(err, results) {
+							if (err) return next(err);
+
+							res.status(results.status).json(results).end();
 						});
 					}
 				});
