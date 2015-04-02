@@ -2,16 +2,14 @@ var express = require('express');
 var path = require('path');
 var logger = require('morgan');
 var bodyParser = require('body-parser');
-var expressJwt = require('express-jwt');
 
 var tests = require('./controllers/tests');
-var admin = require('./controllers/admin');
 var security = require('./controllers/security');
+var admin = require('./controllers/admin');
 
-authSecret = '835hoyubg#@$#2wfsda';
 async = require('async');
 kafka = require('kafka-node');
-var cb = require('couchbase');
+cb = require('couchbase');
 Models = require('octopus-models-api');
 app = express();
 
@@ -70,11 +68,11 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 	app.use(logger('dev'));
 	app.use(bodyParser.json());
 	app.use(bodyParser.urlencoded({ extended: false }));
-	app.use('/admin', expressJwt({secret: authSecret}));
-	app.use(['/get','/object'], security.keyValidation);
+	app.use('/authenticate', security);
+	app.use('/admin', admin);
+	app.use('/testroute', tests);
 
-	app.post('/authenticate', security.authenticate);
-	app.post('/admin/apps', admin.apps);
+	app.use(['/get','/object'], security.keyValidation);
 
 	for (var m in app.ModelsConfig) {
 		if (app.ModelsConfig.hasOwnProperty(m) && m != 'Application' && m != 'Context') {
@@ -396,14 +394,6 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 			})(m);
 		}
 	}
-
-	app.post('/testroute/get', tests.getObject);
-	app.post('/testroute/getAll', tests.getAllObjects);
-	app.post('/testroute/lookup', tests.lookupObject);
-	app.post('/testroute/delete', tests.deleteObject);
-	app.post('/testroute/count', tests.countObjects);
-	app.post('/testroute/create', tests.createObject);
-	app.post('/testroute/update', tests.updateObject);
 
 	app.post('/get/contexts', function(req, res, next) {
 		var id = req.body.id;

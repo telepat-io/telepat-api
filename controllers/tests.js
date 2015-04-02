@@ -1,4 +1,7 @@
-module.exports.getObject = function(req, res, next) {
+var express = require('express');
+var router = express.Router();
+
+router.post('/get', function(req, res, next) {
 	var id = req.body.id;
 	var context = req.body.context;
 	var model = req.body.model;
@@ -8,9 +11,9 @@ module.exports.getObject = function(req, res, next) {
 
 		res.json(results).end();
 	});
-}
+});
 
-module.exports.getAllObjects = function(req, res, next) {
+router.post('/getAll', function(req, res, next) {
 	var id = req.body.id;
 	var context = req.body.context;
 	var model = req.body.model;
@@ -20,9 +23,9 @@ module.exports.getAllObjects = function(req, res, next) {
 
 		res.json(results).end();
 	});
-}
+});
 
-module.exports.lookupObject = function(req, res, next) {
+router.post('/lookup', function(req, res, next) {
 	var id = req.body.id;
 	var context = req.body.context;
 	var model = req.body.model;
@@ -35,9 +38,9 @@ module.exports.lookupObject = function(req, res, next) {
 
 		res.json(results).end();
 	});
-}
+});
 
-module.exports.deleteObject = function(req, res, next) {
+router.post('/delete', function(req, res, next) {
 	var id = req.body.id;
 	var context = req.body.context;
 	var model = req.body.model;
@@ -49,9 +52,9 @@ module.exports.deleteObject = function(req, res, next) {
 
 		res.json(results).end();
 	});
-}
+});
 
-module.exports.countObjects = function(req, res, next) {
+router.post('/count', function(req, res, next) {
 	var id = req.body.id;
 	var context = req.body.context;
 	var model = req.body.model;
@@ -63,9 +66,9 @@ module.exports.countObjects = function(req, res, next) {
 
 		res.json(results).end();
 	});
-}
+});
 
-module.exports.createObject = function(req, res, next) {
+router.post('/create', function(req, res, next) {
 	var props = req.body.props;
 	var context = req.body.context;
 	var model = req.body.model;
@@ -77,9 +80,9 @@ module.exports.createObject = function(req, res, next) {
 
 		res.json(results).end();
 	});
-}
+});
 
-module.exports.updateObject = function(req, res, next) {
+router.post('/update', function(req, res, next) {
 	var id = req.body.id;
 	var props = req.body.props;
 	var context = req.body.context;
@@ -92,4 +95,6 @@ module.exports.updateObject = function(req, res, next) {
 
 		res.json(results).end();
 	});
-}
+});
+
+module.exports = router

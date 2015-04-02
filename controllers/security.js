@@ -1,6 +1,28 @@
 var jwt = require('jsonwebtoken');
 var crypto = require('crypto');
+var express = require('express');
+var router = express.Router();
 
+router.post('/admin', function (req, res) {
+  console.log(app);
+  if (!(req.body.email === 'gabi@appscend.com' && req.body.password === 'password')) {
+    res.status(401).json({status: 401, message: {content: 'Wrong user or password'}});
+    return;
+  }
+
+  var profile = {
+    first_name: 'Gabi',
+    last_name: 'Dobo',
+    email: 'gabi@appscend.com',
+    id: 1
+  };
+
+  var token = jwt.sign(profile, authSecret, { expiresInMinutes: 60*5 });
+  res.json({ token: token });
+})
+
+module.exports = router
+var authSecret = module.exports.authSecret = '835hoyubg#@$#2wfsda';
 module.exports.keyValidation = function (req, res, next) {
   res.type('application/json');
   if (req.get('Content-type') !== 'application/json')
@@ -24,21 +46,4 @@ module.exports.keyValidation = function (req, res, next) {
         res.status(401).json({status: 401, message: {content: "Unauthorized. API key is not valid."}}).end();
     });
   }
-}
-
-module.exports.authenticate = function (req, res) {
-  if (!(req.body.email === 'gabi@appscend.com' && req.body.password === 'password')) {
-    res.status(401).json({status: 401, message: {content: 'Wrong user or password'}});
-    return;
-  }
-
-  var profile = {
-    first_name: 'Gabi',
-    last_name: 'Dobo',
-    email: 'gabi@appscend.com',
-    id: 1
-  };
-
-  var token = jwt.sign(profile, authSecret, { expiresInMinutes: 60*5 });
-  res.json({ token: token });
 }
