@@ -210,31 +210,24 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 				});
 
 				app.post('/create/'+ mdl.toLowerCase(), function(req, res, next) {
-					var context = req.body.context;
 					var content = req.body.content;
-					var parent = null;
 
-					for (var r in app.ModelsConfig[mdl].belongsTo) {
-						if (req.body.content[app.ModelsConfig[mdl].belongsTo[r]+'_id'])
-							parent = {model: mdl, id: req.body.content[app.ModelsConfig[mdl].belongsTo[r]+'_id']};
-					}
+					content.type = mdl.toLowerCase();
+					content.context_id = req.body.context;
+					content.user_id = req.body.user_id;
 
-					Models.Model.create(mdl, context, content, content.user_id, parent, function(err, results) {
+					app.kafkaProducer.send([{
+						topic: 'aggregation',
+						messages: [JSON.stringify({
+							op: 'add',
+							object: content,
+							applicationId: req.get('X-BLGREQ-APPID')
+						})],
+						attributes: 0
+					}], function(err) {
 						if (err) return next(err);
 
-						app.kafkaProducer.send([{
-							topic: 'aggregation',
-							messages: [JSON.stringify({
-								operation: 'add',
-								object: results,
-								applicationId: req.get('X-BLGREQ-APPID')
-							})],
-							attributes: 1
-						}], function(err) {
-							if (err) return next(err);
-
-							res.status(201).json({status: 201, message: results}).end();
-						});
+						res.status(201).json({status: 201, message: 'Created'}).end();
 					});
 				});
 
@@ -242,12 +235,6 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 					var context = req.body.context;
 					var patch = req.body.patch;
 					var id = req.body.id;
-					var parent = null;
-
-					/*for (var r in app.ModelsConfig[mdl].belongsTo) {
-						if (req.body.content[app.ModelsConfig[mdl].belongsTo[r]+'_id'])
-							parent = {model: mdl, id: req.body.content[app.ModelsConfig[mdl].belongsTo[r]+'_id']};
-					}*/
 
 					if (! (patch instanceof Array)) {
 						var error = new Error('Patch must be an array');
@@ -256,27 +243,21 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 						return next(error);
 					}
 
-					Models.Model.update(mdl, context, id, patch, parent, function(err, results) {
-						if (err && err.code == cb.errors.keyNotFound)
-							res.status(404).json({status: 404, message: 'Item not found'}).end();
-						else if (err)
-							return next(err);
-						else {
-							app.kafkaProducer.send([{
-								topic: 'aggregation',
-								messages: [JSON.stringify({
-									op: 'edit',
-									object: patch,
-									applicationId: req.get('X-BLGREQ-APPID')
-								})],
-								attributes: 1
-							}], function(err) {
-								if (err) return next(err);
+					app.kafkaProducer.send([{
+						topic: 'aggregation',
+						messages: [JSON.stringify({
+							op: 'edit',
+							id: id,
+							context: context,
+							object: patch,
+							type: mdl,
+							applicationId: req.get('X-BLGREQ-APPID')
+						})],
+						attributes: 1
+					}], function(err) {
+						if (err) return next(err);
 
-								res.status(200).json({status: 200, message: 'Updated'}).end();
-							});
-						}
-
+						res.status(200).json({status: 200, message: 'Updated'}).end();
 					});
 				});
 
@@ -285,26 +266,18 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 					//var userId = req.body.user_id;
 					var context = req.body.context;
 
-					Models.Model.delete(mdl, context, id, function(err, results) {
-						if (err && err.code == cb.errors.keyNotFound)
-							res.status(404).json({status: 404, message: 'Item not found'}).end();
-						else if (err)
-							next(err);
-						else {
-							app.kafkaProducer.send([{
-								topic: 'aggregation',
-								messages: [JSON.stringify({
-									op: 'delete',
-									object: {id: id, type: mdl},
-									applicationId: req.get('X-BLGREQ-APPID')
-								})],
-								attributes: 1
-							}], function(err) {
-								if (err) return next(err);
+					app.kafkaProducer.send([{
+						topic: 'aggregation',
+						messages: [JSON.stringify({
+							op: 'delete',
+							object: {id: id, type: mdl, context: context},
+							applicationId: req.get('X-BLGREQ-APPID')
+						})],
+						attributes: 1
+					}], function(err) {
+						if (err) return next(err);
 
-								res.status(200).json({status: 200, message: 'Deleted'}).end();
-							});
-						}
+						res.status(200).json({status: 200, message: 'Deleted'}).end();
 					});
 				});
 
