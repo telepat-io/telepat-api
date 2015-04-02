@@ -2,7 +2,6 @@ var express = require('express');
 var path = require('path');
 var logger = require('morgan');
 var bodyParser = require('body-parser');
-var crypto = require('crypto');
 var expressJwt = require('express-jwt');
 
 var tests = require('./controllers/tests');
@@ -24,10 +23,6 @@ app.kafkaProducer = new kafka.HighLevelProducer(app.kafkaClient);
 
 app.kafkaClient.on('error', function(err) {
 	console.log(err)
-});
-
-app.kafkaClient.on('state', function (state) {
-	console.log(state);
 });
 
 app.kafkaProducer.on('error', function(err) {
@@ -210,15 +205,30 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 					content.context_id = req.body.context;
 					content.user_id = req.body.user_id;
 
-					app.kafkaProducer.send([{
-						topic: 'aggregation',
-						messages: [JSON.stringify({
-							op: 'add',
-							object: content,
-							applicationId: req.get('X-BLGREQ-APPID')
-						})],
-						attributes: 0
-					}], function(err) {
+					async.series([
+						function(agg_callback) {
+							app.kafkaProducer.send([{
+								topic: 'aggregation',
+								messages: [JSON.stringify({
+									op: 'add',
+									object: content,
+									applicationId: req.get('X-BLGREQ-APPID')
+								})],
+								attributes: 0
+							}], agg_callback);
+						},
+						function(track_callback) {
+							app.kafkaProducer.send([{
+								topic: 'track',
+								messages: [JSON.stringify({
+									op: 'add',
+									object: content,
+									applicationId: req.get('X-BLGREQ-APPID')
+								})],
+								attributes: 0
+							}], track_callback);
+						}
+					], function(err, results) {
 						if (err) return next(err);
 
 						res.status(201).json({status: 201, message: 'Created'}).end();
@@ -237,18 +247,36 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 						return next(error);
 					}
 
-					app.kafkaProducer.send([{
-						topic: 'aggregation',
-						messages: [JSON.stringify({
-							op: 'edit',
-							id: id,
-							context: context,
-							object: patch,
-							type: mdl,
-							applicationId: req.get('X-BLGREQ-APPID')
-						})],
-						attributes: 1
-					}], function(err) {
+					async.series([
+						function(agg_callback) {
+							app.kafkaProducer.send([{
+								topic: 'aggregation',
+								messages: [JSON.stringify({
+									op: 'edit',
+									id: id,
+									context: context,
+									object: patch,
+									type: mdl,
+									applicationId: req.get('X-BLGREQ-APPID')
+								})],
+								attributes: 1
+							}], agg_callback);
+						},
+						function(track_callback) {
+							app.kafkaProducer.send([{
+								topic: 'track',
+								messages: [JSON.stringify({
+									op: 'edit',
+									id: id,
+									context: context,
+									object: patch,
+									type: mdl,
+									applicationId: req.get('X-BLGREQ-APPID')
+								})],
+								attributes: 1
+							}], track_callback);
+						}
+					], function(err, results) {
 						if (err) return next(err);
 
 						res.status(200).json({status: 200, message: 'Updated'}).end();
@@ -257,18 +285,32 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 
 				app.post('/object/delete/'+mdl.toLowerCase(), function(req, res, next) {
 					var id = req.body.id;
-					//var userId = req.body.user_id;
 					var context = req.body.context;
 
-					app.kafkaProducer.send([{
-						topic: 'aggregation',
-						messages: [JSON.stringify({
-							op: 'delete',
-							object: {id: id, type: mdl, context: context},
-							applicationId: req.get('X-BLGREQ-APPID')
-						})],
-						attributes: 1
-					}], function(err) {
+					async.series([
+						function(agg_callback) {
+							app.kafkaProducer.send([{
+								topic: 'aggregation',
+								messages: [JSON.stringify({
+									op: 'delete',
+									object: {id: id, type: mdl, context: context},
+									applicationId: req.get('X-BLGREQ-APPID')
+								})],
+								attributes: 1
+							}], agg_callback);
+						},
+						function(track_callback) {
+							app.kafkaProducer.send([{
+								topic: 'track',
+								messages: [JSON.stringify({
+									op: 'delete',
+									object: {id: id, type: mdl, context: context},
+									applicationId: req.get('X-BLGREQ-APPID')
+								})],
+								attributes: 1
+							}], track_callback);
+						}
+					], function(err, results) {
 						if (err) return next(err);
 
 						res.status(200).json({status: 200, message: 'Deleted'}).end();

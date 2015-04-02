@@ -1,4 +1,5 @@
 var jwt = require('jsonwebtoken');
+var crypto = require('crypto');
 
 module.exports.keyValidation = function (req, res, next) {
   res.type('application/json');
