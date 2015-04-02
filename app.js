@@ -1,15 +1,20 @@
 var express = require('express');
 var path = require('path');
 var logger = require('morgan');
-var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
-var cb = require('couchbase');
-var Models = require('octopus-models-api');
 var crypto = require('crypto');
-var async = require('async');
-var kafka = require('kafka-node');
+var expressJwt = require('express-jwt');
 
-var app = express();
+var tests = require('./controllers/tests');
+var admin = require('./controllers/admin');
+var security = require('./controllers/security');
+
+authSecret = '835hoyubg#@$#2wfsda';
+async = require('async');
+kafka = require('kafka-node');
+var cb = require('couchbase');
+Models = require('octopus-models-api');
+app = express();
 
 app.set('port', process.env.PORT || 3000);
 
@@ -57,40 +62,29 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 
 	});
 
+	app.use(function(req, res, next) {
+	  res.header("Access-Control-Allow-Origin", "*");
+	  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+	  if ('OPTIONS' == req.method) {
+	      res.send(200);
+	    }
+	  else {
+	    next();
+	  }
+	});
 	app.use(logger('dev'));
 	app.use(bodyParser.json());
 	app.use(bodyParser.urlencoded({ extended: false }));
-	app.use(cookieParser());
+	app.use('/admin', expressJwt({secret: authSecret}));
+	app.use(['/get','/object'], security.keyValidation);
 
-	app.use(function ClientValidation(req, res, next) {
-		res.type('application/json');
-		if (req.get('Content-type') !== 'application/json')
-			res.status(415).json({status: 415, message: {content: "Request content type must pe application/json."}}).end();
-		else if (req.get('X-BLGREQ-SIGN') == undefined)
-			res.status(401).json({status: 401, message: {content: "Unauthorized. Required authorization header not present."}}).end();
-		else if (!req.get('X-BLGREQ-APPID'))
-			res.status(400).json({staus: 400, message: {content: "Requested App ID not found."}}).end();
-		else {
-			var clientHash = req.get('X-BLGREQ-SIGN').toLowerCase();
-			var serverHash = null;
-			var apiKeys = app.applications[req.get('X-BLGREQ-APPID')].keys;
-
-			async.detect(apiKeys, function(item ,cb) {
-				serverHash = crypto.createHash('sha256').update(item).digest('hex').toLowerCase();
-				cb(serverHash === clientHash);
-			}, function(result) {
-				if (result)
-					next();
-				else
-					res.status(401).json({status: 401, message: {content: "Unauthorized. API key is not valid."}}).end();
-			});
-		}
-	});
+	app.post('/authenticate', security.authenticate);
+	app.post('/admin/apps', admin.apps);
 
 	for (var m in app.ModelsConfig) {
 		if (app.ModelsConfig.hasOwnProperty(m) && m != 'Application' && m != 'Context') {
 			(function(mdl) {
-				app.post('/subscribe/'+ mdl.toLowerCase(), function(req, res, next) {
+				app.post('/object/subscribe/'+ mdl.toLowerCase(), function(req, res, next) {
 					var id = req.body.id;
 					var context = req.body.context;
 					var deviceId = req.body.device_id;
@@ -189,7 +183,7 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 					}
 				});
 
-				app.post('/unsubscribe/'+ mdl.toLowerCase(), function(req, res, next) {
+				app.post('/object/unsubscribe/'+ mdl.toLowerCase(), function(req, res, next) {
 					var id = req.body.id;
 					var context = req.body.context;
 					var deviceId = req.body.device_id;
@@ -209,7 +203,7 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 					}
 				});
 
-				app.post('/create/'+ mdl.toLowerCase(), function(req, res, next) {
+				app.post('/object/create/'+ mdl.toLowerCase(), function(req, res, next) {
 					var content = req.body.content;
 
 					content.type = mdl.toLowerCase();
@@ -231,7 +225,7 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 					});
 				});
 
-				app.post('/update/'+ mdl.toLowerCase(), function(req, res, next) {
+				app.post('/object/update/'+ mdl.toLowerCase(), function(req, res, next) {
 					var context = req.body.context;
 					var patch = req.body.patch;
 					var id = req.body.id;
@@ -261,7 +255,7 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 					});
 				});
 
-				app.post('/delete/'+mdl.toLowerCase(), function(req, res, next) {
+				app.post('/object/delete/'+mdl.toLowerCase(), function(req, res, next) {
 					var id = req.body.id;
 					//var userId = req.body.user_id;
 					var context = req.body.context;
@@ -285,129 +279,13 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 		}
 	}
 
-	app.post('/testroute/get', function(req, res, next) {
-		var id = req.body.id;
-		var context = req.body.context;
-		var model = req.body.model;
-
-		new Models.Model(model, id, context, function(err, results) {
-			if(err) return next(err);
-
-			res.json(results).end();
-		});
-	});
-
-	app.post('/testroute/getAll', function(req, res, next) {
-		var id = req.body.id;
-		var context = req.body.context;
-		var model = req.body.model;
-
-		Models.Model.getAll(model, context, function(err, results) {
-			if(err) return next(err);
-
-			res.json(results).end();
-		});
-	});
-
-	app.post('/testroute/lookup', function(req, res, next) {
-		var id = req.body.id;
-		var context = req.body.context;
-		var model = req.body.model;
-		var user_id = req.body.user_id;
-		var parent = req.body.parent;
-		var key = req.body.answerKey;
-
-		Models.Model.lookupWithKey(model, context, key, user_id, parent, function(err, results) {
-			if(err) return next(err);
-
-			res.json(results).end();
-		});
-	});
-
-	app.post('/testroute/delete', function(req, res, next) {
-		var id = req.body.id;
-		var context = req.body.context;
-		var model = req.body.model;
-		var user_id = req.body.user_id;
-		var parent = req.body.parent;
-
-		Models.Model.delete(model, context, id, user_id, parent, function(err, results) {
-			if(err) return next(err);
-
-			res.json(results).end();
-		});
-	});
-
-	app.post('/testroute/delete', function(req, res, next) {
-		var id = req.body.id;
-		var context = req.body.context;
-		var model = req.body.model;
-		var user_id = req.body.user_id;
-		var parent = req.body.parent;
-
-		Models.Model.getAll(model, context, id, user_id, parent, function(err, results) {
-			if(err) return next(err);
-
-			res.json(results).end();
-		});
-	});
-
-	app.post('/testroute/count', function(req, res, next) {
-		var id = req.body.id;
-		var context = req.body.context;
-		var model = req.body.model;
-		var user_id = req.body.user_id;
-		var parent = req.body.parent;
-
-		Models.Model.count(model, function(err, results) {
-			if(err) return next(err);
-
-			res.json(results).end();
-		});
-	});
-
-	app.post('/testroute/delete', function(req, res, next) {
-		var id = req.body.id;
-		var context = req.body.context;
-		var model = req.body.model;
-		var user_id = req.body.user_id;
-		var parent = req.body.parent;
-
-		Models.Model.delete(model, context, id, user_id, parent, function(err, results) {
-			if(err) return next(err);
-
-			res.json(results).end();
-		});
-	});
-
-	app.post('/testroute/create', function(req, res, next) {
-		var props = req.body.props;
-		var context = req.body.context;
-		var model = req.body.model;
-		var user_id = req.body.user_id;
-		var parent = req.body.parent;
-
-		Models.Model.getAll(model, context, props, user_id, parent, function(err, results) {
-			if(err) return next(err);
-
-			res.json(results).end();
-		});
-	});
-
-	app.post('/testroute/update', function(req, res, next) {
-		var id = req.body.id;
-		var props = req.body.props;
-		var context = req.body.context;
-		var model = req.body.model;
-		var user_id = req.body.user_id;
-		var parent = req.body.parent;
-
-		Models.Model.getAll(model, context, props, user_id, parent, function(err, results) {
-			if(err) return next(err);
-
-			res.json(results).end();
-		});
-	});
+	app.post('/testroute/get', tests.getObject);
+	app.post('/testroute/getAll', tests.getAllObjects);
+	app.post('/testroute/lookup', tests.lookupObject);
+	app.post('/testroute/delete', tests.deleteObject);
+	app.post('/testroute/count', tests.countObjects);
+	app.post('/testroute/create', tests.createObject);
+	app.post('/testroute/update', tests.updateObject);
 
 	app.post('/get/contexts', function(req, res, next) {
 		var id = req.body.id;
