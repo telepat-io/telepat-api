@@ -4,21 +4,21 @@ var express = require('express');
 var router = express.Router();
 
 router.post('/admin', function (req, res) {
-  console.log(app);
-  if (!(req.body.email === 'gabi@appscend.com' && req.body.password === 'password')) {
-    res.status(401).json({status: 401, message: {content: 'Wrong user or password'}});
-    return;
-  }
+  Models.Admin(req.body.email, function(err, admin) {
+    if (err) {
+      res.status(404).json({status: 404, message: 'Wrong user or password'});
+      return;
+    }
 
-  var profile = {
-    first_name: 'Gabi',
-    last_name: 'Dobo',
-    email: 'gabi@appscend.com',
-    id: 1
-  };
-
-  var token = jwt.sign(profile, authSecret, { expiresInMinutes: 60*5 });
-  res.json({ token: token });
+    if (req.body.password == admin.password) {
+      var token = jwt.sign(admin, authSecret, { expiresInMinutes: 1 });
+      res.json({ token: token });
+    }
+    else {
+      res.status(404).json({status: 404, message: 'Wrong user or password'});
+      return;
+    }
+  })  
 })
 
 module.exports = router
@@ -26,11 +26,11 @@ var authSecret = module.exports.authSecret = '835hoyubg#@$#2wfsda';
 module.exports.keyValidation = function (req, res, next) {
   res.type('application/json');
   if (req.get('Content-type') !== 'application/json')
-    res.status(415).json({status: 415, message: {content: "Request content type must pe application/json."}}).end();
+    res.status(415).json({status: 415, message: "Request content type must pe application/json."}).end();
   else if (req.get('X-BLGREQ-SIGN') == undefined)
-    res.status(401).json({status: 401, message: {content: "Unauthorized. Required authorization header not present."}}).end();
+    res.status(401).json({status: 401, message: "Unauthorized. Required authorization header not present."}).end();
   else if (!req.get('X-BLGREQ-APPID'))
-    res.status(400).json({status: 400, message: {content: "Requested App ID not found."}}).end();
+    res.status(400).json({status: 400, message: "Requested App ID not found."}).end();
   else {
     var clientHash = req.get('X-BLGREQ-SIGN').toLowerCase();
     var serverHash = null;
@@ -43,7 +43,7 @@ module.exports.keyValidation = function (req, res, next) {
       if (result)
         next();
       else
-        res.status(401).json({status: 401, message: {content: "Unauthorized. API key is not valid."}}).end();
+        res.status(401).json({status: 401, message: "Unauthorized. API key is not valid."}).end();
     });
   }
 }
