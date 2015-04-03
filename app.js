@@ -277,7 +277,6 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 
 					content.type = mdl.toLowerCase();
 					content.context_id = req.body.context;
-					content.user_id = req.body.user_id;
 
 					async.series([
 						function(agg_callback) {
@@ -460,6 +459,10 @@ db.Couchbase.bucket.on('error', function ErrorConnect(error) {
 		res.type('application/json');
 		res.status(500).json({status: 500, message: "Server failed to connect to database."});
 	});
+});
+
+process.on('beforeExit', function() {
+	console.log('exiting');
 });
 
 module.exports = app;
