@@ -451,6 +451,12 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 		}));
 	});
 
+	process.on('SIGUSR2', function() {
+		db.Couchbase.bucket.disconnect();
+		db.Couchbase.stateBucket.disconnect();
+		app.kafkaClient.close();
+	});
+
 });
 
 db.Couchbase.bucket.on('error', function ErrorConnect(error) {
