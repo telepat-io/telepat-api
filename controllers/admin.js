@@ -28,6 +28,15 @@ router.post('/me', function (req, res) {
   res.json(req.user);
 });
 
+router.post('/update', function (req, res) {
+  Models.Admin.update(req.user.email, req.body, function (err, res1) {
+    if (err)
+      res.status(500).send({message: err});
+    else
+      res.send(200);
+  })
+});
+
 router.post('/apps', function (req, res) {
     var adminApps = {};
     async.each(Object.keys(app.applications), function(applicationId, c){
