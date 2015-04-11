@@ -88,4 +88,26 @@ router.post('/apps/remove', function (req, res) {
 
 });
 
+router.post('/apps/update', function (req, res) {
+  if (app.applications.hasOwnProperty(req.body.id)) {
+    if (app.applications[req.body.id].admin_id == req.user.email) {
+      Models.Application.update(req.body.id, req.body, function (err, res1, updatedApp) {
+        if (err)
+          res.status(500).send({message: 'Could not update app'});
+        else {
+          app.applications[req.body.id] = updatedApp;
+          res.send(200);
+        }
+      });
+    }
+    else {
+      res.status(400).send({message: 'Naughty'});
+    }
+  }
+  else {
+    res.status(400).send({message: 'Naughty'});
+  }
+
+});
+
 module.exports = router;
