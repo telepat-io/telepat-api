@@ -74,13 +74,14 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 	app.use('/object', objectRoute);
 	app.use('/testroute', tests);
 
-	app.use(['/get','/object'], security.keyValidation);
+	app.use(['/get', '/object', '/user', '/testroute'], security.keyValidation);
 
 	app.post('/get/contexts', function(req, res, next) {
 		var id = req.body.id;
+		var app_id = req.body.app_id;
 
 		if (!id) {
-			Models.Context.getAll(function(err, results) {
+			Models.Context.getAll(app_id, function(err, results) {
 				if (err)
 					return next(err);
 

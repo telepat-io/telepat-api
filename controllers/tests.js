@@ -63,7 +63,10 @@ router.post('/count', function(req, res, next) {
 	var parent = req.body.parent;
 
 	Models.Model.count(model, function(err, results) {
-		if(err) return next(err);
+		if(err)  {
+			console.trace();
+			return next(err);
+		}
 
 		res.json(results).end();
 	});
@@ -74,7 +77,10 @@ router.post('/create', function(req, res, next) {
 	var model = req.body.model;
 
 	Models.Model.create(model, props, function(err, results) {
-		if(err) return next(err);
+		if(err)  {
+			console.trace('Create trace: ');
+			return next(err);
+		}
 
 		res.json(results).end();
 	});
@@ -90,6 +96,19 @@ router.post('/update', function(req, res, next) {
 
 	Models.Model.getAll(model, context, props, user_id, parent, function(err, results) {
 		if(err) return next(err);
+
+		res.json(results).end();
+	});
+});
+
+router.post('/create_context', function(req, res, next) {
+	var props = req.body.props;
+
+	Models.Context.create(props, function(err, results) {
+		if(err)  {
+			console.trace('Create trace: ');
+			return next(err);
+		}
 
 		res.json(results).end();
 	});
