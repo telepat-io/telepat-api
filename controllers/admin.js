@@ -14,6 +14,19 @@ var unless = function(path, middleware) {
 };
 
 router.use(unless('/add', expressJwt({secret: security.authSecret})));
+router.use(['/apps/remove', 'apps/update'], function (req, res, next) {
+  if (app.applications.hasOwnProperty(req.body.appId)) {
+    if (app.applications[req.body.appId].admin_id == req.user.email) {
+      next();
+    }
+    else {
+      res.status(400).send({message: 'Naughty'});
+    }
+  }
+  else {
+    res.status(400).send({message: 'What app?'});
+  }
+});
 
 router.post('/add', function (req, res) {
   Models.Admin.create(req.body.email, { email: req.body.email, password: req.body.password, name: req.body.name }, function (err, result) {
@@ -56,58 +69,84 @@ router.post('/apps', function (req, res) {
 router.post('/apps/add', function (req, res) {
   var newApp = req.body;
   newApp['admin_id'] = req.user.email;
-  Models.Application.create(newApp, function (err, res1, newIndex) {
+  Models.Application.create(newApp, function (err, res1) {
     if (err)
       res.status(500).send({message: 'Could not add app'});
     else {
-      app.applications[newIndex] = newApp;
-      res.status(200).send({id: newIndex});
+      var newIndex;
+      for (var key in res1) {
+        if (res1.hasOwnProperty(key)) {
+          newIndex = key;
+        }
+      }
+      app.applications[newIndex] = res1[newIndex];
+      res.status(200).send(res1);
     }
   });
 });
 
 router.post('/apps/remove', function (req, res) {
-  if (app.applications.hasOwnProperty(req.body.id)) {
-    if (app.applications[req.body.id].admin_id == req.user.email) {
-      Models.Application.delete(req.body.id, function (err, res1) {
-        if (err)
-          res.status(500).send({message: 'Could not remove app'});
-        else {
-          delete app.applications[req.body.id];
-          res.send(200);
-        }
-      });
-    }
+  Models.Application.delete(req.body.appId, function (err, res1) {
+    if (err)
+      res.status(500).send({message: 'Could not remove app'});
     else {
-      res.status(400).send({message: 'Naughty'});
+      delete app.applications[req.body.appId];
+      res.send(200);
     }
-  }
-  else {
-    res.status(400).send({message: 'Naughty'});
-  }
-
+  });
 });
 
 router.post('/apps/update', function (req, res) {
-  if (app.applications.hasOwnProperty(req.body.id)) {
-    if (app.applications[req.body.id].admin_id == req.user.email) {
-      Models.Application.update(req.body.id, req.body, function (err, res1, updatedApp) {
-        if (err)
-          res.status(500).send({message: 'Could not update app'});
-        else {
-          app.applications[req.body.id] = updatedApp;
-          res.send(200);
-        }
-      });
-    }
+  Models.Application.update(req.body.appId, req.body, function (err, res1, updatedApp) {
+    if (err)
+      res.status(500).send({message: 'Could not update app'});
     else {
-      res.status(400).send({message: 'Naughty'});
+      app.applications[req.body.appId] = updatedApp;
+      res.send(200);
     }
-  }
-  else {
-    res.status(400).send({message: 'Naughty'});
-  }
+  });
+});
 
+router.post('/contexts', function (req, res) {
+  Models.Context.getAll(req.body.appId, function (err, res1) {
+    if (err)
+      res.status(500).send({message: 'Could not get contexts'});
+    else {
+      res.json(res1);
+    }
+  });
+});
+
+router.post('/contexts/add', function (req, res) {
+  var newContext = req.body;
+  newContext['application_id'] = req.body.appId;
+  Models.Context.create(newContext, function (err, res1) {
+    if (err)
+      res.status(500).send({message: 'Could not add context'});
+    else {
+      res.status(200).send(res1);
+    }
+  });
+});
+
+router.post('/contexts/remove', function (req, res) {
+  Models.Context.delete(req.body.id, function (err, res1) {
+    if (err)
+      res.status(500).send({message: 'Could not remove context'});
+    else {
+      res.send(200);
+    }
+  });
+});
+
+router.post('/contexts/update', function (req, res) {
+  Models.Context.update(req.body.id, req.body, function (err, res1, updatedContext) {
+    if (err)
+      res.status(500).send({message: 'Could not update context'});
+    else {
+      res.send(200);
+    }
+  });
 });
 
 module.exports = router;
