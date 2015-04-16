@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 var expressJwt = require('express-jwt');
 var security = require('./security');
+var Models = require('octopus-models-api');
 
 var unless = function(path, middleware) {
     return function(req, res, next) {
@@ -147,6 +148,67 @@ router.post('/contexts/update', function (req, res) {
       res.send(200);
     }
   });
+});
+
+router.post('/schema/create', function(req, res, next) {
+	var appId = req.body.appId;
+	var schema = req.body.schema;
+
+	Models.Application.createSchema(appId, schema, function(err, result) {
+		if (err)
+			next(err);
+		else {
+			res.status(200).end();
+		}
+	});
+});
+
+router.post('/schema/get', function(req, res, next) {
+	var appId = req.body.appId;
+
+	Models.Application.getAppSchema(appId, function(err, result) {
+		if (err && err.code == cb.errors.keyNotFound) {
+			err.status = 404;
+			next(err)
+		} else if (err){
+			next(err);
+		} else {
+			res.status(200).json({models: result.value.models}).end();
+		}
+	});
+});
+
+router.post('/schema/update', function(req, res, next) {
+	var appId = req.body.appId;
+	var name = req.body.name;
+	var props = req.body.props;
+
+	Models.Application.updateSchema(name, appId, props, function(err, result) {
+		if (err && err.code == cb.errors.keyNotFound) {
+			err.status = 404;
+			next(err)
+		} else if (err){
+			next(err);
+		} else {
+			res.status(200).end();
+		}
+	});
+});
+
+router.post('/schema/delete', function(req, res, next) {
+	var appId = req.body.appId;
+	var name = req.body.name;
+
+	Models.Application.deleteSchema(name, appId, function(err, result) {
+		if (err && err.code == cb.errors.keyNotFound) {
+			err.status = 404;
+			next(err)
+		} else if (err)
+			next(err);
+		else {
+			res.status(200).end();
+		}
+	});
 });
 
 module.exports = router;

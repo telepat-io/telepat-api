@@ -3,22 +3,21 @@ var crypto = require('crypto');
 var express = require('express');
 var router = express.Router();
 
-router.post('/admin', function (req, res) {
+router.post('/admin', function (req, res, next) {
   Models.Admin(req.body.email, function(err, admin) {
     if (err) {
-      res.status(404).json({status: 404, message: 'Wrong user or password'});
-      return;
+      return next(err);
     }
 
     if (req.body.password == admin.password) {
-      var token = jwt.sign(admin, authSecret, { expiresInMinutes: 1 });
+      var token = jwt.sign(admin, authSecret, { expiresInMinutes: 60 });
       res.json({ token: token });
     }
     else {
-      res.status(404).json({status: 404, message: 'Wrong user or password'});
+      res.status(401).json({status: 401, message: 'Wrong user or password'});
       return;
     }
-  })  
+  })
 })
 
 module.exports = router
