@@ -1,6 +1,20 @@
 var express = require('express');
 var router = express.Router();
 var Models = require('octopus-models-api');
+var sizeof = require('object-sizeof');
+
+router.use(function(req, res, next) {
+	//roughly 67M
+	if (sizeof(Models.Application.loadedAppModels) > (1 << 26)) {
+		delete Models.Application.loadedAppModels;
+		Models.Application.loadedAppModels = {};
+	}
+
+	if (!Models.Application.loadedAppModels[req.get('X-BLGREQ-APPID')]) {
+		Models.Application.loadAppModels(req.get('X-BLGREQ-APPID'), next);
+	} else
+		next();
+});
 
 router.post('/subscribe', function(req, res, next) {
 	var id = req.body.id;
@@ -9,6 +23,7 @@ router.post('/subscribe', function(req, res, next) {
 	var userId = req.body.user_id;
 	var userToken = req.body.user_token;
 	var mdl = req.body.model;
+	var appId = req.get('X-BLGREQ-APPID');
 	/**
 	 * {
 					 * 		parent: {model: event, id: 1}
@@ -53,60 +68,61 @@ router.post('/subscribe', function(req, res, next) {
 				var parent = {};
 				var user = null;
 				if (filters && filters.parent) {
-					parent.model = app.ModelsConfig[filters.parent.name].namespace;
+					parent.model = Models.Application.loadedAppModels[appId][filters.parent.name].namespace;
 					parent.id = filters.parent.id;
 				}
 				if (filters && filters.user)
 					user = filters.user;
 
-				Models.Subscription.add(context, deviceId, {model: app.ModelsConfig[mdl].namespace, id: id}, user, parent,  callback);
+				console.log(Models.Application.loadedAppModels);
+				Models.Subscription.add(context, deviceId, {model: Models.Application.loadedAppModels[appId][mdl].namespace, id: id}, user, parent,  callback);
 			},
 			function(result, callback) {
 				if(!id) {
 					if (filters) {
-						for (var rel in app.ModelsConfig[mdl].belongsTo) {
-							var parentModelId = filters[app.ModelsConfig[mdl].belongsTo[rel].parentModel+'_id'];
+						for (var rel in Models.Application.loadedAppModels[appId][mdl].belongsTo) {
+							var parentModelId = filters[Models.Application.loadedAppModels[appId][mdl].belongsTo[rel].parentModel+'_id'];
 							if (parentModelId !== undefined) {
-								var parentModel = app.ModelsConfig[mdl].belongsTo[rel].parentModel;
+								var parentModel = Models.Application.loadedAppModels[appId][mdl].belongsTo[rel].parentModel;
 
-								Models.Model.lookup(mdl, context, filters.user, {model: parentModel, id: parentModelId}, function(err, results) {
+								Models.Model.lookup(mdl, appId, context, filters.user, {model: parentModel, id: parentModelId}, function(err, results) {
 									if (!results) {
 										callback(err, results);
 									} else {
 										results = results.slice(0, 10);
 
-										Models.Model.multiGet(mdl, results, context, callback);
+										Models.Model.multiGet(mdl, results, appId, context, callback);
 									}
 								});
 							}
 						}
 					} else {
-						Models.Model.getAll(mdl, context, function(err, results) {
+						Models.Model.getAll(mdl, appId, context, function(err, results) {
 							if (err) return callback(err, null);
 
 							if(!id) {
 								if (filters) {
-									for (var rel in app.ModelsConfig[mdl].belongsTo) {
-										var parentModelId = filters[app.ModelsConfig[mdl].belongsTo[rel].parentModel+'_id'];
+									for (var rel in Models.Application.loadedAppModels[appId][mdl].belongsTo) {
+										var parentModelId = filters[Models.Application.loadedAppModels[appId][mdl].belongsTo[rel].parentModel+'_id'];
 										if (parentModelId !== undefined) {
-											var parentModel = app.ModelsConfig[mdl].belongsTo[rel].parentModel;
+											var parentModel = Models.Application.loadedAppModels[appId][mdl].belongsTo[rel].parentModel;
 
-											Models.Model.lookup(mdl, context, filters.user, {model: parentModel, id: parentModelId}, function(err, results) {
+											Models.Model.lookup(mdl, appId, context, filters.user, {model: parentModel, id: parentModelId}, function(err, results) {
 												if (!results) {
 													callback(err, results);
 												} else {
 													results = results.slice(0, 10);
 
-													Models.Model.multiGet(mdl, results, context, callback);
+													Models.Model.multiGet(mdl, results, appId, context, callback);
 												}
 											});
 										}
 									}
 								} else {
-									Models.Model.getAll(mdl, context, callback);
+									Models.Model.getAll(mdl, appId, context, callback);
 								}
 							} else {
-								new Models.Model(mdl, id, context, function(err, results) {
+								new Models.Model(mdl, appId, id, context, function(err, results) {
 									if (err) return callback(err, null);
 
 									var message = {};
@@ -118,7 +134,7 @@ router.post('/subscribe', function(req, res, next) {
 						});
 					}
 				} else {
-					new Models.Model(mdl, id, context, function(err, results) {
+					new Models.Model(mdl, appId, id, context, function(err, results) {
 						if (err) return callback(err, null);
 
 						var message = {};
@@ -158,13 +174,14 @@ router.post('/unsubscribe', function(req, res, next) {
 	var deviceId = req.body.device_id;
 	var filters = req.body.filters;
 	var mdl = req.body.model;
+	var appId = req.get('X-BLGREQ-APPID');
 
 	if (!context)
 		res.status(400).json({status: 400, message: "Requested context is not provided."}).end();
 	else {
 		async.waterfall([
 			function(callback) {
-				Models.Subscription.remove(context, deviceId, {model: app.ModelsConfig[mdl].namespace, id: id}, filters, function(err, results) {
+				Models.Subscription.remove(context, deviceId, {model: Models.Application.loadedAppModels[appId][mdl].namespace, id: id}, filters, function(err, results) {
 					if (err && err.code == cb.errors.keyNotFound) {
 						var error = new Error('Subscription not found');
 						error.status = 404;

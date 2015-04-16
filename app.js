@@ -29,7 +29,6 @@ app.kafkaProducer.on('error', function(err) {
 });
 
 app.set('datasources', require('./config/datasources'));
-app.ModelsConfig = Models.getModels();
 
 ds = app.get('datasources');
 app.set('database', {
@@ -41,7 +40,6 @@ db.Couchbase.stateBucket = db.Couchbase.openBucket(ds.couchbase.stateBucket);
 
 Models.Application.setBucket(db.Couchbase.bucket);
 Models.Application.setStateBucket(db.Couchbase.stateBucket);
-Models.Model.load(app);
 app.applications = {};
 
 db.Couchbase.bucket.on('connect', function OnBucketConnect() {
