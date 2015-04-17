@@ -7,6 +7,7 @@ var tests = require('./controllers/tests');
 var security = require('./controllers/security');
 var admin = require('./controllers/admin');
 var objectRoute = require('./controllers/object');
+var userRoute = require('./controllers/user');
 
 async = require('async');
 kafka = require('kafka-node');
@@ -15,6 +16,8 @@ Models = require('octopus-models-api');
 app = express();
 
 app.set('port', process.env.PORT || 3000);
+
+app.disable('x-powered-by');
 
 app.kafkaConfig = require('./config/kafka.json');
 app.kafkaClient = new kafka.Client(app.kafkaConfig.host+':'+app.kafkaConfig.port+'/', app.kafkaConfig.clientName);
@@ -70,6 +73,7 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 	app.use('/authenticate', security);
 	app.use('/admin', admin);
 	app.use('/object', objectRoute);
+	app.use('/user', userRoute);
 	app.use('/testroute', tests);
 
 	app.use(['/get', '/object', '/user', '/testroute'], security.keyValidation);
