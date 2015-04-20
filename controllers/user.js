@@ -63,10 +63,10 @@ router.all('/create', function(req, res) {
 			//callback(null, results);
 			Models.User.create(props, callback);
 		},
-		function(callback) {
+		function(result, callback) {
 			app.kafkaProducer.send([{
 				topic: 'update_friends',
-				messages: [JSON.stringify({friends: fbFriends})],
+				messages: [JSON.stringify({fid: userProfile.id, friends: fbFriends})],
 				attributes: 0
 			}], callback);
 		}
