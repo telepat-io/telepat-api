@@ -2,6 +2,12 @@ var express = require('express');
 var router = express.Router();
 var Models = require('octopus-models-api');
 var sizeof = require('object-sizeof');
+var security = require('./security');
+var jwt = require('jsonwebtoken');
+
+ACL_UNAUTHENTICATED = 1;
+ACL_AUTHENTICATED = 2;
+ACL_ADMIN = 4;
 
 router.use(function(req, res, next) {
 	//roughly 67M
@@ -16,11 +22,67 @@ router.use(function(req, res, next) {
 		next();
 });
 
+router.use(['/subscribe', '/unsubscribe'], function(req, res, next) {
+	if (req.body.model) {
+		var acl = Models.Application.loadedAppModels[req.get('X-BLGREQ-APPID')][req.body.model].read_acl;
+
+		if (req.headers.authorization && (acl & ACL_AUTHENTICATED)) {
+			var authHeaderParts = req.headers.authorization.split(' ');
+			var authToken = authHeaderParts[1];
+
+			if (authToken) {
+				jwt.verify(authToken, security.authSecret, function (err, decoded) {
+					if (err) return next(err);
+
+					req.user = decoded;
+
+					next();
+				});
+			} else {
+				res.status(400).json({status: 400, message: 'Authorization field is not formed well.'}).end();
+			}
+		}
+		else if (acl & ACL_UNAUTHENTICATED) {
+			next();
+		} else {
+			res.status(401).json({message: "Authorization header not present."}).end();
+		}
+	}
+});
+
+router.use(['/create', '/update', '/delete'], function(req, res, next) {
+	if (req.body.model) {
+		var acl = Models.Application.loadedAppModels[req.get('X-BLGREQ-APPID')][req.body.model].write_acl;
+
+		if (req.headers.authorization && (acl & ACL_AUTHENTICATED)) {
+			var authHeaderParts = req.headers.authorization.split(' ');
+			var authToken = authHeaderParts[1];
+
+			if (authToken) {
+				jwt.verify(authToken, security.authSecret, function (err, decoded) {
+					if (err) return next(err);
+
+					req.user = decoded;
+
+					next();
+				});
+			} else {
+				res.status(400).json({status: 400, message: 'Authorization field is not formed well.'}).end();
+			}
+		}
+		else if (acl & ACL_UNAUTHENTICATED) {
+			next();
+		} else {
+			res.status(401).json({message: "Authorization header not present."}).end();
+		}
+	}
+});
+
 router.post('/subscribe', function(req, res, next) {
 	var id = req.body.id;
 	var context = req.body.context;
 	var deviceId = req.body.device_id;
-	var userId = req.body.user_id;
+	var userId = req.user.email;
 	var userToken = req.body.user_token;
 	var mdl = req.body.model;
 	var appId = req.get('X-BLGREQ-APPID');

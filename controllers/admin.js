@@ -32,7 +32,7 @@ router.use(['/apps/remove', 'apps/update'], function (req, res, next) {
 router.post('/add', function (req, res) {
   Models.Admin.create(req.body.email, { email: req.body.email, password: req.body.password, name: req.body.name }, function (err, result) {
     if (err)
-      res.status(500).send({message : "Error adding account"})
+      res.status(500).send({message : "Error adding account"});
     else
       res.send(200);
   });

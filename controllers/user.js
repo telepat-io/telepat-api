@@ -4,6 +4,8 @@ var FB = require('facebook-node');
 var async = require('async');
 var crypto = require('crypto');
 var Models = require('octopus-models-api');
+var security = require('./security');
+var jwt = require('jsonwebtoken');
 
 var options = {
 	client_id:          '777341809047927',
@@ -23,6 +25,7 @@ router.all('/create', function(req, res) {
 	var accessToken = {};
 	var fbFriends = [];
 	var userProfile = {};
+	var insertedUser = {};
 
 	if (!req.get('X-BLGREQ-SIGN')) {
 		res.status(200).json({code: code}).end();
@@ -61,9 +64,14 @@ router.all('/create', function(req, res) {
 			};
 
 			//callback(null, results);
-			Models.User.create(props, callback);
+			Models.User.create(props, function(err, result) {
+				if (err) return callback(err);
+
+				insertedUser = result;
+				callback();
+			});
 		},
-		function(result, callback) {
+		function(callback) {
 			app.kafkaProducer.send([{
 				topic: 'update_friends',
 				messages: [JSON.stringify({fid: userProfile.id, friends: fbFriends})],
@@ -71,11 +79,13 @@ router.all('/create', function(req, res) {
 			}], callback);
 		}
 	], function(err, results) {
-		console.log(err ,results);
+		console.log(err, results);
 		if (err)
 			res.status(400).json(err).end();
-		else
-			res.status(200).json(results).end();
+		else {
+			var token = jwt.sign(insertedUser, security.authSecret, { expiresInMinutes: 60 });
+			res.json({ token: token }).end();
+		}
 	});
 });
 
