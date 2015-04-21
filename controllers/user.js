@@ -72,11 +72,14 @@ router.all('/create', function(req, res) {
 			});
 		},
 		function(callback) {
-			app.kafkaProducer.send([{
-				topic: 'update_friends',
-				messages: [JSON.stringify({fid: userProfile.id, friends: fbFriends})],
-				attributes: 0
-			}], callback);
+			if (fbFriends.length) {
+				app.kafkaProducer.send([{
+					topic: 'update_friends',
+					messages: [JSON.stringify({fid: userProfile.id, friends: fbFriends})],
+					attributes: 0
+				}], callback);
+			} else
+				callback();
 		}
 	], function(err, results) {
 		console.log(err, results);
