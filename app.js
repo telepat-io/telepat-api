@@ -79,7 +79,7 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 
 	app.use(['/get', '/object', '/user', '/testroute'], security.keyValidation);
 
-	app.use(['/get/contexts', expressjwt({secret: security.authSecret})]);
+	app.use(['/get/contexts'], expressjwt({secret: security.authSecret}));
 
 	app.post('/get/contexts', function(req, res, next) {
 		var id = req.body.id;

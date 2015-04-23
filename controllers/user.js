@@ -63,13 +63,25 @@ router.all('/create', function(req, res) {
 				friends: fbFriends
 			};
 
+			props.type = 'user';
+
+			app.kafkaProducer.send([{
+				topic: 'aggregation',
+				message: [JSON.stringify({
+					op: 'add',
+					object: props,
+					applicationId: req.get('X-BLGREQ-APPID')
+				})],
+				attributes: 0
+			}], callback);
+
 			//callback(null, results);
-			Models.User.create(props, function(err, result) {
+			/*Models.User.create(props, function(err, result) {
 				if (err) return callback(err);
 
 				insertedUser = result;
 				callback();
-			});
+			});*/
 		},
 		function(callback) {
 			if (fbFriends.length) {
@@ -89,6 +101,52 @@ router.all('/create', function(req, res) {
 			var token = jwt.sign(insertedUser, security.authSecret, { expiresInMinutes: 60 });
 			res.json({ token: token }).end();
 		}
+	});
+});
+
+router.post('/update', function(req, res, next) {
+	var patches = req.body.patches;
+	var id = req.body.id;
+	var email = req.body.email;
+
+	for(var p in patches) {
+		patches[p].email = email;
+	}
+
+	app.kafkaProducer.send([{
+		topic: 'aggregator',
+		message: [JSON.stringify({
+			op: 'edit',
+			object: patches,
+			id: id,
+			applicationId: req.get('X-BLGREQ-APPID'),
+			user: true
+		})],
+		attributes: 0
+	}], function(err, result) {
+		if (err) return next(err);
+
+		res.status(200).json({status: 200, message: "User updated."}).end();
+	});
+});
+
+router.post('/delete', function(req, res, next) {
+	var id = req.body.id;
+	var email = req.body.email;
+
+	app.kafkaProducer.send([{
+		topic: 'aggregation',
+		message: [JSON.stringify({
+			op: 'delete',
+			object: {id: id, email: email},
+			applicationId: req.get('X-BLGREQ-APPID'),
+			user: true
+		})],
+		attributes: 0
+	}], function(err) {
+		if (err) return next(err);
+
+		res.status(200).json({status: 200, message: "User deleted."}).end();
 	});
 });
 
