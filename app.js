@@ -8,6 +8,7 @@ var security = require('./controllers/security');
 var admin = require('./controllers/admin');
 var objectRoute = require('./controllers/object');
 var userRoute = require('./controllers/user');
+var expressjwt = require('express-jwt');
 
 async = require('async');
 kafka = require('kafka-node');
@@ -78,9 +79,11 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 
 	app.use(['/get', '/object', '/user', '/testroute'], security.keyValidation);
 
+	app.use(['/get/contexts'], expressjwt({secret: security.authSecret}));
+
 	app.post('/get/contexts', function(req, res, next) {
 		var id = req.body.id;
-		var app_id = req.body.app_id;
+		var app_id = req.get('X-BLGREQ-APPID');
 
 		if (!id) {
 			Models.Context.getAll(app_id, function(err, results) {

@@ -73,7 +73,7 @@ router.use(['/create', '/update', '/delete'], function(req, res, next) {
 		else if (acl & ACL_UNAUTHENTICATED) {
 			next();
 		} else {
-			res.status(401).json({message: "Authorization header not present."}).end();
+			res.status(401).json({status: 401, message: "Authorization header not present."}).end();
 		}
 	}
 });
