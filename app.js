@@ -79,7 +79,7 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 
 	app.use(['/get', '/object', '/user', '/testroute'], security.keyValidation);
 
-	app.use(['/get/contexts'], expressjwt({secret: security.authSecret}));
+	app.use(['/get/contexts', '/delete/context'], expressjwt({secret: security.authSecret}));
 
 	app.post('/get/contexts', function(req, res, next) {
 		var id = req.body.id;
@@ -102,6 +102,25 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 				res.json(responseBody).end();
 			});
 		}
+	});
+
+	app.post('/delete/context', function(req, res, next) {
+		var id = req.body.id;
+
+		app.kafkaProducer.send([{
+			topic: 'aggregation',
+			messages: [JSON.stringify({
+				op: 'delete',
+				object: {id: id},
+				context: true,
+				applicationId: req.get('X-BLGREQ-APPID')
+			})],
+			attributes: 0
+		}], function(err, result) {
+			if (err) return next(err);
+
+			res.status(200).json({status: 200, message: "Context deleted"}).end();
+		});
 	});
 
 	// error handlers

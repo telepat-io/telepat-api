@@ -340,7 +340,7 @@ router.post('/update', function(req, res, next) {
 					type: mdl,
 					applicationId: req.get('X-BLGREQ-APPID')
 				})],
-				attributes: 1
+				attributes: 0
 			}], agg_callback);
 		},
 		function(track_callback) {
@@ -354,7 +354,7 @@ router.post('/update', function(req, res, next) {
 					type: mdl,
 					applicationId: req.get('X-BLGREQ-APPID')
 				})],
-				attributes: 1
+				attributes: 0
 			}], track_callback);
 		}
 	], function(err, results) {
@@ -378,7 +378,7 @@ router.post('/delete', function(req, res, next) {
 					object: {id: id, type: mdl, context: context},
 					applicationId: req.get('X-BLGREQ-APPID')
 				})],
-				attributes: 1
+				attributes: 0
 			}], agg_callback);
 		},
 		function(track_callback) {
@@ -389,7 +389,7 @@ router.post('/delete', function(req, res, next) {
 					object: {op: 'remove', path: mdl+'/'+id},
 					applicationId: req.get('X-BLGREQ-APPID')
 				})],
-				attributes: 1
+				attributes: 0
 			}], track_callback);
 		}
 	], function(err, results) {
