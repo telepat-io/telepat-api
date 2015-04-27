@@ -67,7 +67,7 @@ router.post('/apps', function (req, res) {
     });
 });
 
-router.post('/apps/add', function (req, res) {
+router.post('/app/add', function (req, res) {
   var newApp = req.body;
   newApp['admin_id'] = req.user.email;
   Models.Application.create(newApp, function (err, res1) {
@@ -86,7 +86,7 @@ router.post('/apps/add', function (req, res) {
   });
 });
 
-router.post('/apps/remove', function (req, res) {
+router.post('/app/remove', function (req, res) {
   Models.Application.delete(req.body.appId, function (err, res1) {
     if (err)
       res.status(500).send({message: 'Could not remove app'});
@@ -97,7 +97,7 @@ router.post('/apps/remove', function (req, res) {
   });
 });
 
-router.post('/apps/update', function (req, res) {
+router.post('/app/update', function (req, res) {
   Models.Application.update(req.body.appId, req.body, function (err, res1, updatedApp) {
     if (err)
       res.status(500).send({message: 'Could not update app'});
@@ -118,7 +118,17 @@ router.post('/contexts', function (req, res) {
   });
 });
 
-router.post('/contexts/add', function (req, res) {
+router.post('/context', function (req, res) {
+  Models.Context(req.body.id, function (err, res1) {
+    if (err)
+      res.status(500).send({message: 'Could not get context'});
+    else {
+      res.json(res1.value);
+    }
+  });
+});
+
+router.post('/context/add', function (req, res) {
   var newContext = req.body;
   newContext['application_id'] = req.body.appId;
   Models.Context.create(newContext, function (err, res1) {
@@ -130,7 +140,7 @@ router.post('/contexts/add', function (req, res) {
   });
 });
 
-router.post('/contexts/remove', function (req, res) {
+router.post('/context/remove', function (req, res) {
   Models.Context.delete(req.body.id, function (err, res1) {
     if (err)
       res.status(500).send({message: 'Could not remove context'});
@@ -140,7 +150,7 @@ router.post('/contexts/remove', function (req, res) {
   });
 });
 
-router.post('/contexts/update', function (req, res) {
+router.post('/context/update', function (req, res) {
   Models.Context.update(req.body.id, req.body, function (err, res1, updatedContext) {
     if (err)
       res.status(500).send({message: 'Could not update context'});
@@ -150,20 +160,7 @@ router.post('/contexts/update', function (req, res) {
   });
 });
 
-router.post('/schema/create', function(req, res, next) {
-	var appId = req.body.appId;
-	var schema = req.body.schema;
-
-	Models.Application.createSchema(appId, schema, function(err, result) {
-		if (err)
-			next(err);
-		else {
-			res.status(200).end();
-		}
-	});
-});
-
-router.post('/schema/get', function(req, res, next) {
+router.post('/schemas', function(req, res, next) {
 	var appId = req.body.appId;
 
 	Models.Application.getAppSchema(appId, function(err, result) {
@@ -173,9 +170,22 @@ router.post('/schema/get', function(req, res, next) {
 		} else if (err){
 			next(err);
 		} else {
-			res.status(200).json({models: result.value.models}).end();
+			res.status(200).send(result.value).end();
 		}
 	});
+});
+
+router.post('/schema/create', function(req, res, next) {
+  var appId = req.body.appId;
+  var schema = req.body.schema;
+
+  Models.Application.createSchema(appId, schema, function(err, result) {
+    if (err)
+      next(err);
+    else {
+      res.status(200).end();
+    }
+  });
 });
 
 router.post('/schema/update', function(req, res, next) {
