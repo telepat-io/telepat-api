@@ -101,6 +101,8 @@ router.post('/subscribe', function(req, res, next) {
 		res.status(400).json({status: 400, message: "Requested deviceID is not provided."}).end();
 	//ia-le pe toate
 	else {
+		var objectCount = 0;
+
 		async.waterfall([
 			//see if device exists
 			function(callback) {
@@ -136,8 +138,7 @@ router.post('/subscribe', function(req, res, next) {
 				if (filters && filters.user)
 					user = filters.user;
 
-				console.log(Models.Application.loadedAppModels);
-				Models.Subscription.add(context, deviceId, {model: Models.Application.loadedAppModels[appId][mdl].namespace, id: id}, user, parent,  callback);
+				Models.Subscription.add(appId, context, deviceId, {model: Models.Application.loadedAppModels[appId][mdl].namespace, id: id}, user, parent,  callback);
 			},
 			function(result, callback) {
 				if(!id) {
@@ -173,6 +174,7 @@ router.post('/subscribe', function(req, res, next) {
 												if (!results) {
 													callback(err, results);
 												} else {
+													objectCount = results.length;
 													results = results.slice(0, 10);
 
 													Models.Model.multiGet(mdl, results, appId, context, callback);
@@ -181,7 +183,12 @@ router.post('/subscribe', function(req, res, next) {
 										}
 									}
 								} else {
-									Models.Model.getAll(mdl, appId, context, callback);
+									Models.Model.getAll(mdl, appId, context, function(err, result) {
+										if (err) return callback(err);
+
+										objectCount = Object.keys(result).length;
+										callback(null, result);
+									});
 								}
 							} else {
 								new Models.Model(mdl, appId, id, context, function(err, results) {
@@ -189,6 +196,7 @@ router.post('/subscribe', function(req, res, next) {
 
 									var message = {};
 									message[id] = results.value;
+									objectCount = 1;
 
 									callback(null, message);
 								});
@@ -201,6 +209,7 @@ router.post('/subscribe', function(req, res, next) {
 
 						var message = {};
 						message[id] = results.value;
+						objectCount = 1;
 
 						callback(null, message)
 					});
@@ -218,6 +227,11 @@ router.post('/subscribe', function(req, res, next) {
 				}], function(err, data) {
 					if (err) return callback(err, null);
 
+					callback(err, results);
+				});
+			},
+			function(results, callback) {
+				Subscription.setObjectCount(appId, context, {model: mdl, id: id}, userId, filters.parent, objectCount, function(err, result) {
 					callback(err, results);
 				});
 			}
