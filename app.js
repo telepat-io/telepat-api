@@ -53,6 +53,7 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 			app.applications[appId] = item.value;
 			c();
 		}, function(err) {
+
 			//console.log(app.applications);
 		});
 

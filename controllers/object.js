@@ -22,9 +22,9 @@ router.use(function(req, res, next) {
 		next();
 });
 
-router.use(['/subscribe', '/unsubscribe'], function(req, res, next) {
+function AccessControlFunction(req, res, next, accessControl) {
 	if (req.body.model) {
-		var acl = Models.Application.loadedAppModels[req.get('X-BLGREQ-APPID')][req.body.model].read_acl;
+		var acl = Models.Application.loadedAppModels[req.get('X-BLGREQ-APPID')][req.body.model][accessControl];
 
 		if (req.headers.authorization && (acl & ACL_AUTHENTICATED)) {
 			var authHeaderParts = req.headers.authorization.split(' ');
@@ -48,34 +48,18 @@ router.use(['/subscribe', '/unsubscribe'], function(req, res, next) {
 			res.status(401).json({message: "Authorization header not present."}).end();
 		}
 	}
+}
+
+router.use(['/subscribe', '/unsubscribe'], function(req, res, next) {
+	AccessControlFunction(req, res, next, 'read_acl');
 });
 
 router.use(['/create', '/update', '/delete'], function(req, res, next) {
-	if (req.body.model) {
-		var acl = Models.Application.loadedAppModels[req.get('X-BLGREQ-APPID')][req.body.model].write_acl;
+	AccessControlFunction(req, res, next, 'write_acl');
+});
 
-		if (req.headers.authorization && (acl & ACL_AUTHENTICATED)) {
-			var authHeaderParts = req.headers.authorization.split(' ');
-			var authToken = authHeaderParts[1];
-
-			if (authToken) {
-				jwt.verify(authToken, security.authSecret, function (err, decoded) {
-					if (err) return next(err);
-
-					req.user = decoded;
-
-					next();
-				});
-			} else {
-				res.status(400).json({status: 400, message: 'Authorization field is not formed well.'}).end();
-			}
-		}
-		else if (acl & ACL_UNAUTHENTICATED) {
-			next();
-		} else {
-			res.status(401).json({status: 401, message: "Authorization header not present."}).end();
-		}
-	}
+router.use(['/count'], function(req, res, next) {
+	AccessControlFunction(req, res, next, 'meta_read_acl');
 });
 
 router.post('/subscribe', function(req, res, next) {
@@ -86,13 +70,7 @@ router.post('/subscribe', function(req, res, next) {
 	var userToken = req.body.user_token;
 	var mdl = req.body.model;
 	var appId = req.get('X-BLGREQ-APPID');
-	/**
-	 * {
-					 * 		parent: {model: event, id: 1}
-					 * 		user: 1
-					 *
-					 * }
-	 */
+
 	var filters = req.body.filters;
 
 	if (!context)
@@ -410,6 +388,20 @@ router.post('/delete', function(req, res, next) {
 		if (err) return next(err);
 
 		res.status(200).json({status: 200, message: 'Deleted'}).end();
+	});
+});
+
+router.post('/count', function(req, res, next) {
+	var appId = req.get('X-BLGREQ-APPID'),
+		context = req.body.context_id,
+		channel = {model: req.body.model, id: req.body.id},
+		user_id = req.body.user_id,
+		parent = req.parent;
+
+	Models.Subscription.getObjectCount(appId, context, channel, user_id, parent, function(err, result) {
+		if (err) return next(err);
+
+		res.status(200).json({status: 200, message: result}).end();
 	});
 });
 
