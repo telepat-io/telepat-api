@@ -26,7 +26,10 @@ function AccessControlFunction(req, res, next, accessControl) {
 	if (req.body.model) {
 		var acl = Models.Application.loadedAppModels[req.get('X-BLGREQ-APPID')][req.body.model][accessControl];
 
-		if (req.headers.authorization && (acl & ACL_AUTHENTICATED)) {
+		if (!req.headers.authorization)
+			return res.status(401).json({message: "Authorization header is not present"}).end();
+
+		if (acl & ACL_AUTHENTICATED) {
 			var authHeaderParts = req.headers.authorization.split(' ');
 			var authToken = authHeaderParts[1];
 
@@ -39,13 +42,13 @@ function AccessControlFunction(req, res, next, accessControl) {
 					next();
 				});
 			} else {
-				res.status(400).json({status: 400, message: 'Authorization field is not formed well.'}).end();
+				res.status(400).json({status: 400, message: 'Authorization field is not formed well'}).end();
 			}
 		}
 		else if (acl & ACL_UNAUTHENTICATED) {
 			next();
 		} else {
-			res.status(401).json({message: "Authorization header not present."}).end();
+			res.status(401).json({message: "You don't have the necessary privilegies for this operation"}).end();
 		}
 	}
 }
