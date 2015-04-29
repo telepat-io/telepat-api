@@ -276,6 +276,17 @@ router.post('/create', function(req, res, next) {
 
 	content.type = mdl;
 	content.context_id = req.body.context;
+	content.user_id = req.user.id;
+
+	if (Application.loadedAppModels[mdl].belongs_to) {
+		var parentModel = Application.loadedAppModels[mdl].belongs_to[0].parentModel;
+		if (!content[parentModel+'_id']) {
+			var error = new Error("'"+parentModel+"_id' is required");
+			error.status = 400;
+
+			return next(error);
+		}
+	}
 
 	async.series([
 		function(agg_callback) {
