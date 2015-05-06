@@ -18,9 +18,9 @@ router.post('/admin', function (req, res, next) {
       return;
     }
   })
-})
+});
 
-module.exports = router
+module.exports = router;
 var authSecret = module.exports.authSecret = '835hoyubg#@$#2wfsda';
 module.exports.keyValidation = function (req, res, next) {
   res.type('application/json');

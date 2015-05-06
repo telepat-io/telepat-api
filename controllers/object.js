@@ -29,13 +29,16 @@ function AccessControlFunction(req, res, next, accessControl) {
 		if (!req.headers.authorization)
 			return res.status(401).json({message: "Authorization header is not present"}).end();
 
-		if (acl & ACL_AUTHENTICATED) {
+		if (acl & ACL_AUTHENTICATED || acl & ACL_ADMIN) {
 			var authHeaderParts = req.headers.authorization.split(' ');
 			var authToken = authHeaderParts[1];
 
 			if (authToken) {
 				jwt.verify(authToken, security.authSecret, function (err, decoded) {
 					if (err) return next(err);
+
+					if ((acl & ACL_ADMIN) && (!decoded.isAdmin) )
+						return res.status(401).json({message: "You don't have the necessary privilegies for this operation"}).end();
 
 					req.user = decoded;
 
@@ -276,13 +279,14 @@ router.post('/unsubscribe', function(req, res, next) {
 router.post('/create', function(req, res, next) {
 	var content = req.body.content;
 	var mdl = req.body.model;
+	var appId = req.get('X-BLGREQ-APPID');
 
 	content.type = mdl;
 	content.context_id = req.body.context;
 	content.user_id = req.user.id;
 
-	if (Application.loadedAppModels[mdl].belongs_to) {
-		var parentModel = Application.loadedAppModels[mdl].belongs_to[0].parentModel;
+	if (Models.Application.loadedAppModels[appId][mdl].belongs_to) {
+		var parentModel = Models.Application.loadedAppModels[appId][mdl].belongs_to[0].parentModel;
 		if (!content[parentModel+'_id']) {
 			var error = new Error("'"+parentModel+"_id' is required");
 			error.status = 400;
@@ -293,26 +297,28 @@ router.post('/create', function(req, res, next) {
 
 	async.series([
 		function(agg_callback) {
-			app.kafkaProducer.send([{
+			agg_callback();
+			/*app.kafkaProducer.send([{
 				topic: 'aggregation',
 				messages: [JSON.stringify({
 					op: 'add',
 					object: content,
-					applicationId: req.get('X-BLGREQ-APPID')
+					applicationId: appId
 				})],
 				attributes: 0
-			}], agg_callback);
+			}], agg_callback);*/
 		},
 		function(track_callback) {
-			app.kafkaProducer.send([{
+			track_callback();
+			/*app.kafkaProducer.send([{
 				topic: 'track',
 				messages: [JSON.stringify({
 					op: 'add',
 					object: content,
-					applicationId: req.get('X-BLGREQ-APPID')
+					applicationId: appId
 				})],
 				attributes: 0
-			}], track_callback);
+			}], track_callback);*/
 		}
 	], function(err, results) {
 		if (err) return next(err);
