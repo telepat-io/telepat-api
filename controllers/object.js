@@ -22,11 +22,14 @@ router.use(function(req, res, next) {
 		next();
 });
 
-router.use(['/subscribe', '/unsubscribe'], function(req, res, next) {
+function AccessControlFunction(req, res, next, accessControl) {
 	if (req.body.model) {
-		var acl = Models.Application.loadedAppModels[req.get('X-BLGREQ-APPID')][req.body.model].read_acl;
+		var acl = Models.Application.loadedAppModels[req.get('X-BLGREQ-APPID')][req.body.model][accessControl];
 
-		if (req.headers.authorization && (acl & ACL_AUTHENTICATED)) {
+		if (!req.headers.authorization)
+			return res.status(401).json({message: "Authorization header is not present"}).end();
+
+		if (acl & ACL_AUTHENTICATED || acl & ACL_ADMIN) {
 			var authHeaderParts = req.headers.authorization.split(' ');
 			var authToken = authHeaderParts[1];
 
@@ -34,48 +37,35 @@ router.use(['/subscribe', '/unsubscribe'], function(req, res, next) {
 				jwt.verify(authToken, security.authSecret, function (err, decoded) {
 					if (err) return next(err);
 
+					if ((acl & ACL_ADMIN) && (!decoded.isAdmin) )
+						return res.status(401).json({message: "You don't have the necessary privilegies for this operation"}).end();
+
 					req.user = decoded;
 
 					next();
 				});
 			} else {
-				res.status(400).json({status: 400, message: 'Authorization field is not formed well.'}).end();
+				res.status(400).json({status: 400, message: 'Authorization field is not formed well'}).end();
 			}
 		}
 		else if (acl & ACL_UNAUTHENTICATED) {
 			next();
 		} else {
-			res.status(401).json({message: "Authorization header not present."}).end();
+			res.status(401).json({message: "You don't have the necessary privilegies for this operation"}).end();
 		}
 	}
+}
+
+router.use(['/subscribe', '/unsubscribe'], function(req, res, next) {
+	AccessControlFunction(req, res, next, 'read_acl');
 });
 
 router.use(['/create', '/update', '/delete'], function(req, res, next) {
-	if (req.body.model) {
-		var acl = Models.Application.loadedAppModels[req.get('X-BLGREQ-APPID')][req.body.model].write_acl;
+	AccessControlFunction(req, res, next, 'write_acl');
+});
 
-		if (req.headers.authorization && (acl & ACL_AUTHENTICATED)) {
-			var authHeaderParts = req.headers.authorization.split(' ');
-			var authToken = authHeaderParts[1];
-
-			if (authToken) {
-				jwt.verify(authToken, security.authSecret, function (err, decoded) {
-					if (err) return next(err);
-
-					req.user = decoded;
-
-					next();
-				});
-			} else {
-				res.status(400).json({status: 400, message: 'Authorization field is not formed well.'}).end();
-			}
-		}
-		else if (acl & ACL_UNAUTHENTICATED) {
-			next();
-		} else {
-			res.status(401).json({status: 401, message: "Authorization header not present."}).end();
-		}
-	}
+router.use(['/count'], function(req, res, next) {
+	AccessControlFunction(req, res, next, 'meta_read_acl');
 });
 
 router.post('/subscribe', function(req, res, next) {
@@ -86,13 +76,7 @@ router.post('/subscribe', function(req, res, next) {
 	var userToken = req.body.user_token;
 	var mdl = req.body.model;
 	var appId = req.get('X-BLGREQ-APPID');
-	/**
-	 * {
-					 * 		parent: {model: event, id: 1}
-					 * 		user: 1
-					 *
-					 * }
-	 */
+
 	var filters = req.body.filters;
 
 	if (!context)
@@ -101,6 +85,8 @@ router.post('/subscribe', function(req, res, next) {
 		res.status(400).json({status: 400, message: "Requested deviceID is not provided."}).end();
 	//ia-le pe toate
 	else {
+		var objectCount = 0;
+
 		async.waterfall([
 			//see if device exists
 			function(callback) {
@@ -136,8 +122,7 @@ router.post('/subscribe', function(req, res, next) {
 				if (filters && filters.user)
 					user = filters.user;
 
-				console.log(Models.Application.loadedAppModels);
-				Models.Subscription.add(context, deviceId, {model: Models.Application.loadedAppModels[appId][mdl].namespace, id: id}, user, parent,  callback);
+				Models.Subscription.add(appId, context, deviceId, {model: Models.Application.loadedAppModels[appId][mdl].namespace, id: id}, user, parent,  callback);
 			},
 			function(result, callback) {
 				if(!id) {
@@ -173,6 +158,7 @@ router.post('/subscribe', function(req, res, next) {
 												if (!results) {
 													callback(err, results);
 												} else {
+													objectCount = results.length;
 													results = results.slice(0, 10);
 
 													Models.Model.multiGet(mdl, results, appId, context, callback);
@@ -181,7 +167,12 @@ router.post('/subscribe', function(req, res, next) {
 										}
 									}
 								} else {
-									Models.Model.getAll(mdl, appId, context, callback);
+									Models.Model.getAll(mdl, appId, context, function(err, result) {
+										if (err) return callback(err);
+
+										objectCount = Object.keys(result).length;
+										callback(null, result);
+									});
 								}
 							} else {
 								new Models.Model(mdl, appId, id, context, function(err, results) {
@@ -189,6 +180,7 @@ router.post('/subscribe', function(req, res, next) {
 
 									var message = {};
 									message[id] = results.value;
+									objectCount = 1;
 
 									callback(null, message);
 								});
@@ -201,6 +193,7 @@ router.post('/subscribe', function(req, res, next) {
 
 						var message = {};
 						message[id] = results.value;
+						objectCount = 1;
 
 						callback(null, message)
 					});
@@ -218,6 +211,11 @@ router.post('/subscribe', function(req, res, next) {
 				}], function(err, data) {
 					if (err) return callback(err, null);
 
+					callback(err, results);
+				});
+			},
+			function(results, callback) {
+				Subscription.setObjectCount(appId, context, {model: mdl, id: id}, userId, filters.parent, objectCount, function(err, result) {
 					callback(err, results);
 				});
 			}
@@ -281,32 +279,46 @@ router.post('/unsubscribe', function(req, res, next) {
 router.post('/create', function(req, res, next) {
 	var content = req.body.content;
 	var mdl = req.body.model;
+	var appId = req.get('X-BLGREQ-APPID');
 
 	content.type = mdl;
 	content.context_id = req.body.context;
+	content.user_id = req.user.id;
+
+	if (Models.Application.loadedAppModels[appId][mdl].belongs_to) {
+		var parentModel = Models.Application.loadedAppModels[appId][mdl].belongs_to[0].parentModel;
+		if (!content[parentModel+'_id']) {
+			var error = new Error("'"+parentModel+"_id' is required");
+			error.status = 400;
+
+			return next(error);
+		}
+	}
 
 	async.series([
 		function(agg_callback) {
-			app.kafkaProducer.send([{
+			agg_callback();
+			/*app.kafkaProducer.send([{
 				topic: 'aggregation',
 				messages: [JSON.stringify({
 					op: 'add',
 					object: content,
-					applicationId: req.get('X-BLGREQ-APPID')
+					applicationId: appId
 				})],
 				attributes: 0
-			}], agg_callback);
+			}], agg_callback);*/
 		},
 		function(track_callback) {
-			app.kafkaProducer.send([{
+			track_callback();
+			/*app.kafkaProducer.send([{
 				topic: 'track',
 				messages: [JSON.stringify({
 					op: 'add',
 					object: content,
-					applicationId: req.get('X-BLGREQ-APPID')
+					applicationId: appId
 				})],
 				attributes: 0
-			}], track_callback);
+			}], track_callback);*/
 		}
 	], function(err, results) {
 		if (err) return next(err);
@@ -340,7 +352,7 @@ router.post('/update', function(req, res, next) {
 					type: mdl,
 					applicationId: req.get('X-BLGREQ-APPID')
 				})],
-				attributes: 1
+				attributes: 0
 			}], agg_callback);
 		},
 		function(track_callback) {
@@ -354,7 +366,7 @@ router.post('/update', function(req, res, next) {
 					type: mdl,
 					applicationId: req.get('X-BLGREQ-APPID')
 				})],
-				attributes: 1
+				attributes: 0
 			}], track_callback);
 		}
 	], function(err, results) {
@@ -378,7 +390,7 @@ router.post('/delete', function(req, res, next) {
 					object: {id: id, type: mdl, context: context},
 					applicationId: req.get('X-BLGREQ-APPID')
 				})],
-				attributes: 1
+				attributes: 0
 			}], agg_callback);
 		},
 		function(track_callback) {
@@ -389,13 +401,27 @@ router.post('/delete', function(req, res, next) {
 					object: {op: 'remove', path: mdl+'/'+id},
 					applicationId: req.get('X-BLGREQ-APPID')
 				})],
-				attributes: 1
+				attributes: 0
 			}], track_callback);
 		}
 	], function(err, results) {
 		if (err) return next(err);
 
 		res.status(200).json({status: 200, message: 'Deleted'}).end();
+	});
+});
+
+router.post('/count', function(req, res, next) {
+	var appId = req.get('X-BLGREQ-APPID'),
+		context = req.body.context_id,
+		channel = {model: req.body.model, id: req.body.id},
+		user_id = req.body.user_id,
+		parent = req.parent;
+
+	Models.Subscription.getObjectCount(appId, context, channel, user_id, parent, function(err, result) {
+		if (err) return next(err);
+
+		res.status(200).json({status: 200, message: result}).end();
 	});
 });
 

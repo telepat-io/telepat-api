@@ -67,23 +67,15 @@ router.all('/create', function(req, res) {
 
 			app.kafkaProducer.send([{
 				topic: 'aggregation',
-				message: [JSON.stringify({
+				messages: [JSON.stringify({
 					op: 'add',
 					object: props,
 					applicationId: req.get('X-BLGREQ-APPID')
 				})],
 				attributes: 0
 			}], callback);
-
-			//callback(null, results);
-			/*Models.User.create(props, function(err, result) {
-				if (err) return callback(err);
-
-				insertedUser = result;
-				callback();
-			});*/
 		},
-		function(callback) {
+		function(result, callback) {
 			if (fbFriends.length) {
 				app.kafkaProducer.send([{
 					topic: 'update_friends',
