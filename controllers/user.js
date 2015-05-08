@@ -19,6 +19,16 @@ router.all('/fb-login', function(req, res) {
 	res.redirect(301, FB.getLoginUrl({scope: 'public_profile,user_about_me,user_friends', client_id: options.client_id, redirect_uri: options.redirect_uri})).end();
 });
 
+/**
+ * @api {post} /user/create Create
+ * @apiDescription Creates a new user based on the access token from FB. This is accessed from a FB redirect.
+ * @apiName UserCreate
+ * @apiGroup User
+ * @apiVersion 0.0.1
+ *
+ * @apiParam {String} code FB access token.
+ *
+ */
 router.all('/create', function(req, res) {
 	var code = req.query.code;
 
@@ -96,10 +106,20 @@ router.all('/create', function(req, res) {
 	});
 });
 
+/**
+ * @api {post} /user/update Update
+ * @apiDescription Updates the user information
+ * @apiName UserUpdate
+ * @apiGroup User
+ * @apiVersion 0.0.1
+ *
+ * @apiParam {Object[]} patches Array of patches that describe the modifications
+ *
+ */
 router.post('/update', function(req, res, next) {
 	var patches = req.body.patches;
-	var id = req.body.id;
-	var email = req.body.email;
+	var id = req.user.id;
+	var email = req.user.email;
 
 	for(var p in patches) {
 		patches[p].email = email;
@@ -122,6 +142,18 @@ router.post('/update', function(req, res, next) {
 	});
 });
 
+
+/**
+ * @api {post} /user/delete Delete
+ * @apiDescription Deletes a user
+ * @apiName UserDelete
+ * @apiGroup User
+ * @apiVersion 0.0.1
+ *
+ * @apiParam {number} id ID of the user
+ * @apiParam {string} email Email of the user
+ *
+ */
 router.post('/delete', function(req, res, next) {
 	var id = req.body.id;
 	var email = req.body.email;

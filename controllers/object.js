@@ -68,12 +68,28 @@ router.use(['/count'], function(req, res, next) {
 	AccessControlFunction(req, res, next, 'meta_read_acl');
 });
 
+/**
+ * @api {post} /object/subscribe Subscribe
+ * @apiDescription Subscribe to an object or a collection of objects (by a filter)
+ * @apiName ObjectSubscribe
+ * @apiGroup Object
+ * @apiVersion 0.0.1
+ *
+ * @apiParam {Number} id ID of the object (optional)
+ * @apiParam {Number} context Context of the object
+ * @apiParam {String} device_id ID of the device which is making the request
+ * @apiParam {String} model The type of object to subscribe to
+ * @apiParam {Object} filters Author or parent model filters by ID.
+ *
+ * @apiError NotAuthenticated  Only authenticated users may access this endpoint.
+ * @apiError NotFound If <code>id</code> was supplied but object not found.
+ */
 router.post('/subscribe', function(req, res, next) {
 	var id = req.body.id;
 	var context = req.body.context;
 	var deviceId = req.body.device_id;
 	var userId = req.user.email;
-	var userToken = req.body.user_token;
+	var userToken = req.user.user_token;
 	var mdl = req.body.model;
 	var appId = req.get('X-BLGREQ-APPID');
 
@@ -228,6 +244,22 @@ router.post('/subscribe', function(req, res, next) {
 	}
 });
 
+/**
+ * @api {post} /object/unsubscribe Unsubscribe
+ * @apiDescription Unsubscribe to an object or a collection of objects (by a filter)
+ * @apiName ObjectUnsubscribe
+ * @apiGroup Object
+ * @apiVersion 0.0.1
+ *
+ * @apiParam {Number} id ID of the object (optional)
+ * @apiParam {Number} context Context of the object
+ * @apiParam {String} device_id ID of the device which is making the request
+ * @apiParam {String} model The type of object to subscribe to
+ * @apiParam {Object} filters Author or parent model filters by ID.
+ *
+ * @apiError NotAuthenticated  Only authenticated users may access this endpoint.
+ * @apiError NotFound If <code>id</code> was supplied but object not found.
+ */
 router.post('/unsubscribe', function(req, res, next) {
 	var id = req.body.id;
 	var context = req.body.context;
@@ -276,6 +308,20 @@ router.post('/unsubscribe', function(req, res, next) {
 	}
 });
 
+/**
+ * @api {post} /object/create Create
+ * @apiDescription Creates a new object
+ * @apiName ObjectCreate
+ * @apiGroup Object
+ * @apiVersion 0.0.1
+ *
+ * @apiParam {String} model The type of object to subscribe to
+ * @apiParam {Object} content Content of the object
+ *
+ * @apiError NotAuthenticated  Only authenticated users may access this endpoint.
+ * @apiError NotFound If <code>id</code> was supplied but object not found.
+ * @apiError PermissionDenied If the model requires other permissions other than the ones provided.
+ */
 router.post('/create', function(req, res, next) {
 	var content = req.body.content;
 	var mdl = req.body.model;
@@ -298,7 +344,7 @@ router.post('/create', function(req, res, next) {
 	async.series([
 		function(agg_callback) {
 			agg_callback();
-			/*app.kafkaProducer.send([{
+			app.kafkaProducer.send([{
 				topic: 'aggregation',
 				messages: [JSON.stringify({
 					op: 'add',
@@ -306,11 +352,11 @@ router.post('/create', function(req, res, next) {
 					applicationId: appId
 				})],
 				attributes: 0
-			}], agg_callback);*/
+			}], agg_callback);
 		},
 		function(track_callback) {
 			track_callback();
-			/*app.kafkaProducer.send([{
+			app.kafkaProducer.send([{
 				topic: 'track',
 				messages: [JSON.stringify({
 					op: 'add',
@@ -318,7 +364,7 @@ router.post('/create', function(req, res, next) {
 					applicationId: appId
 				})],
 				attributes: 0
-			}], track_callback);*/
+			}], track_callback);
 		}
 	], function(err, results) {
 		if (err) return next(err);
@@ -327,6 +373,22 @@ router.post('/create', function(req, res, next) {
 	});
 });
 
+/**
+ * @api {post} /object/update Update
+ * @apiDescription Updates an existing object
+ * @apiName ObjectUpdate
+ * @apiGroup Object
+ * @apiVersion 0.0.1
+ *
+ * @apiParam {Number} id ID of the object (optional)
+ * @apiParam {Number} context Context of the object
+ * @apiParam {String} model The type of object to subscribe to
+ * @apiParam {Array} patch An array of patches that modifies the object
+ *
+ * @apiError NotAuthenticated  Only authenticated users may access this endpoint.
+ * @apiError NotFound If <code>id</code> was supplied but object not found.
+ * @apiError PermissionDenied If the model requires other permissions other than the ones provided.
+ */
 router.post('/update', function(req, res, next) {
 	var context = req.body.context;
 	var patch = req.body.patch;
@@ -376,6 +438,21 @@ router.post('/update', function(req, res, next) {
 	});
 });
 
+/**
+ * @api {post} /object/delete Delete
+ * @apiDescription Deletes an object
+ * @apiName ObjectDelete
+ * @apiGroup Object
+ * @apiVersion 0.0.1
+ *
+ * @apiParam {Number} id ID of the object (optional)
+ * @apiParam {Number} context Context of the object
+ * @apiParam {String} model The type of object to subscribe to
+ *
+ * @apiError NotAuthenticated  Only authenticated users may access this endpoint.
+ * @apiError NotFound If <code>id</code> was supplied but object not found.
+ * @apiError PermissionDenied If the model requires other permissions other than the ones provided.
+ */
 router.post('/delete', function(req, res, next) {
 	var id = req.body.id;
 	var context = req.body.context;
@@ -411,6 +488,21 @@ router.post('/delete', function(req, res, next) {
 	});
 });
 
+/**
+ * @api {post} /object/count Count
+ * @apiDescription Gets the object count of a certain filter/subscription
+ * @apiName ObjectCount
+ * @apiGroup Object
+ * @apiVersion 0.0.1
+ *
+ * @apiParam {Number} context Context of the object
+ * @apiParam {String} model The type of object to subscribe to
+ * @apiParam {Object} channel asdsadas
+ *
+ * @apiError NotAuthenticated  Only authenticated users may access this endpoint.
+ * @apiError NotFound If <code>id</code> was supplied but object not found.
+ * @apiError PermissionDenied If the model requires other permissions other than the ones provided.
+ */
 router.post('/count', function(req, res, next) {
 	var appId = req.get('X-BLGREQ-APPID'),
 		context = req.body.context_id,
