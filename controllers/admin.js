@@ -293,28 +293,6 @@ router.post('/schemas', function(req, res, next) {
 });
 
 /**
- * @api {post} /admin/schema/create CreateSchema
- * @apiDescription Gets the model schema for an application
- * @apiName AdminCreateSchema
- * @apiGroup Admin
- * @apiVersion 0.0.1
- *
- * @apiParam {Number} appId ID of the app from which to get the context
- */
-router.post('/schema/create', function(req, res, next) {
-  var appId = req.body.appId;
-  var schema = req.body.schema;
-
-  Models.Application.createSchema(appId, schema, function(err, result) {
-    if (err)
-      next(err);
-    else {
-      res.status(200).end();
-    }
-  });
-});
-
-/**
  * @api {post} /admin/schema/update UpdateSchema
  * @apiDescription Updates the model schema
  * @apiName AdminUpdateSchema
@@ -333,10 +311,7 @@ router.post('/schema/update', function(req, res, next) {
 	var props = req.body.props;
 
 	Models.Application.updateSchema(name, appId, props, function(err, result) {
-		if (err && err.code == cb.errors.keyNotFound) {
-			err.status = 404;
-			next(err)
-		} else if (err){
+		if (err){
 			next(err);
 		} else {
 			res.status(200).end();
@@ -361,10 +336,7 @@ router.post('/schema/delete', function(req, res, next) {
 	var name = req.body.name;
 
 	Models.Application.deleteSchema(name, appId, function(err, result) {
-		if (err && err.code == cb.errors.keyNotFound) {
-			err.status = 404;
-			next(err)
-		} else if (err)
+		if (err)
 			next(err);
 		else {
 			res.status(200).end();
