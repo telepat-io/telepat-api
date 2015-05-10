@@ -39,6 +39,7 @@ app.set('database', {
 	Couchbase: new cb.Cluster('couchbase://'+ds.couchbase.host)
 });
 db = app.get('database');
+//main data bucket
 db.Couchbase.bucket = db.Couchbase.openBucket(ds.couchbase.bucket);
 db.Couchbase.stateBucket = db.Couchbase.openBucket(ds.couchbase.stateBucket);
 
@@ -77,6 +78,7 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 	app.use('/object', objectRoute);
 	app.use('/user', userRoute);
 	app.use('/testroute', tests);
+	app.use('/documentation', express.static('documentation'));
 
 	app.use(['/get', '/object', '/user', '/testroute'], security.keyValidation);
 

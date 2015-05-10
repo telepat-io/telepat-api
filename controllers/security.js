@@ -3,6 +3,18 @@ var crypto = require('crypto');
 var express = require('express');
 var router = express.Router();
 
+/**
+ * @api {post} /authenticate/admin Authenticate
+ * @apiDescription Authenticates an admin
+ * @apiName AdminAuthenticate
+ * @apiGroup Admin
+ * @apiVersion 0.0.1
+ *
+ * @apiParam {String} email Email of admin
+ * @apiParam {String} password Password of admin
+ *
+ * @apiError Unauthorized If the provided email and password are not correct
+ */
 router.post('/admin', function (req, res, next) {
   Models.Admin(req.body.email, function(err, admin) {
     if (err) {
