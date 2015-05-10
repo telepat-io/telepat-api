@@ -164,10 +164,7 @@ router.post('/schemas', function(req, res, next) {
 	var appId = req.body.appId;
 
 	Models.Application.getAppSchema(appId, function(err, result) {
-		if (err && err.code == cb.errors.keyNotFound) {
-			err.status = 404;
-			next(err)
-		} else if (err){
+		if (err){
 			next(err);
 		} else {
 			res.status(200).send(result.value).end();
@@ -177,26 +174,12 @@ router.post('/schemas', function(req, res, next) {
 
 router.post('/schema/update', function(req, res, next) {
 	var appId = req.body.appId;
-	var name = req.body.name;
-	var props = req.body.props;
-
-	Models.Application.updateSchema(name, appId, props, function(err, result) {
+	var schema = req.body.schema;
+  
+	Models.Application.updateSchema(appId, schema, function(err, result) {
 		if (err){
 			next(err);
 		} else {
-			res.status(200).end();
-		}
-	});
-});
-
-router.post('/schema/delete', function(req, res, next) {
-	var appId = req.body.appId;
-	var name = req.body.name;
-
-	Models.Application.deleteSchema(name, appId, function(err, result) {
-		if (err)
-			next(err);
-		else {
 			res.status(200).end();
 		}
 	});
