@@ -100,7 +100,7 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 				if (err) return next(err);
 
 				var responseBody = {status: 200, message: {}};
-				responseBody.message[id] = result.value;
+				responseBody.message[id] = result;
 
 				res.json(responseBody).end();
 			});

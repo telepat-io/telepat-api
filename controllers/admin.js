@@ -204,7 +204,7 @@ router.post('/context', function (req, res) {
     if (err)
       res.status(500).send({message: 'Could not get context'});
     else {
-      res.json(res1.value);
+      res.json(res1);
     }
   });
 });
