@@ -304,7 +304,7 @@ router.post('/schemas', function(req, res, next) {
 router.post('/schema/update', function(req, res, next) {
 	var appId = req.body.appId;
 	var schema = req.body.schema;
-  
+
 	Models.Application.updateSchema(appId, schema, function(err, result) {
 		if (err){
 			next(err);

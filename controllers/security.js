@@ -34,6 +34,12 @@ router.post('/admin', function (req, res, next) {
 
 module.exports = router;
 var authSecret = module.exports.authSecret = '835hoyubg#@$#2wfsda';
+
+/**
+ * The first middleware of the app. It makes sure that all required headers are ok. It also checks if API key belongs to
+ * the app.
+ *
+ */
 module.exports.keyValidation = function (req, res, next) {
   res.type('application/json');
   if (req.get('Content-type') !== 'application/json')
@@ -57,4 +63,4 @@ module.exports.keyValidation = function (req, res, next) {
         res.status(401).json({status: 401, message: "Unauthorized. API key is not valid."}).end();
     });
   }
-}
+};

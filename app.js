@@ -126,6 +126,23 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 		});
 	});
 
+	app.post('/device/register', function(req, res, next) {
+		if (req.body.id === undefined) {
+			var error = new Error('Device id not present');
+			error.code = 400;
+
+			return next(error);
+		}
+
+		Models.Subscription.addDevice(req.body, function(err, result) {
+			if (!err) {
+				return res.status(200).json({status: 200, message: "Device registered"}).end();
+			}
+
+			next(err);
+		});
+	});
+
 	// error handlers
 	// catch 404 and forward to error handler
 	app.use(function(req, res, next) {
