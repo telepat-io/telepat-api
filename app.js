@@ -63,7 +63,7 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 
 	app.use(function(req, res, next) {
 		res.header("Access-Control-Allow-Origin", "*");
-		res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, X-BLGREQ-SIGN, X-BLGREQ-APPIP");
+		res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, X-BLGREQ-SIGN, X-BLGREQ-APPID");
 		if ('OPTIONS' == req.method) {
 			res.send(200);
 		}
