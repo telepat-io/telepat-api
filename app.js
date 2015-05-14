@@ -9,6 +9,7 @@ var admin = require('./controllers/admin');
 var objectRoute = require('./controllers/object');
 var userRoute = require('./controllers/user');
 var expressjwt = require('express-jwt');
+var uuid = require('uuid');
 
 async = require('async');
 kafka = require('kafka-node');
@@ -61,14 +62,14 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 	});
 
 	app.use(function(req, res, next) {
-	  res.header("Access-Control-Allow-Origin", "*");
-	  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, X-BLGREQ-SIGN, X-BLGREQ-APPID");
-	  if ('OPTIONS' == req.method) {
-	      res.send(200);
-	    }
-	  else {
-	    next();
-	  }
+		res.header("Access-Control-Allow-Origin", "*");
+		res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, X-BLGREQ-SIGN, X-BLGREQ-APPIP");
+		if ('OPTIONS' == req.method) {
+			res.send(200);
+		}
+		else {
+			next();
+		}
 	});
 	app.use(logger('dev'));
 	app.use(bodyParser.json());
@@ -128,10 +129,7 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 
 	app.post('/device/register', function(req, res, next) {
 		if (req.body.id === undefined) {
-			var error = new Error('Device id not present');
-			error.code = 400;
-
-			return next(error);
+			req.body.id = uuid.v4();
 		}
 
 		Models.Subscription.addDevice(req.body, function(err, result) {
