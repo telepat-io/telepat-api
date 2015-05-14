@@ -44,8 +44,10 @@ module.exports.keyValidation = function (req, res, next) {
   res.type('application/json');
   if (req.get('Content-type') !== 'application/json')
     res.status(415).json({status: 415, message: "Request content type must pe application/json."}).end();
-  else if (req.get('X-BLGREQ-SIGN') == undefined)
+  else if (req.get('X-BLGREQ-SIGN') === undefined)
     res.status(401).json({status: 401, message: "Unauthorized. Required authorization header not present."}).end();
+  else if (req.get('X-BLGREQ-UDID') === undefined)
+    res.status(401).json({status: 401, message: "Unauthorized. Device identifier header not present."}).end();
   else if (!req.get('X-BLGREQ-APPID'))
     res.status(400).json({status: 400, message: "Requested App ID not found."}).end();
   else {
