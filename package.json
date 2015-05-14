@@ -19,14 +19,14 @@
     "morgan": "~1.5.1",
     "object-sizeof": "^1.0.4",
     "private-repo": "git+http://freshweb.ro:7990/scm/bel/octopus-models-lib.git#develop",
-    "serve-favicon": "~2.2.0"
+    "serve-favicon": "~2.2.0",
+    "uuid": "^2.0.1"
   },
   "apidoc": {
-	"name": "Octopus API",
-	"version": "0.0.1",
-	"description": "Octopus API used in Telepat distributed data sync platform",
-	"title": "Octopus API Documentation",
-	"url": "http://blg-node-front.cloudapp.net:3001"
+    "name": "Octopus API",
+    "version": "0.0.1",
+    "description": "Octopus API used in Telepat distributed data sync platform",
+    "title": "Octopus API Documentation",
+    "url": "http://blg-node-front.cloudapp.net:3001"
   }
-
 }

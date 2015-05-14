@@ -9,6 +9,7 @@ var admin = require('./controllers/admin');
 var objectRoute = require('./controllers/object');
 var userRoute = require('./controllers/user');
 var expressjwt = require('express-jwt');
+var uuid = require('uuid');
 
 async = require('async');
 kafka = require('kafka-node');
@@ -128,10 +129,7 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 
 	app.post('/device/register', function(req, res, next) {
 		if (req.body.id === undefined) {
-			var error = new Error('Device id not present');
-			error.code = 400;
-
-			return next(error);
+			req.body.id = uuid.v4();
 		}
 
 		Models.Subscription.addDevice(req.body, function(err, result) {
