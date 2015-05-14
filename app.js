@@ -133,7 +133,7 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 
 			Models.Subscription.addDevice(req.body, function(err, result) {
 				if (!err) {
-					return res.status(200).json({status: 200, message: req.body.id}).end();
+					return res.status(200).json({status: 200, identifier: req.body.id}).end();
 				}
 
 				next(err);
@@ -141,7 +141,7 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 		} else {
 			req.body.id = req.get('X-BLGREQ-UDID');
 
-			Models.Subscription.updateDevice(req.body.id, function(err, result) {
+			Models.Subscription.updateDevice(req.body, function(err, result) {
 				if (err) return next(err);
 
 				res.status(200).json({status:200, message: "Device has been updated"});
