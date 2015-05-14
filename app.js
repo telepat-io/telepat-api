@@ -63,7 +63,7 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 
 	app.use(function(req, res, next) {
 		res.header("Access-Control-Allow-Origin", "*");
-		res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, X-BLGREQ-SIGN, X-BLGREQ-APPIP");
+		res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, X-BLGREQ-SIGN, X-BLGREQ-APPID");
 		if ('OPTIONS' == req.method) {
 			res.send(200);
 		}
@@ -134,7 +134,7 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 
 		Models.Subscription.addDevice(req.body, function(err, result) {
 			if (!err) {
-				return res.status(200).json({status: 200, message: "Device registered"}).end();
+				return res.status(200).json({status: 200, message: req.body.id}).end();
 			}
 
 			next(err);
