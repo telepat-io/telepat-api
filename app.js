@@ -130,15 +130,21 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 	app.post('/device/register', function(req, res, next) {
 		if (req.body.id === undefined) {
 			req.body.id = uuid.v4();
+
+			Models.Subscription.addDevice(req.body, function(err, result) {
+				if (!err) {
+					return res.status(200).json({status: 200, message: req.body.id}).end();
+				}
+
+				next(err);
+			});
+		} else {
+			Models.Subscription.updateDevice(req.body.id, function(err, result) {
+				if (err) return next(err);
+
+				res.status(200).json({status:200, message: "Device has been updated"});
+			});
 		}
-
-		Models.Subscription.addDevice(req.body, function(err, result) {
-			if (!err) {
-				return res.status(200).json({status: 200, message: req.body.id}).end();
-			}
-
-			next(err);
-		});
 	});
 
 	// error handlers
