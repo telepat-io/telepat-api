@@ -149,7 +149,9 @@ router.post('/logout', function(req, res, next) {
 			}
 		}
 	], function(err, result) {
+		if (err) return next(err);
 
+		res.status(200).json({message: "Logged out of device"});
 	});
 });
 
