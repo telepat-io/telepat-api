@@ -76,7 +76,7 @@ router.post('/login', function(req, res) {
 					devices = [req.get('X-BLGREQ-UDID')];
 				}
 
-				Models.User.update(userProfile.email, {authenticated: 1, devices: devices}, callback);
+				Models.User.update(userProfile.email, {devices: devices}, callback);
 			} else
 				callback(null, true);
 		},
@@ -90,8 +90,7 @@ router.post('/login', function(req, res) {
 				name: userProfile.name,
 				gender: userProfile.gender,
 				friends: fbFriends,
-				device: req.get('X-BLGREQ-UDID'),
-				authenticated: 1
+				device: req.get('X-BLGREQ-UDID')
 			};
 
 			props.type = 'user';
@@ -144,7 +143,7 @@ router.post('/logout', function(req, res, next) {
 				if (idx >= 0)
 					user.devices.splice(idx, 1);
 
-				Models.User.Update(email, {authenticated: 0, devices: user.devices}, callback);
+				Models.User.Update(email, {devices: user.devices}, callback);
 			} else {
 				callback();
 			}
