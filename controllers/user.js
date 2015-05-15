@@ -143,7 +143,7 @@ router.post('/logout', function(req, res, next) {
 				if (idx >= 0)
 					user.devices.splice(idx, 1);
 
-				Models.User.Update(email, {devices: user.devices}, callback);
+				Models.User.update(email, {devices: user.devices}, callback);
 			} else {
 				callback();
 			}
