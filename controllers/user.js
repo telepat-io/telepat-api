@@ -2,7 +2,6 @@ var express = require('express');
 var router = express.Router();
 var FB = require('facebook-node');
 var async = require('async');
-var crypto = require('crypto');
 var Models = require('octopus-models-api');
 var security = require('./security');
 var jwt = require('jsonwebtoken');
@@ -41,8 +40,10 @@ router.all('/login', function(req, res) {
 		},
 		function(callback) {
 			Models.User(userProfile.email, function(err, result) {
-				if (err && err.code == cb.errors.keyNotFound)
+				if (err && err.code == cb.errors.keyNotFound) {
 					userExists = false;
+					callback();
+				}
 				else if (err)
 					callback(err);
 				else {
