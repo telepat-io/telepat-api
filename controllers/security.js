@@ -22,7 +22,7 @@ router.post('/admin', function (req, res, next) {
     }
 
     if (req.body.password == admin.password) {
-      var token = jwt.sign(admin, authSecret, { expiresInMinutes: 60 });
+      var token = jwt.sign({email: req.body.email, isAdmin: true}, authSecret, { expiresInMinutes: 60 });
       res.json({ token: token });
     }
     else {
