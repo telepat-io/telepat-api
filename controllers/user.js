@@ -5,6 +5,7 @@ var async = require('async');
 var Models = require('octopus-models-api');
 var security = require('./security');
 var jwt = require('jsonwebtoken');
+var expressjwt = require('express-jwt');
 
 var options = {
 	client_id:          '1086083914753251',
@@ -12,6 +13,8 @@ var options = {
 };
 
 FB.options(options);
+
+router.use('/logout', expressjwt({secret: security.authSecret}));
 
 /**
  * @api {post} /user/create Create
@@ -73,7 +76,7 @@ router.post('/login', function(req, res) {
 					devices = [req.get('X-BLGREQ-UDID')];
 				}
 
-				Models.User.update(userProfile.email, {devices: devices}, callback);
+				Models.User.update(userProfile.email, {authenticated: 1, devices: devices}, callback);
 			} else
 				callback(null, true);
 		},
@@ -149,6 +152,21 @@ router.post('/logout', function(req, res, next) {
 	], function(err, result) {
 
 	});
+});
+
+router.post('/refresh_token', function(req, res, next) {
+	var oldToken = req.get('Authorization').split(' ')[1];
+	if (oldToken) {
+		var decoded = jwt.decode(oldToken);
+		var newToken = jwt.sign(decoded.email, security.authSecret, {expiresInMinutes: 60});
+
+		return res.status(200).json({token: newToken}).end();
+	} else {
+		var error = new Error('Token not present or authorization header is invalid');
+		error.status = 401;
+
+		return next(error);
+	}
 });
 
 /**
