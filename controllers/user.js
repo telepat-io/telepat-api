@@ -23,11 +23,10 @@ FB.options(options);
  * @apiParam {String} code FB access token.
  *
  */
-router.all('/login', function(req, res) {
+router.post('/login', function(req, res) {
 	var accessToken = req.body.access_token;
 	var fbFriends = [];
 	var userProfile = {};
-	var insertedUser = {};
 	var userExists = null;
 
 	async.waterfall([
@@ -48,6 +47,7 @@ router.all('/login', function(req, res) {
 					callback(err);
 				else {
 					userExists = true;
+					userProfile = result;
 					callback();
 				}
 			});
@@ -63,6 +63,21 @@ router.all('/login', function(req, res) {
 			});
 		},
 		function(callback) {
+			if (userExists) {
+				var devices = userProfile.devices;
+				if (devices) {
+					var idx = devices.indexOf(req.get('X-BLGREQ-UDID'));
+					if (idx === -1)
+						devices.push(req.get('X-BLGREQ-UDID'));
+				} else {
+					devices = [req.get('X-BLGREQ-UDID')];
+				}
+
+				Models.User.update(userProfile.email, {devices: devices}, callback);
+			} else
+				callback(null, true);
+		},
+		function(result, callback) {
 			if (userExists)
 				return callback(null, true);
 
@@ -71,7 +86,9 @@ router.all('/login', function(req, res) {
 				fid: userProfile.id,
 				name: userProfile.name,
 				gender: userProfile.gender,
-				friends: fbFriends
+				friends: fbFriends,
+				device: req.get('X-BLGREQ-UDID'),
+				authenticated: 1
 			};
 
 			props.type = 'user';
@@ -104,9 +121,33 @@ router.all('/login', function(req, res) {
 		if (err)
 			res.status(400).json(err).end();
 		else {
-			var token = jwt.sign(insertedUser, security.authSecret, { expiresInMinutes: 60 });
+			var token = jwt.sign(userProfile.email, security.authSecret, { expiresInMinutes: 60 });
 			res.json({ token: token }).end();
 		}
+	});
+});
+
+router.post('/logout', function(req, res, next) {
+	var deviceId = req.get('X-BLGREQ-UDID');
+	var email = req.user.email;
+
+	async.waterfall([
+		function(callback) {
+			Models.User(id, callback);
+		},
+		function(user, callback) {
+			if (user.devices) {
+				var idx = user.devices.indexOf(deviceId);
+				if (idx >= 0)
+					user.devices.splice(idx, 1);
+
+				Models.User.Update(email, {authenticated: 0, devices: user.devices}, callback);
+			} else {
+				callback();
+			}
+		}
+	], function(err, result) {
+
 	});
 });
 
