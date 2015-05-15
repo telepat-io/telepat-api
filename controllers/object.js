@@ -35,23 +35,24 @@ function AccessControlFunction(req, res, next, accessControl) {
 
 			if (authToken) {
 				jwt.verify(authToken, security.authSecret, function (err, decoded) {
-					if (err) return next(err);
+					if (err)
+						return res.status(401).json({message: "Invalid authorization: " + err.message}).end();
 
 					if ((acl & ACL_ADMIN) && (!decoded.isAdmin) )
-						return res.status(401).json({message: "You don't have the necessary privilegies for this operation"}).end();
+						return res.status(403).json({message: "You don't have the necessary privilegies for this operation"}).end();
 
 					req.user = decoded;
 
 					next();
 				});
 			} else {
-				res.status(400).json({status: 400, message: 'Authorization field is not formed well'}).end();
+				res.status(400).json({status: 400, message: 'Authorization header field is not formed well'}).end();
 			}
 		}
 		else if (acl & ACL_UNAUTHENTICATED) {
 			next();
 		} else {
-			res.status(401).json({message: "You don't have the necessary privilegies for this operation"}).end();
+			res.status(403).json({message: "You don't have the necessary privilegies for this operation"}).end();
 		}
 	}
 }
