@@ -131,11 +131,11 @@ router.post('/login', function(req, res) {
 
 router.post('/logout', function(req, res, next) {
 	var deviceId = req.get('X-BLGREQ-UDID');
-	var email = req.user.email;
+	var email = req.user;
 
 	async.waterfall([
 		function(callback) {
-			Models.User(id, callback);
+			Models.User(email, callback);
 		},
 		function(user, callback) {
 			if (user.devices) {
