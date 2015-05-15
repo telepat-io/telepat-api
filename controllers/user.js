@@ -8,16 +8,11 @@ var security = require('./security');
 var jwt = require('jsonwebtoken');
 
 var options = {
-	client_id:          '777341809047927',
-	client_secret:      '336f01a4b50c7c6f459b60c93c50d7ce',
-	redirect_uri:    'http://blg-node-front.cloudapp.net:3001/user/create'
+	client_id:          '1086083914753251',
+	client_secret:      '40f626ca66e4472e0d11c22f048e9ea8'
 };
 
 FB.options(options);
-
-router.all('/fb-login', function(req, res) {
-	res.redirect(301, FB.getLoginUrl({scope: 'public_profile,user_about_me,user_friends', client_id: options.client_id, redirect_uri: options.redirect_uri})).end();
-});
 
 /**
  * @api {post} /user/create Create
@@ -29,29 +24,31 @@ router.all('/fb-login', function(req, res) {
  * @apiParam {String} code FB access token.
  *
  */
-router.all('/create', function(req, res) {
-	var code = req.query.code;
-
-	var accessToken = {};
+router.all('/login', function(req, res) {
+	var accessToken = req.body.access_token;
 	var fbFriends = [];
 	var userProfile = {};
 	var insertedUser = {};
-
-	if (!req.get('X-BLGREQ-SIGN')) {
-		res.status(200).json({code: code}).end();
-		return ;
-	}
+	var userExists = null;
 
 	async.waterfall([
 		function(callback) {
-			FB.napi('oauth/access_token', {code: code, client_id: options.client_id, client_secret: options.client_secret, redirect_uri: options.redirect_uri}, callback);
-		},
-		function(results, callback) {
-			accessToken = results.access_token;
 			FB.napi('/me', {access_token: accessToken}, function(err, result) {
 				if (err) return callback(err);
 				userProfile = result;
 				callback();
+			});
+		},
+		function(callback) {
+			Models.User(userProfile.email, function(err, result) {
+				if (err && err.code == cb.errors.keyNotFound)
+					userExists = false;
+				else if (err)
+					callback(err);
+				else {
+					userExists = true;
+					callback();
+				}
 			});
 		},
 		function(callback) {
@@ -65,8 +62,11 @@ router.all('/create', function(req, res) {
 			});
 		},
 		function(callback) {
+			if (userExists)
+				return callback(null, true);
+
 			var props = {
-				email: crypto.createHash('sha256').update(Math.random().toString()).digest('hex').slice(0,5)+'@gmail.com',
+				email: userProfile.email,
 				fid: userProfile.id,
 				name: userProfile.name,
 				gender: userProfile.gender,
@@ -86,6 +86,9 @@ router.all('/create', function(req, res) {
 			}], callback);
 		},
 		function(result, callback) {
+			if (userExists)
+				return callback(null, true);
+
 			if (fbFriends.length) {
 				app.kafkaProducer.send([{
 					topic: 'update_friends',

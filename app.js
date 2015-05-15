@@ -108,27 +108,8 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 		}
 	});
 
-	app.post('/delete/context', function(req, res, next) {
-		var id = req.body.id;
-
-		app.kafkaProducer.send([{
-			topic: 'aggregation',
-			messages: [JSON.stringify({
-				op: 'delete',
-				object: {id: id},
-				context: true,
-				applicationId: req.get('X-BLGREQ-APPID')
-			})],
-			attributes: 0
-		}], function(err, result) {
-			if (err) return next(err);
-
-			res.status(200).json({status: 200, message: "Context deleted"}).end();
-		});
-	});
-
 	app.post('/device/register', function(req, res, next) {
-		if (req.get('X-BLGREQ-UDID') == '-') {
+		if (req.get('X-BLGREQ-UDID') == '') {
 			req.body.id = uuid.v4();
 
 			Models.Subscription.addDevice(req.body, function(err, result) {
