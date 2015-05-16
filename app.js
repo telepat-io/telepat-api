@@ -4,11 +4,12 @@ var bodyParser = require('body-parser');
 
 var tests = require('./controllers/tests');
 var security = require('./controllers/security');
-var admin = require('./controllers/admin');
+
+var adminRoute = require('./controllers/admin');
 var objectRoute = require('./controllers/object');
 var userRoute = require('./controllers/user');
-var expressjwt = require('express-jwt');
-var uuid = require('uuid');
+var contextRoute = require('./controllers/context');
+var deviceRoute = require('./controllers/device');
 
 async = require('async');
 kafka = require('kafka-node');
@@ -60,74 +61,17 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 
 	});
 
-	app.use(function(req, res, next) {
-		res.header("Access-Control-Allow-Origin", "*");
-		res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, X-BLGREQ-SIGN, X-BLGREQ-APPID, X-BLGREQ-UDID");
-		if ('OPTIONS' == req.method) {
-			res.send(200);
-		}
-		else {
-			next();
-		}
-	});
+	app.use(security.corsValidation);
 	app.use(logger('dev'));
 	app.use(bodyParser.json());
 	app.use(bodyParser.urlencoded({ extended: false }));
-	app.use('/authenticate', security);
-	app.use('/admin', admin);
+	app.use('/admin', adminRoute);
 	app.use('/object', objectRoute);
 	app.use('/user', userRoute);
-	app.use('/testroute', tests);
+	app.use('/context', contextRoute);
+	app.use('/device', deviceRoute);
+
 	app.use('/documentation', express.static('documentation'));
-
-	app.use(['/get', '/object', '/user', '/testroute'], security.keyValidation);
-
-	app.use(['/get/contexts', '/delete/context'], expressjwt({secret: security.authSecret}));
-
-	app.post('/get/contexts', function(req, res, next) {
-		var id = req.body.id;
-		var app_id = req.get('X-BLGREQ-APPID');
-
-		if (!id) {
-			Models.Context.getAll(app_id, function(err, results) {
-				if (err)
-					return next(err);
-
-				res.json({status: 200, message: results}).end();
-			});
-		} else {
-			new Models.Context(id, function(err, result) {
-				if (err) return next(err);
-
-				var responseBody = {status: 200, message: {}};
-				responseBody.message[id] = result;
-
-				res.json(responseBody).end();
-			});
-		}
-	});
-
-	app.post('/device/register', function(req, res, next) {
-		if (req.get('X-BLGREQ-UDID') == '') {
-			req.body.id = uuid.v4();
-
-			Models.Subscription.addDevice(req.body, function(err, result) {
-				if (!err) {
-					return res.status(200).json({status: 200, identifier: req.body.id}).end();
-				}
-
-				next(err);
-			});
-		} else {
-			req.body.id = req.get('X-BLGREQ-UDID');
-
-			Models.Subscription.updateDevice(req.body, function(err, result) {
-				if (err) return next(err);
-
-				res.status(200).json({status:200, message: "Device has been updated"});
-			});
-		}
-	});
 
 	// error handlers
 	// catch 404 and forward to error handler

@@ -5,7 +5,6 @@ var async = require('async');
 var Models = require('octopus-models-api');
 var security = require('./security');
 var jwt = require('jsonwebtoken');
-var expressjwt = require('express-jwt');
 
 var options = {
 	client_id:          '1086083914753251',
@@ -14,7 +13,8 @@ var options = {
 
 FB.options(options);
 
-router.use('/logout', expressjwt({secret: security.authSecret}));
+router.use(security.keyValidation);
+router.use('/logout', security.tokenValidation);
 
 /**
  * @api {post} /user/create Create

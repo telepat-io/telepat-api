@@ -9,6 +9,8 @@ ACL_UNAUTHENTICATED = 1;
 ACL_AUTHENTICATED = 2;
 ACL_ADMIN = 4;
 
+router.use(security.keyValidation);
+
 router.use(function(req, res, next) {
 	//roughly 67M
 	if (sizeof(Models.Application.loadedAppModels) > (1 << 26)) {
@@ -22,52 +24,9 @@ router.use(function(req, res, next) {
 		next();
 });
 
-function AccessControlFunction(req, res, next, accessControl) {
-	if (req.body.model) {
-		var acl = Models.Application.loadedAppModels[req.get('X-BLGREQ-APPID')][req.body.model][accessControl];
-
-		if (!req.headers.authorization)
-			return res.status(401).json({message: "Authorization header is not present"}).end();
-
-		if (acl & ACL_AUTHENTICATED || acl & ACL_ADMIN) {
-			var authHeaderParts = req.headers.authorization.split(' ');
-			var authToken = authHeaderParts[1];
-
-			if (authToken) {
-				jwt.verify(authToken, security.authSecret, function (err, decoded) {
-					if (err)
-						return res.status(401).json({message: "Invalid authorization: " + err.message}).end();
-
-					if ((acl & ACL_ADMIN) && (!decoded.isAdmin) )
-						return res.status(403).json({message: "You don't have the necessary privilegies for this operation"}).end();
-
-					req.user = decoded;
-
-					next();
-				});
-			} else {
-				res.status(400).json({status: 400, message: 'Authorization header field is not formed well'}).end();
-			}
-		}
-		else if (acl & ACL_UNAUTHENTICATED) {
-			next();
-		} else {
-			res.status(403).json({message: "You don't have the necessary privilegies for this operation"}).end();
-		}
-	}
-}
-
-router.use(['/subscribe', '/unsubscribe'], function(req, res, next) {
-	AccessControlFunction(req, res, next, 'read_acl');
-});
-
-router.use(['/create', '/update', '/delete'], function(req, res, next) {
-	AccessControlFunction(req, res, next, 'write_acl');
-});
-
-router.use(['/count'], function(req, res, next) {
-	AccessControlFunction(req, res, next, 'meta_read_acl');
-});
+router.use(['/subscribe', '/unsubscribe'], security.objectACL('read_acl'));
+router.use(['/create', '/update', '/delete'], security.objectACL('write_acl'));
+router.use(['/count'], security.objectACL('meta_read_acl'));
 
 /**
  * @api {post} /object/subscribe Subscribe
