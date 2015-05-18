@@ -159,7 +159,7 @@ router.post('/refresh_token', function(req, res, next) {
 	var oldToken = req.get('Authorization').split(' ')[1];
 	if (oldToken) {
 		var decoded = jwt.decode(oldToken);
-		var newToken = jwt.sign(decoded.email, security.authSecret, {expiresInMinutes: 60});
+		var newToken = jwt.sign(decoded, security.authSecret, {expiresInMinutes: 60});
 
 		return res.status(200).json({token: newToken}).end();
 	} else {
