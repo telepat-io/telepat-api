@@ -1,12 +1,18 @@
 var express = require('express');
 var router = express.Router();
-var expressJwt = require('express-jwt');
+
 var security = require('./security');
 var Models = require('octopus-models-api');
 
-var unless = function(path, middleware) {
+var unless = function(paths, middleware) {
     return function(req, res, next) {
-        if (path === req.path) {
+        var excluded = false;
+        for (var i=0; i<paths.length; i++) {
+            if (paths[i] === req.path) {
+                excluded = true;
+            }
+        }
+        if (excluded) {
             return next();
         } else {
             return middleware(req, res, next);
@@ -14,19 +20,35 @@ var unless = function(path, middleware) {
     };
 };
 
-router.use(unless('/add', expressJwt({secret: security.authSecret})));
-router.use(['/apps/remove', 'apps/update'], function (req, res, next) {
-  if (app.applications.hasOwnProperty(req.body.appId)) {
-    if (app.applications[req.body.appId].admin_id == req.user.email) {
-      next();
+router.use(unless(['/add', '/login'], security.tokenValidation));
+router.use(['/apps/remove', 'apps/update'], security.adminAppValidation);
+
+/**
+ * @api {post} /admin/login Authenticate
+ * @apiDescription Authenticates an admin
+ * @apiName AdminAuthenticate
+ * @apiGroup Admin
+ * @apiVersion 0.0.1
+ *
+ * @apiParam {String} email Email of admin
+ * @apiParam {String} password Password of admin
+ *
+ * @apiError Unauthorized If the provided email and password are not correct
+ */
+router.post('/login', function (req, res, next) {
+  Models.Admin(req.body.email, function(err, admin) {
+    if (err) {
+      return next(err);
+    }
+
+    if (req.body.password == admin.password) {
+      res.json({ token: security.createToken({email: req.body.email, isAdmin: true}) });
     }
     else {
-      res.status(400).send({message: 'Naughty'});
+      res.status(401).json({status: 401, message: 'Wrong user or password'});
+      return;
     }
-  }
-  else {
-    res.status(400).send({message: 'What app?'});
-  }
+  })
 });
 
 /**
