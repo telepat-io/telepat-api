@@ -3,11 +3,6 @@ var router = express.Router();
 var Models = require('octopus-models-api');
 var sizeof = require('object-sizeof');
 var security = require('./security');
-var jwt = require('jsonwebtoken');
-
-ACL_UNAUTHENTICATED = 1;
-ACL_AUTHENTICATED = 2;
-ACL_ADMIN = 4;
 
 router.use(security.keyValidation);
 
