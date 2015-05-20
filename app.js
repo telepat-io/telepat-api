@@ -59,15 +59,12 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 			var appId = item.id.split(':').slice(-1)[0];
 			app.applications[appId] = item.value;
 			c();
-		}, function(err) {
-
-			//console.log(app.applications);
 		});
-
 	});
 
 	app.use(security.corsValidation);
 	app.use(logger('dev'));
+	/*Automatically parses request body from json string to object*/
 	app.use(bodyParser.json());
 	app.use(bodyParser.urlencoded({ extended: false }));
 	app.use('/admin', adminRoute);
@@ -75,8 +72,6 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 	app.use('/user', userRoute);
 	app.use('/context', contextRoute);
 	app.use('/device', deviceRoute);
-
-	app.use('/documentation', express.static('documentation'));
 
 	// error handlers
 	// catch 404 and forward to error handler
@@ -113,6 +108,7 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 		}));
 	});
 
+	//signal sent by nodemon when restarting the server
 	process.on('SIGUSR2', function() {
 		db.Couchbase.bucket.disconnect();
 		db.Couchbase.stateBucket.disconnect();
@@ -127,10 +123,6 @@ db.Couchbase.bucket.on('error', function ErrorConnect(error) {
 		res.type('application/json');
 		res.status(500).json({status: 500, message: "Server failed to connect to database."});
 	});
-});
-
-process.on('beforeExit', function() {
-	console.log('exiting');
 });
 
 module.exports = app;

@@ -6,6 +6,15 @@ var security = require('./security');
 
 router.use(security.keyValidation);
 
+/**
+ * @api {post} /device/register Register
+ * @apiDescription Registers a new device or updates an already existing one.
+ * @apiName DeviceRegister
+ * @apiGroup Device
+ * @apiVersion 0.0.1
+ *
+ * @apiError NotAuthenticated  Only authenticated users may access this endpoint.
+ */
 router.post('/register', function(req, res, next) {
 	if (req.get('X-BLGREQ-UDID') == '') {
 		req.body.id = uuid.v4();

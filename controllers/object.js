@@ -3,12 +3,14 @@ var router = express.Router();
 var Models = require('octopus-models-api');
 var sizeof = require('object-sizeof');
 var security = require('./security');
-var utils = require('./utils');
 
 router.use(security.keyValidation);
 
+/**
+ * Middleware used to load application model schema
+ */
 router.use(function(req, res, next) {
-	//roughly 67M
+	//roughly 67M - it self cleares so it doesn't get too big
 	if (sizeof(Models.Application.loadedAppModels) > (1 << 26)) {
 		delete Models.Application.loadedAppModels;
 		Models.Application.loadedAppModels = {};
