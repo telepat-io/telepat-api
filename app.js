@@ -14,6 +14,8 @@ var deviceRoute = require('./controllers/device');
 async = require('async');
 kafka = require('kafka-node');
 cb = require('couchbase');
+elastic = require('elasticsearch');
+
 Models = require('octopus-models-api');
 app = express();
 
@@ -36,10 +38,13 @@ app.kafkaProducer.on('error', function(err) {
 app.set('datasources', require('./config/datasources'));
 
 ds = app.get('datasources');
-app.set('database', {
+app.set('couchbase-db', {
 	Couchbase: new cb.Cluster('couchbase://'+ds.couchbase.host)
 });
-db = app.get('database');
+app.set('elastic-db', {
+	Elastic: new elastic.Client({host: ds.elasticsearch.host+':'+ds.elasticsearch.port})
+});
+db = app.get('couchbase-db');
 //main data bucket
 db.Couchbase.bucket = db.Couchbase.openBucket(ds.couchbase.bucket);
 db.Couchbase.stateBucket = db.Couchbase.openBucket(ds.couchbase.stateBucket);
