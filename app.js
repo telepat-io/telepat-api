@@ -17,6 +17,8 @@ kafka = require('kafka-node');
 cb = require('couchbase');
 elastic = require('elasticsearch');
 
+var dbConnected = false;
+
 Models = require('octopus-models-api');
 app = express();
 
@@ -81,7 +83,15 @@ Models.Application.setBucket(db.Couchbase.bucket);
 Models.Application.setStateBucket(db.Couchbase.stateBucket);
 app.applications = {};
 
-db.Couchbase.bucket.on('connect', function OnBucketConnect() {
+app.use(function(req, res, next) {
+	if (dbConnected)
+		return next();
+	res.type('application/json');
+	res.status(500).json({status: 500, message: "Server failed to connect to database."});
+});
+
+var OnBucketConnect = function() {
+	dbConnected = true;
 	Models.Application.getAll(function(err, results) {
 		async.each(results, function(item, c){
 			var appId = item.id.split(':').slice(-1)[0];
@@ -143,14 +153,31 @@ db.Couchbase.bucket.on('connect', function OnBucketConnect() {
 		app.kafkaClient.close();
 	});
 
-});
+};
 
-db.Couchbase.bucket.on('error', function ErrorConnect(error) {
+db.Couchbase.bucket.on('connect', OnBucketConnect);
+
+var ErrorConnect = function ErrorConnect(error) {
 	console.error('Could not connect to '+ds.couchbase.host+': '+error.toString()+' ('+error.code+')');
-	app.use(function(req, res) {
-		res.type('application/json');
-		res.status(500).json({status: 500, message: "Server failed to connect to database."});
-	});
-});
+	setTimeout(function() {
+		console.log('Retrying...');
+
+		app.set('couchbase-db', {
+			Couchbase: new cb.Cluster('couchbase://'+ds.couchbase.host)
+		});
+
+		db.Couchbase.bucket = db.Couchbase.openBucket(ds.couchbase.bucket);
+		db.Couchbase.stateBucket = db.Couchbase.openBucket(ds.couchbase.stateBucket);
+
+		Models.Application.setBucket(db.Couchbase.bucket);
+		Models.Application.setStateBucket(db.Couchbase.stateBucket);
+
+		db.Couchbase.bucket.on('connect', OnBucketConnect);
+		db.Couchbase.bucket.on('error', ErrorConnect);
+	}, 1000);
+	db.Couchbase.bucket.disconnect();
+};
+
+db.Couchbase.bucket.on('error', ErrorConnect);
 
 module.exports = app;
