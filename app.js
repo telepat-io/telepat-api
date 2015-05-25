@@ -1,6 +1,7 @@
 var express = require('express');
 var logger = require('morgan');
 var bodyParser = require('body-parser');
+var fs = require('fs');
 
 var tests = require('./controllers/tests');
 var security = require('./controllers/security');
@@ -23,7 +24,16 @@ app.set('port', process.env.PORT || 3000);
 
 app.disable('x-powered-by');
 
-app.kafkaConfig = require('./config/kafka.json');
+if (process.env.TP_KFK_HOST) {
+	app.kafkaConfig = {
+		host: process.env.TP_KFK_HOST,
+		port: process.env.TP_KFK_PORT,
+		clientName: process.env.TP_KFK_CLIENT
+	};
+} else {
+	app.kafkaConfig = require('./config/kafka.json');
+}
+
 app.kafkaClient = new kafka.Client(app.kafkaConfig.host+':'+app.kafkaConfig.port+'/', app.kafkaConfig.clientName);
 app.kafkaProducer = new kafka.HighLevelProducer(app.kafkaClient);
 
@@ -35,9 +45,27 @@ app.kafkaProducer.on('error', function(err) {
 	console.log(err)
 });
 
-app.set('datasources', require('./config/datasources'));
+app.datasources = {};
 
-ds = app.get('datasources');
+if (process.env.TP_CB_HOST) {
+	app.datasources.couchbase = {
+		host: process.env.TP_CB_HOST,
+		bucket: process.env.TP_CB_BUCKET,
+		stateBucket: process.env.TP_CB_STATE_BUCKET
+	};
+} else {
+	app.datasources.couchbase = require('./config/datasources').couchbase;
+}
+if (process.env.TP_ES_HOST) {
+	app.datasources.elasticsearch = {
+		host: process.env.TP_ES_HOST,
+		port: process.env.TP_ES_PORT
+	}
+} else {
+	app.datasources.elasticsearch = require('./config/datasources').elasticsearch;
+}
+
+ds = app.datasources;
 app.set('couchbase-db', {
 	Couchbase: new cb.Cluster('couchbase://'+ds.couchbase.host)
 });
