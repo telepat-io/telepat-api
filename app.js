@@ -93,6 +93,11 @@ app.use(function(req, res, next) {
 var OnBucketConnect = function() {
 	dbConnected = true;
 	Models.Application.getAll(function(err, results) {
+		if (err) {
+			console.log("Fatal error: ", err);
+			return;
+		}
+
 		async.each(results, function(item, c){
 			var appId = item.id.split(':').slice(-1)[0];
 			app.applications[appId] = item.value;
