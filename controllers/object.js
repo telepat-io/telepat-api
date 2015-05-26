@@ -295,7 +295,6 @@ router.post('/create', function(req, res, next) {
 
 	async.series([
 		function(agg_callback) {
-			agg_callback();
 			app.kafkaProducer.send([{
 				topic: 'aggregation',
 				messages: [JSON.stringify({
@@ -307,7 +306,6 @@ router.post('/create', function(req, res, next) {
 			}], agg_callback);
 		},
 		function(track_callback) {
-			track_callback();
 			app.kafkaProducer.send([{
 				topic: 'track',
 				messages: [JSON.stringify({

@@ -87,7 +87,7 @@ app.use(function(req, res, next) {
 	if (dbConnected)
 		return next();
 	res.type('application/json');
-	res.status(500).json({status: 500, message: "Server failed to connect to database."});
+	res.status(500).json({status: 500, message: "Server failed to connect to database."}).end();
 });
 
 var OnBucketConnect = function() {
