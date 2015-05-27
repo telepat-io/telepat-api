@@ -149,7 +149,9 @@ async.waterfall([
 		db.Couchbase.bucket.on('error', function(err) {
 			console.log('Failed connecting to Data Bucket on couchbase "'+ds.couchbase.host+'": '+err.message);
 			console.log('Retrying...');
-			setTimeout(DataBucket, 1000);
+			setTimeout(function () {
+				DataBucket(callback);
+			}, 1000);
 		});
 		db.Couchbase.bucket.on('connect', function() {
 			console.log('Connected to Data bucket on couchbase.');
@@ -163,7 +165,9 @@ async.waterfall([
 		db.Couchbase.stateBucket.on('error', function(err) {
 			console.log('Failed connecting to State Bucket on couchbase "'+ds.couchbase.host+'": '+err.message);
 			console.log('Retrying...');
-			setTimeout(StateBucket, 1000);
+			setTimeout(function () {
+				StateBucket(callback);
+			}, 1000);
 		});
 		db.Couchbase.stateBucket.on('connect', function() {
 			console.log('Connected to State bucket on couchbase.');
@@ -183,7 +187,9 @@ async.waterfall([
 			if (err) {
 				console.log('Failed connecting to Elasticsearch "'+ds.elasticsearch.host+'": '+err.message);
 				console.log('Retrying...');
-				setTimeout(Elasticsearch, 1000);
+				setTimeout(function () {
+					Elasticsearch(callback);
+				}, 1000);
 			} else {
 				console.log('Connected to Elasticsearch.');
 				callback();
@@ -198,7 +204,9 @@ async.waterfall([
 		app.kafkaProducer.on('error', function(err) {
 			console.log('Failed connecting to Kafka "'+ds.kafkaConfig.host+'": '+err.message);
 			console.log('Retrying...');
-			setTimeout(Kafka, 1000);
+			setTimeout(function () {
+				Kafka(callback);
+			}, 1000);
 		});
 
 		app.kafkaProducer.on('ready', function() {
