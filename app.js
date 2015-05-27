@@ -1,25 +1,21 @@
 var express = require('express');
 var logger = require('morgan');
 var bodyParser = require('body-parser');
-var fs = require('fs');
 
-var tests = require('./controllers/tests');
+async = require('async');
+kafka = require('kafka-node');
+cb = require('couchbase');
+elastic = require('elasticsearch');
+Models = require('octopus-models-api');
+
 var security = require('./controllers/security');
-
 var adminRoute = require('./controllers/admin');
 var objectRoute = require('./controllers/object');
 var userRoute = require('./controllers/user');
 var contextRoute = require('./controllers/context');
 var deviceRoute = require('./controllers/device');
 
-async = require('async');
-kafka = require('kafka-node');
-cb = require('couchbase');
-elastic = require('elasticsearch');
-
 var dbConnected = false;
-
-Models = require('octopus-models-api');
 app = express();
 
 app.set('port', process.env.PORT || 3000);
@@ -70,7 +66,7 @@ app.use(function(req, res, next) {
 	if (dbConnected)
 		return next();
 	res.type('application/json');
-	res.status(500).json({status: 500, message: "Server failed to connect to database."}).end();
+	res.status(503).json({status: 503, message: "API server not available."}).end();
 });
 
 var OnServicesConnect = function() {
