@@ -37,15 +37,6 @@ if (process.env.TP_KFK_HOST) {
 }
 
 app.kafkaClient = new kafka.Client(app.kafkaConfig.host+':'+app.kafkaConfig.port+'/', app.kafkaConfig.clientName);
-app.kafkaProducer = new kafka.HighLevelProducer(app.kafkaClient);
-
-app.kafkaClient.on('error', function(err) {
-	console.log(err)
-});
-
-app.kafkaProducer.on('error', function(err) {
-	console.log(err)
-});
 
 app.datasources = {};
 
@@ -71,16 +62,8 @@ ds = app.datasources;
 app.set('couchbase-db', {
 	Couchbase: new cb.Cluster('couchbase://'+ds.couchbase.host)
 });
-app.set('elastic-db', {
-	Elastic: new elastic.Client({host: ds.elasticsearch.host+':'+ds.elasticsearch.port})
-});
 db = app.get('couchbase-db');
-//main data bucket
-db.Couchbase.bucket = db.Couchbase.openBucket(ds.couchbase.bucket);
-db.Couchbase.stateBucket = db.Couchbase.openBucket(ds.couchbase.stateBucket);
 
-Models.Application.setBucket(db.Couchbase.bucket);
-Models.Application.setStateBucket(db.Couchbase.stateBucket);
 app.applications = {};
 
 app.use(function(req, res, next) {
@@ -90,8 +73,10 @@ app.use(function(req, res, next) {
 	res.status(500).json({status: 500, message: "Server failed to connect to database."}).end();
 });
 
-var OnBucketConnect = function() {
+var OnServicesConnect = function() {
 	dbConnected = true;
+	Models.Application.setBucket(db.Couchbase.bucket);
+	Models.Application.setStateBucket(db.Couchbase.stateBucket);
 	Models.Application.getAll(function(err, results) {
 		if (err) {
 			console.log("Fatal error: ", err);
@@ -160,29 +145,71 @@ var OnBucketConnect = function() {
 
 };
 
-db.Couchbase.bucket.on('connect', OnBucketConnect);
+async.waterfall([
+	function DataBucket(callback) {
+		if (db.Couchbase.bucket)
+			delete db.Couchbase.bucket;
+		db.Couchbase.bucket = db.Couchbase.openBucket(ds.couchbase.bucket);
+		db.Couchbase.bucket.on('error', function(err) {
+			console.log('Failed connecting to Data Bucket on couchbase "'+ds.couchbase.host+'": '+err.message);
+			console.log('Retrying...');
+			setTimeout(DataBucket, 1000);
+		});
+		db.Couchbase.bucket.on('connect', function() {
+			console.log('Connected to Data bucket on couchbase.');
+			callback();
+		});
+	},
+	function StateBucket(callback) {
+		if (db.Couchbase.stateBucket)
+			delete db.Couchbase.stateBucket;
+		db.Couchbase.stateBucket = db.Couchbase.openBucket(ds.couchbase.stateBucket);
+		db.Couchbase.stateBucket.on('error', function(err) {
+			console.log('Failed connecting to State Bucket on couchbase "'+ds.couchbase.host+'": '+err.message);
+			console.log('Retrying...');
+			setTimeout(StateBucket, 1000);
+		});
+		db.Couchbase.stateBucket.on('connect', function() {
+			console.log('Connected to State bucket on couchbase.');
+			callback();
+		});
+	},
+	function Elasticsearch(callback) {
+		if (app.get('elastic-db'))
+			app.disable('elastic-db');
 
-var ErrorConnect = function ErrorConnect(error) {
-	console.error('Could not connect to '+ds.couchbase.host+': '+error.toString()+' ('+error.code+')');
-	setTimeout(function() {
-		console.log('Retrying...');
+		app.set('elastic-db', {
+			client: new elastic.Client({host: ds.elasticsearch.host+':'+ds.elasticsearch.port})
+		});
+		app.get('elastic-db').client.ping({
+			requestTimeout: Infinity
+		}, function(err) {
+			if (err) {
+				console.log('Failed connecting to Elasticsearch "'+ds.elasticsearch.host+'": '+err.message);
+				console.log('Retrying...');
+				setTimeout(Elasticsearch, 1000);
+			} else {
+				console.log('Connected to Elasticsearch.');
+				callback();
+			}
+		});
+	},
+	function Kafka(callback) {
+		if (app.kafkaProducer)
+			delete app.kafkaProducer;
+		app.kafkaProducer = new kafka.HighLevelProducer(app.kafkaClient);
 
-		app.set('couchbase-db', {
-			Couchbase: new cb.Cluster('couchbase://'+ds.couchbase.host)
+		app.kafkaProducer.on('error', function(err) {
+			console.log('Failed connecting to Kafka "'+ds.kafkaConfig.host+'": '+err.message);
+			console.log('Retrying...');
+			setTimeout(Kafka, 1000);
 		});
 
-		db.Couchbase.bucket = db.Couchbase.openBucket(ds.couchbase.bucket);
-		db.Couchbase.stateBucket = db.Couchbase.openBucket(ds.couchbase.stateBucket);
-
-		Models.Application.setBucket(db.Couchbase.bucket);
-		Models.Application.setStateBucket(db.Couchbase.stateBucket);
-
-		db.Couchbase.bucket.on('connect', OnBucketConnect);
-		db.Couchbase.bucket.on('error', ErrorConnect);
-	}, 1000);
-	db.Couchbase.bucket.disconnect();
-};
-
-db.Couchbase.bucket.on('error', ErrorConnect);
+		app.kafkaProducer.on('ready', function() {
+			console.log('Connected to Kafka.');
+			callback();
+		});
+	}
+], OnServicesConnect);
 
 module.exports = app;

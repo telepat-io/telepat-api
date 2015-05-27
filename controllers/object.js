@@ -110,7 +110,7 @@ router.post('/subscribe', function(req, res, next) {
 							};
 
 							elasticSearchQuery.query.filtered.filter = Models.utils.parseQueryObject(filters.query);
-							app.get('elastic-db').search({
+							app.get('elastic-db').client.search({
 								index: 'default',
 								type: 'couchbaseDocument',
 								body: elasticSearchQuery

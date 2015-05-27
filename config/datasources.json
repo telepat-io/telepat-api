@@ -5,7 +5,7 @@
 	"stateBucket": "state"
   },
   "elasticsearch": {
-	"host": "blg-elastic.cloudapp.net",
+	"host": "10.32.0.7",
 	"port": 9200
   }
 }
