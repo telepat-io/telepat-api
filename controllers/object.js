@@ -87,7 +87,7 @@ router.post('/subscribe', function(req, res, next) {
 				if (filters && filters.user)
 					user = filters.user;
 
-				Models.Subscription.add(appId, context, deviceId, {model: Models.Application.loadedAppModels[appId][mdl].namespace, id: id}, user, parent,  callback);
+				Models.Subscription.add(appId, context, deviceId, {model: Models.Application.loadedAppModels[appId][mdl].namespace, id: id}, user, parent, filters.query,  callback);
 			},
 			function(result, callback) {
 				if(!id) {
