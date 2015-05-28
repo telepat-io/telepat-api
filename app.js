@@ -200,8 +200,8 @@ async.waterfall([
 		if (app.kafkaProducer)
 			delete app.kafkaProducer;
 
-		app.kafkaProducer = new kafka.HighLevelProducer(app.kafkaClient);
 		app.kafkaClient = new kafka.Client(app.kafkaConfig.host+':'+app.kafkaConfig.port+'/', app.kafkaConfig.clientName);
+		app.kafkaProducer = new kafka.HighLevelProducer(app.kafkaClient);
 
 		app.kafkaProducer.on('error', function(err) {
 			console.log('Failed connecting to Kafka "'+app.kafkaConfig.host+'": '+err.message);
