@@ -22,6 +22,8 @@ app.set('port', process.env.PORT || 3000);
 
 app.disable('x-powered-by');
 
+app.use('/documentation', express.static('documentation'));
+
 if (process.env.TP_KFK_HOST) {
 	app.kafkaConfig = {
 		host: process.env.TP_KFK_HOST,
@@ -31,8 +33,6 @@ if (process.env.TP_KFK_HOST) {
 } else {
 	app.kafkaConfig = require('./config/kafka.json');
 }
-
-app.kafkaClient = new kafka.Client(app.kafkaConfig.host+':'+app.kafkaConfig.port+'/', app.kafkaConfig.clientName);
 
 app.datasources = {};
 
@@ -199,7 +199,9 @@ async.waterfall([
 	function Kafka(callback) {
 		if (app.kafkaProducer)
 			delete app.kafkaProducer;
+
 		app.kafkaProducer = new kafka.HighLevelProducer(app.kafkaClient);
+		app.kafkaClient = new kafka.Client(app.kafkaConfig.host+':'+app.kafkaConfig.port+'/', app.kafkaConfig.clientName);
 
 		app.kafkaProducer.on('error', function(err) {
 			console.log('Failed connecting to Kafka "'+app.kafkaConfig.host+'": '+err.message);
@@ -207,6 +209,7 @@ async.waterfall([
 			setTimeout(function () {
 				Kafka(callback);
 			}, 1000);
+			app.kafkaClient.close();
 		});
 
 		app.kafkaProducer.on('ready', function() {
