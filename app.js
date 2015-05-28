@@ -202,7 +202,7 @@ async.waterfall([
 		app.kafkaProducer = new kafka.HighLevelProducer(app.kafkaClient);
 
 		app.kafkaProducer.on('error', function(err) {
-			console.log('Failed connecting to Kafka "'+ds.kafkaConfig.host+'": '+err.message);
+			console.log('Failed connecting to Kafka "'+app.kafkaConfig.host+'": '+err.message);
 			console.log('Retrying...');
 			setTimeout(function () {
 				Kafka(callback);
