@@ -1,6 +1,7 @@
 var express = require('express');
 var logger = require('morgan');
 var bodyParser = require('body-parser');
+var colors = require('colors');
 
 async = require('async');
 kafka = require('kafka-node');
@@ -75,7 +76,7 @@ var OnServicesConnect = function() {
 	Models.Application.setStateBucket(db.Couchbase.stateBucket);
 	Models.Application.getAll(function(err, results) {
 		if (err) {
-			console.log("Fatal error: ", err);
+			console.log("Fatal error: ".red, err);
 			return;
 		}
 
@@ -147,14 +148,15 @@ async.waterfall([
 			delete db.Couchbase.bucket;
 		db.Couchbase.bucket = db.Couchbase.openBucket(ds.couchbase.bucket);
 		db.Couchbase.bucket.on('error', function(err) {
-			console.log('Failed connecting to Data Bucket on couchbase "'+ds.couchbase.host+'": '+err.message);
+			var d = new Date();
+			console.log('Failed'.bold.red+' connecting to Data Bucket on couchbase "'+ds.couchbase.host+'": '+err.message);
 			console.log('Retrying...');
 			setTimeout(function () {
 				DataBucket(callback);
 			}, 1000);
 		});
 		db.Couchbase.bucket.on('connect', function() {
-			console.log('Connected to Data bucket on couchbase.');
+			console.log('Connected to Data bucket on couchbase.'.green);
 			callback();
 		});
 	},
@@ -163,14 +165,15 @@ async.waterfall([
 			delete db.Couchbase.stateBucket;
 		db.Couchbase.stateBucket = db.Couchbase.openBucket(ds.couchbase.stateBucket);
 		db.Couchbase.stateBucket.on('error', function(err) {
-			console.log('Failed connecting to State Bucket on couchbase "'+ds.couchbase.host+'": '+err.message);
+			var d = new Date();
+			console.log('Failed'.bold.red+' connecting to State Bucket on couchbase "'+ds.couchbase.host+'": '+err.message);
 			console.log('Retrying...');
 			setTimeout(function () {
 				StateBucket(callback);
 			}, 1000);
 		});
 		db.Couchbase.stateBucket.on('connect', function() {
-			console.log('Connected to State bucket on couchbase.');
+			console.log('Connected to State bucket on couchbase.'.green);
 			callback();
 		});
 	},
@@ -185,36 +188,31 @@ async.waterfall([
 			requestTimeout: Infinity
 		}, function(err) {
 			if (err) {
-				console.log('Failed connecting to Elasticsearch "'+ds.elasticsearch.host+'": '+err.message);
+				var d = new Date();
+				console.log('Failed'.bold.red+' connecting to Elasticsearch "'+ds.elasticsearch.host+'": '+err.message);
 				console.log('Retrying...');
 				setTimeout(function () {
 					Elasticsearch(callback);
 				}, 1000);
 			} else {
-				console.log('Connected to Elasticsearch.');
+				console.log('Connected to Elasticsearch.'.green);
 				callback();
 			}
 		});
 	},
 	function Kafka(callback) {
-		if (app.kafkaProducer)
-			delete app.kafkaProducer;
-
+		console.log('Waiting for Zookeeper connection...');
 		app.kafkaClient = new kafka.Client(app.kafkaConfig.host+':'+app.kafkaConfig.port+'/', app.kafkaConfig.clientName);
-		app.kafkaProducer = new kafka.HighLevelProducer(app.kafkaClient);
+		app.kafkaClient.on('ready', function() {
+			console.log('Client connected to Zookeeper.'.green);
 
-		app.kafkaProducer.on('error', function(err) {
-			console.log('Failed connecting to Kafka "'+app.kafkaConfig.host+'": '+err.message);
-			console.log('Retrying...');
-			setTimeout(function () {
-				Kafka(callback);
-			}, 1000);
-			app.kafkaClient.close();
-		});
+			app.kafkaProducer = new kafka.HighLevelProducer(app.kafkaClient);
+			app.kafkaProducer.on('error', function() {});
 
-		app.kafkaProducer.on('ready', function() {
-			console.log('Connected to Kafka.');
 			callback();
+		});
+		app.kafkaClient.on('error', function() {
+			console.log('Kafka broker not available.'.red+' Trying to reconnect.');
 		});
 	}
 ], OnServicesConnect);
