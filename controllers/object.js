@@ -303,7 +303,10 @@ router.post('/create', function(req, res, next) {
 					applicationId: appId
 				})],
 				attributes: 0
-			}], agg_callback);
+			}], function(err) {
+				err.message = 'Failed to send message to aggregation worker.';
+				agg_callback(err);
+			});
 		},
 		function(track_callback) {
 			app.kafkaProducer.send([{
@@ -314,10 +317,16 @@ router.post('/create', function(req, res, next) {
 					applicationId: appId
 				})],
 				attributes: 0
-			}], track_callback);
+			}], function(err) {
+				err.message = 'Failed to send message to track worker.';
+				track_callback();
+			});
 		}
 	], function(err, results) {
-		if (err) return next(err);
+		if (err) {
+			console.log(req.originalUrl+': '+err.message.red);
+			return next(err);
+		}
 
 		res.status(201).json({status: 201, message: 'Created'}).end();
 	});
@@ -365,7 +374,10 @@ router.post('/update', function(req, res, next) {
 					applicationId: req.get('X-BLGREQ-APPID')
 				})],
 				attributes: 0
-			}], agg_callback);
+			}], function(err) {
+				err.message = 'Failed to send message to aggregation worker.';
+				agg_callback(err);
+			});
 		},
 		function(track_callback) {
 			app.kafkaProducer.send([{
@@ -379,10 +391,16 @@ router.post('/update', function(req, res, next) {
 					applicationId: req.get('X-BLGREQ-APPID')
 				})],
 				attributes: 0
-			}], track_callback);
+			}], function(err) {
+				err.message = 'Failed to send message to track worker.';
+				track_callback();
+			});
 		}
 	], function(err, results) {
-		if (err) return next(err);
+		if (err) {
+			console.log(req.originalUrl+': '+err.message.red);
+			return next(err);
+		}
 
 		res.status(200).json({status: 200, message: 'Updated'}).end();
 	});

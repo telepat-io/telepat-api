@@ -5,19 +5,19 @@ var security = require('./security');
 var Models = require('octopus-models-api');
 
 var unless = function(paths, middleware) {
-    return function(req, res, next) {
-        var excluded = false;
-        for (var i=0; i<paths.length; i++) {
-            if (paths[i] === req.path) {
-                excluded = true;
-            }
-        }
-        if (excluded) {
-            return next();
-        } else {
-            return middleware(req, res, next);
-        }
-    };
+	return function(req, res, next) {
+		var excluded = false;
+		for (var i=0; i<paths.length; i++) {
+			if (paths[i] === req.path) {
+				excluded = true;
+			}
+		}
+		if (excluded) {
+			return next();
+		} else {
+			return middleware(req, res, next);
+		}
+	};
 };
 
 router.use(unless(['/add', '/login'], security.tokenValidation));
@@ -36,19 +36,19 @@ router.use(['/apps/remove', 'apps/update'], security.adminAppValidation);
  * @apiError Unauthorized If the provided email and password are not correct
  */
 router.post('/login', function (req, res, next) {
-  Models.Admin(req.body.email, function(err, admin) {
-    if (err) {
-      return next(err);
-    }
+	Models.Admin(req.body.email, function(err, admin) {
+		if (err) {
+			return next(err);
+		}
 
-    if (req.body.password == admin.password) {
-      res.json({ token: security.createToken({email: req.body.email, isAdmin: true}) });
-    }
-    else {
-      res.status(401).json({status: 401, message: 'Wrong user or password'});
-      return;
-    }
-  })
+		if (req.body.password == admin.password) {
+			res.json({ token: security.createToken({email: req.body.email, isAdmin: true}) });
+		}
+		else {
+			res.status(401).json({status: 401, message: 'Wrong user or password'});
+			return;
+		}
+	})
 });
 
 /**
@@ -64,12 +64,12 @@ router.post('/login', function (req, res, next) {
  *
  */
 router.post('/add', function (req, res) {
-  Models.Admin.create(req.body.email, { email: req.body.email, password: req.body.password, name: req.body.name }, function (err, result) {
-    if (err)
-      res.status(500).send({message : "Error adding account"});
-    else
-      res.send(200);
-  });
+	Models.Admin.create(req.body.email, { email: req.body.email, password: req.body.password, name: req.body.name }, function (err, result) {
+		if (err)
+			res.status(500).send({message : "Error adding account"});
+		else
+			res.send(200);
+	});
 });
 
 /**
@@ -81,7 +81,7 @@ router.post('/add', function (req, res) {
  *
  */
 router.post('/me', function (req, res) {
-  res.json(req.user);
+	res.json(req.user);
 });
 
 /**
@@ -93,12 +93,12 @@ router.post('/me', function (req, res) {
  *
  */
 router.post('/update', function (req, res) {
-  Models.Admin.update(req.user.email, req.body, function (err, res1) {
-    if (err)
-      res.status(500).send({message: err});
-    else
-      res.send(200);
-  })
+	Models.Admin.update(req.user.email, req.body, function (err, res1) {
+		if (err)
+			res.status(500).send({message: err});
+		else
+			res.send(200);
+	})
 });
 
 /**
@@ -110,19 +110,19 @@ router.post('/update', function (req, res) {
  *
  */
 router.post('/apps', function (req, res) {
-    var adminApps = {};
-    async.each(Object.keys(app.applications), function(applicationId, c){
-        if (app.applications[applicationId].admin_id == req.user.email)
-          adminApps[applicationId] = app.applications[applicationId];
-        c();
-      }, function(err) {
-        if (err) {
-          res.status(500).send({message: "Server issue"});
-        }
-        else {
-          res.json(adminApps);
-        }
-    });
+	var adminApps = {};
+	async.each(Object.keys(app.applications), function(applicationId, c){
+		if (app.applications[applicationId].admin_id == req.user.email)
+			adminApps[applicationId] = app.applications[applicationId];
+		c();
+	}, function(err) {
+		if (err) {
+			res.status(500).send({message: "Server issue"});
+		}
+		else {
+			res.json(adminApps);
+		}
+	});
 });
 
 /**
@@ -134,22 +134,22 @@ router.post('/apps', function (req, res) {
  *
  */
 router.post('/app/add', function (req, res) {
-  var newApp = req.body;
-  newApp['admin_id'] = req.user.email;
-  Models.Application.create(newApp, function (err, res1) {
-    if (err)
-      res.status(500).send({message: 'Could not add app'});
-    else {
-      var newIndex;
-      for (var key in res1) {
-        if (res1.hasOwnProperty(key)) {
-          newIndex = key;
-        }
-      }
-      app.applications[newIndex] = res1[newIndex];
-      res.status(200).send(res1);
-    }
-  });
+	var newApp = req.body;
+	newApp['admin_id'] = req.user.email;
+	Models.Application.create(newApp, function (err, res1) {
+		if (err)
+			res.status(500).send({message: 'Could not add app'});
+		else {
+			var newIndex;
+			for (var key in res1) {
+				if (res1.hasOwnProperty(key)) {
+					newIndex = key;
+				}
+			}
+			app.applications[newIndex] = res1[newIndex];
+			res.status(200).send(res1);
+		}
+	});
 });
 
 /**
@@ -163,14 +163,14 @@ router.post('/app/add', function (req, res) {
  *
  */
 router.post('/app/remove', function (req, res) {
-  Models.Application.delete(req.body.appId, function (err, res1) {
-    if (err)
-      res.status(500).send({message: 'Could not remove app'});
-    else {
-      delete app.applications[req.body.appId];
-      res.send(200);
-    }
-  });
+	Models.Application.delete(req.body.appId, function (err, res1) {
+		if (err)
+			res.status(500).send({message: 'Could not remove app'});
+		else {
+			delete app.applications[req.body.appId];
+			res.send(200);
+		}
+	});
 });
 
 /**
@@ -184,14 +184,14 @@ router.post('/app/remove', function (req, res) {
  *
  */
 router.post('/app/update', function (req, res) {
-  Models.Application.update(req.body.appId, req.body, function (err, res1, updatedApp) {
-    if (err)
-      res.status(500).send({message: 'Could not update app'});
-    else {
-      app.applications[req.body.appId] = updatedApp;
-      res.send(200);
-    }
-  });
+	Models.Application.update(req.body.appId, req.body, function (err, res1, updatedApp) {
+		if (err)
+			res.status(500).send({message: 'Could not update app'});
+		else {
+			app.applications[req.body.appId] = updatedApp;
+			res.send(200);
+		}
+	});
 });
 
 /**
@@ -203,13 +203,13 @@ router.post('/app/update', function (req, res) {
  *
  */
 router.post('/contexts', function (req, res) {
-  Models.Context.getAll(req.body.appId, function (err, res1) {
-    if (err)
-      res.status(500).send({message: 'Could not get contexts'});
-    else {
-      res.json(res1);
-    }
-  });
+	Models.Context.getAll(req.body.appId, function (err, res1) {
+		if (err)
+			res.status(500).send({message: 'Could not get contexts'});
+		else {
+			res.json(res1);
+		}
+	});
 });
 
 /**
@@ -222,13 +222,13 @@ router.post('/contexts', function (req, res) {
  * @apiParam {Number} id ID of the context to get
  */
 router.post('/context', function (req, res) {
-  Models.Context(req.body.id, function (err, res1) {
-    if (err)
-      res.status(500).send({message: 'Could not get context'});
-    else {
-      res.json(res1);
-    }
-  });
+	Models.Context(req.body.id, function (err, res1) {
+		if (err)
+			res.status(500).send({message: 'Could not get context'});
+		else {
+			res.json(res1);
+		}
+	});
 });
 
 /**
@@ -241,15 +241,15 @@ router.post('/context', function (req, res) {
  * @apiParam {Number} appId ID of the application
  */
 router.post('/context/add', function (req, res) {
-  var newContext = req.body;
-  newContext['application_id'] = req.body.appId;
-  Models.Context.create(newContext, function (err, res1) {
-    if (err)
-      res.status(500).send({message: 'Could not add context'});
-    else {
-      res.status(200).send(res1);
-    }
-  });
+	var newContext = req.body;
+	newContext['application_id'] = req.body.appId;
+	Models.Context.create(newContext, function (err, res1) {
+		if (err)
+			res.status(500).send({message: 'Could not add context'});
+		else {
+			res.status(200).send(res1);
+		}
+	});
 });
 
 /**
@@ -262,13 +262,13 @@ router.post('/context/add', function (req, res) {
  * @apiParam {Number} id ID of the context to remove
  */
 router.post('/context/remove', function (req, res) {
-  Models.Context.delete(req.body.id, function (err, res1) {
-    if (err)
-      res.status(500).send({message: 'Could not remove context'});
-    else {
-      res.send(200);
-    }
-  });
+	Models.Context.delete(req.body.id, function (err, res1) {
+		if (err)
+			res.status(500).send({message: 'Could not remove context'});
+		else {
+			res.send(200);
+		}
+	});
 });
 
 /**
@@ -281,13 +281,13 @@ router.post('/context/remove', function (req, res) {
  * @apiParam {Number} id ID of the context to update
  */
 router.post('/context/update', function (req, res) {
-  Models.Context.update(req.body.id, req.body, function (err, res1, updatedContext) {
-    if (err)
-      res.status(500).send({message: 'Could not update context'});
-    else {
-      res.send(200);
-    }
-  });
+	Models.Context.update(req.body.id, req.body, function (err, res1, updatedContext) {
+		if (err)
+			res.status(500).send({message: 'Could not update context'});
+		else {
+			res.send(200);
+		}
+	});
 });
 
 /**
