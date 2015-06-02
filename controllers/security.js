@@ -21,30 +21,33 @@ security.createToken = function (data) {
  *
  */
 security.keyValidation = function (req, res, next) {
-	res.type('application/json');
-	if (req.get('Content-Type').substring(0, 16) !== 'application/json')
-		res.status(415).json({status: 415, message: "Request content type must pe application/json."}).end();
-	else if (req.get('X-BLGREQ-SIGN') === undefined)
-		res.status(401).json({status: 401, message: "Unauthorized. Required authorization header not present."}).end();
-	else if (req.get('X-BLGREQ-UDID') === undefined)
-		res.status(401).json({status: 401, message: "Unauthorized. Device identifier header not present."}).end();
-	else if (!req.get('X-BLGREQ-APPID'))
-		res.status(400).json({status: 400, message: "Requested App ID not found."}).end();
-	else {
-		var clientHash = req.get('X-BLGREQ-SIGN').toLowerCase();
-		var serverHash = null;
-		var apiKeys = app.applications[req.get('X-BLGREQ-APPID')].keys;
+  res.type('application/json');
+  if (req.get('Content-Type').substring(0, 16) !== 'application/json')
+    res.status(415).json({status: 415, message: "Request content type must pe application/json."}).end();
+  else if (req.get('X-BLGREQ-SIGN') === undefined)
+    res.status(401).json({status: 401, message: "Unauthorized. Required authorization header not present."}).end();
+  else if (req.get('X-BLGREQ-UDID') === undefined)
+    res.status(401).json({status: 401, message: "Unauthorized. Device identifier header not present."}).end();
+  else if (!req.get('X-BLGREQ-APPID'))
+    res.status(400).json({status: 400, message: "Requested App ID not found."}).end();
+  else {
+    var clientHash = req.get('X-BLGREQ-SIGN').toLowerCase();
+    var serverHash = null;
+    var apiKeys = app.applications[req.get('X-BLGREQ-APPID')].keys;
 
-		async.detect(apiKeys, function(item ,cb) {
-			serverHash = crypto.createHash('sha256').update(item).digest('hex').toLowerCase();
-			cb(serverHash === clientHash);
-		}, function(result) {
-			if (result)
-				next();
-			else
-				res.status(401).json({status: 401, message: "Unauthorized. API key is not valid."}).end();
-		});
-	}
+    async.detect(apiKeys, function(item ,cb) {
+      serverHash = crypto.createHash('sha256').update(item).digest('hex').toLowerCase();
+      cb(serverHash === clientHash);
+    }, function(result) {
+      if (result) {
+        req.body.appId = req.get('X-BLGREQ-APPID');
+        req.body.deviceUDID = req.get('X-BLGREQ-UDID');
+        next();
+      }
+      else
+        res.status(401).json({status: 401, message: "Unauthorized. API key is not valid."}).end();
+    });
+  }
 };
 
 security.corsValidation = function(req, res, next) {
