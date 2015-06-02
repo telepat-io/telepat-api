@@ -17,13 +17,13 @@ router.use(security.keyValidation);
 router.use('/logout', security.tokenValidation);
 
 /**
- * @api {post} /user/create Create
- * @apiDescription Creates a new user based on the access token from FB. This is accessed from a FB redirect.
- * @apiName UserCreate
+ * @api {post} /user/login Login
+ * @apiDescription Log in the user and create it if it doesn't exist in database.
+ * @apiName UserLogin
  * @apiGroup User
  * @apiVersion 0.0.1
  *
- * @apiParam {String} code FB access token.
+ * @apiParam {String} access_token Facebook access token.
  *
  */
 router.post('/login', function(req, res) {
@@ -33,6 +33,7 @@ router.post('/login', function(req, res) {
 	var userExists = null;
 
 	async.waterfall([
+		//Retrieve facebook information
 		function(callback) {
 			FB.napi('/me', {access_token: accessToken}, function(err, result) {
 				if (err) return callback(err);
@@ -41,6 +42,7 @@ router.post('/login', function(req, res) {
 			});
 		},
 		function(callback) {
+			//try and get user profile from DB
 			Models.User(userProfile.email, function(err, result) {
 				if (err && err.code == cb.errors.keyNotFound) {
 					userExists = false;
@@ -56,6 +58,7 @@ router.post('/login', function(req, res) {
 			});
 		},
 		function(callback) {
+			//get his/her friends
 			FB.napi('/me/friends', {access_token: accessToken}, function(err, result) {
 				if (err) return callback(err);
 
@@ -65,6 +68,7 @@ router.post('/login', function(req, res) {
 				callback();
 			});
 		},
+		//update user with deviceID if it already exists
 		function(callback) {
 			if (userExists) {
 				var devices = userProfile.devices;
@@ -80,6 +84,7 @@ router.post('/login', function(req, res) {
 			} else
 				callback(null, true);
 		},
+		//send message to kafka if user doesn't exist in order to create it
 		function(result, callback) {
 			if (userExists)
 				return callback(null, true);
@@ -105,6 +110,7 @@ router.post('/login', function(req, res) {
 				attributes: 0
 			}], callback);
 		},
+		//add this user to his/her friends array
 		function(result, callback) {
 			if (userExists)
 				return callback(null, true);
@@ -118,6 +124,7 @@ router.post('/login', function(req, res) {
 			} else
 				callback();
 		}
+		//final step: send authentification token
 	], function(err, results) {
 		console.log(err, results);
 		if (err)
@@ -129,6 +136,15 @@ router.post('/login', function(req, res) {
 	});
 });
 
+/**
+ * @api {post} /user/logout Logout
+ * @apiDescription Logs out the user removing the device from his array of devices.
+ * @apiName UserLogout
+ * @apiGroup User
+ * @apiVersion 0.0.1
+ *
+ * @apiError NotAuthenticated  Only authenticated users may access this endpoint.
+ */
 router.post('/logout', function(req, res, next) {
 	var deviceId = req.get('X-BLGREQ-UDID');
 	var email = req.user;
@@ -155,11 +171,22 @@ router.post('/logout', function(req, res, next) {
 	});
 });
 
+
+/**
+ * @api {post} /user/refresh_token Refresh Token
+ * @apiDescription Sends a new authentification token to the user. The old token must be provide (and it may or not
+ * may not be aleady expired.
+ * @apiName RefreshToken
+ * @apiGroup User
+ * @apiVersion 0.0.1
+ *
+ * @apiError NotAuthenticated  If authorization header is missing or invalid.
+ */
 router.post('/refresh_token', function(req, res, next) {
 	var oldToken = req.get('Authorization').split(' ')[1];
 	if (oldToken) {
 		var decoded = jwt.decode(oldToken);
-		var newToken = jwt.sign(decoded.email, security.authSecret, {expiresInMinutes: 60});
+		var newToken = jwt.sign(decoded, security.authSecret, {expiresInMinutes: 60});
 
 		return res.status(200).json({token: newToken}).end();
 	} else {

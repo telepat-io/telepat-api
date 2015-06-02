@@ -3,5 +3,9 @@
 	"host": "blg-couch.cloudapp.net",
 	"bucket": "default",
 	"stateBucket": "state"
+  },
+  "elasticsearch": {
+	"host": "10.32.0.7",
+	"port": 9200
   }
 }

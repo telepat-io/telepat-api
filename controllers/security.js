@@ -3,13 +3,17 @@ var crypto = require('crypto');
 var Models = require('octopus-models-api');
 var expressJwt = require('express-jwt');
 
-var security = {}
+ACL_UNAUTHENTICATED = 1;
+ACL_AUTHENTICATED = 2;
+ACL_ADMIN = 4;
+
+var security = {};
 
 security.authSecret = '835hoyubg#@$#2wfsda';
 
 security.createToken = function (data) {
-  return jwt.sign(data, this.authSecret, { expiresInMinutes: 60 });
-}
+	return jwt.sign(data, this.authSecret, { expiresInMinutes: 60 });
+};
 
 /**
  * This middleware makes sure that all required headers are set for a general purpose request. It also checks if the API key belongs to
@@ -47,69 +51,69 @@ security.keyValidation = function (req, res, next) {
 };
 
 security.corsValidation = function(req, res, next) {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, X-BLGREQ-SIGN, X-BLGREQ-APPID, X-BLGREQ-UDID");
-  if ('OPTIONS' == req.method) {
-    res.send(200);
-  }
-  else {
-    next();
-  }
-}
+	res.header("Access-Control-Allow-Origin", "*");
+	res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, X-BLGREQ-SIGN, X-BLGREQ-APPID, X-BLGREQ-UDID");
+	if ('OPTIONS' == req.method) {
+		res.send(200);
+	}
+	else {
+		next();
+	}
+};
 
 security.tokenValidation = function(req, res, next) {
-  return (expressJwt({secret: security.authSecret}))(req, res, next);
-}
+	return (expressJwt({secret: security.authSecret}))(req, res, next);
+};
 
 security.adminAppValidation = function (req, res, next) {
-  if (app.applications.hasOwnProperty(req.body.appId)) {
-    if (app.applications[req.body.appId].admin_id == req.user.email) {
-      next();
-    }
-    else {
-      res.status(400).send({message: 'Naughty'});
-    }
-  }
-  else {
-    res.status(400).send({message: 'What app?'});
-  }
-}
+	if (app.applications.hasOwnProperty(req.body.appId)) {
+		if (app.applications[req.body.appId].admin_id == req.user.email) {
+			next();
+		}
+		else {
+			res.status(400).send({message: 'Naughty'});
+		}
+	}
+	else {
+		res.status(400).send({message: 'What app?'});
+	}
+};
 
 security.objectACL = function (accessControl) {
-  return function(req, res, next) {
-    if (req.body.model) {
-      var acl = Models.Application.loadedAppModels[req.get('X-BLGREQ-APPID')][req.body.model][accessControl];
+	return function(req, res, next) {
+		if (req.body.model) {
+			var acl = Models.Application.loadedAppModels[req.get('X-BLGREQ-APPID')][req.body.model][accessControl];
 
-      if (!req.headers.authorization)
-        return res.status(401).json({message: "Authorization header is not present"}).end();
+			if (!req.headers.authorization)
+				return res.status(401).json({message: "Authorization header is not present"}).end();
 
-      if (acl & ACL_AUTHENTICATED || acl & ACL_ADMIN) {
-        var authHeaderParts = req.headers.authorization.split(' ');
-        var authToken = authHeaderParts[1];
+			if (acl & ACL_AUTHENTICATED || acl & ACL_ADMIN) {
+				var authHeaderParts = req.headers.authorization.split(' ');
+				var authToken = authHeaderParts[1];
 
-        if (authToken) {
-          jwt.verify(authToken, security.authSecret, function (err, decoded) {
-            if (err)
-              return res.status(401).json({message: "Invalid authorization: " + err.message}).end();
+				if (authToken) {
+					jwt.verify(authToken, security.authSecret, function (err, decoded) {
+						if (err)
+							return res.status(401).json({message: "Invalid authorization: " + err.message}).end();
 
-            if ((acl & ACL_ADMIN) && (!decoded.isAdmin) )
-              return res.status(403).json({message: "You don't have the necessary privilegies for this operation"}).end();
+						if ((acl & ACL_ADMIN) && (!decoded.isAdmin) )
+							return res.status(403).json({message: "You don't have the necessary privilegies for this operation"}).end();
 
-            req.user = decoded;
+						req.user = decoded;
 
-            next();
-          });
-        } else {
-          res.status(400).json({status: 400, message: 'Authorization header field is not formed well'}).end();
-        }
-      }
-      else if (acl & ACL_UNAUTHENTICATED) {
-        next();
-      } else {
-        res.status(403).json({message: "You don't have the necessary privilegies for this operation"}).end();
-      }
-    }
-  }
-}
+						next();
+					});
+				} else {
+					res.status(400).json({status: 400, message: 'Authorization header field is not formed well'}).end();
+				}
+			}
+			else if (acl & ACL_UNAUTHENTICATED) {
+				next();
+			} else {
+				res.status(403).json({message: "You don't have the necessary privilegies for this operation"}).end();
+			}
+		}
+	}
+};
 
 module.exports = security;

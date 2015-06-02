@@ -14,13 +14,13 @@ router.use(security.keyValidation);
  *
  */
 router.post('/all', function (req, res) {
-  Models.Context.getAll(req.body.appId, function (err, res1) {
-    if (err)
-      res.status(500).send({message: 'Could not get contexts'});
-    else {
-      res.json(res1);
-    }
-  });
+	Models.Context.getAll(req.body.appId, function (err, res1) {
+		if (err)
+			res.status(500).send({message: 'Could not get contexts'});
+		else {
+			res.json(res1);
+		}
+	});
 });
 
 /**
@@ -33,13 +33,13 @@ router.post('/all', function (req, res) {
  * @apiParam {Number} id ID of the context to get
  */
 router.post('/', function (req, res) {
-  Models.Context(req.body.id, function (err, res1) {
-    if (err)
-      res.status(500).send({message: 'Could not get context'});
-    else {
-      res.json(res1);
-    }
-  });
+	Models.Context(req.body.id, function (err, res1) {
+		if (err)
+			res.status(500).send({message: 'Could not get context'});
+		else {
+			res.json(res1);
+		}
+	});
 });
 
 module.exports = router;
