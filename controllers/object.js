@@ -35,18 +35,68 @@ router.use(['/count'], security.objectACL('meta_read_acl'));
  *
  * @apiParam {Number} id ID of the object (optional)
  * @apiParam {Number} context Context of the object
- * @apiParam {String} device_id ID of the device which is making the request
  * @apiParam {String} model The type of object to subscribe to
  * @apiParam {Object} filters Author or parent model filters by ID.
  *
- * @apiError NotAuthenticated  Only authenticated users may access this endpoint.
- * @apiError NotFound If <code>id</code> was supplied but object not found.
+ * @apiExample {json} Client Request
+ * {
+ * 		"id": 1,
+ * 		"context": 1,
+ * 		"model": "comment",
+ *		"filters": {
+ *			"user": 2,
+ *			"event_id": 1,
+ *			"query": {
+ *				"or": [
+ *					{
+ *					  "and": [
+ *						{
+ *						  "is": {
+ *							"gender": "male",
+ *							"age": 23
+ *						  }
+ *						},
+ *						{
+ *						  "range": {
+ *							"experience": {
+ *							  "gte": 1,
+ *							  "lte": 6
+ *							}
+ *						  }
+ *						}
+ *					  ]
+ *					},
+ *					{
+ *					  "and": [
+ *						{
+ *						  "like": {
+ *							"image_url": "png",
+ *							"website": "png"
+ *						  }
+ *						}
+ *					  ]
+ *					}
+ *				  ]
+ *			}
+ *		}
+ * }
+ *
+ *	@apiSuccessExample {json} Success Response
+ * 	{
+ * 		"1": {
+ * 			//item properties
+ * 		}
+ * 	}
+ *
+ * @apiError 402 NotAuthenticated  Only authenticated users may access this endpoint.
+ * @apiError 404 NotFound If <code>id</code> was supplied but object not found or device is not registered.
+ * @apiError 400 RequestedContextMissing If context id has been provided
  */
 router.post('/subscribe', function(req, res, next) {
 	var id = req.body.id;
 	var context = req.body.context;
 	var deviceId = req.get('X-BLGREQ-UDID');
-	var userId = req.user.id;
+	var userEmail = req.user.email;
 	var mdl = req.body.model;
 	var appId = req.get('X-BLGREQ-APPID');
 	var elasticQuery = false;
@@ -162,7 +212,7 @@ router.post('/subscribe', function(req, res, next) {
 					topic: 'track',
 					messages: [JSON.stringify({
 						op: 'sub',
-						object: {id: id, context: context, device_id: deviceId, user_id: userId, filters: filters},
+						object: {id: id, context: context, device_id: deviceId, user_id: userEmail, filters: filters},
 						applicationId: req.get('X-BLGREQ-APPID')
 					})],
 					attributes: 0
@@ -173,7 +223,7 @@ router.post('/subscribe', function(req, res, next) {
 				});
 			},
 			function(results, callback) {
-				Subscription.setObjectCount(appId, context, {model: mdl, id: id}, userId, filters.parent, filters.query, objectCount, function(err, result) {
+				Subscription.setObjectCount(appId, context, {model: mdl, id: id}, filters.user, filters.parent, filters.query, objectCount, function(err, result) {
 					callback(err, results);
 				});
 			}
@@ -205,17 +255,27 @@ router.post('/subscribe', function(req, res, next) {
  *
  * @apiParam {Number} id ID of the object (optional)
  * @apiParam {Number} context Context of the object
- * @apiParam {String} device_id ID of the device which is making the request
  * @apiParam {String} model The type of object to subscribe to
  * @apiParam {Object} filters Author or parent model filters by ID.
  *
- * @apiError NotAuthenticated  Only authenticated users may access this endpoint.
- * @apiError NotFound If <code>id</code> was supplied but object not found.
+ * @apiExample {json} Client Request
+ * {
+ * 		//exactly the same as with the subscribe method
+ * }
+ *
+ * @apiSuccessExample {json} Success Response
+ * 	{
+ * 		"status": 200,
+ * 		"message": "Subscription removed"
+ * 	}
+ *
+ * @apiError 402 NotAuthenticated  Only authenticated users may access this endpoint.
+ * @apiError 404 NotFound If subscription doesn't exist.
  */
 router.post('/unsubscribe', function(req, res, next) {
 	var id = req.body.id;
 	var context = req.body.context;
-	var deviceId = req.body.device_id;
+	var deviceId = req.get('X-BLGREQ-UDID');
 	var filters = req.body.filters;
 	var mdl = req.body.model;
 	var appId = req.get('X-BLGREQ-APPID');
@@ -270,6 +330,20 @@ router.post('/unsubscribe', function(req, res, next) {
  * @apiParam {String} model The type of object to subscribe to
  * @apiParam {Object} content Content of the object
  *
+ * @apiExample {json} Client Request
+ * {
+ * 		"model": "comment",
+ * 		"content": {
+ *			//object properties
+ * 		}
+ * }
+ *
+ * @apiSuccessExample {json} Success Response
+ * 	{
+ * 		"status": 201,
+ * 		"message": "Created"
+ * 	}
+ *
  * @apiError NotAuthenticated  Only authenticated users may access this endpoint.
  * @apiError NotFound If <code>id</code> was supplied but object not found.
  * @apiError PermissionDenied If the model requires other permissions other than the ones provided.
@@ -278,10 +352,10 @@ router.post('/create', function(req, res, next) {
 	var content = req.body.content;
 	var mdl = req.body.model;
 	var appId = req.get('X-BLGREQ-APPID');
+	var isAdmin = false;
 
 	content.type = mdl;
 	content.context_id = req.body.context;
-	content.user_id = req.user.id;
 
 	if (Models.Application.loadedAppModels[appId][mdl].belongs_to) {
 		var parentModel = Models.Application.loadedAppModels[appId][mdl].belongs_to[0].parentModel;
@@ -294,13 +368,30 @@ router.post('/create', function(req, res, next) {
 	}
 
 	async.series([
+		function(callback) {
+			if (req.user.isAdmin) {
+				Models.Admin(req.user.email, function(err, result) {
+					if (err) return callback(err);
+					content.user_id = result.id;
+					isAdmin = true;
+					callback();
+				});
+			} else {
+				Models.User(req.user.email, function(err, result) {
+					if (err) return callback(err);
+					content.user_id = result.id;
+					callback();
+				});
+			}
+		},
 		function(agg_callback) {
 			app.kafkaProducer.send([{
 				topic: 'aggregation',
 				messages: [JSON.stringify({
 					op: 'add',
 					object: content,
-					applicationId: appId
+					applicationId: appId,
+					isAdmin: isAdmin
 				})],
 				attributes: 0
 			}], function(err) {
@@ -314,7 +405,8 @@ router.post('/create', function(req, res, next) {
 				messages: [JSON.stringify({
 					op: 'add',
 					object: content,
-					applicationId: appId
+					applicationId: appId,
+					isAdmin: isAdmin
 				})],
 				attributes: 0
 			}], function(err) {
@@ -343,6 +435,27 @@ router.post('/create', function(req, res, next) {
  * @apiParam {Number} context Context of the object
  * @apiParam {String} model The type of object to subscribe to
  * @apiParam {Array} patch An array of patches that modifies the object
+ *
+ * @apiExample {json} Client Request
+ * {
+ * 		"model": "comment",
+ * 		"id": 1,
+ * 		"context": 1,
+ * 		"patch": [
+ * 			{
+ * 				"op": "replace",
+ * 				"path": "text",
+ * 				"value": "some edited text"
+ * 			},
+ * 			...
+ * 		],
+ * }
+ *
+ * @apiSuccessExample {json} Success Response
+ * 	{
+ * 		"status": 201,
+ * 		"message": "Created"
+ * 	}
  *
  * @apiError NotAuthenticated  Only authenticated users may access this endpoint.
  * @apiError NotFound If <code>id</code> was supplied but object not found.
@@ -415,7 +528,14 @@ router.post('/update', function(req, res, next) {
  *
  * @apiParam {Number} id ID of the object (optional)
  * @apiParam {Number} context Context of the object
- * @apiParam {String} model The type of object to subscribe to
+ * @apiParam {String} model The type of object to delete
+ *
+ * @apiExample {json} Client Request
+ * {
+ * 		"model": "comment",
+ * 		"id": 1,
+ * 		"context": 1
+ * }
  *
  * @apiError NotAuthenticated  Only authenticated users may access this endpoint.
  * @apiError NotFound If <code>id</code> was supplied but object not found.
@@ -475,7 +595,7 @@ router.post('/count', function(req, res, next) {
 	var appId = req.get('X-BLGREQ-APPID'),
 		context = req.body.context_id,
 		channel = {model: req.body.model, id: req.body.id},
-		user_id = req.body.user_id,
+		user_id = req.user.id,
 		parent = req.parent;
 
 	Models.Subscription.getObjectCount(appId, context, channel, user_id, parent, function(err, result) {

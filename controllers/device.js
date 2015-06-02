@@ -13,7 +13,48 @@ router.use(security.keyValidation);
  * @apiGroup Device
  * @apiVersion 0.0.1
  *
- * @apiError NotAuthenticated  Only authenticated users may access this endpoint.
+ * @apiExample {json} Register new device
+ * {
+ * 		"info": {
+ * 			"os": "Android",
+ * 			"version": "4.4.3",
+ * 			"sdk_level": 19,
+ * 			"manufacturer": "HTC",
+ * 			"model": "HTC One_M8"
+ * 		}
+ * 		"persistent": {
+ *   		"type": "android",
+ *   		"token": "android pn token"
+ * 		}
+ * }
+ *
+ * @apiExample {json} Update existing device
+ * {
+ * 		"info": {
+ * 			"os": "Android",
+ * 			"version": "5.0.1",
+ * 			"sdk_level": 20,
+ * 			"manufacturer": "HTC",
+ * 			"model": "HTC One_M8"
+ * 		}
+ * 		"persistent": {
+ *   		"type": "android",
+ *   		"token": "android pn token"
+ * 		}
+ * }
+ *
+ * 	@apiSuccessExample {json} 'Created' Response
+ * 	{
+ * 		"status": 200,
+ * 		"identifier": "2397bfc7-a3b3-47c0-b677-a4a2eee036e4"
+ * 	}
+ *
+ * 	@apiSuccessExample {json} 'Updated' Response
+ * 	{
+ * 		"status": 200,
+ * 		"message": "Device has been updated"
+ * 	}
+ *
  */
 router.post('/register', function(req, res, next) {
 	if (req.get('X-BLGREQ-UDID') == '') {

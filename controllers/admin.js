@@ -25,7 +25,7 @@ router.use(['/apps/remove', 'apps/update'], security.adminAppValidation);
 
 /**
  * @api {post} /admin/login Authenticate
- * @apiDescription Authenticates an admin
+ * @apiDescription Authenticates an admin and returns the authorization token
  * @apiName AdminAuthenticate
  * @apiGroup Admin
  * @apiVersion 0.0.1
@@ -33,7 +33,23 @@ router.use(['/apps/remove', 'apps/update'], security.adminAppValidation);
  * @apiParam {String} email Email of admin
  * @apiParam {String} password Password of admin
  *
+ * @apiExample {json} Client Request
+ * 	{
+ * 		email: "email@example.com",
+ * 		password: "5f4dcc3b5aa765d61d8327deb882cf99"
+ * 	}
+ *
+ * 	@apiSuccessExample {json} Success Response
+ * 	{
+ * 		token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImdhYmlAYXBwc2NlbmQuY29tIiwiaXNBZG1pbiI6dHJ1ZSwiaWF0IjoxNDMyOTA2ODQwLCJleHAiOjE0MzI5MTA0NDB9.knhPevsK4cWewnx0LpSLrMg3Tk_OpchKu6it7FK9C2Q"
+ * 	}
+ *
  * @apiError Unauthorized If the provided email and password are not correct
+ * @apiErrorExample {json} Error Response
+ * 	{
+ * 		status: 401,
+ * 		message: "Wrong user or password"
+ * 	}
  */
 router.post('/login', function (req, res, next) {
 	Models.Admin(req.body.email, function(err, admin) {
@@ -42,7 +58,7 @@ router.post('/login', function (req, res, next) {
 		}
 
 		if (req.body.password == admin.password) {
-			res.json({ token: security.createToken({email: req.body.email, isAdmin: true}) });
+			res.json({ token: security.createToken({email: req.body.email, isAdmin: true})});
 		}
 		else {
 			res.status(401).json({status: 401, message: 'Wrong user or password'});
@@ -60,8 +76,20 @@ router.post('/login', function (req, res, next) {
  *
  * @apiParam {String} email Admin e-mail
  * @apiParam {String} password The password
- * @apiParam {String} name The name
+ * @apiParam {String} name Real name of the admin
  *
+ * @apiExample {json} Client Request
+ * 	{
+ * 		email: "email@example.com",
+ * 		password: "5f4dcc3b5aa765d61d8327deb882cf99",
+ * 		name: "General Specific"
+ * 	}
+ *
+ * @apiError (500) Error Admin account with that email address already exists or internal server error.
+ * @apiErrorExample {json} Error Response
+ * 	{
+ * 		message: "Error adding account"
+ * 	}
  */
 router.post('/add', function (req, res) {
 	Models.Admin.create(req.body.email, { email: req.body.email, password: req.body.password, name: req.body.name }, function (err, result) {
@@ -79,9 +107,17 @@ router.post('/add', function (req, res) {
  * @apiGroup Admin
  * @apiVersion 0.0.1
  *
+ * @apiSuccessExample {json} Success Response
+ * 	{
+ * 		  "id": 3,
+ * 		  "email": "email@example.com",
+ * 		  "password": "5f4dcc3b5aa765d61d8327deb882cf99",
+ * 		  "name": "General Specific",
+ * 		  "isAdmin": true
+ * 	}
  */
 router.post('/me', function (req, res) {
-	res.json(req.user);
+	res.json(req.user).end();
 });
 
 /**
@@ -90,6 +126,19 @@ router.post('/me', function (req, res) {
  * @apiName AdminUpdate
  * @apiGroup Admin
  * @apiVersion 0.0.1
+ *
+ * @apiExample {json} Client Request
+ * 	{
+ * 		email: "email@example.com",
+ * 		password: "d1e6b0b6b76039c9c42541f2da5891fa"
+ * 	}
+ *
+ * 	@apiError (500) Error Admin account with that e-mail address doesn't exist or internal server error.
+ *
+ * 	@apiErrorExample {json} Error Response
+ * 	{
+ * 		message: "Error description"
+ * 	}
  *
  */
 router.post('/update', function (req, res) {
@@ -107,6 +156,20 @@ router.post('/update', function (req, res) {
  * @apiName AdminApps
  * @apiGroup Admin
  * @apiVersion 0.0.1
+ *
+ * @apiSuccessExample {json} Success Response
+ * 	{
+ * 		"20": {
+ * 			 "admin_id": "email@example.com",
+ *			 "icon": "fa-bullhorn",
+ *			 "name": "The Voice",
+ *			 "type": "application",
+ *			 "keys": [
+ *			 	"3406870085495689e34d878f09faf52c"
+ *			 ]
+ * 		},
+ * 		...
+ * 	}
  *
  */
 router.post('/apps', function (req, res) {
@@ -131,6 +194,35 @@ router.post('/apps', function (req, res) {
  * @apiName AdminAppAdd
  * @apiGroup Admin
  * @apiVersion 0.0.1
+ *
+ * @apiExample {json} Client Request
+ * 	{
+ * 		"icon": "fa-bullhorn",
+ *		"name": "The Voice",
+ *		"keys": [
+ *			"3406870085495689e34d878f09faf52c"
+ *		]
+ * 	}
+ *
+ * @apiSuccessExample {json} Success Response
+ * 	{
+ * 		"20": {
+ * 			 "admin_id": "email@example.com",
+ *			 "icon": "fa-bullhorn",
+ *			 "name": "The Voice",
+ *			 "type": "application",
+ *			 "keys": [
+ *			 	"3406870085495689e34d878f09faf52c"
+ *			 ]
+ * 		}
+ * 	}
+ *
+ * 	@apiError (500) Error Internal server error.
+ *
+ * 	@apiErrorExample {json} Error Response
+ * 	{
+ * 		message: "Could not add app"
+ * 	}
  *
  */
 router.post('/app/add', function (req, res) {
@@ -161,6 +253,18 @@ router.post('/app/add', function (req, res) {
  *
  * @apiParam {Number} appId The ID of the app to remove
  *
+ * @apiExample {json} Client Request
+ * 	{
+ * 		"appId": 20
+ * 	}
+ *
+ * 	@apiError (500) Error Application with that ID doesn't exist or internal server error.
+ *
+ * 	@apiErrorExample {json} Error Response
+ * 	{
+ * 		message: "Could not remove app"
+ * 	}
+ *
  */
 router.post('/app/remove', function (req, res) {
 	Models.Application.delete(req.body.appId, function (err, res1) {
@@ -182,6 +286,19 @@ router.post('/app/remove', function (req, res) {
  *
  * @apiParam {Number} appId ID of the app to update
  *
+ * @apiExample {json} Client Request
+ * 	{
+ * 		"appId": 20,
+ * 		"name": "New name"
+ * 	}
+ *
+ * 	@apiError (500) Error Application with that ID doesn't exist or internal server error.
+ *
+ * 	@apiErrorExample {json} Error Response
+ * 	{
+ * 		message: "Could not update app"
+ * 	}
+ *
  */
 router.post('/app/update', function (req, res) {
 	Models.Application.update(req.body.appId, req.body, function (err, res1, updatedApp) {
@@ -200,6 +317,25 @@ router.post('/app/update', function (req, res) {
  * @apiName AdminGetContexts
  * @apiGroup Admin
  * @apiVersion 0.0.1
+ *
+ * @apiSuccessExample {json} Success Response
+ * 	{
+ * 		"1": {
+ * 			"name": "Episode 1",
+ * 			"state": 0,
+ * 			"meta": {},
+ * 			"type": "context",
+ * 			"application_id": "20"
+ * 		},
+ * 		...
+ * 	}
+ *
+ * 	@apiError (500) Error Internal server error.
+ *
+ * 	@apiErrorExample {json} Error Response
+ * 	{
+ * 		message: "Could not get contexts"
+ * 	}
  *
  */
 router.post('/contexts', function (req, res) {
@@ -220,6 +356,30 @@ router.post('/contexts', function (req, res) {
  * @apiVersion 0.0.1
  *
  * @apiParam {Number} id ID of the context to get
+ *
+ * @apiExample {json} Client Request
+ * 	{
+ * 		"id": 1
+ * 	}
+ *
+ * 	@apiSuccessExample {json} Success Response
+ * 	{
+ * 		"1": {
+ * 			"name": "Episode 1",
+ * 			"state": 0,
+ * 			"meta": {},
+ * 			"type": "context",
+ * 			"application_id": "20"
+ * 		}
+ * 	}
+ *
+ * 	@apiError (500) Error Internal server error.
+ *
+ * 	@apiErrorExample {json} Error Response
+ * 	{
+ * 		message: "Could not get context"
+ * 	}
+ *
  */
 router.post('/context', function (req, res) {
 	Models.Context(req.body.id, function (err, res1) {
@@ -239,6 +399,32 @@ router.post('/context', function (req, res) {
  * @apiVersion 0.0.1
  *
  * @apiParam {Number} appId ID of the application
+ *
+ * @apiExample {json} Client Request
+ * 	{
+ * 		"name": "Episode 2",
+ * 		"meta": {"info": "some meta info"},
+ * 		"appId": 20
+ * 	}
+ *
+ * 	@apiSuccessExample {json} Success Response
+ * 	{
+ * 		"2": {
+ * 			"name": "Episode 2",
+ * 			"state": 0,
+ * 			"meta": {"info": "some meta info"},
+ * 			"type": "context",
+ * 			"application_id": "20"
+ * 		}
+ * 	}
+ *
+ * 	@apiError (500) Error Internal server error.
+ *
+ * 	@apiErrorExample {json} Error Response
+ * 	{
+ * 		message: "Could not add context"
+ * 	}
+ *
  */
 router.post('/context/add', function (req, res) {
 	var newContext = req.body;
@@ -260,6 +446,19 @@ router.post('/context/add', function (req, res) {
  * @apiVersion 0.0.1
  *
  * @apiParam {Number} id ID of the context to remove
+ *
+ * @apiExample {json} Client Request
+ * 	{
+ * 		"id": 1
+ * 	}
+ *
+ * 	@apiError (500) Error Context not found or internal server error.
+ *
+ * 	@apiErrorExample {json} Error Response
+ * 	{
+ * 		message: "Could not remove context"
+ * 	}
+ *
  */
 router.post('/context/remove', function (req, res) {
 	Models.Context.delete(req.body.id, function (err, res1) {
@@ -279,6 +478,20 @@ router.post('/context/remove', function (req, res) {
  * @apiVersion 0.0.1
  *
  * @apiParam {Number} id ID of the context to update
+ *
+ * @apiExample {json} Client Request
+ * 	{
+ * 		"id": 1,
+ * 		"name": "new name"
+ * 	}
+ *
+ * 	@apiError (500) Error Context not found or internal server error.
+ *
+ * 	@apiErrorExample {json} Error Response
+ * 	{
+ * 		message: "Could not update context"
+ * 	}
+ *
  */
 router.post('/context/update', function (req, res) {
 	Models.Context.update(req.body.id, req.body, function (err, res1, updatedContext) {
@@ -298,6 +511,31 @@ router.post('/context/update', function (req, res) {
  * @apiVersion 0.0.1
  *
  * @apiParam {Number} appId ID of the app from which to get the context
+ *
+ * @apiExample {json} Client Request
+ * 	{
+ * 		"appId": 20
+ * 	}
+ *
+ * 	@apiSuccessExample {json} Success Response
+ * 	{
+ * 		"answer": {
+ *   		"namespace": "answers",
+ *   		"type": "answer",
+ *   		"properties": {},
+ *   		"belongsTo": [
+ *     			{
+ *       			"parentModel": "event",
+ *       			"relationType": "hasSome"
+ *     			}
+ *   		],
+ *   		"read_acl": 6,
+ *   		"write_acl": 6,
+ *   		"meta_read_acl": 6
+ * 		},
+ * 		...
+ * 	}
+ *
  */
 router.post('/schemas', function(req, res, next) {
 	var appId = req.body.appId;
@@ -319,9 +557,15 @@ router.post('/schemas', function(req, res, next) {
  * @apiVersion 0.0.1
  *
  * @apiParam {Number} appId ID of the app of the schema to update
- * @apiParam {Object} props Model properties
+ * @apiParam {Object} props Updated schema object
  *
- * @apiError NotFound If the App ID doesn't exist
+ * @apiExample {json} Client Request
+ * 	{
+ * 		"appId": 20,
+ * 		"schema": "see example at /schemas"
+ * 	}
+ *
+ * @apiError 404 NotFound If the App ID doesn't exist
  */
 router.post('/schema/update', function(req, res, next) {
 	var appId = req.body.appId;

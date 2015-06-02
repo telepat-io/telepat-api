@@ -96,7 +96,7 @@ security.objectACL = function (accessControl) {
 						if ((acl & ACL_ADMIN) && (!decoded.isAdmin) )
 							return res.status(403).json({message: "You don't have the necessary privilegies for this operation"}).end();
 
-						req.user = decoded;
+						req.user = JSON.parse(decoded);
 
 						next();
 					});

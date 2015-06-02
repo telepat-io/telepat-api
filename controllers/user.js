@@ -25,6 +25,16 @@ router.use('/logout', security.tokenValidation);
  *
  * @apiParam {String} access_token Facebook access token.
  *
+ * @apiExample {json} Client Request
+ * 	{
+ * 		"access_token": "fb access token"
+ * 	}
+ *
+ * 	@apiSuccessExample {json} Success Response
+ * 	{
+ * 		token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImdhYmlAYXBwc2NlbmQuY29tIiwiaXNBZG1pbiI6dHJ1ZSwiaWF0IjoxNDMyOTA2ODQwLCJleHAiOjE0MzI5MTA0NDB9.knhPevsK4cWewnx0LpSLrMg3Tk_OpchKu6it7FK9C2Q"
+ * 	}
+ *
  */
 router.post('/login', function(req, res) {
 	var accessToken = req.body.access_token;
@@ -126,11 +136,10 @@ router.post('/login', function(req, res) {
 		}
 		//final step: send authentification token
 	], function(err, results) {
-		console.log(err, results);
 		if (err)
 			res.status(400).json(err).end();
 		else {
-			var token = jwt.sign(userProfile.email, security.authSecret, { expiresInMinutes: 60 });
+			var token = jwt.sign({email: userProfile.email}, security.authSecret, { expiresInMinutes: 60 });
 			res.json({ token: token }).end();
 		}
 	});
@@ -142,6 +151,12 @@ router.post('/login', function(req, res) {
  * @apiName UserLogout
  * @apiGroup User
  * @apiVersion 0.0.1
+ *
+ * 	@apiSuccessExample {json} Success Response
+ * 	{
+ * 		"status": 200,
+ * 		"message": "Logged out of device"
+ * 	}
  *
  * @apiError NotAuthenticated  Only authenticated users may access this endpoint.
  */
@@ -167,7 +182,7 @@ router.post('/logout', function(req, res, next) {
 	], function(err, result) {
 		if (err) return next(err);
 
-		res.status(200).json({message: "Logged out of device"});
+		res.status(200).json({status: 200, message: "Logged out of device"}).end();
 	});
 });
 
@@ -180,7 +195,18 @@ router.post('/logout', function(req, res, next) {
  * @apiGroup User
  * @apiVersion 0.0.1
  *
+ * @apiSuccessExample {json} Success Response
+ * 	{
+ * 		token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImdhYmlAYXBwc2NlbmQuY29tIiwiaXNBZG1pbiI6dHJ1ZSwiaWF0IjoxNDMyOTA2ODQwLCJleHAiOjE0MzI5MTA0NDB9.knhPevsK4cWewnx0LpSLrMg3Tk_OpchKu6it7FK9C2Q"
+ * 	}
+ *
  * @apiError NotAuthenticated  If authorization header is missing or invalid.
+ *
+ * @apiErrorExample {json} Error Response
+ * 	{
+ * 		status: 401,
+ * 		message: "Token not present or authorization header is invalid"
+ * 	}
  */
 router.post('/refresh_token', function(req, res, next) {
 	var oldToken = req.get('Authorization').split(' ')[1];
