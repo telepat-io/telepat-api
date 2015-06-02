@@ -35,8 +35,11 @@ security.keyValidation = function (req, res, next) {
       serverHash = crypto.createHash('sha256').update(item).digest('hex').toLowerCase();
       cb(serverHash === clientHash);
     }, function(result) {
-      if (result)
+      if (result) {
+        req.body.appId = req.get('X-BLGREQ-APPID');
+        req.body.deviceUDID = req.get('X-BLGREQ-UDID');
         next();
+      }
       else
         res.status(401).json({status: 401, message: "Unauthorized. API key is not valid."}).end();
     });

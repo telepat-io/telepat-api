@@ -8,7 +8,7 @@ var Models = require('octopus-models-api');
 router.use(security.keyValidation);
 
 router.post('/register', function(req, res, next) {
-  if (req.get('X-BLGREQ-UDID') == '') {
+  if (req.body.deviceUDID == '') {
     req.body.id = uuid.v4();
 
     Models.Subscription.addDevice(req.body, function(err, result) {
@@ -19,7 +19,7 @@ router.post('/register', function(req, res, next) {
       next(err);
     });
   } else {
-    req.body.id = req.get('X-BLGREQ-UDID');
+    req.body.id = req.body.deviceUDID;
 
     Models.Subscription.updateDevice(req.body, function(err, result) {
       if (err) return next(err);
