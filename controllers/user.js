@@ -163,7 +163,8 @@ router.post('/login', function(req, res) {
  */
 router.post('/logout', function(req, res, next) {
 	var deviceId = req._telepat.device_id;
-	var email = req.user;
+	var email = req.user.email;
+	console.log(req);
 
 	async.waterfall([
 		function(callback) {
