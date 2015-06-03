@@ -40,9 +40,15 @@ router.use(['/count'], security.objectACL('meta_read_acl'));
  *
  * @apiExample {json} Client Request
  * {
- * 		"id": 1,
- * 		"context": 1,
- * 		"model": "comment",
+ * 		"channel": {
+ * 			"id": 1,
+ * 			"context": 1,
+ *			"model": "comment",
+ *			"parent": {
+ *				"id": 1,
+ *				"model": "event"
+ *			}
+ * 		}
  *		"filters": {
  *			"user": 2,
  *			"event_id": 1,
@@ -93,16 +99,19 @@ router.use(['/count'], security.objectACL('meta_read_acl'));
  * @apiError 400 RequestedContextMissing If context id has been provided
  */
 router.post('/subscribe', function(req, res, next) {
-	var id = req.body.id;
-	var context = req.body.context;
-	var deviceId = req._telepat.device_id;
-	var userEmail = req.user.email;
-	var mdl = req.body.model;
-	var appId = req._telepat.application_id;
-	var elasticQuery = false;
-	var elasticQueryResult = null;
-
-	var filters = req.body.filters;
+	var channel = req.body.channel,
+		id = channel.id,
+		context = channel.context,
+		mdl = channel.model,
+		parent = channel.parent,// eg: {model: "event", id: 1}
+		user = channel.user,
+		filters = req.body.filters,
+		q = filters ? filters.query : undefined,
+		userEmail = req.user.email,
+		deviceId = req._telepat.device_id,
+		appId = req._telepat.application_id,
+		elasticQuery = false,
+		elasticQueryResult = null;
 
 	if (!context)
 		res.status(400).json({status: 400, message: "Requested context is not provided."}).end();
@@ -128,21 +137,12 @@ router.post('/subscribe', function(req, res, next) {
 			},
 			//finally, add subscription
 			function(result, callback) {
-				var parent = {};
-				var user = null;
-				if (filters && filters.parent) {
-					parent.model = Models.Application.loadedAppModels[appId][filters.parent.name].namespace;
-					parent.id = filters.parent.id;
-				}
-				if (filters && filters.user)
-					user = filters.user;
-
-				Models.Subscription.add(appId, context, deviceId, {model: Models.Application.loadedAppModels[appId][mdl].namespace, id: id}, user, parent, filters.query,  callback);
+				Models.Subscription.add(appId, context, deviceId, {model: Models.Application.loadedAppModels[appId][mdl].namespace, id: id}, user, parent, q,  callback);
 			},
 			function(result, callback) {
 				if(!id) {
 					if (filters) {
-						if (filters.query) {
+						if (q) {
 							elasticQuery = true;
 							var elasticSearchQuery = {
 								query: {
@@ -159,7 +159,7 @@ router.post('/subscribe', function(req, res, next) {
 								}
 							};
 
-							elasticSearchQuery.query.filtered.filter = Models.utils.parseQueryObject(filters.query);
+							elasticSearchQuery.query.filtered.filter = Models.utils.parseQueryObject(q);
 							app.get('elastic-db').client.search({
 								index: 'default',
 								type: 'couchbaseDocument',
@@ -171,12 +171,9 @@ router.post('/subscribe', function(req, res, next) {
 							});
 
 						} else {
-							for (var rel in Models.Application.loadedAppModels[appId][mdl].belongsTo) {
-								var parentModelId = filters[Models.Application.loadedAppModels[appId][mdl].belongsTo[rel].parentModel+'_id'];
-								if (parentModelId !== undefined) {
-									var parentModel = Models.Application.loadedAppModels[appId][mdl].belongsTo[rel].parentModel;
-
-									Models.Model.lookup(mdl, appId, context, filters.user, {model: parentModel, id: parentModelId}, function(err, results) {
+							if (Models.Application.loadedAppModels[appId][mdl].belongsTo) {
+								if (Models.Application.loadedAppModels[appId][mdl].belongsTo[0].parentModel !== parent.model) {
+									Models.Model.lookup(mdl, appId, context, user, parent, function(err, results) {
 										if (!results) {
 											callback(err, results);
 										} else {
@@ -212,7 +209,7 @@ router.post('/subscribe', function(req, res, next) {
 					topic: 'track',
 					messages: [JSON.stringify({
 						op: 'sub',
-						object: {id: id, context: context, device_id: deviceId, user_id: userEmail, filters: filters},
+						object: {device_id: deviceId, user_id: userEmail, channel: channel, filters: filters},
 						applicationId: appId
 					})],
 					attributes: 0
@@ -223,7 +220,7 @@ router.post('/subscribe', function(req, res, next) {
 				});
 			},
 			function(results, callback) {
-				Subscription.setObjectCount(appId, context, {model: mdl, id: id}, filters.user, filters.parent, filters.query, objectCount, function(err, result) {
+				Subscription.setObjectCount(appId, context, {model: mdl, id: id}, user, parent, q, objectCount, function(err, result) {
 					callback(err, results);
 				});
 			}

@@ -98,10 +98,10 @@ security.objectACL = function (accessControl) {
 						if (err)
 							return res.status(401).json({message: "Invalid authorization: " + err.message}).end();
 
-						if ((acl & ACL_ADMIN) && (!decoded.isAdmin) )
+						if ((!(acl & ACL_UNAUTHENTICATED)) && (!(acl & ACL_AUTHENTICATED)) &&  (acl & ACL_ADMIN) && (!decoded.isAdmin) )
 							return res.status(403).json({message: "You don't have the necessary privilegies for this operation"}).end();
 
-						req.user = JSON.parse(decoded);
+						req.user = decoded;
 
 						next();
 					});
