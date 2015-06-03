@@ -41,6 +41,7 @@ router.post('/login', function(req, res) {
 	var fbFriends = [];
 	var userProfile = {};
 	var userExists = null;
+	var deviceId = req._telepat.device_id;
 
 	async.waterfall([
 		//Retrieve facebook information
@@ -83,11 +84,11 @@ router.post('/login', function(req, res) {
 			if (userExists) {
 				var devices = userProfile.devices;
 				if (devices) {
-					var idx = devices.indexOf(req.get('X-BLGREQ-UDID'));
+					var idx = devices.indexOf(deviceId);
 					if (idx === -1)
-						devices.push(req.get('X-BLGREQ-UDID'));
+						devices.push(deviceId);
 				} else {
-					devices = [req.get('X-BLGREQ-UDID')];
+					devices = [deviceId];
 				}
 
 				Models.User.update(userProfile.email, {devices: devices}, callback);
@@ -105,7 +106,7 @@ router.post('/login', function(req, res) {
 				name: userProfile.name,
 				gender: userProfile.gender,
 				friends: fbFriends,
-				device: req.get('X-BLGREQ-UDID')
+				device: deviceId
 			};
 
 			props.type = 'user';
@@ -115,7 +116,7 @@ router.post('/login', function(req, res) {
 				messages: [JSON.stringify({
 					op: 'add',
 					object: props,
-					applicationId: req.get('X-BLGREQ-APPID')
+					applicationId: req._telepat.application_id
 				})],
 				attributes: 0
 			}], callback);
@@ -161,7 +162,7 @@ router.post('/login', function(req, res) {
  * @apiError NotAuthenticated  Only authenticated users may access this endpoint.
  */
 router.post('/logout', function(req, res, next) {
-	var deviceId = req.get('X-BLGREQ-UDID');
+	var deviceId = req._telepat.device_id;
 	var email = req.user;
 
 	async.waterfall([
@@ -248,7 +249,7 @@ router.post('/update', function(req, res, next) {
 			op: 'edit',
 			object: patches,
 			id: id,
-			applicationId: req.get('X-BLGREQ-APPID'),
+			applicationId: req._telepat.application_id,
 			user: true
 		})],
 		attributes: 0
@@ -280,7 +281,7 @@ router.post('/delete', function(req, res, next) {
 		message: [JSON.stringify({
 			op: 'delete',
 			object: {id: id, email: email},
-			applicationId: req.get('X-BLGREQ-APPID'),
+			applicationId: req._telepat.application_id,
 			user: true
 		})],
 		attributes: 0

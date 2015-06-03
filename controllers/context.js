@@ -6,7 +6,7 @@ var security = require('./security');
 router.use(security.keyValidation);
 
 /**
- * @api {post} /context/all GetContexts
+ * @api {get} /context/all GetContexts
  * @apiDescription Get all contexsts
  * @apiName GetContexts
  * @apiGroup Context
@@ -32,8 +32,8 @@ router.use(security.keyValidation);
  * 	}
  *
  */
-router.post('/all', function (req, res) {
-	var appId = req.get('X-BLGREQ-APPID');
+router.get('/all', function (req, res) {
+	var appId = req._telepat.application_id;
 
 	Models.Context.getAll(appId, function (err, res1) {
 		if (err)

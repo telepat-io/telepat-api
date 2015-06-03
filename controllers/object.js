@@ -16,8 +16,8 @@ router.use(function(req, res, next) {
 		Models.Application.loadedAppModels = {};
 	}
 
-	if (!Models.Application.loadedAppModels[req.get('X-BLGREQ-APPID')]) {
-		Models.Application.loadAppModels(req.get('X-BLGREQ-APPID'), next);
+	if (!Models.Application.loadedAppModels[req._telepat.application_id]) {
+		Models.Application.loadAppModels(req._telepat.application_id, next);
 	} else
 		next();
 });
@@ -95,10 +95,10 @@ router.use(['/count'], security.objectACL('meta_read_acl'));
 router.post('/subscribe', function(req, res, next) {
 	var id = req.body.id;
 	var context = req.body.context;
-	var deviceId = req.get('X-BLGREQ-UDID');
+	var deviceId = req._telepat.device_id;
 	var userEmail = req.user.email;
 	var mdl = req.body.model;
-	var appId = req.get('X-BLGREQ-APPID');
+	var appId = req._telepat.application_id;
 	var elasticQuery = false;
 	var elasticQueryResult = null;
 
@@ -213,7 +213,7 @@ router.post('/subscribe', function(req, res, next) {
 					messages: [JSON.stringify({
 						op: 'sub',
 						object: {id: id, context: context, device_id: deviceId, user_id: userEmail, filters: filters},
-						applicationId: req.get('X-BLGREQ-APPID')
+						applicationId: appId
 					})],
 					attributes: 0
 				}], function(err, data) {
@@ -275,10 +275,10 @@ router.post('/subscribe', function(req, res, next) {
 router.post('/unsubscribe', function(req, res, next) {
 	var id = req.body.id;
 	var context = req.body.context;
-	var deviceId = req.get('X-BLGREQ-UDID');
+	var deviceId = req._telepat.device_id;
 	var filters = req.body.filters;
 	var mdl = req.body.model;
-	var appId = req.get('X-BLGREQ-APPID');
+	var appId = req._telepat.application_id;
 
 	if (!context)
 		res.status(400).json({status: 400, message: "Requested context is not provided."}).end();
@@ -303,7 +303,7 @@ router.post('/unsubscribe', function(req, res, next) {
 					messages: [JSON.stringify({
 						op: 'unsub',
 						object: {id: id, context: context, device_id: deviceId, filters: filters},
-						applicationId: req.get('X-BLGREQ-APPID')
+						applicationId: appId
 					})],
 					attributes: 0
 				}], function(err, data) {
@@ -351,7 +351,7 @@ router.post('/unsubscribe', function(req, res, next) {
 router.post('/create', function(req, res, next) {
 	var content = req.body.content;
 	var mdl = req.body.model;
-	var appId = req.get('X-BLGREQ-APPID');
+	var appId = req._telepat.application_id;
 	var isAdmin = false;
 
 	content.type = mdl;
@@ -466,6 +466,7 @@ router.post('/update', function(req, res, next) {
 	var patch = req.body.patch;
 	var id = req.body.id;
 	var mdl = req.body.model;
+	var appId = req._telepat.application_id;
 
 	if (! (patch instanceof Array)) {
 		var error = new Error('Patch must be an array');
@@ -484,7 +485,7 @@ router.post('/update', function(req, res, next) {
 					context: context,
 					object: patch,
 					type: mdl,
-					applicationId: req.get('X-BLGREQ-APPID')
+					applicationId: appId
 				})],
 				attributes: 0
 			}], function(err) {
@@ -501,7 +502,7 @@ router.post('/update', function(req, res, next) {
 					context: context,
 					object: patch,
 					type: mdl,
-					applicationId: req.get('X-BLGREQ-APPID')
+					applicationId: appId
 				})],
 				attributes: 0
 			}], function(err) {
@@ -545,6 +546,7 @@ router.post('/delete', function(req, res, next) {
 	var id = req.body.id;
 	var context = req.body.context;
 	var mdl = req.body.model;
+	var appId = req._telepat.application_id;
 
 	async.series([
 		function(agg_callback) {
@@ -553,7 +555,7 @@ router.post('/delete', function(req, res, next) {
 				messages: [JSON.stringify({
 					op: 'delete',
 					object: {id: id, type: mdl, context: context},
-					applicationId: req.get('X-BLGREQ-APPID')
+					applicationId: appId
 				})],
 				attributes: 0
 			}], agg_callback);
@@ -564,7 +566,7 @@ router.post('/delete', function(req, res, next) {
 				messages: [JSON.stringify({
 					op: 'delete',
 					object: {op: 'remove', path: mdl+'/'+id},
-					applicationId: req.get('X-BLGREQ-APPID')
+					applicationId: appId
 				})],
 				attributes: 0
 			}], track_callback);
@@ -592,7 +594,7 @@ router.post('/delete', function(req, res, next) {
  * @apiError PermissionDenied If the model requires other permissions other than the ones provided.
  */
 router.post('/count', function(req, res, next) {
-	var appId = req.get('X-BLGREQ-APPID'),
+	var appId = req._telepat.application_id,
 		context = req.body.context_id,
 		channel = {model: req.body.model, id: req.body.id},
 		user_id = req.user.id,

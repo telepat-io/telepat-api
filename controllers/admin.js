@@ -101,7 +101,7 @@ router.post('/add', function (req, res) {
 });
 
 /**
- * @api {post} /admin/me Me
+ * @api {get} /admin/me Me
  * @apiDescription Gets information about the logged admin
  * @apiName AdminMe
  * @apiGroup Admin
@@ -116,7 +116,7 @@ router.post('/add', function (req, res) {
  * 		  "isAdmin": true
  * 	}
  */
-router.post('/me', function (req, res) {
+router.get('/me', function (req, res) {
 	res.json(req.user).end();
 });
 
@@ -151,7 +151,7 @@ router.post('/update', function (req, res) {
 });
 
 /**
- * @api {post} /admin/apps Applications
+ * @api {get} /admin/apps Applications
  * @apiDescription Lists the application for the current admin
  * @apiName AdminApps
  * @apiGroup Admin
@@ -172,7 +172,7 @@ router.post('/update', function (req, res) {
  * 	}
  *
  */
-router.post('/apps', function (req, res) {
+router.get('/apps', function (req, res) {
 	var adminApps = {};
 	async.each(Object.keys(app.applications), function(applicationId, c){
 		if (app.applications[applicationId].admin_id == req.user.email)
