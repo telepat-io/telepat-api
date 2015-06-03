@@ -83,8 +83,9 @@ security.adminAppValidation = function (req, res, next) {
 
 security.objectACL = function (accessControl) {
 	return function(req, res, next) {
-		if (req.body.model) {
-			var acl = Models.Application.loadedAppModels[req.get('X-BLGREQ-APPID')][req.body.model][accessControl];
+		if (req.body.model || req.body.channel.model) {
+			var mdl = req.body.model || req.body.channel.model;
+			var acl = Models.Application.loadedAppModels[req._telepat.application_id][req.body.model][accessControl];
 
 			if (!req.headers.authorization)
 				return res.status(401).json({message: "Authorization header is not present"}).end();
