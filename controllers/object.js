@@ -438,7 +438,9 @@ router.post('/create', function(req, res, next) {
 				})],
 				attributes: 0
 			}], function(err) {
-				err.message = 'Failed to send message to aggregation worker.';
+				if (err) {
+					err.message = 'Failed to send message to aggregation worker.';
+				}
 				agg_callback(err);
 			});
 		},
@@ -453,7 +455,7 @@ router.post('/create', function(req, res, next) {
 				})],
 				attributes: 0
 			}], function(err) {
-				err.message = 'Failed to send message to track worker.';
+				//err.message = 'Failed to send message to track worker.';
 				track_callback();
 			});
 		}
