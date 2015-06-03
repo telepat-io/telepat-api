@@ -183,7 +183,7 @@ router.post('/subscribe', function(req, res, next) {
 						elasticSearchQuery.query.filtered.query.bool.must.push({term: parentQuery});
 					}
 
-					elasticSearchQuery.query.filtered.filter = Models.utils.parseQueryObject(q);
+					elasticSearchQuery.query.filtered.filter = Models.utils.parseQueryObject(filters);
 					app.get('elastic-db').client.search({
 						index: 'default',
 						type: 'couchbaseDocument',
@@ -231,7 +231,7 @@ router.post('/subscribe', function(req, res, next) {
 						}
 					};
 
-					elasticSearchQuery.query.filtered.filter = Models.utils.parseQueryObject(q);
+					elasticSearchQuery.query.filtered.filter = Models.utils.parseQueryObject(filters);
 					app.get('elastic-db').client.search({
 						index: 'default',
 						type: 'couchbaseDocument',
@@ -267,7 +267,7 @@ router.post('/subscribe', function(req, res, next) {
 			});
 		},
 		function(results, callback) {
-			Models.Subscription.setObjectCount(appId, context, {model: mdl, id: id}, user, parent, q, objectCount, function(err, result) {
+			Models.Subscription.setObjectCount(appId, context, {model: mdl, id: id}, user, parent, filters, objectCount, function(err, result) {
 				callback(err, results);
 			});
 		}
