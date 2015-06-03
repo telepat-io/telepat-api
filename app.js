@@ -25,6 +25,8 @@ app.disable('x-powered-by');
 
 app.use('/documentation', express.static('documentation'));
 
+process.title = "octopus-api";
+
 if (process.env.TP_KFK_HOST) {
 	app.kafkaConfig = {
 		host: process.env.TP_KFK_HOST,

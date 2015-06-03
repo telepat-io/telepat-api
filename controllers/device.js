@@ -15,31 +15,35 @@ router.use(security.keyValidation);
  *
  * @apiExample {json} Register new device
  * {
- * 		"info": {
- * 			"os": "Android",
- * 			"version": "4.4.3",
- * 			"sdk_level": 19,
- * 			"manufacturer": "HTC",
- * 			"model": "HTC One_M8"
- * 		}
- * 		"persistent": {
- *   		"type": "android",
- *   		"token": "android pn token"
+ * 		"content": {
+ * 			"info": {
+ * 				"os": "Android",
+ * 				"version": "4.4.3",
+ * 				"sdk_level": 19,
+ * 				"manufacturer": "HTC",
+ * 				"model": "HTC One_M8"
+ * 			},
+ * 			"persistent": {
+ *   			"type": "android",
+ *   			"token": "android pn token"
+ * 			}
  * 		}
  * }
  *
  * @apiExample {json} Update existing device
  * {
- * 		"info": {
- * 			"os": "Android",
- * 			"version": "5.0.1",
- * 			"sdk_level": 20,
- * 			"manufacturer": "HTC",
- * 			"model": "HTC One_M8"
- * 		}
- * 		"persistent": {
- *   		"type": "android",
- *   		"token": "android pn token"
+ * 		"content": {
+ * 			"info": {
+ * 				"os": "Android",
+ * 				"version": "5.0.0",
+ * 				"sdk_level": 20,
+ * 				"manufacturer": "HTC",
+ * 				"model": "HTC One_M8"
+ * 			},
+ * 			"persistent": {
+ *   			"type": "android",
+ *   			"token": "android pn token"
+ * 			}
  * 		}
  * }
  *
@@ -57,20 +61,25 @@ router.use(security.keyValidation);
  *
  */
 router.post('/register', function(req, res, next) {
-  if (req.body.deviceUDID == '') {
-    req.body.id = uuid.v4();
+	if (!req.body.content) {
+		var err = new Error('Field "content" is missing.');
+		err.status = 400;
 
-		Models.Subscription.addDevice(req.body, function(err, result) {
+		return next(err);
+	} else if (req.body.deviceUDID == '') {
+		req.body.content.id = uuid.v4();
+
+		Models.Subscription.addDevice(req.body.content, function(err, result) {
 			if (!err) {
-				return res.status(200).json({status: 200, identifier: req.body.id}).end();
+				return res.status(200).json({status: 200, identifier: req.body.content.id}).end();
 			}
 
-      next(err);
-    });
-  } else {
-    req.body.id = req.body.deviceUDID;
+			next(err);
+		});
+	} else {
+		req.body.content.id = req.body.deviceUDID;
 
-		Models.Subscription.updateDevice(req.body, function(err, result) {
+		Models.Subscription.updateDevice(req.body.content, function(err, result) {
 			if (err) return next(err);
 
 			res.status(200).json({status:200, message: "Device has been updated"});
