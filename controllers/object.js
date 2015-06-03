@@ -267,7 +267,7 @@ router.post('/subscribe', function(req, res, next) {
 			});
 		},
 		function(results, callback) {
-			Subscription.setObjectCount(appId, context, {model: mdl, id: id}, user, parent, q, objectCount, function(err, result) {
+			Models.Subscription.setObjectCount(appId, context, {model: mdl, id: id}, user, parent, q, objectCount, function(err, result) {
 				callback(err, results);
 			});
 		}
