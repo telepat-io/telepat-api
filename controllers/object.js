@@ -316,11 +316,11 @@ router.post('/subscribe', function(req, res, next) {
  * @apiError 404 NotFound If subscription doesn't exist.
  */
 router.post('/unsubscribe', function(req, res, next) {
-	var id = req.body.id;
-	var context = req.body.context;
+	var id = req.body.channel.id;
+	var context = req.body.channel.context;
 	var deviceId = req._telepat.device_id;
 	var filters = req.body.filters;
-	var mdl = req.body.model;
+	var mdl = req.body.channel.model;
 	var appId = req._telepat.application_id;
 
 	if (!context)
