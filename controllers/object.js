@@ -47,43 +47,40 @@ router.use(['/count'], security.objectACL('meta_read_acl'));
  *			"parent": {
  *				"id": 1,
  *				"model": "event"
- *			}
+ *			},
+ *			"user": 2
  * 		}
  *		"filters": {
- *			"user": 2,
- *			"event_id": 1,
- *			"query": {
- *				"or": [
- *					{
- *					  "and": [
- *						{
- *						  "is": {
- *							"gender": "male",
- *							"age": 23
- *						  }
- *						},
- *						{
- *						  "range": {
- *							"experience": {
- *							  "gte": 1,
- *							  "lte": 6
- *							}
- *						  }
- *						}
- *					  ]
- *					},
- *					{
- *					  "and": [
- *						{
- *						  "like": {
- *							"image_url": "png",
- *							"website": "png"
- *						  }
- *						}
- *					  ]
- *					}
- *				  ]
- *			}
+*			"or": [
+*				{
+*					"and": [
+*						{
+*						  "is": {
+*							"gender": "male",
+*							"age": 23
+*						  }
+*						},
+*						{
+*						  "range": {
+*							"experience": {
+*							  "gte": 1,
+*							  "lte": 6
+*							}
+*						  }
+*						}
+*					  ]
+*					},
+*					{
+*					  "and": [
+*						{
+*						  "like": {
+*							"image_url": "png",
+*							"website": "png"
+*						  }
+*						}
+*					  ]
+*					}
+*				  ]
  *		}
  * }
  *
@@ -99,24 +96,199 @@ router.use(['/count'], security.objectACL('meta_read_acl'));
  * @apiError 400 RequestedContextMissing If context id has been provided
  */
 router.post('/subscribe', function(req, res, next) {
-	var channel = req.body.channel,
-		id = channel.id,
+	var channel = req.body.channel;
+
+	if (!channel) {
+		return res.status(400).json({status: 400, message: "Requested channel field is missing."}).end();
+	}
+
+	var id = channel.id,
 		context = channel.context,
 		mdl = channel.model,
 		parent = channel.parent,// eg: {model: "event", id: 1}
 		user = channel.user,
 		filters = req.body.filters,
-		q = filters ? filters.query : undefined,
 		userEmail = req.user.email,
 		deviceId = req._telepat.device_id,
 		appId = req._telepat.application_id,
 		elasticQuery = false,
-		elasticQueryResult = null;
+		elasticQueryResult = null,
+		objectCount = 0;
 
 	if (!context)
-		res.status(400).json({status: 400, message: "Requested context is not provided."}).end();
-	//ia-le pe toate
-	else {
+		return res.status(400).json({status: 400, message: "Requested context is not provided."}).end();
+
+	async.waterfall([
+		//see if device exists
+		function(callback) {
+			Models.Subscription.getDevice(deviceId, function(err, results) {
+				if (err) {
+					if (err.code == 13) {
+						var error = new Error('Device is not registered');
+						error.status = 404;
+						return callback(error);
+					} else
+						return callback(err);
+				}
+
+				callback(null, results);
+			});
+		},
+		function(subscriptions, callback) {
+			Models.Subscription.add(appId, context, deviceId, {model: mdl, id: id}, user, parent, filters,  callback);
+		},
+		function(result, callback) {
+			if (id) {
+				new Models.Model(mdl, appId, id, context, function(err, results) {
+					if (err) return callback(err, null);
+
+					var message = {};
+					message[id] = results.value;
+					objectCount = 1;
+
+					callback(null, message)
+				});
+				return;
+			}
+
+			//we have a channel
+			if (parent || user) {
+				//with filters
+				if (filters) {
+					elasticQuery = true;
+					var userQuery = {};
+					var parentQuery = {};
+					var elasticSearchQuery = {
+						query: {
+							filtered: {
+								query: {
+									bool: {
+										must: [
+											{term: {'doc.type': mdl}},
+											{term: {'doc.context_id': context}}
+										]
+									}
+								}
+							}
+						}
+					};
+
+					if (user) {
+						userQuery['doc.user_id'] = user;
+						elasticSearchQuery.query.filtered.query.bool.must.push({term: userQuery});
+					}
+
+					if(parent) {
+						parentQuery['doc.'+parent.model+'_id'] = parent.id;
+						elasticSearchQuery.query.filtered.query.bool.must.push({term: parentQuery});
+					}
+
+					elasticSearchQuery.query.filtered.filter = Models.utils.parseQueryObject(q);
+					app.get('elastic-db').client.search({
+						index: 'default',
+						type: 'couchbaseDocument',
+						body: elasticSearchQuery
+					}, function(err, result) {
+						if (err) return callback(err);
+
+						objectCount = result.hits.total;
+						elasticQueryResult = result.hits.hits;
+						callback();
+					});
+				//no filters
+				} else {
+					if (Models.Application.loadedAppModels[appId][mdl].belongsTo) {
+						if (Models.Application.loadedAppModels[appId][mdl].belongsTo[0].parentModel !== parent.model) {
+							Models.Model.lookup(mdl, appId, context, user, parent, function(err, results) {
+								if (!results) {
+									callback(err, results);
+								} else {
+									objectCount = results.length;
+									results = results.slice(0, 10);
+
+									Models.Model.multiGet(mdl, results, appId, context, callback);
+								}
+							});
+						}
+					}
+				}
+			//no channel (AKA all items)
+			} else {
+				//with filters
+				if (filters) {
+					var elasticSearchQuery = {
+						query: {
+							filtered: {
+								query: {
+									bool: {
+										must: [
+											{term: {'doc.type': mdl}},
+											{term: {'doc.context_id': context}}
+										]
+									}
+								}
+							}
+						}
+					};
+
+					elasticSearchQuery.query.filtered.filter = Models.utils.parseQueryObject(q);
+					app.get('elastic-db').client.search({
+						index: 'default',
+						type: 'couchbaseDocument',
+						body: elasticSearchQuery
+					}, function(err, result) {
+						if (err) return callback(err);
+
+						objectCount = result.hits.total;
+						elasticQueryResult = result.hits.hits;
+						callback();
+					});
+				//with no filters
+				} else {
+					Models.Model.getAll(mdl, appId, context, function(err, results) {
+						callback(err, results);
+					});
+				}
+			}
+		},
+		function(results, callback) {
+			app.kafkaProducer.send([{
+				topic: 'track',
+				messages: [JSON.stringify({
+					op: 'sub',
+					object: {device_id: deviceId, user_id: userEmail, channel: channel, filters: filters},
+					applicationId: appId
+				})],
+				attributes: 0
+			}], function(err, data) {
+				if (err) return callback(err, null);
+
+				callback(err, results);
+			});
+		},
+		function(results, callback) {
+			Subscription.setObjectCount(appId, context, {model: mdl, id: id}, user, parent, q, objectCount, function(err, result) {
+				callback(err, results);
+			});
+		}
+	], function(err, result) {
+		if (err)
+			return next(err);
+
+		if(elasticQuery) {
+			result = {};
+			async.each(elasticQueryResult.applicationId.hits.hits, function(item, c) {
+				result[item._source.doc.id] = item._source.doc;
+				c();
+			}, function(err) {
+				res.json({status: 200, message: result}).end();
+			});
+		} else {
+			res.json({status: 200, message: result}).end();
+		}
+	});
+
+	/*else {
 		var objectCount = 0;
 
 		async.waterfall([
@@ -240,7 +412,7 @@ router.post('/subscribe', function(req, res, next) {
 				res.json({status: 200, message: result}).end();
 			}
 		});
-	}
+	}*/
 });
 
 /**
