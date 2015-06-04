@@ -116,7 +116,10 @@ router.post('/subscribe', function(req, res, next) {
 		objectCount = 0;
 
 	if (!context)
-		return res.status(400).json({status: 400, message: "Requested context is not provided."}).end();
+		return res.status(400).json({status: 400, message: "Requested context is missing."}).end();
+
+	if (!mdl)
+		return res.status(400).json({status: 400, message: "Requested object model is missing."}).end();
 
 	async.waterfall([
 		//see if device exists
@@ -135,7 +138,7 @@ router.post('/subscribe', function(req, res, next) {
 			});
 		},
 		function(subscriptions, callback) {
-			Models.Subscription.add(appId, context, deviceId, {model: mdl, id: id}, user, parent, filters,  callback);
+			Models.Subscription.add(appId, deviceId, channel, filters,  callback);
 		},
 		function(result, callback) {
 			if (id) {
@@ -316,51 +319,56 @@ router.post('/subscribe', function(req, res, next) {
  * @apiError 404 NotFound If subscription doesn't exist.
  */
 router.post('/unsubscribe', function(req, res, next) {
-	var id = req.body.channel.id;
-	var context = req.body.channel.context;
-	var deviceId = req._telepat.device_id;
-	var filters = req.body.filters;
-	var mdl = req.body.channel.model;
-	var appId = req._telepat.application_id;
+	var channel = req.body.channel;
+
+	if (!channel) {
+		return res.status(400).json({status: 400, message: "Requested channel field is missing."}).end();
+	}
+
+	var id = channel.id,
+	context = channel.context,
+	mdl = channel.model,
+	filters = req.body.filters,
+	deviceId = req._telepat.device_id,
+	appId = req._telepat.application_id;
 
 	if (!context)
-		res.status(400).json({status: 400, message: "Requested context is not provided."}).end();
-	else {
-		async.waterfall([
-			function(callback) {
-				Models.Subscription.remove(context, deviceId, {model: Models.Application.loadedAppModels[appId][mdl].namespace, id: id}, filters, function(err, results) {
-					if (err && err.code == cb.errors.keyNotFound) {
-						var error = new Error('Subscription not found');
-						error.status = 404;
+		return res.status(400).json({status: 400, message: "Requested context is missing."}).end();
 
-						callback(error, null);
-					}	else if (err)
-						callback(err, null);
-					else
-						callback(null, {status: 200, message: "Subscription removed"});
-				});
-			},
-			function(result, callback) {
-				app.kafkaProducer.send([{
-					topic: 'track',
-					messages: [JSON.stringify({
-						op: 'unsub',
-						object: {id: id, context: context, device_id: deviceId, filters: filters},
-						applicationId: appId
-					})],
-					attributes: 0
-				}], function(err, data) {
-					if (err) return callback(err, null);
+	async.waterfall([
+		function(callback) {
+			Models.Subscription.remove(appId, deviceId, channel, filters, function(err, results) {
+				if (err && err.code == cb.errors.keyNotFound) {
+					var error = new Error("Subscription not found");
+					error.status = 404;
 
-					callback(err, result);
-				});
-			}
-		], function(err, results) {
-			if (err) return next(err);
+					callback(error, null);
+				}	else if (err)
+					callback(err, null);
+				else
+					callback(null, {status: 200, message: "Subscription removed"});
+			});
+		},
+		function(result, callback) {
+			app.kafkaProducer.send([{
+				topic: 'track',
+				messages: [JSON.stringify({
+					op: 'unsub',
+					object: {device_id: deviceId, channel: channel, filters: filters},
+					applicationId: appId
+				})],
+				attributes: 0
+			}], function(err, data) {
+				if (err) return callback(err, null);
 
-			res.status(results.status).json(results).end();
-		});
-	}
+				callback(err, result);
+			});
+		}
+	], function(err, results) {
+		if (err) return next(err);
+
+		res.status(200).json(results).end();
+	});
 });
 
 /**
