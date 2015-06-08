@@ -26,6 +26,22 @@ router.use(['/subscribe', '/unsubscribe'], security.objectACL('read_acl'));
 router.use(['/create', '/update', '/delete'], security.objectACL('write_acl'));
 router.use(['/count'], security.objectACL('meta_read_acl'));
 
+var validateContext = function(appId, context, callback) {
+	Models.Application.hasContext(appId, context, function(err, result) {
+		if (err && err.code == cb.errors.keyNotFound) {
+			var error = new Error('Application with id "'+appId+'" does not exist.');
+			error.status = 404;
+			callback(error);
+		} else if (err) return callback(err)
+		else if (result === false) {
+			var error = new Error('Context with id "'+context+'" does not belong to app with id "'+appId+'"');
+			error.status = 404;
+			callback(error);
+		} else
+			callback();
+	});
+};
+
 /**
  * @api {post} /object/subscribe Subscribe
  * @apiDescription Subscribe to an object or a collection of objects (by a filter)
@@ -112,8 +128,7 @@ router.post('/subscribe', function(req, res, next) {
 		deviceId = req._telepat.device_id,
 		appId = req._telepat.application_id,
 		elasticQuery = false,
-		elasticQueryResult = null,
-		objectCount = 0;
+		elasticQueryResult = null;
 
 	if (!context)
 		return res.status(400).json({status: 400, message: "Requested context is missing."}).end();
@@ -121,7 +136,14 @@ router.post('/subscribe', function(req, res, next) {
 	if (!mdl)
 		return res.status(400).json({status: 400, message: "Requested object model is missing."}).end();
 
+	if (!Models.Application.loadedAppModels[appId][mdl])
+		return res.status(404).json({status: 404, message: 'Application model "'+mdl+'" does not exist.'}).end();
+
 	async.waterfall([
+		//verify if context belongs to app
+		function(callback) {
+			validateContext(appId, context, callback);
+		},
 		//see if device exists
 		function(callback) {
 			Models.Subscription.getDevice(deviceId, function(err, results) {
@@ -147,7 +169,6 @@ router.post('/subscribe', function(req, res, next) {
 
 					var message = {};
 					message[id] = results.value;
-					objectCount = 1;
 
 					callback(null, message)
 				});
@@ -194,7 +215,6 @@ router.post('/subscribe', function(req, res, next) {
 					}, function(err, result) {
 						if (err) return callback(err);
 
-						objectCount = result.hits.total;
 						elasticQueryResult = result.hits.hits;
 						callback();
 					});
@@ -206,7 +226,6 @@ router.post('/subscribe', function(req, res, next) {
 								if (!results) {
 									callback(err, results);
 								} else {
-									objectCount = results.length;
 									results = results.slice(0, 10);
 
 									Models.Model.multiGet(mdl, results, appId, context, callback);
@@ -242,7 +261,6 @@ router.post('/subscribe', function(req, res, next) {
 					}, function(err, result) {
 						if (err) return callback(err);
 
-						objectCount = result.hits.total;
 						elasticQueryResult = result.hits.hits;
 						callback();
 					});
@@ -266,11 +284,6 @@ router.post('/subscribe', function(req, res, next) {
 			}], function(err, data) {
 				if (err) return callback(err, null);
 
-				callback(err, results);
-			});
-		},
-		function(results, callback) {
-			Models.Subscription.setObjectCount(appId, context, {model: mdl, id: id}, user, parent, filters, objectCount, function(err, result) {
 				callback(err, results);
 			});
 		}
@@ -335,7 +348,17 @@ router.post('/unsubscribe', function(req, res, next) {
 	if (!context)
 		return res.status(400).json({status: 400, message: "Requested context is missing."}).end();
 
+	if (!mdl)
+		return res.status(400).json({status: 400, message: "Requested object model is missing."}).end();
+
+	if (!Models.Application.loadedAppModels[appId][mdl])
+		return res.status(404).json({status: 404, message: 'Application model "'+mdl+'" does not exist.'}).end();
+
 	async.waterfall([
+		//verify if context belongs to app
+		function(callback) {
+			validateContext(appId, context, callback);
+		},
 		function(callback) {
 			Models.Subscription.remove(appId, deviceId, channel, filters, function(err, results) {
 				if (err && err.code == cb.errors.keyNotFound) {
@@ -408,6 +431,15 @@ router.post('/create', function(req, res, next) {
 	content.type = mdl;
 	content.context_id = req.body.context;
 
+	if (!context)
+		return res.status(400).json({status: 400, message: "Requested context is missing."}).end();
+
+	if (!mdl)
+		return res.status(400).json({status: 400, message: "Requested object model is missing."}).end();
+
+	if (!Models.Application.loadedAppModels[appId][mdl])
+		return res.status(400).json({status: 400, message: 'Application model "'+mdl+'" does not exist.'}).end();
+
 	if (Models.Application.loadedAppModels[appId][mdl].belongs_to) {
 		var parentModel = Models.Application.loadedAppModels[appId][mdl].belongs_to[0].parentModel;
 		if (!content[parentModel+'_id']) {
@@ -463,8 +495,8 @@ router.post('/create', function(req, res, next) {
 				})],
 				attributes: 0
 			}], function(err) {
-				//err.message = 'Failed to send message to track worker.';
-				track_callback();
+				err.message = 'Failed to send message to track worker.';
+				track_callback(err);
 			});
 		}
 	], function(err, results) {
@@ -520,6 +552,18 @@ router.post('/update', function(req, res, next) {
 	var id = req.body.id;
 	var mdl = req.body.model;
 	var appId = req._telepat.application_id;
+
+	if (!id)
+		return res.status(400).json({status: 400, message: "Requested item id is missing."}).end();
+
+	if (!context)
+		return res.status(400).json({status: 400, message: "Requested context is missing."}).end();
+
+	if (!mdl)
+		return res.status(400).json({status: 400, message: "Requested object model is missing."}).end();
+
+	if (!Models.Application.loadedAppModels[appId][mdl])
+		return res.status(400).json({status: 400, message: 'Application model "'+mdl+'" does not exist.'}).end();
 
 	if (! (patch instanceof Array)) {
 		var error = new Error('Patch must be an array');
@@ -600,6 +644,18 @@ router.post('/delete', function(req, res, next) {
 	var context = req.body.context;
 	var mdl = req.body.model;
 	var appId = req._telepat.application_id;
+
+	if (!id)
+		return res.status(400).json({status: 400, message: "Requested item id is missing."}).end();
+
+	if (!context)
+		return res.status(400).json({status: 400, message: "Requested context is missing."}).end();
+
+	if (!mdl)
+		return res.status(400).json({status: 400, message: "Requested object model is missing."}).end();
+
+	if (!Models.Application.loadedAppModels[appId][mdl])
+		return res.status(400).json({status: 400, message: 'Application model "'+mdl+'" does not exist.'}).end();
 
 	async.series([
 		function(agg_callback) {
