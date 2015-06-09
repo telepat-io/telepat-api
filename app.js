@@ -76,6 +76,7 @@ var OnServicesConnect = function() {
 	dbConnected = true;
 	Models.Application.setBucket(db.Couchbase.bucket);
 	Models.Application.setStateBucket(db.Couchbase.stateBucket);
+	Models.Application.setElasticClient(app.get('elastic-db').client);
 	Models.Application.getAll(function(err, results) {
 		if (err) {
 			console.log("Fatal error: ".red, err);

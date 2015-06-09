@@ -226,8 +226,6 @@ router.post('/subscribe', function(req, res, next) {
 								if (!results) {
 									callback(err, results);
 								} else {
-									results = results.slice(0, 10);
-
 									Models.Model.multiGet(mdl, results, appId, context, callback);
 								}
 							});
@@ -704,12 +702,10 @@ router.post('/delete', function(req, res, next) {
  */
 router.post('/count', function(req, res, next) {
 	var appId = req._telepat.application_id,
-		context = req.body.context_id,
-		channel = {model: req.body.model, id: req.body.id},
-		user_id = req.user.id,
-		parent = req.parent;
+		channel = req.body.channel,
+		filters = req.body.filters;
 
-	Models.Subscription.getObjectCount(appId, context, channel, user_id, parent, function(err, result) {
+	Models.Subscription.getObjectCount(appId, channel, filters, function(err, result) {
 		if (err) return next(err);
 
 		res.status(200).json({status: 200, message: result}).end();
