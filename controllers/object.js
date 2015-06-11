@@ -423,11 +423,9 @@ router.post('/unsubscribe', function(req, res, next) {
 router.post('/create', function(req, res, next) {
 	var content = req.body.content;
 	var mdl = req.body.model;
+	var context = req.body.context;
 	var appId = req._telepat.application_id;
 	var isAdmin = false;
-
-	content.type = mdl;
-	content.context_id = req.body.context;
 
 	if (!context)
 		return res.status(400).json({status: 400, message: "Requested context is missing."}).end();
@@ -437,6 +435,9 @@ router.post('/create', function(req, res, next) {
 
 	if (!Models.Application.loadedAppModels[appId][mdl])
 		return res.status(400).json({status: 400, message: 'Application model "'+mdl+'" does not exist.'}).end();
+
+	content.type = mdl;
+	content.context_id = context;
 
 	if (Models.Application.loadedAppModels[appId][mdl].belongs_to) {
 		var parentModel = Models.Application.loadedAppModels[appId][mdl].belongs_to[0].parentModel;
@@ -493,7 +494,8 @@ router.post('/create', function(req, res, next) {
 				})],
 				attributes: 0
 			}], function(err) {
-				err.message = 'Failed to send message to track worker.';
+				if (err)
+					err.message = 'Failed to send message to track worker.';
 				track_callback(err);
 			});
 		}
