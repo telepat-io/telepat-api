@@ -160,9 +160,14 @@ router.post('/subscribe', function(req, res, next) {
 			});
 		},
 		function(subscriptions, callback) {
-			Models.Subscription.add(appId, deviceId, channel, filters,  callback);
+			Models.Subscription.add(appId, deviceId, channel, filters,  function(err) {
+				if (err && err.status === 409)
+					return callback();
+
+				callback(err);
+			});
 		},
-		function(result, callback) {
+		function(callback) {
 			if (id) {
 				new Models.Model(mdl, appId, id, context, function(err, results) {
 					if (err) return callback(err, null);

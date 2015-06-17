@@ -1,5 +1,5 @@
 {
-  "host": "blg-kafka.cloudapp.net",
+  "host": "10.32.0.8",
   "port": 2181,
   "clientName": "octopus-producer"
 }
