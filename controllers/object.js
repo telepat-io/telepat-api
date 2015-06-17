@@ -5,6 +5,7 @@ var sizeof = require('object-sizeof');
 var security = require('./security');
 
 router.use(security.keyValidation);
+router.use(security.deviceIDExists);
 
 /**
  * Middleware used to load application model schema

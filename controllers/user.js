@@ -14,6 +14,7 @@ var options = {
 FB.options(options);
 
 router.use(security.keyValidation);
+router.use(security.deviceIDExists);
 router.use('/logout', security.tokenValidation);
 
 /**
@@ -36,7 +37,7 @@ router.use('/logout', security.tokenValidation);
  * 	}
  *
  */
-router.post('/login', function(req, res) {
+router.post('/login', function(req, res, next) {
 	var accessToken = req.body.access_token;
 	var fbFriends = [];
 	var userProfile = {};

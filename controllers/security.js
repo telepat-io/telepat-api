@@ -15,6 +15,19 @@ security.createToken = function (data) {
 	return jwt.sign(data, this.authSecret, { expiresInMinutes: 60 });
 };
 
+security.deviceIDExists = function(req, res, next) {
+	var deviceId = req._telepat.device_id;
+
+	if (!deviceId) {
+		var error = new Error('Missing device id in headers');
+		error.status = 400;
+
+		return next(error);
+	}
+
+	next();
+};
+
 /**
  * This middleware makes sure that all required headers are set for a general purpose request. It also checks if the API key belongs to
  * the requested app.
