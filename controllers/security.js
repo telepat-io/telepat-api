@@ -98,6 +98,14 @@ security.objectACL = function (accessControl) {
 	return function(req, res, next) {
 		if (req.body.model || req.body.channel.model) {
 			var mdl = req.body.model || req.body.channel.model;
+
+			if (Models.Application.loadedAppModels[req._telepat.application_id][mdl]) {
+				var error = new Error('Model name "'+mdl+'" does not exist.');
+				error.status = 404;
+
+				return next(error);
+			}
+
 			var acl = Models.Application.loadedAppModels[req._telepat.application_id][mdl][accessControl];
 
 			if (!req.headers.authorization)
