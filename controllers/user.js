@@ -123,7 +123,8 @@ router.post('/login', function(req, res) {
 				messages: [JSON.stringify({
 					op: 'add',
 					object: props,
-					applicationId: req._telepat.application_id
+					applicationId: req._telepat.application_id,
+					isUser: true
 				})],
 				attributes: 0
 			}], callback);

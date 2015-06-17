@@ -56,7 +56,7 @@ security.corsValidation = function(req, res, next) {
 	res.header("Access-Control-Allow-Origin", "*");
 	res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, X-BLGREQ-SIGN, X-BLGREQ-APPID, X-BLGREQ-UDID");
 	if ('OPTIONS' == req.method) {
-		res.send(200);
+		res.send(200).end();
 	}
 	else {
 		next();

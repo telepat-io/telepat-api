@@ -1,11 +1,11 @@
 {
   "couchbase": {
-	"host": "blg-couch.cloudapp.net",
+	"host": "blg-couchbase.cloudapp.net",
 	"bucket": "default",
 	"stateBucket": "state"
   },
   "elasticsearch": {
-	"host": "10.32.0.7",
+	"host": "10.32.0.6",
 	"port": 9200
   }
 }

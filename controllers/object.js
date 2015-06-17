@@ -279,9 +279,9 @@ router.post('/subscribe', function(req, res, next) {
 					applicationId: appId
 				})],
 				attributes: 0
-			}], function(err, data) {
-				if (err) return callback(err, null);
-
+			}], function(err) {
+				if (err)
+					err.message = "Failed to send message to track worker.";
 				callback(err, results);
 			});
 		}
@@ -380,7 +380,8 @@ router.post('/unsubscribe', function(req, res, next) {
 				})],
 				attributes: 0
 			}], function(err, data) {
-				if (err) return callback(err, null);
+				if (err)
+					err.message = "Failed to send message to track worker.";
 
 				callback(err, result);
 			});
@@ -477,9 +478,8 @@ router.post('/create', function(req, res, next) {
 				})],
 				attributes: 0
 			}], function(err) {
-				if (err) {
-					err.message = 'Failed to send message to aggregation worker.';
-				}
+				if (err)
+					err.message = "Failed to send message to aggregation worker.";
 				agg_callback(err);
 			});
 		},
@@ -495,7 +495,7 @@ router.post('/create', function(req, res, next) {
 				attributes: 0
 			}], function(err) {
 				if (err)
-					err.message = 'Failed to send message to track worker.';
+					err.message = "Failed to send message to track worker.";
 				track_callback(err);
 			});
 		}
@@ -586,7 +586,8 @@ router.post('/update', function(req, res, next) {
 				})],
 				attributes: 0
 			}], function(err) {
-				err.message = 'Failed to send message to aggregation worker.';
+				if (err)
+					err.message = 'Failed to send message to aggregation worker.';
 				agg_callback(err);
 			});
 		},
@@ -603,8 +604,9 @@ router.post('/update', function(req, res, next) {
 				})],
 				attributes: 0
 			}], function(err) {
-				err.message = 'Failed to send message to track worker.';
-				track_callback();
+				if (err)
+					err.message = 'Failed to send message to track worker.';
+				track_callback(err);
 			});
 		}
 	], function(err, results) {
