@@ -58,14 +58,24 @@ router.use(security.keyValidation);
  */
 router.post('/register', function(req, res, next) {
 	if (req._telepat.device_id == '') {
-		req.body.id = uuid.v4();
+		var udid = req.body.info.udid;
 
-		Models.Subscription.addDevice(req.body, function(err, result) {
-			if (!err) {
-				return res.status(200).json({status: 200, identifier: req.body.id}).end();
+		var q = cb.ViewQuery.from('dev_state_document', 'by_udid').custom({key: '"'+udid+'"', inclusive_end: true, stale: false});
+		Models.Application.stateBucket.query(q, function(err, results) {
+			if (err) return next(err);
+
+			if (results.length === 0) {
+				req.body.id = uuid.v4();
+				Models.Subscription.addDevice(req.body, function(err) {
+					if (!err) {
+						return res.status(200).json({status: 200, identifier: req.body.id}).end();
+					}
+
+					next(err);
+				});
+			} else {
+				return res.status(200).json({status: 200, identifier: results[0].value}).end();
 			}
-
-			next(err);
 		});
 	} else {
 		req.body.id = req._telepat.device_id;

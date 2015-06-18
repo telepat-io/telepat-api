@@ -301,6 +301,9 @@ router.post('/subscribe', function(req, res, next) {
 				result[item._source.doc.id] = item._source.doc;
 				c();
 			}, function(err) {
+				if (err)
+					return next(err);
+
 				res.json({status: 200, message: result}).end();
 			});
 		} else {
