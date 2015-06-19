@@ -1,6 +1,6 @@
 {
   "name": "octopus-api",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
     "start": "nodemon ./bin/www"
@@ -26,9 +26,9 @@
   },
   "apidoc": {
     "name": "Octopus API",
-    "version": "0.0.1",
+    "version": "0.1.0",
     "description": "Octopus API used in Telepat distributed data sync platform",
     "title": "Octopus API Documentation",
-    "url": "http://blg-node-front.cloudapp.net:3001"
+    "url": "http://localhost:3000"
   }
 }
