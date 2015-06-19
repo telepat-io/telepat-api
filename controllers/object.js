@@ -422,7 +422,7 @@ router.post('/unsubscribe', function(req, res, next) {
  *
  * @apiSuccessExample {json} Success Response
  * 	{
- * 		"status": 201,
+ * 		"status": 202,
  * 		"message": "Created"
  * 	}
  *
@@ -519,7 +519,7 @@ router.post('/create', function(req, res, next) {
 			return next(err);
 		}
 
-		res.status(201).json({status: 201, message: 'Created'}).end();
+		res.status(202).json({status: 202, message: 'Created'}).end();
 	});
 });
 
@@ -552,7 +552,7 @@ router.post('/create', function(req, res, next) {
  *
  * @apiSuccessExample {json} Success Response
  * 	{
- * 		"status": 201,
+ * 		"status": 202,
  * 		"message": "Created"
  * 	}
  *
@@ -579,7 +579,7 @@ router.post('/update', function(req, res, next) {
 	if (!Models.Application.loadedAppModels[appId][mdl])
 		return res.status(400).json({status: 400, message: 'Application model "'+mdl+'" does not exist.'}).end();
 
-	if (! (patch instanceof Array)) {
+	if (!(Array.isArray(patch))) {
 		var error = new Error('Patch must be an array');
 		error.status = 400;
 
@@ -629,7 +629,7 @@ router.post('/update', function(req, res, next) {
 			return next(err);
 		}
 
-		res.status(200).json({status: 200, message: 'Updated'}).end();
+		res.status(202).json({status: 202, message: 'Updated'}).end();
 	});
 });
 
@@ -699,7 +699,7 @@ router.post('/delete', function(req, res, next) {
 	], function(err, results) {
 		if (err) return next(err);
 
-		res.status(200).json({status: 200, message: 'Deleted'}).end();
+		res.status(202).json({status: 202, message: 'Deleted'}).end();
 	});
 });
 
