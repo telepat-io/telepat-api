@@ -435,7 +435,7 @@ router.post('/create', function(req, res, next) {
 	var mdl = req.body.model;
 	var context = req.body.context;
 	var appId = req._telepat.application_id;
-	var isAdmin = false;
+	var isAdmin = req.user.isAdmin;
 
 	if (!context)
 		return res.status(400).json({status: 400, message: "Requested context is missing."}).end();
@@ -449,10 +449,15 @@ router.post('/create', function(req, res, next) {
 	content.type = mdl;
 	content.context_id = context;
 
-	if (Models.Application.loadedAppModels[appId][mdl].belongs_to) {
-		var parentModel = Models.Application.loadedAppModels[appId][mdl].belongs_to[0].parentModel;
+	if (Models.Application.loadedAppModels[appId][mdl].belongsTo) {
+		var parentModel = Models.Application.loadedAppModels[appId][mdl].belongsTo[0].parentModel;
 		if (!content[parentModel+'_id']) {
 			var error = new Error("'"+parentModel+"_id' is required");
+			error.status = 400;
+
+			return next(error);
+		} else if (content[Models.Application.loadedAppModels[appId][parentModel].hasSome_property+'_index'] === undefined) {
+			var error = new Error("'"+Models.Application.loadedAppModels[appId][parentModel].hasSome_property+"_index is required");
 			error.status = 400;
 
 			return next(error);
@@ -461,7 +466,7 @@ router.post('/create', function(req, res, next) {
 
 	async.series([
 		function(callback) {
-			if (req.user.isAdmin) {
+			if (isAdmin) {
 				Models.Admin(req.user.email, function(err, result) {
 					if (err) return callback(err);
 					content.user_id = result.id;

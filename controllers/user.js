@@ -114,7 +114,7 @@ router.post('/login', function(req, res, next) {
 				name: userProfile.name,
 				gender: userProfile.gender,
 				friends: fbFriends,
-				device: deviceId
+				devices: [deviceId]
 			};
 
 			props.type = 'user';
