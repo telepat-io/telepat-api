@@ -22,7 +22,7 @@ router.use('/logout', security.tokenValidation);
  * @apiDescription Log in the user and create it if it doesn't exist in database.
  * @apiName UserLogin
  * @apiGroup User
- * @apiVersion 0.0.1
+ * @apiVersion 0.1.2
  *
  * @apiParam {String} access_token Facebook access token.
  *
@@ -35,6 +35,8 @@ router.use('/logout', security.tokenValidation);
  * 	{
  * 		token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImdhYmlAYXBwc2NlbmQuY29tIiwiaXNBZG1pbiI6dHJ1ZSwiaWF0IjoxNDMyOTA2ODQwLCJleHAiOjE0MzI5MTA0NDB9.knhPevsK4cWewnx0LpSLrMg3Tk_OpchKu6it7FK9C2Q"
  * 	}
+ *
+ * 	@apiError 400 <code>InsufficientFacebookPermissions</code> User email is not publicly available (insufficient facebook permissions)
  *
  */
 router.post('/login', function(req, res, next) {
@@ -160,7 +162,7 @@ router.post('/login', function(req, res, next) {
  * @apiDescription Logs out the user removing the device from his array of devices.
  * @apiName UserLogout
  * @apiGroup User
- * @apiVersion 0.0.1
+ * @apiVersion 0.1.2
  *
  * 	@apiSuccessExample {json} Success Response
  * 	{
@@ -200,10 +202,10 @@ router.post('/logout', function(req, res, next) {
 /**
  * @api {post} /user/refresh_token Refresh Token
  * @apiDescription Sends a new authentification token to the user. The old token must be provide (and it may or not
- * may not be aleady expired.
+ * may not be aleady expired).
  * @apiName RefreshToken
  * @apiGroup User
- * @apiVersion 0.0.1
+ * @apiVersion 0.1.2
  *
  * @apiSuccessExample {json} Success Response
  * 	{
@@ -238,9 +240,15 @@ router.post('/refresh_token', function(req, res, next) {
  * @apiDescription Updates the user information
  * @apiName UserUpdate
  * @apiGroup User
- * @apiVersion 0.0.1
+ * @apiVersion 0.1.2
  *
  * @apiParam {Object[]} patches Array of patches that describe the modifications
+ *
+ * @apiSuccessExample {json} Success Response
+ * 	{
+ * 		status: 202,
+ * 		message: "User updated"
+ * 	}
  *
  */
 router.post('/update', function(req, res, next) {
@@ -265,7 +273,7 @@ router.post('/update', function(req, res, next) {
 	}], function(err, result) {
 		if (err) return next(err);
 
-		res.status(200).json({status: 200, message: "User updated."}).end();
+		res.status(202).json({status: 202, message: "User updated"}).end();
 	});
 });
 
@@ -275,10 +283,16 @@ router.post('/update', function(req, res, next) {
  * @apiDescription Deletes a user
  * @apiName UserDelete
  * @apiGroup User
- * @apiVersion 0.0.1
+ * @apiVersion 0.1.2
  *
  * @apiParam {number} id ID of the user
  * @apiParam {string} email Email of the user
+ *
+ * @apiSuccessExample {json} Success Response
+ * 	{
+ * 		status: 202,
+ * 		message: "User deleted"
+ * 	}
  *
  */
 router.post('/delete', function(req, res, next) {
@@ -297,7 +311,7 @@ router.post('/delete', function(req, res, next) {
 	}], function(err) {
 		if (err) return next(err);
 
-		res.status(200).json({status: 200, message: "User deleted."}).end();
+		res.status(202).json({status: 202, message: "User deleted"}).end();
 	});
 });
 

@@ -10,7 +10,7 @@ router.use(security.keyValidation);
  * @apiDescription Get all contexsts
  * @apiName GetContexts
  * @apiGroup Context
- * @apiVersion 0.0.1
+ * @apiVersion 0.1.2
  *
  * @apiSuccessExample {json} Success Response
  * 	{
@@ -49,7 +49,7 @@ router.get('/all', function (req, res) {
  * @apiDescription Retrieves a context
  * @apiName GetContext
  * @apiGroup Context
- * @apiVersion 0.0.1
+ * @apiVersion 0.1.2
  *
  * @apiParam {Number} id ID of the context to get
  *

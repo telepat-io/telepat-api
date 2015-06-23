@@ -45,14 +45,13 @@ var validateContext = function(appId, context, callback) {
 
 /**
  * @api {post} /object/subscribe Subscribe
- * @apiDescription Subscribe to an object or a collection of objects (by a filter)
+ * @apiDescription Subscribe to an object or a collection of objects (by a filter). Returns a the resulting object(s).
+ * Subsequent subscription on the same channel and filter will have no effect but will return the objects.
  * @apiName ObjectSubscribe
  * @apiGroup Object
- * @apiVersion 0.0.1
+ * @apiVersion 0.1.2
  *
- * @apiParam {Number} id ID of the object (optional)
- * @apiParam {Number} context Context of the object
- * @apiParam {String} model The type of object to subscribe to
+ * @apiParam {Object} channel Object representing the channel
  * @apiParam {Object} filters Author or parent model filters by ID.
  *
  * @apiExample {json} Client Request
@@ -108,9 +107,11 @@ var validateContext = function(appId, context, callback) {
  * 		}
  * 	}
  *
- * @apiError 402 NotAuthenticated  Only authenticated users may access this endpoint.
- * @apiError 404 NotFound If <code>id</code> was supplied but object not found or device is not registered.
- * @apiError 400 RequestedContextMissing If context id has been provided
+ * @apiError 402 <code>NotAuthenticated</code> Only authenticated users may access this endpoint.
+ * @apiError 404 <code>NotFound</code> If <code>id</code> was supplied but object not found or device is not registered.
+ * @apiError 400 <code>RequestedContextMissing</code> If context id is missing from the request body
+ * @apiError 400 <code>RequestedChannelMissing</code> If the channel object is missing from the request body
+ * @apiError 400 <code>RequestedModelMissing</code> If the item model is not present from the request body
  */
 router.post('/subscribe', function(req, res, next) {
 	var channel = req.body.channel;
@@ -317,11 +318,9 @@ router.post('/subscribe', function(req, res, next) {
  * @apiDescription Unsubscribe to an object or a collection of objects (by a filter)
  * @apiName ObjectUnsubscribe
  * @apiGroup Object
- * @apiVersion 0.0.1
+ * @apiVersion 0.1.2
  *
- * @apiParam {Number} id ID of the object (optional)
- * @apiParam {Number} context Context of the object
- * @apiParam {String} model The type of object to subscribe to
+ * @apiParam {Object} channel Object representing the channel
  * @apiParam {Object} filters Author or parent model filters by ID.
  *
  * @apiExample {json} Client Request
@@ -335,8 +334,11 @@ router.post('/subscribe', function(req, res, next) {
  * 		"message": "Subscription removed"
  * 	}
  *
- * @apiError 402 NotAuthenticated  Only authenticated users may access this endpoint.
- * @apiError 404 NotFound If subscription doesn't exist.
+ * @apiError 402 <code>NotAuthenticated</code>  Only authenticated users may access this endpoint.
+ * @apiError 404 <code>NotFound</code> If device hasn't subscribed to this channel or if application model is not valid (doesn't exist)
+ * @apiError 400 <code>RequestedContextMissing</code> If context id is missing from the request body
+ * @apiError 400 <code>RequestedChannelMissing</code> If the channel object is missing from the request body
+ * @apiError 400 <code>RequestedModelMissing</code> If the item model is not present from the request body
  */
 router.post('/unsubscribe', function(req, res, next) {
 	var channel = req.body.channel;
@@ -407,7 +409,7 @@ router.post('/unsubscribe', function(req, res, next) {
  * @apiDescription Creates a new object
  * @apiName ObjectCreate
  * @apiGroup Object
- * @apiVersion 0.0.1
+ * @apiVersion 0.1.2
  *
  * @apiParam {String} model The type of object to subscribe to
  * @apiParam {Object} content Content of the object
@@ -415,6 +417,7 @@ router.post('/unsubscribe', function(req, res, next) {
  * @apiExample {json} Client Request
  * {
  * 		"model": "comment",
+ * 		"context": 1,
  * 		"content": {
  *			//object properties
  * 		}
@@ -426,9 +429,11 @@ router.post('/unsubscribe', function(req, res, next) {
  * 		"message": "Created"
  * 	}
  *
- * @apiError NotAuthenticated  Only authenticated users may access this endpoint.
- * @apiError NotFound If <code>id</code> was supplied but object not found.
- * @apiError PermissionDenied If the model requires other permissions other than the ones provided.
+ * @apiError 402 <code>NotAuthenticated</code>  Only authenticated users may access this endpoint.
+ * @apiError 404 <code>NotFound</code> If application object model doesn't exist
+ * @apiError 403 <code>PermissionDenied</code> If the model requires other permissions other than the ones provided.
+ * @apiError 400 <code>RequestedContextMissing</code> If context id is missing from the request body
+ * @apiError 400 <code>RequestedModelMissing</code> If the item model is not present from the request body
  */
 router.post('/create', function(req, res, next) {
 	var content = req.body.content;
@@ -444,7 +449,7 @@ router.post('/create', function(req, res, next) {
 		return res.status(400).json({status: 400, message: "Requested object model is missing."}).end();
 
 	if (!Models.Application.loadedAppModels[appId][mdl])
-		return res.status(400).json({status: 400, message: 'Application model "'+mdl+'" does not exist.'}).end();
+		return res.status(404).json({status: 404, message: 'Application model "'+mdl+'" does not exist.'}).end();
 
 	content.type = mdl;
 	content.context_id = context;
@@ -528,7 +533,7 @@ router.post('/create', function(req, res, next) {
  * @apiDescription Updates an existing object
  * @apiName ObjectUpdate
  * @apiGroup Object
- * @apiVersion 0.0.1
+ * @apiVersion 0.1.2
  *
  * @apiParam {Number} id ID of the object (optional)
  * @apiParam {Number} context Context of the object
@@ -543,7 +548,7 @@ router.post('/create', function(req, res, next) {
  * 		"patch": [
  * 			{
  * 				"op": "replace",
- * 				"path": "text",
+ * 				"path": "comment/1/text",
  * 				"value": "some edited text"
  * 			},
  * 			...
@@ -556,9 +561,14 @@ router.post('/create', function(req, res, next) {
  * 		"message": "Created"
  * 	}
  *
- * @apiError NotAuthenticated  Only authenticated users may access this endpoint.
- * @apiError NotFound If <code>id</code> was supplied but object not found.
- * @apiError PermissionDenied If the model requires other permissions other than the ones provided.
+ * @apiError 402 <code>NotAuthenticated</code>  Only authenticated users may access this endpoint
+ * @apiError 404 <code>NotFound</code> If <code>id</code> was supplied but object not found or application model doesn't exist
+ * @apiError 403 <code>PermissionDenied</code> If the model requires other permissions other than the ones provided
+ * @apiError 400 <code>RequestedContextMissing</code> If context id is missing from the request body
+ * @apiError 400 <code>RequestedChannelMissing</code> If the channel object is missing from the request body
+ * @apiError 400 <code>RequestedModelMissing</code> If the item model is not present from the request body
+ * @apiError 400 <code>PatchNotArray</code> If the patch property of the request body is not an array
+ * @apiError 400 <code>NoIdSupplied</code> If the requested item id has not been provided
  */
 router.post('/update', function(req, res, next) {
 	var context = req.body.context;
@@ -638,7 +648,7 @@ router.post('/update', function(req, res, next) {
  * @apiDescription Deletes an object
  * @apiName ObjectDelete
  * @apiGroup Object
- * @apiVersion 0.0.1
+ * @apiVersion 0.1.2
  *
  * @apiParam {Number} id ID of the object (optional)
  * @apiParam {Number} context Context of the object
@@ -651,9 +661,13 @@ router.post('/update', function(req, res, next) {
  * 		"context": 1
  * }
  *
- * @apiError NotAuthenticated  Only authenticated users may access this endpoint.
- * @apiError NotFound If <code>id</code> was supplied but object not found.
- * @apiError PermissionDenied If the model requires other permissions other than the ones provided.
+ * @apiError 402 <code>NotAuthenticated</code>  Only authenticated users may access this endpoint.
+ * @apiError 404 <code>NotFound</code> If <code>id</code> was supplied but object not found.
+ * @apiError 403 <code>PermissionDenied</code> If the model requires other permissions other than the ones provided.
+ * @apiError 400 <code>RequestedContextMissing</code> If context id is missing from the request body
+ * @apiError 400 <code>RequestedChannelMissing</code> If the channel object is missing from the request body
+ * @apiError 400 <code>RequestedModelMissing</code> If the item model is not present from the request body
+ * @apiError 400 <code>NoIdSupplied</code> If the requested item id has not been provided
  */
 router.post('/delete', function(req, res, next) {
 	var id = req.body.id;
@@ -708,15 +722,14 @@ router.post('/delete', function(req, res, next) {
  * @apiDescription Gets the object count of a certain filter/subscription
  * @apiName ObjectCount
  * @apiGroup Object
- * @apiVersion 0.0.1
+ * @apiVersion 0.1.2
  *
- * @apiParam {Number} context Context of the object
- * @apiParam {String} model The type of object to subscribe to
- * @apiParam {Object} channel asdsadas
+ * @apiParam {Object} channel The object reperesenting a channel
+ * @apiParam {Object} filters Additional filters to the subscription channel
  *
- * @apiError NotAuthenticated  Only authenticated users may access this endpoint.
- * @apiError NotFound If <code>id</code> was supplied but object not found.
- * @apiError PermissionDenied If the model requires other permissions other than the ones provided.
+ * @apiError 402 <code>NotAuthenticated</code>  Only authenticated users may access this endpoint.
+ * @apiError 404 <code>NotFound</code> If <code>id</code> was supplied but object not found.
+ * @apiError 403 <code>PermissionDenied</code> If the model requires other permissions other than the ones provided.
  */
 router.post('/count', function(req, res, next) {
 	var appId = req._telepat.application_id,

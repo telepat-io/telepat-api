@@ -23,7 +23,7 @@ app.set('port', process.env.PORT || 3000);
 
 app.disable('x-powered-by');
 
-app.use('/documentation', express.static('documentation'));
+app.use('/documentation', express.static(__dirname+'/documentation'));
 
 process.title = "octopus-api";
 

@@ -8,10 +8,11 @@ router.use(security.keyValidation);
 
 /**
  * @api {post} /device/register Register
- * @apiDescription Registers a new device or updates an already existing one.
+ * @apiDescription Registers a new device or updates an already existing one. If device udid is supplied in info it will try
+ * to search for a device with this udid and return the device id.
  * @apiName DeviceRegister
  * @apiGroup Device
- * @apiVersion 0.0.1
+ * @apiVersion 0.1.2
  *
  * @apiExample {json} Register new device
  * {
@@ -20,7 +21,8 @@ router.use(security.keyValidation);
  * 			"version": "4.4.3",
  * 			"sdk_level": 19,
  * 			"manufacturer": "HTC",
- * 			"model": "HTC One_M8"
+ * 			"model": "HTC One_M8",
+ * 			"udid": "some unique identifier"
  * 		}
  * 		"persistent": {
  *   		"type": "android",
