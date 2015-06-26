@@ -3,6 +3,7 @@ var router = express.Router();
 var Models = require('octopus-models-api');
 var sizeof = require('object-sizeof');
 var security = require('./security');
+var microtime = require('microtime-nodejs');
 
 router.use(security.keyValidation);
 router.use(security.deviceIDExists);
@@ -272,6 +273,7 @@ router.post('/subscribe', function(req, res, next) {
 				//with no filters
 				} else {
 					Models.Model.getAll(mdl, appId, context, function(err, results) {
+						console.log(results);
 						callback(err, results);
 					});
 				}
@@ -438,7 +440,7 @@ router.post('/unsubscribe', function(req, res, next) {
 router.post('/create', function(req, res, next) {
 	var content = req.body.content;
 	var mdl = req.body.model;
-	var context = req.body.context;
+	var context = parseInt(req.body.context);
 	var appId = req._telepat.application_id;
 	var isAdmin = req.user.isAdmin;
 
@@ -571,6 +573,7 @@ router.post('/create', function(req, res, next) {
  * @apiError 400 <code>NoIdSupplied</code> If the requested item id has not been provided
  */
 router.post('/update', function(req, res, next) {
+	var modifiedMicrotime = microtime.now();
 	var context = req.body.context;
 	var patch = req.body.patch;
 	var id = req.body.id;
@@ -606,7 +609,8 @@ router.post('/update', function(req, res, next) {
 					context: context,
 					object: patch,
 					type: mdl,
-					applicationId: appId
+					applicationId: appId,
+					ts: modifiedMicrotime
 				})],
 				attributes: 0
 			}], function(err) {

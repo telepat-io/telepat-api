@@ -18,6 +18,7 @@
     "facebook-node": "0.0.3",
     "jsonwebtoken": "^5.0.1",
     "kafka-node": "^0.2.24",
+    "microtime-nodejs": "^1.0.0",
     "morgan": "~1.5.1",
     "object-sizeof": "^1.0.6",
     "private-repo": "git+http://freshweb.ro:7990/scm/bel/octopus-models-lib.git#develop",
