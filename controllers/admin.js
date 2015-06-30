@@ -28,7 +28,7 @@ router.use(['/apps/remove', 'apps/update'], security.adminAppValidation);
  * @apiDescription Authenticates an admin and returns the authorization token
  * @apiName AdminAuthenticate
  * @apiGroup Admin
- * @apiVersion 0.0.1
+ * @apiVersion 0.1.2
  *
  * @apiParam {String} email Email of admin
  * @apiParam {String} password Password of admin
@@ -72,7 +72,7 @@ router.post('/login', function (req, res, next) {
  * @apiDescription Creates a new admin
  * @apiName AdminAdd
  * @apiGroup Admin
- * @apiVersion 0.0.1
+ * @apiVersion 0.1.2
  *
  * @apiParam {String} email Admin e-mail
  * @apiParam {String} password The password
@@ -105,7 +105,7 @@ router.post('/add', function (req, res) {
  * @apiDescription Gets information about the logged admin
  * @apiName AdminMe
  * @apiGroup Admin
- * @apiVersion 0.0.1
+ * @apiVersion 0.1.2
  *
  * @apiSuccessExample {json} Success Response
  * 	{
@@ -125,7 +125,7 @@ router.get('/me', function (req, res) {
  * @apiDescription Updates a new admin. Every property in the request body is used to udpate the admin.
  * @apiName AdminUpdate
  * @apiGroup Admin
- * @apiVersion 0.0.1
+ * @apiVersion 0.1.2
  *
  * @apiExample {json} Client Request
  * 	{
@@ -155,7 +155,7 @@ router.post('/update', function (req, res) {
  * @apiDescription Lists the application for the current admin
  * @apiName AdminApps
  * @apiGroup Admin
- * @apiVersion 0.0.1
+ * @apiVersion 0.1.2
  *
  * @apiSuccessExample {json} Success Response
  * 	{
@@ -193,7 +193,7 @@ router.get('/apps', function (req, res) {
  * @apiDescription Creates a app for the admin. The request body should contain the app itself.
  * @apiName AdminAppAdd
  * @apiGroup Admin
- * @apiVersion 0.0.1
+ * @apiVersion 0.1.2
  *
  * @apiExample {json} Client Request
  * 	{
@@ -249,7 +249,7 @@ router.post('/app/add', function (req, res) {
  * @apiDescription Removes an app from the admin.
  * @apiName AdminAppRemove
  * @apiGroup Admin
- * @apiVersion 0.0.1
+ * @apiVersion 0.1.2
  *
  * @apiParam {Number} appId The ID of the app to remove
  *
@@ -282,7 +282,7 @@ router.post('/app/remove', function (req, res) {
  * @apiDescription Updates an app
  * @apiName AdminAppUpdate
  * @apiGroup Admin
- * @apiVersion 0.0.1
+ * @apiVersion 0.1.2
  *
  * @apiParam {Number} appId ID of the app to update
  *
@@ -316,7 +316,7 @@ router.post('/app/update', function (req, res) {
  * @apiDescription Get all contexsts
  * @apiName AdminGetContexts
  * @apiGroup Admin
- * @apiVersion 0.0.1
+ * @apiVersion 0.1.2
  *
  * @apiSuccessExample {json} Success Response
  * 	{
@@ -353,7 +353,7 @@ router.post('/contexts', function (req, res) {
  * @apiDescription Retrieves a context
  * @apiName AdminGetContext
  * @apiGroup Admin
- * @apiVersion 0.0.1
+ * @apiVersion 0.1.2
  *
  * @apiParam {Number} id ID of the context to get
  *
@@ -396,7 +396,7 @@ router.post('/context', function (req, res) {
  * @apiDescription Creates a new context
  * @apiName AdminCreateContext
  * @apiGroup Admin
- * @apiVersion 0.0.1
+ * @apiVersion 0.1.2
  *
  * @apiParam {Number} appId ID of the application
  *
@@ -443,7 +443,7 @@ router.post('/context/add', function (req, res) {
  * @apiDescription Removes a context and all associated objects
  * @apiName AdminRemoveContext
  * @apiGroup Admin
- * @apiVersion 0.0.1
+ * @apiVersion 0.1.2
  *
  * @apiParam {Number} id ID of the context to remove
  *
@@ -475,7 +475,7 @@ router.post('/context/remove', function (req, res) {
  * @apiDescription Updates the context object
  * @apiName AdminUpdateContext
  * @apiGroup Admin
- * @apiVersion 0.0.1
+ * @apiVersion 0.1.2
  *
  * @apiParam {Number} id ID of the context to update
  *
@@ -508,7 +508,7 @@ router.post('/context/update', function (req, res) {
  * @apiDescription Gets the model schema for an application
  * @apiName AdminGetSchemas
  * @apiGroup Admin
- * @apiVersion 0.0.1
+ * @apiVersion 0.1.2
  *
  * @apiParam {Number} appId ID of the app from which to get the context
  *
@@ -554,7 +554,7 @@ router.post('/schemas', function(req, res, next) {
  * @apiDescription Updates the model schema
  * @apiName AdminUpdateSchema
  * @apiGroup Admin
- * @apiVersion 0.0.1
+ * @apiVersion 0.1.2
  *
  * @apiParam {Number} appId ID of the app of the schema to update
  * @apiParam {Object} props Updated schema object
