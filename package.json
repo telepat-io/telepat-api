@@ -1,6 +1,6 @@
 {
   "name": "octopus-api",
-  "version": "0.1.0",
+  "version": "0.1.3",
   "private": true,
   "scripts": {
     "start": "nodemon ./bin/www"
@@ -31,5 +31,6 @@
     "description": "Octopus API used in Telepat distributed data sync platform",
     "title": "Octopus API Documentation",
     "url": "http://localhost:3000"
-  }
+  },
+  "license": "Apache-2.0"
 }
