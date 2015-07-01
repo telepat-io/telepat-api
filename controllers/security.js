@@ -44,6 +44,13 @@ security.keyValidation = function (req, res, next) {
 	else if (!req.get('X-BLGREQ-APPID'))
 		res.status(400).json({status: 400, message: "Requested App ID not found."}).end();
 	else {
+		if (!app.applications[req.get('X-BLGREQ-APPID')]) {
+			var error = new Error('Application with ID "'+req.get('X-BLGREQ-APPID')+'" doest not exist.');
+			error.status = 404;
+
+			return next(error);
+		}
+
 		var clientHash = req.get('X-BLGREQ-SIGN').toLowerCase();
 		var serverHash = null;
 		var apiKeys = app.applications[req.get('X-BLGREQ-APPID')].keys;
