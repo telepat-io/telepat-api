@@ -70,22 +70,28 @@ router.post('/register', function(req, res, next) {
 				req.body.id = uuid.v4();
 				Models.Subscription.addDevice(req.body, function(err) {
 					if (!err) {
-						return res.status(200).json({status: 200, identifier: req.body.id}).end();
+						return res.status(200).json({status: 200, content: {identifier: req.body.id}}).end();
 					}
 
 					next(err);
 				});
 			} else {
-				return res.status(200).json({status: 200, identifier: results[0].value}).end();
+				return res.status(200).json({status: 200, content: {identifier: results[0].value}}).end();
 			}
 		});
 	} else {
 		req.body.id = req._telepat.device_id;
 
 		Models.Subscription.updateDevice(req.body, function(err, result) {
-			if (err) return next(err);
+			if (err && err.code == cb.errors.keyNotFound) {
+				var error = new Error('Device with ID "'+req._telepat.device_id+'" does not exist.');
+				error.status = 404;
 
-			res.status(200).json({status:200, message: "Device has been updated"});
+				return next(error);
+			} else if (err)
+				return next(err);
+
+			res.status(200).json({status:200, content: "Device has been updated"});
 		});
 	}
 });

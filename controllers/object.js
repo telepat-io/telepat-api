@@ -526,7 +526,7 @@ router.post('/create', function(req, res, next) {
 			return next(err);
 		}
 
-		res.status(202).json({status: 202, message: 'Created'}).end();
+		res.status(202).json({status: 202, content: 'Created'}).end();
 	});
 });
 
@@ -643,7 +643,7 @@ router.post('/update', function(req, res, next) {
 			return next(err);
 		}
 
-		res.status(202).json({status: 202, message: 'Updated'}).end();
+		res.status(202).json({status: 202, content: 'Updated'}).end();
 	});
 });
 
@@ -717,7 +717,7 @@ router.post('/delete', function(req, res, next) {
 	], function(err, results) {
 		if (err) return next(err);
 
-		res.status(202).json({status: 202, message: 'Deleted'}).end();
+		res.status(202).json({status: 202, content: 'Deleted'}).end();
 	});
 });
 
@@ -743,7 +743,7 @@ router.post('/count', function(req, res, next) {
 	Models.Subscription.getObjectCount(appId, channel, filters, function(err, result) {
 		if (err) return next(err);
 
-		res.status(200).json({status: 200, message: result}).end();
+		res.status(200).json({status: 200, content: result}).end();
 	});
 });
 

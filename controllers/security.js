@@ -86,11 +86,11 @@ security.adminAppValidation = function (req, res, next) {
 			next();
 		}
 		else {
-			res.status(400).send({message: 'Naughty'});
+			res.status(400).send({status: 400, message: 'Naughty'});
 		}
 	}
 	else {
-		res.status(400).send({message: 'What app?'});
+		res.status(400).send({status: 400, message: 'What app?'});
 	}
 };
 
@@ -109,7 +109,7 @@ security.objectACL = function (accessControl) {
 			var acl = Models.Application.loadedAppModels[req._telepat.application_id][mdl][accessControl];
 
 			if (!req.headers.authorization)
-				return res.status(401).json({message: "Authorization header is not present"}).end();
+				return res.status(401).json({status: 401, message: "Authorization header is not present"}).end();
 
 			if (acl & ACL_AUTHENTICATED || acl & ACL_ADMIN) {
 				var authHeaderParts = req.headers.authorization.split(' ');
@@ -118,10 +118,10 @@ security.objectACL = function (accessControl) {
 				if (authToken) {
 					jwt.verify(authToken, security.authSecret, function (err, decoded) {
 						if (err)
-							return res.status(401).json({message: "Invalid authorization: " + err.message}).end();
+							return res.status(401).json({status: 401, message: "Invalid authorization: " + err.message}).end();
 
 						if ((!(acl & ACL_UNAUTHENTICATED)) && (!(acl & ACL_AUTHENTICATED)) &&  (acl & ACL_ADMIN) && (!decoded.isAdmin) )
-							return res.status(403).json({message: "You don't have the necessary privilegies for this operation"}).end();
+							return res.status(403).json({status: 403, message: "You don't have the necessary privilegies for this operation"}).end();
 
 						req.user = decoded;
 
@@ -134,7 +134,7 @@ security.objectACL = function (accessControl) {
 			else if (acl & ACL_UNAUTHENTICATED) {
 				next();
 			} else {
-				res.status(403).json({message: "You don't have the necessary privilegies for this operation"}).end();
+				res.status(403).json({status: 403, message: "You don't have the necessary privilegies for this operation"}).end();
 			}
 		}
 	}

@@ -152,7 +152,7 @@ router.post('/login', function(req, res, next) {
 			res.status(400).json(err).end();
 		else {
 			var token = jwt.sign({email: userProfile.email}, security.authSecret, { expiresInMinutes: 60 });
-			res.json({ token: token }).end();
+			res.json({status: 200, content: {token: token }}).end();
 		}
 	});
 });
@@ -194,7 +194,7 @@ router.post('/logout', function(req, res, next) {
 	], function(err, result) {
 		if (err) return next(err);
 
-		res.status(200).json({status: 200, message: "Logged out of device"}).end();
+		res.status(200).json({status: 200, content: "Logged out of device"}).end();
 	});
 });
 
@@ -226,7 +226,7 @@ router.post('/refresh_token', function(req, res, next) {
 		var decoded = jwt.decode(oldToken);
 		var newToken = jwt.sign(decoded, security.authSecret, {expiresInMinutes: 60});
 
-		return res.status(200).json({token: newToken}).end();
+		return res.status(200).json({status: 200, content: {token: newToken}}).end();
 	} else {
 		var error = new Error('Token not present or authorization header is invalid');
 		error.status = 401;
@@ -273,7 +273,7 @@ router.post('/update', function(req, res, next) {
 	}], function(err, result) {
 		if (err) return next(err);
 
-		res.status(202).json({status: 202, message: "User updated"}).end();
+		res.status(202).json({status: 202, content: "User updated"}).end();
 	});
 });
 
@@ -311,7 +311,7 @@ router.post('/delete', function(req, res, next) {
 	}], function(err) {
 		if (err) return next(err);
 
-		res.status(202).json({status: 202, message: "User deleted"}).end();
+		res.status(202).json({status: 202, content: "User deleted"}).end();
 	});
 });
 
