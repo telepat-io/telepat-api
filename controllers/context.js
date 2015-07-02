@@ -39,7 +39,7 @@ router.get('/all', function (req, res) {
 		if (err)
 			res.status(500).send({message: 'Could not get contexts'});
 		else {
-			res.json(res1);
+			res.json({status: 200, content: res1});
 		}
 	});
 });
@@ -82,7 +82,7 @@ router.post('/', function (req, res) {
 		if (err)
 			res.status(500).send({message: 'Could not get context'});
 		else {
-			res.json(res1);
+			res.json({status: 200, contet: res1});
 		}
 	});
 });
