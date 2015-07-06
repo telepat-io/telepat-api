@@ -1,6 +1,6 @@
 var express = require('express');
 var router = express.Router();
-var Models = require('octopus-models-api');
+var Models = require('telepat-models');
 var uuid = require('uuid');
 var security = require('./security');
 

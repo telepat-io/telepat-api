@@ -7,7 +7,7 @@ async = require('async');
 kafka = require('kafka-node');
 cb = require('couchbase');
 elastic = require('elasticsearch');
-Models = require('octopus-models-api');
+Models = require('telepat-models');
 
 var security = require('./controllers/security');
 var adminRoute = require('./controllers/admin');

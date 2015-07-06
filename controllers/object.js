@@ -1,6 +1,6 @@
 var express = require('express');
 var router = express.Router();
-var Models = require('octopus-models-api');
+var Models = require('telepat-models');
 var sizeof = require('object-sizeof');
 var security = require('./security');
 var microtime = require('microtime-nodejs');

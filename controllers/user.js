@@ -2,7 +2,7 @@ var express = require('express');
 var router = express.Router();
 var FB = require('facebook-node');
 var async = require('async');
-var Models = require('octopus-models-api');
+var Models = require('telepat-models');
 var security = require('./security');
 var jwt = require('jsonwebtoken');
 

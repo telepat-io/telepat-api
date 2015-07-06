@@ -2,7 +2,7 @@ var express = require('express');
 var router = express.Router();
 
 var security = require('./security');
-var Models = require('octopus-models-api');
+var Models = require('telepat-models');
 
 var unless = function(paths, middleware) {
 	return function(req, res, next) {
@@ -229,8 +229,9 @@ router.post('/app/add', function (req, res) {
 	var newApp = req.body;
 	newApp['admin_id'] = req.user.email;
 	Models.Application.create(newApp, function (err, res1) {
-		if (err)
-			res.status(500).send({message: 'Could not add app'});
+		if (err) {
+			res.status(500).send({status: 500, message: 'Could not add app'});
+		}
 		else {
 			var newIndex;
 			for (var key in res1) {

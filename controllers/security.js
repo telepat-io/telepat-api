@@ -1,6 +1,6 @@
 var jwt = require('jsonwebtoken');
 var crypto = require('crypto');
-var Models = require('octopus-models-api');
+var Models = require('telepat-models');
 var expressJwt = require('express-jwt');
 
 ACL_UNAUTHENTICATED = 1;
