@@ -130,8 +130,7 @@ router.post('/subscribe', function(req, res, next) {
 		userEmail = req.user.email,
 		deviceId = req._telepat.device_id,
 		appId = req._telepat.application_id,
-		elasticQuery = false,
-		elasticQueryResult = null;
+		elasticQuery = false;
 
 	if (!context)
 		return res.status(400).json({status: 400, message: "Requested context is missing."}).end();
@@ -141,6 +140,33 @@ router.post('/subscribe', function(req, res, next) {
 
 	if (!Models.Application.loadedAppModels[appId][mdl])
 		return res.status(404).json({status: 404, message: 'Application model "'+mdl+'" does not exist.'}).end();
+
+	var channelObject = new Models.Channel(appId);
+
+	if (id) {
+		channelObject.model(mdl, id);
+	} else {
+		channelObject.model(mdl);
+
+		if (context)
+			channelObject.context(context);
+
+		if (parent)
+			channelObject.parent(parent);
+
+		if (user)
+			channelObject.user(user);
+
+		if (filters)
+			channelObject.setFilter(filters);
+	}
+
+	if (!channelObject.isValid()) {
+		var error = new Error('Could not subscribe to invalid channel');
+		error.status = 400;
+
+		return next(error);
+	}
 
 	async.waterfall([
 		//verify if context belongs to app
@@ -159,11 +185,11 @@ router.post('/subscribe', function(req, res, next) {
 						return callback(err);
 				}
 
-				callback(null, results);
+				callback();
 			});
 		},
-		function(subscriptions, callback) {
-			Models.Subscription.add(appId, deviceId, channel, filters,  function(err) {
+		function(callback) {
+			Models.Subscription.add(deviceId, channelObject,  function(err) {
 				if (err && err.status === 409)
 					return callback();
 
@@ -223,8 +249,7 @@ router.post('/subscribe', function(req, res, next) {
 					}, function(err, result) {
 						if (err) return callback(err);
 
-						elasticQueryResult = result.hits.hits;
-						callback();
+						callback(null, result.hits.hits);
 					});
 				//no filters
 				} else {
@@ -267,13 +292,11 @@ router.post('/subscribe', function(req, res, next) {
 					}, function(err, result) {
 						if (err) return callback(err);
 
-						elasticQueryResult = result.hits.hits;
-						callback();
+						callback(null, result.hits.hits);
 					});
 				//with no filters
 				} else {
 					Models.Model.getAll(mdl, appId, context, function(err, results) {
-						console.log(results);
 						callback(err, results);
 					});
 				}
@@ -299,15 +322,16 @@ router.post('/subscribe', function(req, res, next) {
 			return next(err);
 
 		if(elasticQuery) {
-			result = [];
-			async.each(elasticQueryResult.applicationId.hits.hits, function(item, c) {
-				result.push(item._source.doc);
+			var elasticsearchResult = [];
+			async.each(result, function(item, c) {
+				if (item._source.doc)
+					elasticsearchResult.push(item._source.doc);
 				c();
 			}, function(err) {
 				if (err)
 					return next(err);
 
-				res.json({status: 200, content: result}).end();
+				res.json({status: 200, content: elasticsearchResult}).end();
 			});
 		} else {
 			res.json({status: 200, content: result}).end();
@@ -455,6 +479,7 @@ router.post('/create', function(req, res, next) {
 
 	content.type = mdl;
 	content.context_id = context;
+	content.application_id = appId;
 
 	if (Models.Application.loadedAppModels[appId][mdl].belongsTo) {
 		var parentModel = Models.Application.loadedAppModels[appId][mdl].belongsTo[0].parentModel;
@@ -604,7 +629,7 @@ router.post('/update', function(req, res, next) {
 			app.kafkaProducer.send([{
 				topic: 'aggregation',
 				messages: [JSON.stringify({
-					op: 'edit',
+					op: 'update',
 					id: id,
 					context: context,
 					object: patch,
@@ -623,7 +648,7 @@ router.post('/update', function(req, res, next) {
 			app.kafkaProducer.send([{
 				topic: 'track',
 				messages: [JSON.stringify({
-					op: 'edit',
+					op: 'update',
 					id: id,
 					context: context,
 					object: patch,
@@ -697,7 +722,8 @@ router.post('/delete', function(req, res, next) {
 				topic: 'aggregation',
 				messages: [JSON.stringify({
 					op: 'delete',
-					object: {id: id, type: mdl, context: context},
+					object: {path: mdl+'/'+id},
+					context: context,
 					applicationId: appId
 				})],
 				attributes: 0

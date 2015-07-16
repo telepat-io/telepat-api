@@ -8,6 +8,7 @@ kafka = require('kafka-node');
 cb = require('couchbase');
 elastic = require('elasticsearch');
 Models = require('telepat-models');
+redis = require('redis');
 
 var security = require('./controllers/security');
 var adminRoute = require('./controllers/admin');
@@ -27,6 +28,8 @@ app.use('/documentation', express.static(__dirname+'/documentation'));
 
 process.title = "octopus-api";
 
+Models.Application.setCB(cb);
+
 if (process.env.TP_KFK_HOST) {
 	app.kafkaConfig = {
 		host: process.env.TP_KFK_HOST,
@@ -42,12 +45,21 @@ app.datasources = {};
 if (process.env.TP_CB_HOST) {
 	app.datasources.couchbase = {
 		host: process.env.TP_CB_HOST,
-		bucket: process.env.TP_CB_BUCKET,
-		stateBucket: process.env.TP_CB_STATE_BUCKET
+		bucket: process.env.TP_CB_BUCKET
 	};
 } else {
 	app.datasources.couchbase = require('./config/datasources').couchbase;
 }
+
+if (process.env.TP_REDIS_HOST) {
+	app.datasources.redis = {
+		host: process.env.TP_REDIS_HOST,
+		port: process.env.TP_REDIS_PORT
+	};
+} else {
+	app.datasources.redis = require('./config/datasources').redis;
+}
+
 if (process.env.TP_ES_HOST) {
 	app.datasources.elasticsearch = {
 		host: process.env.TP_ES_HOST,
@@ -75,7 +87,6 @@ app.use(function(req, res, next) {
 var OnServicesConnect = function() {
 	dbConnected = true;
 	Models.Application.setBucket(db.Couchbase.bucket);
-	Models.Application.setStateBucket(db.Couchbase.stateBucket);
 	Models.Application.setElasticClient(app.get('elastic-db').client);
 	Models.Application.getAll(function(err, results) {
 		if (err) {
@@ -163,20 +174,17 @@ async.waterfall([
 			callback();
 		});
 	},
-	function StateBucket(callback) {
-		if (db.Couchbase.stateBucket)
-			delete db.Couchbase.stateBucket;
-		db.Couchbase.stateBucket = db.Couchbase.openBucket(ds.couchbase.stateBucket);
-		db.Couchbase.stateBucket.on('error', function(err) {
-			var d = new Date();
-			console.log('Failed'.bold.red+' connecting to State Bucket on couchbase "'+ds.couchbase.host+'": '+err.message);
+	function RedisClient(callback) {
+		if (Models.Application.redisClient)
+			Models.Application.redisClient = null;
+
+		Models.Application.redisClient = redis.createClient(ds.redis.port, ds.redis.host);
+		Models.Application.redisClient.on('error', function(err) {
+			console.log('Failed'.bold.red+' connecting to Redis "'+ds.redis.host+'": '+err.message);
 			console.log('Retrying...');
-			setTimeout(function () {
-				StateBucket(callback);
-			}, 1000);
 		});
-		db.Couchbase.stateBucket.on('connect', function() {
-			console.log('Connected to State bucket on couchbase.'.green);
+		Models.Application.redisClient.on('ready', function() {
+			console.log('Client connected to Redis.'.green);
 			callback();
 		});
 	},

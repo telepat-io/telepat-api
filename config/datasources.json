@@ -1,11 +1,14 @@
 {
   "couchbase": {
-	"host": "blg-couchbase.cloudapp.net",
-	"bucket": "default",
-	"stateBucket": "state"
+	"host": "devel-couchbase.cloudapp.net",
+	"bucket": "default"
   },
   "elasticsearch": {
-	"host": "10.32.0.6",
+	"host": "10.32.0.11",
 	"port": 9200
+  },
+  "redis": {
+	"host": "10.32.0.13",
+	"port": 6379
   }
 }

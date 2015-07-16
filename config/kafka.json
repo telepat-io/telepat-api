@@ -1,5 +1,5 @@
 {
-  "host": "10.32.0.8",
+  "host": "10.32.0.7",
   "port": 2181,
   "clientName": "octopus-producer"
 }
