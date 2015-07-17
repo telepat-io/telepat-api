@@ -82,7 +82,7 @@ router.post('/register', function(req, res, next) {
 	} else {
 		req.body.id = req._telepat.device_id;
 
-		Models.Subscription.updateDevice(req.body, function(err, result) {
+		Models.Subscription.updateDevice(req._telepat.device_id, req.body, function(err, result) {
 			if (err && err.code == cb.errors.keyNotFound) {
 				var error = new Error('Device with ID "'+req._telepat.device_id+'" does not exist.');
 				error.status = 404;

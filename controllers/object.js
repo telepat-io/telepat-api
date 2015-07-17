@@ -243,7 +243,7 @@ router.post('/subscribe', function(req, res, next) {
 
 					elasticSearchQuery.query.filtered.filter = Models.utils.parseQueryObject(filters);
 					app.get('elastic-db').client.search({
-						index: 'default',
+						index: 'couchbasereplica',
 						type: 'couchbaseDocument',
 						body: elasticSearchQuery
 					}, function(err, result) {
@@ -286,7 +286,7 @@ router.post('/subscribe', function(req, res, next) {
 
 					elasticSearchQuery.query.filtered.filter = Models.utils.parseQueryObject(filters);
 					app.get('elastic-db').client.search({
-						index: 'default',
+						index: 'couchbasereplica',
 						type: 'couchbaseDocument',
 						body: elasticSearchQuery
 					}, function(err, result) {
@@ -376,6 +376,8 @@ router.post('/unsubscribe', function(req, res, next) {
 	var id = channel.id,
 	context = channel.context,
 	mdl = channel.model,
+	parent = channel.parent,// eg: {model: "event", id: 1}
+	user = channel.user,
 	filters = req.body.filters,
 	deviceId = req._telepat.device_id,
 	appId = req._telepat.application_id;
@@ -389,13 +391,40 @@ router.post('/unsubscribe', function(req, res, next) {
 	if (!Models.Application.loadedAppModels[appId][mdl])
 		return res.status(404).json({status: 404, message: 'Application model "'+mdl+'" does not exist.'}).end();
 
+	var channelObject = new Models.Channel(appId);
+
+	if (id) {
+		channelObject.model(mdl, id);
+	} else {
+		channelObject.model(mdl);
+
+		if (context)
+			channelObject.context(context);
+
+		if (parent)
+			channelObject.parent(parent);
+
+		if (user)
+			channelObject.user(user);
+
+		if (filters)
+			channelObject.setFilter(filters);
+	}
+
+	if (!channelObject.isValid()) {
+		var error = new Error('Could not subscribe to invalid channel');
+		error.status = 400;
+
+		return next(error);
+	}
+
 	async.waterfall([
 		//verify if context belongs to app
 		function(callback) {
 			validateContext(appId, context, callback);
 		},
 		function(callback) {
-			Models.Subscription.remove(appId, deviceId, channel, filters, function(err, results) {
+			Models.Subscription.remove(deviceId, channelObject, function(err, results) {
 				if (err && err.code == cb.errors.keyNotFound) {
 					var error = new Error("Subscription not found");
 					error.status = 404;
@@ -404,7 +433,7 @@ router.post('/unsubscribe', function(req, res, next) {
 				}	else if (err)
 					callback(err, null);
 				else
-					callback(null, {status: 200, message: "Subscription removed"});
+					callback(null, {status: 200, content: "Subscription removed"});
 			});
 		},
 		function(result, callback) {
