@@ -111,6 +111,8 @@ router.post('/login', function(req, res, next) {
 
 						Models.User.update(userProfile.email, userProfile, callback);
 					});
+				} else {
+					callback(null, true);
 				}
 			} else
 				callback(null, true);
