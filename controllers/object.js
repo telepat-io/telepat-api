@@ -103,9 +103,12 @@ var validateContext = function(appId, context, callback) {
  *
  *	@apiSuccessExample {json} Success Response
  * 	{
- * 		"1": {
- * 			//item properties
- * 		}
+ * 		"status": 200,
+ * 		"content": [
+ * 			{
+ * 				//item properties
+ * 			}
+ * 		]
  * 	}
  *
  * @apiError 402 <code>NotAuthenticated</code> Only authenticated users may access this endpoint.
@@ -357,7 +360,7 @@ router.post('/subscribe', function(req, res, next) {
  * @apiSuccessExample {json} Success Response
  * 	{
  * 		"status": 200,
- * 		"message": "Subscription removed"
+ * 		"content": "Subscription removed"
  * 	}
  *
  * @apiError 402 <code>NotAuthenticated</code>  Only authenticated users may access this endpoint.
@@ -481,7 +484,7 @@ router.post('/unsubscribe', function(req, res, next) {
  * @apiSuccessExample {json} Success Response
  * 	{
  * 		"status": 202,
- * 		"message": "Created"
+ * 		"content": "Created"
  * 	}
  *
  * @apiError 402 <code>NotAuthenticated</code>  Only authenticated users may access this endpoint.
@@ -614,7 +617,7 @@ router.post('/create', function(req, res, next) {
  * @apiSuccessExample {json} Success Response
  * 	{
  * 		"status": 202,
- * 		"message": "Created"
+ * 		"content": "Created"
  * 	}
  *
  * @apiError 402 <code>NotAuthenticated</code>  Only authenticated users may access this endpoint
@@ -718,6 +721,12 @@ router.post('/update', function(req, res, next) {
  * 		"id": 1,
  * 		"context": 1
  * }
+ *
+ * @apiSuccessExample {json} Success Response
+ * 	{
+ * 		"status": 202,
+ * 		"content": "Deleted"
+ * 	}
  *
  * @apiError 402 <code>NotAuthenticated</code>  Only authenticated users may access this endpoint.
  * @apiError 404 <code>NotFound</code> If <code>id</code> was supplied but object not found.

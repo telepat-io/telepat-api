@@ -48,13 +48,15 @@ router.use(security.keyValidation);
  * 	@apiSuccessExample {json} 'Created' Response
  * 	{
  * 		"status": 200,
- * 		"identifier": "2397bfc7-a3b3-47c0-b677-a4a2eee036e4"
+ * 		"content": {
+ * 			"identifier": "2397bfc7-a3b3-47c0-b677-a4a2eee036e4"
+ * 		}
  * 	}
  *
  * 	@apiSuccessExample {json} 'Updated' Response
  * 	{
  * 		"status": 200,
- * 		"message": "Device has been updated"
+ * 		"content": "Device has been updated"
  * 	}
  *
  */

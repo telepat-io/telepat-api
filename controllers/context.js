@@ -14,14 +14,17 @@ router.use(security.keyValidation);
  *
  * @apiSuccessExample {json} Success Response
  * 	{
- * 		"1": {
- * 			"name": "Episode 1",
- * 			"state": 0,
- * 			"meta": {},
- * 			"type": "context",
- * 			"application_id": "20"
- * 		},
- * 		...
+ * 		"status": 200,
+ * 		"content": [
+ * 			{
+ * 				"name": "Episode 1",
+ * 				"state": 0,
+ * 				"meta": {},
+ * 				"type": "context",
+ * 				"application_id": "20"
+ * 			},
+ * 			...
+ * 		]
  * 	}
  *
  * 	@apiError (500) Error Internal server error.
@@ -60,13 +63,16 @@ router.get('/all', function (req, res) {
  *
  * 	@apiSuccessExample {json} Success Response
  * 	{
- * 		"1": {
- * 			"name": "Episode 1",
- * 			"state": 0,
- * 			"meta": {},
- * 			"type": "context",
- * 			"application_id": "20"
- * 		}
+ * 		"status": 200,
+ * 		"content": [
+ * 			{
+ * 				"name": "Episode 1",
+ * 				"state": 0,
+ * 				"meta": {},
+ * 				"type": "context",
+ * 				"application_id": "20"
+ * 			}
+ * 		]
  * 	}
  *
  * 	@apiError (500) Error Internal server error.

@@ -5,6 +5,7 @@ var async = require('async');
 var Models = require('telepat-models');
 var security = require('./security');
 var jwt = require('jsonwebtoken');
+var crypto = require('crypto');
 
 var options = {
 	client_id:          '1086083914753251',
@@ -33,7 +34,10 @@ router.use('/logout', security.tokenValidation);
  *
  * 	@apiSuccessExample {json} Success Response
  * 	{
- * 		token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImdhYmlAYXBwc2NlbmQuY29tIiwiaXNBZG1pbiI6dHJ1ZSwiaWF0IjoxNDMyOTA2ODQwLCJleHAiOjE0MzI5MTA0NDB9.knhPevsK4cWewnx0LpSLrMg3Tk_OpchKu6it7FK9C2Q"
+ * 		"status": 200,
+ * 		"content": {
+ * 			"token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImdhYmlAYXBwc2NlbmQuY29tIiwiaXNBZG1pbiI6dHJ1ZSwiaWF0IjoxNDMyOTA2ODQwLCJleHAiOjE0MzI5MTA0NDB9.knhPevsK4cWewnx0LpSLrMg3Tk_OpchKu6it7FK9C2Q"
+ * 		}
  * 	}
  *
  * 	@apiError 400 <code>InsufficientFacebookPermissions</code> User email is not publicly available (insufficient facebook permissions)
@@ -169,12 +173,41 @@ router.post('/login', function(req, res, next) {
 	});
 });
 
+/**
+ * @api {post} /user/login_password Password login
+ * @apiDescription Logs in the user with a password; creates the user if it doesn't exist
+ * @apiName UserLoginPassword
+ * @apiGroup User
+ * @apiVersion 0.1.2
+ *
+ * @apiParam {String} password The password
+ * @apiParam {String} email The email
+ *
+ * @apiExample {json} Client Request
+ * 	{
+ * 		"email": "user@example.com",
+ * 		"password": "magic-password1337"
+ * 	}
+ *
+ * 	@apiSuccessExample {json} Success Response
+ * 	{
+ * 		"content": {
+ * 			"token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImdhYmlAYXBwc2NlbmQuY29tIiwiaXNBZG1pbiI6dHJ1ZSwiaWF0IjoxNDMyOTA2ODQwLCJleHAiOjE0MzI5MTA0NDB9.knhPevsK4cWewnx0LpSLrMg3Tk_OpchKu6it7FK9C2Q"
+ * 		}
+ * 	}
+ *
+ * 	@apiError 401 <code>InvalidCredentials</code> User email and password did not match
+ *
+ */
 router.post('/login_password', function(req, res, next) {
 	var userExists = null;
 	var userProfile = null;
 	var email = req.body.email;
 	var password = req.body.password;
 	var deviceId = req._telepat.device_id;
+
+	var md5password = crypto.createHash('md5').update(password).digest('hex');
+	var hashedPassword = crypto.createHash('sha256').update(md5password).digest('hex');
 
 	async.series([
 		function(callback) {
@@ -245,7 +278,7 @@ router.post('/login_password', function(req, res, next) {
  * 	@apiSuccessExample {json} Success Response
  * 	{
  * 		"status": 200,
- * 		"message": "Logged out of device"
+ * 		"content": "Logged out of device"
  * 	}
  *
  * @apiError NotAuthenticated  Only authenticated users may access this endpoint.
@@ -287,7 +320,10 @@ router.post('/logout', function(req, res, next) {
  *
  * @apiSuccessExample {json} Success Response
  * 	{
- * 		token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImdhYmlAYXBwc2NlbmQuY29tIiwiaXNBZG1pbiI6dHJ1ZSwiaWF0IjoxNDMyOTA2ODQwLCJleHAiOjE0MzI5MTA0NDB9.knhPevsK4cWewnx0LpSLrMg3Tk_OpchKu6it7FK9C2Q"
+ * 		"status": 200,
+ * 		"content": {
+ * 			token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImdhYmlAYXBwc2NlbmQuY29tIiwiaXNBZG1pbiI6dHJ1ZSwiaWF0IjoxNDMyOTA2ODQwLCJleHAiOjE0MzI5MTA0NDB9.knhPevsK4cWewnx0LpSLrMg3Tk_OpchKu6it7FK9C2Q"
+ * 		}
  * 	}
  *
  * @apiError NotAuthenticated  If authorization header is missing or invalid.
@@ -324,8 +360,8 @@ router.post('/refresh_token', function(req, res, next) {
  *
  * @apiSuccessExample {json} Success Response
  * 	{
- * 		status: 202,
- * 		message: "User updated"
+ * 		"status": 202,
+ * 		"content": "User updated"
  * 	}
  *
  */
@@ -368,8 +404,8 @@ router.post('/update', function(req, res, next) {
  *
  * @apiSuccessExample {json} Success Response
  * 	{
- * 		status: 202,
- * 		message: "User deleted"
+ * 		"status": 202,
+ * 		"content": "User deleted"
  * 	}
  *
  */
