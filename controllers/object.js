@@ -428,12 +428,7 @@ router.post('/unsubscribe', function(req, res, next) {
 		},
 		function(callback) {
 			Models.Subscription.remove(deviceId, channelObject, function(err, results) {
-				if (err && err.code == cb.errors.keyNotFound) {
-					var error = new Error("Subscription not found");
-					error.status = 404;
-
-					callback(error, null);
-				}	else if (err)
+				if (err)
 					callback(err, null);
 				else
 					callback(null, {status: 200, content: "Subscription removed"});

@@ -1,0 +1,23 @@
+{
+  "couchbase": {
+	"host": "blg-couchbase.cloudapp.net",
+	"bucket": "default"
+  },
+  "elasticsearch": {
+	"host": "10.32.0.6",
+	"port": 9200
+  },
+  "redis": {
+	"host": "10.32.0.4",
+	"port": 6379
+  },
+  "kafka": {
+	"host": "10.32.0.14",
+	"port": 2181,
+	"clientName": "octopus-producer"
+  },
+  "password_salt": [
+	"",
+	""
+  ]
+}

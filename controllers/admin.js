@@ -3,6 +3,7 @@ var router = express.Router();
 
 var security = require('./security');
 var Models = require('telepat-models');
+var crypto = require('crypto');
 
 var unless = function(paths, middleware) {
 	return function(req, res, next) {
@@ -52,12 +53,16 @@ router.use(['/apps/remove', 'apps/update'], security.adminAppValidation);
  * 	}
  */
 router.post('/login', function (req, res, next) {
+	var passwordSalt = req.app.get('password_salt');
+	var md5password = crypto.createHash('md5').update(req.body.password).digest('hex');
+	var hashedPassword = crypto.createHash('sha256').update(passwordSalt[0]+md5password+passwordSalt[1]).digest('hex');
+
 	Models.Admin(req.body.email, function(err, admin) {
 		if (err) {
 			return next(err);
 		}
 
-		if (req.body.password == admin.password) {
+		if (hashedPassword == admin.password) {
 			res.json({ token: security.createToken({email: req.body.email, isAdmin: true})});
 		}
 		else {
@@ -92,7 +97,11 @@ router.post('/login', function (req, res, next) {
  * 	}
  */
 router.post('/add', function (req, res) {
-	Models.Admin.create(req.body.email, { email: req.body.email, password: req.body.password, name: req.body.name }, function (err, result) {
+	var passwordSalt = req.app.get('password_salt');
+	var md5password = crypto.createHash('md5').update(req.body.password).digest('hex');
+	var hashedPassword = crypto.createHash('sha256').update(passwordSalt[0]+md5password+passwordSalt[1]).digest('hex');
+
+	Models.Admin.create(req.body.email, { email: req.body.email, password: hashedPassword, name: req.body.name }, function (err, result) {
 		if (err)
 			res.status(500).send({message : "Error adding account"});
 		else

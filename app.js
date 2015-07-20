@@ -37,7 +37,7 @@ if (process.env.TP_KFK_HOST) {
 		clientName: process.env.TP_KFK_CLIENT
 	};
 } else {
-	app.kafkaConfig = require('./config/kafka.json');
+	app.kafkaConfig = require('./config.json').kafka;
 }
 
 app.datasources = {};
@@ -48,7 +48,7 @@ if (process.env.TP_CB_HOST) {
 		bucket: process.env.TP_CB_BUCKET
 	};
 } else {
-	app.datasources.couchbase = require('./config/datasources').couchbase;
+	app.datasources.couchbase = require('./config.json').couchbase;
 }
 
 if (process.env.TP_REDIS_HOST) {
@@ -57,7 +57,7 @@ if (process.env.TP_REDIS_HOST) {
 		port: process.env.TP_REDIS_PORT
 	};
 } else {
-	app.datasources.redis = require('./config/datasources').redis;
+	app.datasources.redis = require('./config.json').redis;
 }
 
 if (process.env.TP_ES_HOST) {
@@ -66,8 +66,10 @@ if (process.env.TP_ES_HOST) {
 		port: process.env.TP_ES_PORT
 	}
 } else {
-	app.datasources.elasticsearch = require('./config/datasources').elasticsearch;
+	app.datasources.elasticsearch = require('./config.json').elasticsearch;
 }
+
+app.set('password_salt', require('./config.json').password_salt);
 
 ds = app.datasources;
 app.set('couchbase-db', {

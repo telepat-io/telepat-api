@@ -206,8 +206,9 @@ router.post('/login_password', function(req, res, next) {
 	var password = req.body.password;
 	var deviceId = req._telepat.device_id;
 
+	var passwordSalt = req.app.get('password_salt');
 	var md5password = crypto.createHash('md5').update(password).digest('hex');
-	var hashedPassword = crypto.createHash('sha256').update(md5password).digest('hex');
+	var hashedPassword = crypto.createHash('sha256').update(passwordSalt[0]+md5password+passwordSalt[1]).digest('hex');
 
 	async.series([
 		function(callback) {
@@ -228,7 +229,7 @@ router.post('/login_password', function(req, res, next) {
 		}
 	], function(err) {
 		if (userExists) {
-			if (password != userProfile.password) {
+			if (hashedPassword != userProfile.password) {
 				res.status(401).json({status: 401, message: 'wrong password'}).end();
 
 				return;
@@ -244,7 +245,7 @@ router.post('/login_password', function(req, res, next) {
 				gender: req.body.gender,
 				friends: [],
 				devices: [deviceId],
-				password: password
+				password: hashedPassword
 			};
 
 			props.type = 'user';
