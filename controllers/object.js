@@ -201,7 +201,7 @@ router.post('/subscribe', function(req, res, next) {
 		},
 		function(callback) {
 			if (id) {
-				new Models.Model(mdl, appId, id, context, function(err, results) {
+				new Models.Model(mdl, context, appId, id, context, function(err, results) {
 					if (err) return callback(err, null);
 
 					var message = {};
@@ -547,7 +547,8 @@ router.post('/create', function(req, res, next) {
 					op: 'add',
 					object: content,
 					applicationId: appId,
-					isAdmin: isAdmin
+					isAdmin: isAdmin,
+					context: context
 				})],
 				attributes: 0
 			}], function(err) {
