@@ -133,7 +133,7 @@ router.post('/subscribe', function(req, res, next) {
 		userEmail = req.user.email,
 		deviceId = req._telepat.device_id,
 		appId = req._telepat.application_id,
-		elasticQuery = false;
+		elasticQuery = filters ? true : false;
 
 	if (!context)
 		return res.status(400).json({status: 400, message: "Requested context is missing."}).end();
@@ -216,7 +216,6 @@ router.post('/subscribe', function(req, res, next) {
 			if (parent || user) {
 				//with filters
 				if (filters) {
-					elasticQuery = true;
 					var userQuery = {};
 					var parentQuery = {};
 					var elasticSearchQuery = {
