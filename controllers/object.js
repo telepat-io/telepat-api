@@ -231,7 +231,8 @@ router.post('/subscribe', function(req, res, next) {
 									}
 								}
 							}
-						}
+						},
+						_source: ['doc.*']
 					};
 
 					if (user) {
@@ -284,7 +285,8 @@ router.post('/subscribe', function(req, res, next) {
 									}
 								}
 							}
-						}
+						},
+						_source: ['doc.*']
 					};
 
 					elasticSearchQuery.query.filtered.filter = Models.utils.parseQueryObject(filters);
