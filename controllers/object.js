@@ -517,7 +517,7 @@ router.post('/create', function(req, res, next) {
 			error.status = 400;
 
 			return next(error);
-		} else if (content[Models.Application.loadedAppModels[appId][parentModel].hasSome_property+'_index'] === undefined) {
+		} else if (Models.Application.loadedAppModels[appId][mdl].belongsTo[0].relationType == 'hasSome' && content[Models.Application.loadedAppModels[appId][parentModel].hasSome_property+'_index'] === undefined) {
 			var error = new Error("'"+Models.Application.loadedAppModels[appId][parentModel].hasSome_property+"_index is required");
 			error.status = 400;
 
