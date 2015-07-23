@@ -133,7 +133,7 @@ router.post('/subscribe', function(req, res, next) {
 		userEmail = req.user.email,
 		deviceId = req._telepat.device_id,
 		appId = req._telepat.application_id,
-		elasticQuery = false;
+		elasticQuery = filters ? true : false;
 
 	if (!context)
 		return res.status(400).json({status: 400, message: "Requested context is missing."}).end();
@@ -216,7 +216,6 @@ router.post('/subscribe', function(req, res, next) {
 			if (parent || user) {
 				//with filters
 				if (filters) {
-					elasticQuery = true;
 					var userQuery = {};
 					var parentQuery = {};
 					var elasticSearchQuery = {
@@ -257,7 +256,7 @@ router.post('/subscribe', function(req, res, next) {
 					});
 				//no filters
 				} else {
-					if (Models.Application.loadedAppModels[appId][mdl].belongsTo) {
+					if (Models.Application.loadedAppModels[appId][mdl].belongsTo && Models.Application.loadedAppModels[appId][mdl].belongsTo.length) {
 						if (Models.Application.loadedAppModels[appId][mdl].belongsTo[0].parentModel !== parent.model) {
 							Models.Model.lookup(mdl, appId, context, user, parent, function(err, results) {
 								if (!results) {
@@ -510,7 +509,7 @@ router.post('/create', function(req, res, next) {
 	content.context_id = context;
 	content.application_id = appId;
 
-	if (Models.Application.loadedAppModels[appId][mdl].belongsTo) {
+	if (Models.Application.loadedAppModels[appId][mdl].belongsTo && Models.Application.loadedAppModels[appId][mdl].belongsTo.length) {
 		var parentModel = Models.Application.loadedAppModels[appId][mdl].belongsTo[0].parentModel;
 		if (!content[parentModel+'_id']) {
 			var error = new Error("'"+parentModel+"_id' is required");
