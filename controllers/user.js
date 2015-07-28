@@ -17,6 +17,7 @@ FB.options(options);
 router.use(security.keyValidation);
 router.use(security.deviceIDExists);
 router.use('/logout', security.tokenValidation);
+router.use('/me', security.tokenValidation);
 
 /**
  * @api {post} /user/login Login
@@ -37,6 +38,17 @@ router.use('/logout', security.tokenValidation);
  * 		"status": 200,
  * 		"content": {
  * 			"token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImdhYmlAYXBwc2NlbmQuY29tIiwiaXNBZG1pbiI6dHJ1ZSwiaWF0IjoxNDMyOTA2ODQwLCJleHAiOjE0MzI5MTA0NDB9.knhPevsK4cWewnx0LpSLrMg3Tk_OpchKu6it7FK9C2Q"
+ * 			"user": {
+ * 				 "id": 31,
+ *				"type": "user",
+ * 				"email": "abcd@appscend.com",
+ * 				"fid": "facebook_id",
+ * 				"devices": [
+ *					"466fa519-acb4-424b-8736-fc6f35d6b6cc"
+ *				],
+ *				"friends": [],
+ *				"password": "acb8a9cbb479b6079f59eabbb50780087859aba2e8c0c397097007444bba07c0"
+ *			}
  * 		}
  * 	}
  *
@@ -168,8 +180,51 @@ router.post('/login', function(req, res, next) {
 			res.status(400).json(err).end();
 		else {
 			var token = jwt.sign({email: userProfile.email}, security.authSecret, { expiresInMinutes: 60 });
-			res.json({status: 200, content: {token: token }}).end();
+			res.json({status: 200, content: {token: token, user: userProfile }}).end();
 		}
+	});
+});
+
+/**
+ * @api {post} /user/me Info about logged user
+ * @apiDescription Logs in the user with a password; creates the user if it doesn't exist
+ * @apiName UserLoginPassword
+ * @apiGroup User
+ * @apiVersion 0.2.1
+ *
+ * @apiParam {String} password The password
+ * @apiParam {String} email The email
+ *
+ * 	@apiSuccessExample {json} Success Response
+ * 	{
+ * 		"content": {
+ *			"id": 31,
+ *			"type": "user",
+ * 			"email": "abcd@appscend.com",
+ * 			"fid": "",
+ * 			"devices": [
+ *				"466fa519-acb4-424b-8736-fc6f35d6b6cc"
+ *			],
+ *			"friends": [],
+ *			"password": "acb8a9cbb479b6079f59eabbb50780087859aba2e8c0c397097007444bba07c0"
+ * 		}
+ * 	}
+ *
+ * 	@apiError 401 <code>InvalidCredentials</code> User email and password did not match
+ *
+ */
+router.get('/me', function(req, res, next) {
+	Models.User(req.user.email, function(err, result) {
+		if (err && err.code == cb.errors.keyNotFound) {
+			var error = new Error('User not fount');
+			error.status = 404;
+
+			return next(error);
+		}
+		else if (err)
+			next(err);
+		else
+			next(null, result);
 	});
 });
 

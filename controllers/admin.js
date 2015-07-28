@@ -63,7 +63,7 @@ router.post('/login', function (req, res, next) {
 		}
 
 		if (hashedPassword == admin.password) {
-			res.json({ token: security.createToken({email: req.body.email, isAdmin: true})});
+			res.json({ content: {user: admin, token: security.createToken({email: req.body.email, isAdmin: true})}});
 		}
 		else {
 			res.status(401).json({status: 401, message: 'Wrong user or password'});
