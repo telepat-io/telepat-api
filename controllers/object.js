@@ -256,17 +256,16 @@ router.post('/subscribe', function(req, res, next) {
 					});
 				//no filters
 				} else {
-					if (Models.Application.loadedAppModels[appId][mdl].belongsTo && Models.Application.loadedAppModels[appId][mdl].belongsTo.length) {
-						if (Models.Application.loadedAppModels[appId][mdl].belongsTo[0].parentModel !== parent.model) {
-							Models.Model.lookup(mdl, appId, context, user, parent, function(err, results) {
-								if (!results) {
-									callback(err, results);
-								} else {
-									Models.Model.multiGet(mdl, results, appId, context, callback);
-								}
-							});
+					Models.Model.lookup(channelObject, function(err, results) {
+						if (err)
+							return callback(err);
+
+						if (results.length) {
+							Models.Model.multiGet(mdl, results, appId, context, callback);
+						} else {
+							callback(null, []);
 						}
-					}
+					});
 				}
 			//no channel (AKA all items)
 			} else {
