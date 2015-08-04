@@ -103,9 +103,9 @@ router.post('/add', function (req, res) {
 
 	Models.Admin.create(req.body.email, { email: req.body.email, password: hashedPassword, name: req.body.name }, function (err, result) {
 		if (err)
-			res.status(500).send({message : "Error adding account"});
+			res.status(500).send({status: 500, message : "Error adding account"});
 		else
-			res.send(200);
+			res.status(200).json({status: 200, content: 'Admin added'}).end();
 	});
 });
 
@@ -126,7 +126,7 @@ router.post('/add', function (req, res) {
  * 	}
  */
 router.get('/me', function (req, res) {
-	res.json(req.user).end();
+	res.status(200).json({status: 200, content: req.user}).end();
 });
 
 /**
@@ -153,9 +153,9 @@ router.get('/me', function (req, res) {
 router.post('/update', function (req, res) {
 	Models.Admin.update(req.user.email, req.body, function (err, res1) {
 		if (err)
-			res.status(500).send({message: err});
+			res.status(500).json({status: 500, message: err}).end();
 		else
-			res.send(200);
+			res.send(200).json({status: 200, content: "Admin updated"});
 	})
 });
 
@@ -189,10 +189,10 @@ router.get('/apps', function (req, res) {
 		c();
 	}, function(err) {
 		if (err) {
-			res.status(500).send({message: "Server issue"});
+			res.status(500).send({status: 500, message: "Server issue"});
 		}
 		else {
-			res.json(adminApps);
+			res.status(200).json({status: 200, content: adminApps}).end();
 		}
 	});
 });
@@ -249,7 +249,7 @@ router.post('/app/add', function (req, res) {
 				}
 			}
 			app.applications[newIndex] = res1[newIndex];
-			res.status(200).send(res1);
+			res.status(200).json({status: 200, content: res1});
 		}
 	});
 });
@@ -281,10 +281,10 @@ router.post('/app/remove', function (req, res) {
 
 	Models.Application.delete(appId, function (err, res1) {
 		if (err)
-			res.status(500).send({message: 'Could not remove app'});
+			res.status(500).send({status: 500, message: 'Could not remove app'});
 		else {
 			delete app.applications[appId];
-			res.send(200);
+			res.status(200).json({status: 200, content: "App removed"}).end();
 		}
 	});
 });
@@ -317,10 +317,10 @@ router.post('/app/update', function (req, res) {
 
 	Models.Application.update(appId, req.body, function (err, res1, updatedApp) {
 		if (err)
-			res.status(500).send({message: 'Could not update app'});
+			res.status(500).send({status: 500, message: 'Could not update app'});
 		else {
 			app.applications[appId] = updatedApp;
-			res.send(200);
+			res.status(200).json({status: 200, content: 'Updated '}).end();
 		}
 	});
 });
@@ -357,9 +357,9 @@ router.post('/contexts', function (req, res) {
 
 	Models.Context.getAll(appId, function (err, res1) {
 		if (err)
-			res.status(500).send({message: 'Could not get contexts'});
+			res.status(500).send({status: 500, message: 'Could not get contexts'});
 		else {
-			res.json(res1);
+			res.status(200).json({status: 200, content: res1});
 		}
 	});
 });
@@ -400,9 +400,9 @@ router.post('/contexts', function (req, res) {
 router.post('/context', function (req, res) {
 	Models.Context(req.body.id, function (err, res1) {
 		if (err)
-			res.status(500).send({message: 'Could not get context'});
+			res.status(500).send({status: 500, message: 'Could not get context'});
 		else {
-			res.json(res1);
+			res.status(200).json({status: 200, content: res1}).end();
 		}
 	});
 });
@@ -447,9 +447,9 @@ router.post('/context/add', function (req, res) {
 	newContext['application_id'] = req._telepat.application_id;
 	Models.Context.create(newContext, function (err, res1) {
 		if (err)
-			res.status(500).send({message: 'Could not add context'});
+			res.status(500).send({status: 500, message: 'Could not add context'});
 		else {
-			res.status(200).send(res1);
+			res.status(200).json({status: 200, content: res1}).end();
 		}
 	});
 });
@@ -479,9 +479,9 @@ router.post('/context/add', function (req, res) {
 router.post('/context/remove', function (req, res) {
 	Models.Context.delete(req.body.id, function (err, res1) {
 		if (err)
-			res.status(500).send({message: 'Could not remove context'});
+			res.status(500).send({status: 500, message: 'Could not remove context'});
 		else {
-			res.send(200);
+			res.status(200).json({status: 200, content: "Context removed"});
 		}
 	});
 });
@@ -512,9 +512,9 @@ router.post('/context/remove', function (req, res) {
 router.post('/context/update', function (req, res) {
 	Models.Context.update(req.body.id, req.body, function (err, res1, updatedContext) {
 		if (err)
-			res.status(500).send({message: 'Could not update context'});
+			res.status(500).send({status: 500, message: 'Could not update context'});
 		else {
-			res.send(200);
+			res.status(200).json({status: 200, content: 'Context updated'}).end();
 		}
 	});
 });
@@ -560,7 +560,7 @@ router.post('/schemas', function(req, res, next) {
 		if (err){
 			next(err);
 		} else {
-			res.status(200).send(result.value).end();
+			res.status(200).json({status: 200, content: result.value}).end();
 		}
 	});
 });
@@ -591,7 +591,7 @@ router.post('/schema/update', function(req, res, next) {
 		if (err){
 			next(err);
 		} else {
-			res.status(200).end();
+			res.status(200).json({status: 200, content: "Schema updated"}).end();
 		}
 	});
 });
@@ -599,6 +599,27 @@ router.post('/schema/update', function(req, res, next) {
 router.post('/users', function(req, res, next) {
 	var appId = req._telepat.application_id;
 	Models.User.getByApplication(appId, function(err, results) {
+		if (err) return next(err);
+
+		results.forEach(function(item, index, originalArray) {
+			delete originalArray[index].password;
+		});
+
+		res.status(200).json({status: 200, content: results}).end();
+	});
+});
+
+router.post('/user/update', function(req, res, next) {
+	var appId = req._telepat.application_id;
+	var props = req.body.user;
+
+	if (props.password) {
+		var passwordSalt = req.app.get('password_salt');
+		var md5password = crypto.createHash('md5').update(props.password).digest('hex');
+		props.password = crypto.createHash('sha256').update(passwordSalt[0]+md5password+passwordSalt[1]).digest('hex');
+	}
+
+	Models.User.update(props.email, props, function(err) {
 		if (err) return next(err);
 
 		res.status(200).json({status: 200, content: results}).end();
