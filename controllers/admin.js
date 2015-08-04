@@ -621,11 +621,13 @@ router.post('/user/delete', function(req, res, next) {
 
 				return next(error);
 			} else {
-				Models.User.delete()
+				Models.User.delete(userEmail, callback);
 			}
 		}
 	], function(error) {
+		if (error) return next(error);
 
+		res.status(200).json({status: 200, content: 'User deleted'});
 	})
 });
 
