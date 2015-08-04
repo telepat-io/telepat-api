@@ -57,10 +57,9 @@ router.use('/me', security.tokenValidation);
  */
 router.post('/login', function(req, res, next) {
 	var accessToken = req.body.access_token;
-	var fbFriends = [];
-	var userProfile = {};
-	var fbProfile = {};
-	var userExists = null;
+	var email = null;
+	var userProfile = null;
+	var fbProfile = null;
 	var deviceId = req._telepat.device_id;
 
 	async.waterfall([
@@ -68,9 +67,10 @@ router.post('/login', function(req, res, next) {
 		function(callback) {
 			FB.napi('/me', {access_token: accessToken}, function(err, result) {
 				if (err) return callback(err);
-				fbProfile = result;
+				userProfile = result;
+				email = result.email;
 
-				if (!fbProfile.email) {
+				if (!email) {
 					var error = new Error('User email is not publicly available (insufficient facebook permissions)');
 					error.status = 400;
 					callback(error);
@@ -81,72 +81,185 @@ router.post('/login', function(req, res, next) {
 		},
 		function(callback) {
 			//try and get user profile from DB
-			Models.User(fbProfile.email, function(err, result) {
+			Models.User(email, function(err, result) {
 				if (err && err.code == cb.errors.keyNotFound) {
-					userExists = false;
-					callback();
+					var error = new Error('User with email address not found');
+					error.status = 404;
+					callback(error);
 				}
 				else if (err)
 					callback(err);
 				else {
-					userExists = true;
 					userProfile = result;
-					callback();
 				}
-			});
-		},
-		function(callback) {
-			//get his/her friends
-			FB.napi('/me/friends', {access_token: accessToken}, function(err, result) {
-				if (err) return callback(err);
-
-				for(var f in result.data) {
-					fbFriends.push(result.data[f].id);
-				}
-				callback();
 			});
 		},
 		//update user with deviceID if it already exists
 		function(callback) {
-			if (userExists) {
-				if (userProfile.devices) {
-					var idx = userProfile.devices.indexOf(deviceId);
-					if (idx === -1)
-						userProfile.devices.push(deviceId);
-				} else {
-					userProfile.devices = [deviceId];
-				}
+			if (userProfile.devices) {
+				var idx = userProfile.devices.indexOf(deviceId);
+				if (idx === -1)
+					userProfile.devices.push(deviceId);
+			} else {
+				userProfile.devices = [deviceId];
+			}
 
-				//user first logged in with password then with fb
-				if (!userProfile.fid) {
-					var key = 'blg:'+User._model.namespace+':fid:'+fbProfile.id;
-					Application.bucket.insert(key, userProfile.email, function() {
-						userProfile.fid = fbProfile.id;
-						userProfile.name = fbProfile.name;
-						userProfile.gender = fbProfile.gender;
+			//user first logged in with password then with fb
+			if (!userProfile.fid) {
+				var key = 'blg:'+User._model.namespace+':fid:'+fbProfile.id;
+				Application.bucket.insert(key, userProfile.email, function() {
+					userProfile.fid = fbProfile.id;
+					userProfile.name = fbProfile.name;
+					userProfile.gender = fbProfile.gender;
 
-						Models.User.update(userProfile.email, userProfile, callback);
-					});
-				} else {
-					callback(null, true);
-				}
-			} else
+					Models.User.update(userProfile.email, userProfile, callback);
+				});
+			} else {
 				callback(null, true);
+			}
+		}
+		//final step: send authentification token
+	], function(err, results) {
+		if (err)
+			res.status(400).json(err).end();
+		else {
+			var token = jwt.sign({email: userProfile.email}, security.authSecret, { expiresInMinutes: 60 });
+			res.json({status: 200, content: {token: token, user: userProfile}}).end();
+		}
+	});
+});
+
+router.post('/register', function(req, res, next) {
+	var userProfile = req.body;
+	var accessToken = req.body.access_token;
+	var fbFriends = [];
+	var deviceId = req._telepat.device_id;
+
+	async.waterfall([
+		function(callback) {
+			if (accessToken) {
+				FB.napi('/me', {access_token: accessToken}, function(err, result) {
+					if (err) return callback(err);
+
+					if (!userProfile.email) {
+						var error = new Error('User email is not publicly available (insufficient facebook permissions)');
+						error.status = 400;
+						callback(error);
+					}
+
+					userProfile = result;
+
+					callback();
+				});
+			} else {
+				callback();
+			}
+		},
+		function(callback) {
+			//get his/her friends
+			if (accessToken) {
+				FB.napi('/me/friends', {access_token: accessToken}, function(err, result) {
+					if (err) return callback(err);
+
+					for(var f in result.data) {
+						fbFriends.push(result.data[f].id);
+					}
+					callback();
+				});
+			} else
+				callback();
+		},
+		function(callback) {
+			Models.User(userProfile.email, function(err, result) {
+				if (!err) {
+					var error = new Error('User with that email address already exists');
+					error.code = 409;
+					callback(error);
+				}
+				else if (err && err.code !== cb.errors.keyNotFound)
+					callback(err);
+				else {
+					callback();
+				}
+			});
 		},
 		//send message to kafka if user doesn't exist in order to create it
 		function(result, callback) {
-			if (userExists)
-				return callback(null, true);
-
-			var props = {
+			/*var props = {
 				email: userProfile.email,
 				fid: userProfile.id,
 				name: userProfile.name,
 				gender: userProfile.gender,
 				friends: fbFriends,
 				devices: [deviceId]
-			};
+			};*/
 
+			userProfile.friends = fbFriends;
+			userProfile.type = 'user';
+			userProfile.devices = [deviceId];
+
+			if (userProfile.password) {
+				var passwordSalt = req.app.get('password_salt');
+				var md5password = crypto.createHash('md5').update(userProfile.password).digest('hex');
+				userProfile.password = crypto.createHash('sha256').update(passwordSalt[0]+md5password+passwordSalt[1]).digest('hex');
+			}
+
+			app.kafkaProducer.send([{
+				topic: 'aggregation',
+				messages: [JSON.stringify({
+					op: 'add',
+					object: userProfile,
+					applicationId: req._telepat.application_id,
+					isUser: true
+				})],
+				attributes: 0
+			}], callback);
+		},
+		//add this user to his/her friends array
+		function(result, callback) {
+			if (fbFriends.length) {
+				app.kafkaProducer.send([{
+					topic: 'update_friends',
+					messages: [JSON.stringify({fid: userProfile.id, friends: fbFriends})],
+					attributes: 0
+				}], callback);
+			} else
+				callback();
+		}
+	], function(err) {
+		if (err) return next(err);
+
+		res.status(202).json({status: 202, content: 'User created'}).end();
+	});
+
+	/*async.waterfall([
+		function(callback) {
+			Models.User(req.body.email, function(err, result) {
+				if (!err) {
+					var error = new Error('User with that email address already exists');
+					error.code = 409;
+					callback(error);
+				}
+				else if (err && err.code !== cb.errors.keyNotFound)
+					callback(err);
+				else {
+					callback();
+				}
+			});
+		},
+		function(callback) {
+			/!*var props = {
+				email: props.email,
+				fid: "",
+				name: props.name,
+				gender: userProfile.gender,
+				friends: fbFriends,
+				devices: [deviceId]
+			};*!/
+
+			props.fid = "";
+			props.friends = [];
+			props.devices = [deviceId];
 			props.type = 'user';
 
 			app.kafkaProducer.send([{
@@ -159,30 +272,12 @@ router.post('/login', function(req, res, next) {
 				})],
 				attributes: 0
 			}], callback);
-		},
-		//add this user to his/her friends array
-		function(result, callback) {
-			if (userExists)
-				return callback(null, true);
+		}
+	], function(err) {
+		if (err) return next(err);
 
-			if (fbFriends.length) {
-				app.kafkaProducer.send([{
-					topic: 'update_friends',
-					messages: [JSON.stringify({fid: userProfile.id, friends: fbFriends})],
-					attributes: 0
-				}], callback);
-			} else
-				callback();
-		}
-		//final step: send authentification token
-	], function(err, results) {
-		if (err)
-			res.status(400).json(err).end();
-		else {
-			var token = jwt.sign({email: userProfile.email}, security.authSecret, { expiresInMinutes: 60 });
-			res.json({status: 200, content: {token: token, user: userProfile }}).end();
-		}
-	});
+
+	});*/
 });
 
 /**
@@ -255,7 +350,6 @@ router.get('/me', function(req, res, next) {
  *
  */
 router.post('/login_password', function(req, res, next) {
-	var userExists = null;
 	var userProfile = null;
 	var email = req.body.email;
 	var password = req.body.password;
@@ -270,20 +364,19 @@ router.post('/login_password', function(req, res, next) {
 			//try and get user profile from DB
 			Models.User(email, function(err, result) {
 				if (err && err.code == cb.errors.keyNotFound) {
-					userExists = false;
-					callback();
+					var error = new Error('User with email address not found');
+					error.status = 404;
+					callback(error);
 				}
 				else if (err)
 					callback(err);
 				else {
-					userExists = true;
 					userProfile = result;
 					callback();
 				}
 			});
 		}
 	], function(err) {
-		if (userExists) {
 			if (hashedPassword != userProfile.password) {
 				res.status(401).json({status: 401, message: 'wrong password'}).end();
 
@@ -292,7 +385,7 @@ router.post('/login_password', function(req, res, next) {
 
 			var token = jwt.sign({email: email}, security.authSecret, { expiresInMinutes: 60 });
 			res.json({status: 200, content: {token: token }}).end();
-		} else {
+		/*else {
 			var props = {
 				email: email,
 				fid: '',
@@ -320,7 +413,7 @@ router.post('/login_password', function(req, res, next) {
 
 			var token = jwt.sign({email: email}, security.authSecret, { expiresInMinutes: 60 });
 			res.json({status: 200, content: {token: token }}).end();
-		}
+		}*/
 	});
 });
 
@@ -428,6 +521,11 @@ router.post('/update', function(req, res, next) {
 
 	for(var p in patches) {
 		patches[p].email = email;
+		if (patches[p].path.split('/')[2] == 'password') {
+			var passwordSalt = req.app.get('password_salt');
+			var md5password = crypto.createHash('md5').update(patches[p].value).digest('hex');
+			patches[p].value = crypto.createHash('sha256').update(passwordSalt[0]+md5password+passwordSalt[1]).digest('hex');
+		}
 	}
 
 	app.kafkaProducer.send([{

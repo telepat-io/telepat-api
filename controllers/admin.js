@@ -21,6 +21,7 @@ var unless = function(paths, middleware) {
 	};
 };
 
+router.use(security.keyValidation);
 router.use(unless(['/add', '/login'], security.tokenValidation));
 router.use(['/apps/remove', 'apps/update'], security.adminAppValidation);
 
@@ -277,11 +278,13 @@ router.post('/app/add', function (req, res) {
  *
  */
 router.post('/app/remove', function (req, res) {
-	Models.Application.delete(req.body.appId, function (err, res1) {
+	var appId = req._telepat.application_id;
+
+	Models.Application.delete(appId, function (err, res1) {
 		if (err)
 			res.status(500).send({message: 'Could not remove app'});
 		else {
-			delete app.applications[req.body.appId];
+			delete app.applications[appId];
 			res.send(200);
 		}
 	});
@@ -311,11 +314,13 @@ router.post('/app/remove', function (req, res) {
  *
  */
 router.post('/app/update', function (req, res) {
-	Models.Application.update(req.body.appId, req.body, function (err, res1, updatedApp) {
+	var appId = req._telepat.application_id;
+
+	Models.Application.update(appId, req.body, function (err, res1, updatedApp) {
 		if (err)
 			res.status(500).send({message: 'Could not update app'});
 		else {
-			app.applications[req.body.appId] = updatedApp;
+			app.applications[appId] = updatedApp;
 			res.send(200);
 		}
 	});
@@ -349,7 +354,9 @@ router.post('/app/update', function (req, res) {
  *
  */
 router.post('/contexts', function (req, res) {
-	Models.Context.getAll(req.body.appId, function (err, res1) {
+	var appId = req._telepat.application_id;
+
+	Models.Context.getAll(appId, function (err, res1) {
 		if (err)
 			res.status(500).send({message: 'Could not get contexts'});
 		else {
@@ -438,7 +445,7 @@ router.post('/context', function (req, res) {
  */
 router.post('/context/add', function (req, res) {
 	var newContext = req.body;
-	newContext['application_id'] = req.body.appId;
+	newContext['application_id'] = req._telepat.application_id;
 	Models.Context.create(newContext, function (err, res1) {
 		if (err)
 			res.status(500).send({message: 'Could not add context'});
@@ -548,7 +555,7 @@ router.post('/context/update', function (req, res) {
  *
  */
 router.post('/schemas', function(req, res, next) {
-	var appId = req.body.appId;
+	var appId = req._telepat.application_id;
 
 	Models.Application.getAppSchema(appId, function(err, result) {
 		if (err){
@@ -578,7 +585,7 @@ router.post('/schemas', function(req, res, next) {
  * @apiError 404 NotFound If the App ID doesn't exist
  */
 router.post('/schema/update', function(req, res, next) {
-	var appId = req.body.appId;
+	var appId = req._telepat.application_id;
 	var schema = req.body.schema;
 
 	Models.Application.updateSchema(appId, schema, function(err, result) {
@@ -588,6 +595,38 @@ router.post('/schema/update', function(req, res, next) {
 			res.status(200).end();
 		}
 	});
+});
+
+router.post('/users', function(req, res, next) {
+	var appId = req._telepat.application_id;
+	Models.User.getByApplication(appId, function(err, results) {
+		if (err) return next(err);
+
+		res.status(200).json({status: 200, content: results}).end();
+	});
+});
+
+router.post('/user/delete', function(req, res, next) {
+	var appId = req._telepat.application_id;
+	var userEmail = req.body.email;
+
+	async.waterfall([
+		function(callback) {
+			Models.User(userEmail, callback);
+		},
+		function(user, callback) {
+			if (user.application_id !== appId) {
+				var error = new Error('User does not belong to this application');
+				error.code = 404;
+
+				return next(error);
+			} else {
+				Models.User.delete()
+			}
+		}
+	], function(error) {
+
+	})
 });
 
 module.exports = router;
