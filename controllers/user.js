@@ -383,8 +383,10 @@ router.post('/login_password', function(req, res, next) {
 				return;
 			}
 
+			delete userProfile.password;
+
 			var token = jwt.sign({email: email}, security.authSecret, { expiresInMinutes: 60 });
-			res.json({status: 200, content: {token: token }}).end();
+			res.json({status: 200, content: {user: userProfile, token: token }}).end();
 		/*else {
 			var props = {
 				email: email,

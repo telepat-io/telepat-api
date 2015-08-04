@@ -21,7 +21,6 @@ var unless = function(paths, middleware) {
 	};
 };
 
-router.use(security.keyValidation);
 router.use(unless(['/add', '/login'], security.tokenValidation));
 router.use(['/apps/remove', 'apps/update'], security.adminAppValidation);
 
