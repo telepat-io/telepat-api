@@ -624,8 +624,29 @@ router.post('/user/delete', function(req, res, next) {
 				Models.User.delete(userEmail, callback);
 			}
 		}
-	], function(error) {
+	], function(error, results) {
 		if (error) return next(error);
+
+		if (results) {
+			async.each(results, function(itemKey, c) {
+				var keyParts = itemKey.split(':'); // blg:{context_id}:{model_name}:{id}
+				var context = keyParts[1];
+				var mdl = keyParts[2];
+				var id = keyParts[3];
+
+				app.kafkaProducer.send([{
+					topic: 'aggregation',
+					messages: [JSON.stringify({
+						op: 'delete',
+						object: {path: mdl+'/'+id},
+						context: context,
+						applicationId: appId
+					})],
+					attributes: 0
+				}]);
+				c();
+			});
+		}
 
 		res.status(200).json({status: 200, content: 'User deleted'});
 	})
