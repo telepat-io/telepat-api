@@ -21,6 +21,7 @@ var unless = function(paths, middleware) {
 	};
 };
 
+router.use(unless(['/add'], security.keyValidation));
 router.use(unless(['/add', '/login'], security.tokenValidation));
 router.use(['/apps/remove', 'apps/update'], security.adminAppValidation);
 
@@ -29,7 +30,7 @@ router.use(['/apps/remove', 'apps/update'], security.adminAppValidation);
  * @apiDescription Authenticates an admin and returns the authorization token
  * @apiName AdminAuthenticate
  * @apiGroup Admin
- * @apiVersion 0.1.2
+ * @apiVersion 0.2.0
  *
  * @apiParam {String} email Email of admin
  * @apiParam {String} password Password of admin
@@ -42,7 +43,10 @@ router.use(['/apps/remove', 'apps/update'], security.adminAppValidation);
  *
  * 	@apiSuccessExample {json} Success Response
  * 	{
- * 		token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImdhYmlAYXBwc2NlbmQuY29tIiwiaXNBZG1pbiI6dHJ1ZSwiaWF0IjoxNDMyOTA2ODQwLCJleHAiOjE0MzI5MTA0NDB9.knhPevsK4cWewnx0LpSLrMg3Tk_OpchKu6it7FK9C2Q"
+ * 		status: 200,
+ * 		content:{
+ * 			token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImdhYmlAYXBwc2NlbmQuY29tIiwiaXNBZG1pbiI6dHJ1ZSwiaWF0IjoxNDMyOTA2ODQwLCJleHAiOjE0MzI5MTA0NDB9.knhPevsK4cWewnx0LpSLrMg3Tk_OpchKu6it7FK9C2Q"
+ * 		}
  * 	}
  *
  * @apiError Unauthorized If the provided email and password are not correct
@@ -77,7 +81,7 @@ router.post('/login', function (req, res, next) {
  * @apiDescription Creates a new admin
  * @apiName AdminAdd
  * @apiGroup Admin
- * @apiVersion 0.1.2
+ * @apiVersion 0.2.0
  *
  * @apiParam {String} email Admin e-mail
  * @apiParam {String} password The password
@@ -93,6 +97,7 @@ router.post('/login', function (req, res, next) {
  * @apiError (500) Error Admin account with that email address already exists or internal server error.
  * @apiErrorExample {json} Error Response
  * 	{
+ * 		status: 500,
  * 		message: "Error adding account"
  * 	}
  */
@@ -114,7 +119,7 @@ router.post('/add', function (req, res) {
  * @apiDescription Gets information about the logged admin
  * @apiName AdminMe
  * @apiGroup Admin
- * @apiVersion 0.1.2
+ * @apiVersion 0.2.0
  *
  * @apiSuccessExample {json} Success Response
  * 	{
@@ -134,7 +139,7 @@ router.get('/me', function (req, res) {
  * @apiDescription Updates a new admin. Every property in the request body is used to udpate the admin.
  * @apiName AdminUpdate
  * @apiGroup Admin
- * @apiVersion 0.1.2
+ * @apiVersion 0.2.0
  *
  * @apiExample {json} Client Request
  * 	{
@@ -146,6 +151,7 @@ router.get('/me', function (req, res) {
  *
  * 	@apiErrorExample {json} Error Response
  * 	{
+ * 		status: 500,
  * 		message: "Error description"
  * 	}
  *
@@ -164,7 +170,7 @@ router.post('/update', function (req, res) {
  * @apiDescription Lists the application for the current admin
  * @apiName AdminApps
  * @apiGroup Admin
- * @apiVersion 0.1.2
+ * @apiVersion 0.2.0
  *
  * @apiSuccessExample {json} Success Response
  * 	{
@@ -202,7 +208,7 @@ router.get('/apps', function (req, res) {
  * @apiDescription Creates a app for the admin. The request body should contain the app itself.
  * @apiName AdminAppAdd
  * @apiGroup Admin
- * @apiVersion 0.1.2
+ * @apiVersion 0.2.0
  *
  * @apiExample {json} Client Request
  * 	{
@@ -215,7 +221,8 @@ router.get('/apps', function (req, res) {
  *
  * @apiSuccessExample {json} Success Response
  * 	{
- * 		"20": {
+ * 		"status": 200,
+ * 		"content": {
  * 			 "admin_id": "email@example.com",
  *			 "icon": "fa-bullhorn",
  *			 "name": "The Voice",
@@ -259,7 +266,7 @@ router.post('/app/add', function (req, res) {
  * @apiDescription Removes an app from the admin.
  * @apiName AdminAppRemove
  * @apiGroup Admin
- * @apiVersion 0.1.2
+ * @apiVersion 0.2.0
  *
  * @apiParam {Number} appId The ID of the app to remove
  *
@@ -272,6 +279,7 @@ router.post('/app/add', function (req, res) {
  *
  * 	@apiErrorExample {json} Error Response
  * 	{
+ * 		status: 500,
  * 		message: "Could not remove app"
  * 	}
  *
@@ -294,7 +302,7 @@ router.post('/app/remove', function (req, res) {
  * @apiDescription Updates an app
  * @apiName AdminAppUpdate
  * @apiGroup Admin
- * @apiVersion 0.1.2
+ * @apiVersion 0.2.0
  *
  * @apiParam {Number} appId ID of the app to update
  *
@@ -308,6 +316,7 @@ router.post('/app/remove', function (req, res) {
  *
  * 	@apiErrorExample {json} Error Response
  * 	{
+ * 		status: 500,
  * 		message: "Could not update app"
  * 	}
  *
@@ -330,11 +339,12 @@ router.post('/app/update', function (req, res) {
  * @apiDescription Get all contexsts
  * @apiName AdminGetContexts
  * @apiGroup Admin
- * @apiVersion 0.1.2
+ * @apiVersion 0.2.0
  *
  * @apiSuccessExample {json} Success Response
  * 	{
- * 		"1": {
+ * 		"status": 200,
+ * 		"content": [{
  * 			"name": "Episode 1",
  * 			"state": 0,
  * 			"meta": {},
@@ -342,12 +352,14 @@ router.post('/app/update', function (req, res) {
  * 			"application_id": "20"
  * 		},
  * 		...
+ * 		]
  * 	}
  *
  * 	@apiError (500) Error Internal server error.
  *
  * 	@apiErrorExample {json} Error Response
  * 	{
+ * 		status: 500,
  * 		message: "Could not get contexts"
  * 	}
  *
@@ -369,7 +381,7 @@ router.post('/contexts', function (req, res) {
  * @apiDescription Retrieves a context
  * @apiName AdminGetContext
  * @apiGroup Admin
- * @apiVersion 0.1.2
+ * @apiVersion 0.2.0
  *
  * @apiParam {Number} id ID of the context to get
  *
@@ -380,7 +392,8 @@ router.post('/contexts', function (req, res) {
  *
  * 	@apiSuccessExample {json} Success Response
  * 	{
- * 		"1": {
+ * 		"status": 200,
+ * 		"content": {
  * 			"name": "Episode 1",
  * 			"state": 0,
  * 			"meta": {},
@@ -393,7 +406,8 @@ router.post('/contexts', function (req, res) {
  *
  * 	@apiErrorExample {json} Error Response
  * 	{
- * 		message: "Could not get context"
+ * 		"status": 500,
+ * 		'message": "Could not get context"
  * 	}
  *
  */
@@ -412,7 +426,7 @@ router.post('/context', function (req, res) {
  * @apiDescription Creates a new context
  * @apiName AdminCreateContext
  * @apiGroup Admin
- * @apiVersion 0.1.2
+ * @apiVersion 0.2.0
  *
  * @apiParam {Number} appId ID of the application
  *
@@ -425,7 +439,8 @@ router.post('/context', function (req, res) {
  *
  * 	@apiSuccessExample {json} Success Response
  * 	{
- * 		"2": {
+ * 		"status": 200,
+ * 		"content": {
  * 			"name": "Episode 2",
  * 			"state": 0,
  * 			"meta": {"info": "some meta info"},
@@ -438,7 +453,8 @@ router.post('/context', function (req, res) {
  *
  * 	@apiErrorExample {json} Error Response
  * 	{
- * 		message: "Could not add context"
+ * 		"status" 500,
+ * 		"message": "Could not add context"
  * 	}
  *
  */
@@ -459,7 +475,7 @@ router.post('/context/add', function (req, res) {
  * @apiDescription Removes a context and all associated objects
  * @apiName AdminRemoveContext
  * @apiGroup Admin
- * @apiVersion 0.1.2
+ * @apiVersion 0.2.0
  *
  * @apiParam {Number} id ID of the context to remove
  *
@@ -472,7 +488,8 @@ router.post('/context/add', function (req, res) {
  *
  * 	@apiErrorExample {json} Error Response
  * 	{
- * 		message: "Could not remove context"
+ * 		"status" 500,
+ * 		"message": "Could not remove context"
  * 	}
  *
  */
@@ -491,7 +508,7 @@ router.post('/context/remove', function (req, res) {
  * @apiDescription Updates the context object
  * @apiName AdminUpdateContext
  * @apiGroup Admin
- * @apiVersion 0.1.2
+ * @apiVersion 0.2.0
  *
  * @apiParam {Number} id ID of the context to update
  *
@@ -505,7 +522,8 @@ router.post('/context/remove', function (req, res) {
  *
  * 	@apiErrorExample {json} Error Response
  * 	{
- * 		message: "Could not update context"
+ * 		"status": 500,
+ * 		"message": "Could not update context"
  * 	}
  *
  */
@@ -524,7 +542,7 @@ router.post('/context/update', function (req, res) {
  * @apiDescription Gets the model schema for an application
  * @apiName AdminGetSchemas
  * @apiGroup Admin
- * @apiVersion 0.1.2
+ * @apiVersion 0.2.0
  *
  * @apiParam {Number} appId ID of the app from which to get the context
  *
@@ -535,7 +553,9 @@ router.post('/context/update', function (req, res) {
  *
  * 	@apiSuccessExample {json} Success Response
  * 	{
- * 		"answer": {
+ * 		"status": 200,
+ * 		"content" :{
+ * 			"answer": {
  *   		"namespace": "answers",
  *   		"type": "answer",
  *   		"properties": {},
@@ -550,6 +570,7 @@ router.post('/context/update', function (req, res) {
  *   		"meta_read_acl": 6
  * 		},
  * 		...
+ * 		}
  * 	}
  *
  */
@@ -570,7 +591,7 @@ router.post('/schemas', function(req, res, next) {
  * @apiDescription Updates the model schema
  * @apiName AdminUpdateSchema
  * @apiGroup Admin
- * @apiVersion 0.1.2
+ * @apiVersion 0.2.0
  *
  * @apiParam {Number} appId ID of the app of the schema to update
  * @apiParam {Object} props Updated schema object
@@ -596,6 +617,25 @@ router.post('/schema/update', function(req, res, next) {
 	});
 });
 
+
+/**
+ * @api {post} /admin/users GetAppusers
+ * @apiDescription Gets all users of the app
+ * @apiName AdminGetUsers
+ * @apiGroup Admin
+ * @apiVersion 0.2.0
+ *
+ * 	@apiSuccessExample {json} Success Response
+ * 	{
+ * 		"status": 200,
+ * 		"content" : [
+ * 			{//user props}, ...
+ * 		]
+ * 	}
+ *
+ * @apiError 404 NotFound If the App ID doesn't exist
+ */
+
 router.post('/users', function(req, res, next) {
 	var appId = req._telepat.application_id;
 	Models.User.getByApplication(appId, function(err, results) {
@@ -609,6 +649,26 @@ router.post('/users', function(req, res, next) {
 	});
 });
 
+
+/**
+ * @api {post} /admin/user/update EditUser
+ * @apiDescription Updates an user from an app
+ * @apiName AdminUpdateuser
+ * @apiGroup Admin
+ * @apiVersion 0.2.0
+ *
+ * @apiParam {Object} user The object that contains the user (must contain the email to identify him)
+ *
+ * 	@apiSuccessExample {json} Success Response
+ * 	{
+ * 		"status": 200,
+ * 		"content" : [
+ * 			{//user props}, ...
+ * 		]
+ * 	}
+ *
+ * @apiError 404 NotFound If the App ID doesn't exist
+ */
 router.post('/user/update', function(req, res, next) {
 	var appId = req._telepat.application_id;
 	var props = req.body.user;
@@ -619,13 +679,31 @@ router.post('/user/update', function(req, res, next) {
 		props.password = crypto.createHash('sha256').update(passwordSalt[0]+md5password+passwordSalt[1]).digest('hex');
 	}
 
-	Models.User.update(props.email, props, function(err) {
+	Models.User.update(props.email, props, function(err, results) {
 		if (err) return next(err);
 
-		res.status(200).json({status: 200, content: results}).end();
+		res.status(200).json({status: 200, content: "User has been updated"}).end();
 	});
 });
 
+/**
+ * @api {post} /admin/user/delete Deleteuser
+ * @apiDescription Deketes an user from an app
+ * @apiName AdminDeleteUser
+ * @apiGroup Admin
+ * @apiVersion 0.2.0
+ *
+ * @apiParam {String} email The email address of an user from an app
+ *
+ * 	@apiSuccessExample {json} Success Response
+ * 	{
+ * 		"status": 200,
+ * 		"content" : "User deleted"
+ * 	}
+ *
+ * @apiError 404 NotFound If the App ID doesn't exist
+ * @apiError 404 NotFound If the User does not belong to this application
+ */
 router.post('/user/delete', function(req, res, next) {
 	var appId = req._telepat.application_id;
 	var userEmail = req.body.email;
@@ -635,11 +713,11 @@ router.post('/user/delete', function(req, res, next) {
 			Models.User(userEmail, callback);
 		},
 		function(user, callback) {
-			if (user.application_id !== appId) {
+			if (user.application_id != appId) {
 				var error = new Error('User does not belong to this application');
 				error.code = 404;
 
-				return next(error);
+				return callback(error);
 			} else {
 				Models.User.delete(userEmail, callback);
 			}
@@ -648,11 +726,10 @@ router.post('/user/delete', function(req, res, next) {
 		if (error) return next(error);
 
 		if (results) {
-			async.each(results, function(itemKey, c) {
-				var keyParts = itemKey.split(':'); // blg:{context_id}:{model_name}:{id}
-				var context = keyParts[1];
-				var mdl = keyParts[2];
-				var id = keyParts[3];
+			async.each(results, function(item, c) {
+				var context = item.context_id;
+				var mdl = item.type;
+				var id = item.id;
 
 				app.kafkaProducer.send([{
 					topic: 'aggregation',
@@ -663,12 +740,11 @@ router.post('/user/delete', function(req, res, next) {
 						applicationId: appId
 					})],
 					attributes: 0
-				}]);
-				c();
+				}], c);
 			});
 		}
 
-		res.status(200).json({status: 200, content: 'User deleted'});
+		res.status(200).json({status: 200, content: 'User deleted'}).end();
 	})
 });
 

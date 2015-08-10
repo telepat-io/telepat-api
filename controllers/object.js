@@ -304,7 +304,7 @@ router.post('/subscribe', function(req, res, next) {
 					});
 				}
 			}
-		},
+		}/*,
 		function(results, callback) {
 			app.kafkaProducer.send([{
 				topic: 'track',
@@ -319,7 +319,7 @@ router.post('/subscribe', function(req, res, next) {
 					err.message = "Failed to send message to track worker.";
 				callback(err, results);
 			});
-		}
+		}*/
 	], function(err, result) {
 		if (err)
 			return next(err);
@@ -433,7 +433,7 @@ router.post('/unsubscribe', function(req, res, next) {
 				else
 					callback(null, {status: 200, content: "Subscription removed"});
 			});
-		},
+		}/*,
 		function(result, callback) {
 			app.kafkaProducer.send([{
 				topic: 'track',
@@ -449,7 +449,7 @@ router.post('/unsubscribe', function(req, res, next) {
 
 				callback(err, result);
 			});
-		}
+		}*/
 	], function(err, results) {
 		if (err) return next(err);
 
@@ -556,7 +556,7 @@ router.post('/create', function(req, res, next) {
 					err.message = "Failed to send message to aggregation worker.";
 				agg_callback(err);
 			});
-		},
+		}/*,
 		function(track_callback) {
 			app.kafkaProducer.send([{
 				topic: 'track',
@@ -572,7 +572,7 @@ router.post('/create', function(req, res, next) {
 					err.message = "Failed to send message to track worker.";
 				track_callback(err);
 			});
-		}
+		}*/
 	], function(err, results) {
 		if (err) {
 			console.log(req.originalUrl+': '+err.message.red);
@@ -671,7 +671,7 @@ router.post('/update', function(req, res, next) {
 					err.message = 'Failed to send message to aggregation worker.';
 				agg_callback(err);
 			});
-		},
+		}/*,
 		function(track_callback) {
 			app.kafkaProducer.send([{
 				topic: 'track',
@@ -689,7 +689,7 @@ router.post('/update', function(req, res, next) {
 					err.message = 'Failed to send message to track worker.';
 				track_callback(err);
 			});
-		}
+		}*/
 	], function(err, results) {
 		if (err) {
 			console.log(req.originalUrl+': '+err.message.red);
@@ -762,7 +762,7 @@ router.post('/delete', function(req, res, next) {
 				})],
 				attributes: 0
 			}], agg_callback);
-		},
+		}/*,
 		function(track_callback) {
 			app.kafkaProducer.send([{
 				topic: 'track',
@@ -773,7 +773,7 @@ router.post('/delete', function(req, res, next) {
 				})],
 				attributes: 0
 			}], track_callback);
-		}
+		}*/
 	], function(err, results) {
 		if (err) return next(err);
 

@@ -377,16 +377,19 @@ router.post('/login_password', function(req, res, next) {
 			});
 		}
 	], function(err) {
-			if (hashedPassword != userProfile.password) {
-				res.status(401).json({status: 401, message: 'wrong password'}).end();
+		if (err)
+			return next(err);
 
-				return;
-			}
+		if (hashedPassword != userProfile.password) {
+			res.status(401).json({status: 401, message: 'wrong password'}).end();
 
-			delete userProfile.password;
+			return;
+		}
 
-			var token = jwt.sign({email: email}, security.authSecret, { expiresInMinutes: 60 });
-			res.json({status: 200, content: {user: userProfile, token: token }}).end();
+		delete userProfile.password;
+
+		var token = jwt.sign({email: email}, security.authSecret, { expiresInMinutes: 60 });
+		res.json({status: 200, content: {user: userProfile, token: token }}).end();
 		/*else {
 			var props = {
 				email: email,
@@ -547,6 +550,21 @@ router.post('/update', function(req, res, next) {
 	});
 });
 
+router.post('/update_immediate', function(req, res, next) {
+	var user = req.body;
+
+	if (user.password) {
+		var passwordSalt = req.app.get('password_salt');
+		var md5password = crypto.createHash('md5').update(props.password).digest('hex');
+		user.password = crypto.createHash('sha256').update(passwordSalt[0]+md5password+passwordSalt[1]).digest('hex');
+	}
+
+	Models.User.update(user.email, user, function(err, result) {
+		if (err) return next(err);
+
+		res.status(200).json({status: 200, content: "User updated"}).end();
+	});
+});
 
 /**
  * @api {post} /user/delete Delete
