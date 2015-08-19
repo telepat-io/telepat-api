@@ -129,10 +129,8 @@ var OnServicesConnect = function() {
 			res.status(err.status || 500);
 			res.send(JSON.stringify({
 				status: err.status || 500,
-				message: {
-					content: err.message,
-					stack: err.stack
-				}
+				stack: err.stack,
+				message: err.message
 			}));
 		});
 	}
@@ -143,9 +141,7 @@ var OnServicesConnect = function() {
 		res.status(err.status || 500);
 		res.send(JSON.stringify({
 			status: err.status || 500,
-			message: {
-				content: err.message
-			}
+			message: err.message
 		}));
 	});
 
