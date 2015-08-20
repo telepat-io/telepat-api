@@ -728,8 +728,8 @@ router.post('/user/delete', function(req, res, next) {
 		if (results) {
 			async.each(results, function(item, c) {
 				var context = item.context_id;
-				var mdl = item.type;
-				var id = item.id;
+				var mdl = item.value.type;
+				var id = item.value.id;
 
 				app.kafkaProducer.send([{
 					topic: 'aggregation',
