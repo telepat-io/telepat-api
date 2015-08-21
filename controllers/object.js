@@ -654,23 +654,25 @@ router.post('/update', function(req, res, next) {
 
 	async.series([
 		function(agg_callback) {
-			app.kafkaProducer.send([{
-				topic: 'aggregation',
-				messages: [JSON.stringify({
-					op: 'update',
-					id: id,
-					context: context,
-					object: patch,
-					type: mdl,
-					applicationId: appId,
-					ts: modifiedMicrotime
-				})],
-				attributes: 0
-			}], function(err) {
-				if (err)
-					err.message = 'Failed to send message to aggregation worker.';
-				agg_callback(err);
-			});
+			async.each(patch, function(p ,c) {
+				app.kafkaProducer.send([{
+					topic: 'aggregation',
+					messages: [JSON.stringify({
+						op: 'update',
+						id: id,
+						context: context,
+						object: p,
+						type: mdl,
+						applicationId: appId,
+						ts: modifiedMicrotime
+					})],
+					attributes: 0
+				}], function(err) {
+					if (err)
+						err.message = 'Failed to send message to aggregation worker.';
+					c(err);
+				});
+			}, agg_callback);
 		}/*,
 		function(track_callback) {
 			app.kafkaProducer.send([{
