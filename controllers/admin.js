@@ -496,6 +496,9 @@ router.use('/context/add', security.tokenValidation, security.applicationIdValid
  *
  */
 router.post('/context/add', function (req, res) {
+	if (Object.getOwnPropertyNames(req.body).length === 0)
+		return res.status(400).json({status: 400, message: "Request body is empty"}).end();
+
 	var newContext = req.body;
 	newContext['application_id'] = req._telepat.application_id;
 	Models.Context.create(newContext, function (err, res1) {
