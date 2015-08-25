@@ -3,14 +3,17 @@ var router = express.Router();
 var Models = require('telepat-models');
 var security = require('./security');
 
-router.use(security.keyValidation);
+router.use(security.applicationIdValidation);
+router.use(security.apiKeyValidation);
+router.use(security.deviceIdValidation);
+router.use(security.tokenValidation);
 
 /**
  * @api {get} /context/all GetContexts
  * @apiDescription Get all contexsts
  * @apiName GetContexts
  * @apiGroup Context
- * @apiVersion 0.1.2
+ * @apiVersion 0.2.0
  *
  * @apiSuccessExample {json} Success Response
  * 	{
@@ -31,7 +34,8 @@ router.use(security.keyValidation);
  *
  * 	@apiErrorExample {json} Error Response
  * 	{
- * 		message: "Could not get contexts"
+ * 		"message": "Could not get contexts",
+ * 		"status": 500
  * 	}
  *
  */
@@ -52,7 +56,7 @@ router.get('/all', function (req, res) {
  * @apiDescription Retrieves a context
  * @apiName GetContext
  * @apiGroup Context
- * @apiVersion 0.1.2
+ * @apiVersion 0.2.0
  *
  * @apiParam {Number} id ID of the context to get
  *
@@ -79,11 +83,15 @@ router.get('/all', function (req, res) {
  *
  * 	@apiErrorExample {json} Error Response
  * 	{
- * 		message: "Could not get context"
+ * 		"message": "Could not get context"
+ * 		"status": 500
  * 	}
  *
  */
 router.post('/', function (req, res) {
+	if (!req.body.id)
+		return res.status(400).json({status: 400, message: "Requested context ID is missing"}).end();
+
 	Models.Context(req.body.id, function (err, res1) {
 		if (err)
 			res.status(500).send({message: 'Could not get context'});

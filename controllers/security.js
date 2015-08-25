@@ -28,20 +28,32 @@ security.deviceIDExists = function(req, res, next) {
 	next();
 };
 
-/**
- * This middleware makes sure that all required headers are set for a general purpose request. It also checks if the API key belongs to
- * the requested app.
- *
- */
-security.keyValidation = function (req, res, next) {
-	res.type('application/json');
+security.contentTypeValidation = function(req, res, next) {
 	if (req.get('Content-Type').substring(0, 16) !== 'application/json')
 		res.status(415).json({status: 415, message: "Request content type must pe application/json."}).end();
-	else if (req.get('X-BLGREQ-SIGN') === undefined)
+	else next();
+};
+
+security.apiKeyValidation = function(req, res, next) {
+	if (req.get('X-BLGREQ-SIGN') === undefined)
 		res.status(401).json({status: 401, message: "Unauthorized. Required authorization header not present."}).end();
-	else if (req.get('X-BLGREQ-UDID') === undefined)
+	else next();
+};
+
+security.deviceIdValidation = function(req, res, next) {
+	if (req.get('X-BLGREQ-UDID') === undefined)
 		res.status(401).json({status: 401, message: "Unauthorized. Device identifier header not present."}).end();
-	else if (!req.get('X-BLGREQ-APPID'))
+	else {
+		if (req._telepat)
+			req._telepat.device_id = req.get('X-BLGREQ-UDID');
+		else
+			req._telepat = {device_id: req.get('X-BLGREQ-UDID')};
+		next();
+	}
+};
+
+security.applicationIdValidation = function(req, res, next) {
+	if (!req.get('X-BLGREQ-APPID'))
 		res.status(400).json({status: 400, message: "Requested App ID not found."}).end();
 	else {
 		if (!app.applications[req.get('X-BLGREQ-APPID')]) {
@@ -60,10 +72,11 @@ security.keyValidation = function (req, res, next) {
 			cb(serverHash === clientHash);
 		}, function(result) {
 			if (result) {
-				req._telepat = {
-					application_id: req.get('X-BLGREQ-APPID'),
-					device_id: req.get('X-BLGREQ-UDID')
-				};
+				if (req._telepat)
+					req._telepat.application_id = req.get('X-BLGREQ-APPID');
+				else
+					req._telepat = {application_id: req.get('X-BLGREQ-APPID')};
+				console.log(req._telepat);
 				next();
 			}
 			else
@@ -88,17 +101,22 @@ security.tokenValidation = function(req, res, next) {
 };
 
 security.adminAppValidation = function (req, res, next) {
-	if (app.applications.hasOwnProperty(req.body.appId)) {
-		if (app.applications[req.body.appId].admin_id == req.user.email) {
-			next();
-		}
-		else {
-			res.status(400).send({status: 400, message: 'Naughty'});
-		}
+	var appId = req._telepat.application_id;
+
+	if (!app.applications[appId]) {
+		res.status(404).json({status: 404, message: "Application with ID '"+appId+"' does not exist"}).end();
+		return;
 	}
-	else {
-		res.status(400).send({status: 400, message: 'What app?'});
+
+	if (!req.user)
+		return next();
+
+	if (app.applications[appId].admin_id != req.user.email) {
+		res.status(401).json({status: 401, message: "This application does not belong to you"}).end();
+		return ;
 	}
+
+	next();
 };
 
 security.objectACL = function (accessControl) {

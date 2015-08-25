@@ -5,8 +5,10 @@ var sizeof = require('object-sizeof');
 var security = require('./security');
 var microtime = require('microtime-nodejs');
 
-router.use(security.keyValidation);
-router.use(security.deviceIDExists);
+router.use(security.contentTypeValidation);
+router.use(security.applicationIdValidation);
+router.use(security.apiKeyValidation);
+router.use(security.deviceIdValidation);
 
 /**
  * Middleware used to load application model schema
@@ -50,7 +52,7 @@ var validateContext = function(appId, context, callback) {
  * Subsequent subscription on the same channel and filter will have no effect but will return the objects.
  * @apiName ObjectSubscribe
  * @apiGroup Object
- * @apiVersion 0.1.2
+ * @apiVersion 0.2.0
  *
  * @apiParam {Object} channel Object representing the channel
  * @apiParam {Object} filters Author or parent model filters by ID.
@@ -347,7 +349,7 @@ router.post('/subscribe', function(req, res, next) {
  * @apiDescription Unsubscribe to an object or a collection of objects (by a filter)
  * @apiName ObjectUnsubscribe
  * @apiGroup Object
- * @apiVersion 0.1.2
+ * @apiVersion 0.2.0
  *
  * @apiParam {Object} channel Object representing the channel
  * @apiParam {Object} filters Author or parent model filters by ID.
@@ -462,7 +464,7 @@ router.post('/unsubscribe', function(req, res, next) {
  * @apiDescription Creates a new object
  * @apiName ObjectCreate
  * @apiGroup Object
- * @apiVersion 0.1.2
+ * @apiVersion 0.2.0
  *
  * @apiParam {String} model The type of object to subscribe to
  * @apiParam {Object} content Content of the object
@@ -588,7 +590,7 @@ router.post('/create', function(req, res, next) {
  * @apiDescription Updates an existing object
  * @apiName ObjectUpdate
  * @apiGroup Object
- * @apiVersion 0.1.2
+ * @apiVersion 0.2.0
  *
  * @apiParam {Number} id ID of the object (optional)
  * @apiParam {Number} context Context of the object
@@ -707,7 +709,7 @@ router.post('/update', function(req, res, next) {
  * @apiDescription Deletes an object
  * @apiName ObjectDelete
  * @apiGroup Object
- * @apiVersion 0.1.2
+ * @apiVersion 0.2.0
  *
  * @apiParam {Number} id ID of the object (optional)
  * @apiParam {Number} context Context of the object
@@ -788,7 +790,7 @@ router.post('/delete', function(req, res, next) {
  * @apiDescription Gets the object count of a certain filter/subscription
  * @apiName ObjectCount
  * @apiGroup Object
- * @apiVersion 0.1.2
+ * @apiVersion 0.2.0
  *
  * @apiParam {Object} channel The object reperesenting a channel
  * @apiParam {Object} filters Additional filters to the subscription channel

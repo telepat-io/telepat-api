@@ -14,8 +14,11 @@ var options = {
 
 FB.options(options);
 
-router.use(security.keyValidation);
-router.use(security.deviceIDExists);
+router.use(security.contentTypeValidation);
+router.use(security.deviceIdValidation);
+router.use(security.apiKeyValidation);
+router.use(security.applicationIdValidation);
+
 router.use('/logout', security.tokenValidation);
 router.use('/me', security.tokenValidation);
 
@@ -24,7 +27,7 @@ router.use('/me', security.tokenValidation);
  * @apiDescription Log in the user and create it if it doesn't exist in database.
  * @apiName UserLogin
  * @apiGroup User
- * @apiVersion 0.1.2
+ * @apiVersion 0.2.0
  *
  * @apiParam {String} access_token Facebook access token.
  *
@@ -56,6 +59,9 @@ router.use('/me', security.tokenValidation);
  *
  */
 router.post('/login', function(req, res, next) {
+	if (!req.body.access_token)
+		res.status(400).json({status: 400, message: "Facebook access token is missing"}).end();
+
 	var accessToken = req.body.access_token;
 	var email = null;
 	var userProfile = null;
@@ -130,6 +136,12 @@ router.post('/login', function(req, res, next) {
 });
 
 router.post('/register', function(req, res, next) {
+	if (!req.body)
+		res.status(400).json({status: 400, message: "Request body is empty"}).end();
+
+	if (!req.body.access_token)
+		res.status(400).json({status: 400, message: "Facebook access token is missing"}).end();
+
 	var userProfile = req.body;
 	var accessToken = req.body.access_token;
 	var fbFriends = [];
@@ -231,53 +243,6 @@ router.post('/register', function(req, res, next) {
 
 		res.status(202).json({status: 202, content: 'User created'}).end();
 	});
-
-	/*async.waterfall([
-		function(callback) {
-			Models.User(req.body.email, function(err, result) {
-				if (!err) {
-					var error = new Error('User with that email address already exists');
-					error.code = 409;
-					callback(error);
-				}
-				else if (err && err.code !== cb.errors.keyNotFound)
-					callback(err);
-				else {
-					callback();
-				}
-			});
-		},
-		function(callback) {
-			/!*var props = {
-				email: props.email,
-				fid: "",
-				name: props.name,
-				gender: userProfile.gender,
-				friends: fbFriends,
-				devices: [deviceId]
-			};*!/
-
-			props.fid = "";
-			props.friends = [];
-			props.devices = [deviceId];
-			props.type = 'user';
-
-			app.kafkaProducer.send([{
-				topic: 'aggregation',
-				messages: [JSON.stringify({
-					op: 'add',
-					object: props,
-					applicationId: req._telepat.application_id,
-					isUser: true
-				})],
-				attributes: 0
-			}], callback);
-		}
-	], function(err) {
-		if (err) return next(err);
-
-
-	});*/
 });
 
 /**
@@ -350,9 +315,15 @@ router.get('/me', function(req, res, next) {
  *
  */
 router.post('/login_password', function(req, res, next) {
+	if (!req.body.email)
+		return res.status(400).json({status: 400, message: "Missing email address"}).end();
+
+	if (!req.body.password)
+		return res.status(400).json({status: 400, message: "Missing password"}).end();
+
 	var userProfile = null;
 	var email = req.body.email;
-	var password = req.body.password;
+	var password = req.body.password.toString();
 	var deviceId = req._telepat.device_id;
 
 	var passwordSalt = req.app.get('password_salt');
@@ -390,35 +361,6 @@ router.post('/login_password', function(req, res, next) {
 
 		var token = jwt.sign({email: email}, security.authSecret, { expiresInMinutes: 60 });
 		res.json({status: 200, content: {user: userProfile, token: token }}).end();
-		/*else {
-			var props = {
-				email: email,
-				fid: '',
-				name: req.body.name,
-				gender: req.body.gender,
-				friends: [],
-				devices: [deviceId],
-				password: hashedPassword
-			};
-
-			props.type = 'user';
-
-			app.kafkaProducer.send([{
-				topic: 'aggregation',
-				messages: [JSON.stringify({
-					op: 'add',
-					object: props,
-					applicationId: req._telepat.application_id,
-					isUser: true
-				})],
-				attributes: 0
-			}], function(err) {
-				if (err) console.log(err);
-			});
-
-			var token = jwt.sign({email: email}, security.authSecret, { expiresInMinutes: 60 });
-			res.json({status: 200, content: {token: token }}).end();
-		}*/
 	});
 });
 
@@ -519,7 +461,7 @@ router.post('/refresh_token', function(req, res, next) {
  * 	}
  *
  */
-router.post('/update', function(req, res, next) {
+/*router.post('/update', function(req, res, next) {
 	var patches = req.body.patches;
 	var id = req.user.id;
 	var email = req.user.email;
@@ -548,7 +490,7 @@ router.post('/update', function(req, res, next) {
 
 		res.status(202).json({status: 202, content: "User updated"}).end();
 	});
-});
+});*/
 
 router.post('/update_immediate', function(req, res, next) {
 	var user = req.body;

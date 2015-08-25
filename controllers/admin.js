@@ -21,9 +21,11 @@ var unless = function(paths, middleware) {
 	};
 };
 
-router.use(unless(['/add'], security.keyValidation));
+router.use(security.contentTypeValidation);
+
+/*router.use(unless(['/add'], security.keyValidation));
 router.use(unless(['/add', '/login'], security.tokenValidation));
-router.use(['/apps/remove', 'apps/update'], security.adminAppValidation);
+router.use(['/apps/remove', 'apps/update'], security.adminAppValidation);*/
 
 /**
  * @api {post} /admin/login Authenticate
@@ -62,12 +64,15 @@ router.post('/login', function (req, res, next) {
 	var hashedPassword = crypto.createHash('sha256').update(passwordSalt[0]+md5password+passwordSalt[1]).digest('hex');
 
 	Models.Admin(req.body.email, function(err, admin) {
-		if (err) {
+		if (err && err.code == cb.errors.keyNotFound) {
+			res.status(404).json({status: 404, message: "Admin email address not found"}).end();
+			return;
+		} else if (err) {
 			return next(err);
 		}
 
 		if (hashedPassword == admin.password) {
-			res.json({ content: {user: admin, token: security.createToken({email: req.body.email, isAdmin: true})}});
+			res.json({status: 200, content: {user: admin, token: security.createToken({email: req.body.email, isAdmin: true, application_id: admin.application_id})}});
 		}
 		else {
 			res.status(401).json({status: 401, message: 'Wrong user or password'});
@@ -102,6 +107,15 @@ router.post('/login', function (req, res, next) {
  * 	}
  */
 router.post('/add', function (req, res) {
+	if (!req.body.email) {
+		res.status(400).json({status: 400, message: "Missing requested email address"}).end();
+		return;
+	}
+	if (!req.body.password) {
+		res.status(400).json({status: 400, message: "Missing requested password"}).end();
+		return;
+	}
+
 	var passwordSalt = req.app.get('password_salt');
 	var md5password = crypto.createHash('md5').update(req.body.password).digest('hex');
 	var hashedPassword = crypto.createHash('sha256').update(passwordSalt[0]+md5password+passwordSalt[1]).digest('hex');
@@ -114,6 +128,7 @@ router.post('/add', function (req, res) {
 	});
 });
 
+router.use('/me', security.tokenValidation);
 /**
  * @api {get} /admin/me Me
  * @apiDescription Gets information about the logged admin
@@ -134,6 +149,7 @@ router.get('/me', function (req, res) {
 	res.status(200).json({status: 200, content: req.user}).end();
 });
 
+router.use('/update', security.tokenValidation);
 /**
  * @api {post} /admin/update Update
  * @apiDescription Updates a new admin. Every property in the request body is used to udpate the admin.
@@ -157,14 +173,19 @@ router.get('/me', function (req, res) {
  *
  */
 router.post('/update', function (req, res) {
-	Models.Admin.update(req.user.email, req.body, function (err, res1) {
-		if (err)
-			res.status(500).json({status: 500, message: err}).end();
-		else
-			res.send(200).json({status: 200, content: "Admin updated"});
-	})
+	if (Object.getOwnPropertyNames(req.body).length == 0) {
+		res.status(400).json({status: 400, message: "Missing request body"}).end();
+	} else {
+		Models.Admin.update(req.user.email, req.body, function (err, res1) {
+			if (err)
+				res.status(500).json({status: 500, message: err}).end();
+			else
+				res.send(200).json({status: 200, content: "Admin updated"});
+		})
+	}
 });
 
+router.use('/apps', security.tokenValidation);
 /**
  * @api {get} /admin/apps Applications
  * @apiDescription Lists the application for the current admin
@@ -203,6 +224,7 @@ router.get('/apps', function (req, res) {
 	});
 });
 
+router.use('/app/add', security.tokenValidation);
 /**
  * @api {post} /admin/add/app AppCreate
  * @apiDescription Creates a app for the admin. The request body should contain the app itself.
@@ -261,6 +283,7 @@ router.post('/app/add', function (req, res) {
 	});
 });
 
+router.use('/app/remove', security.tokenValidation, security.applicationIdValidation, security.adminAppValidation);
 /**
  * @api {post} /admin/app/remove RemoveApp
  * @apiDescription Removes an app from the admin.
@@ -297,6 +320,7 @@ router.post('/app/remove', function (req, res) {
 	});
 });
 
+router.use('/app/update', security.tokenValidation, security.applicationIdValidation, security.adminAppValidation);
 /**
  * @api {post} /admin/app/update UpdateApp
  * @apiDescription Updates an app
@@ -334,6 +358,7 @@ router.post('/app/update', function (req, res) {
 	});
 });
 
+router.use('/contexts', security.tokenValidation, security.applicationIdValidation, security.adminAppValidation);
 /**
  * @api {post} /admin/contexts GetContexts
  * @apiDescription Get all contexsts
@@ -376,6 +401,7 @@ router.post('/contexts', function (req, res) {
 	});
 });
 
+router.use('/context', security.tokenValidation, security.applicationIdValidation, security.adminAppValidation);
 /**
  * @api {post} /admin/context GetContext
  * @apiDescription Retrieves a context
@@ -412,6 +438,10 @@ router.post('/contexts', function (req, res) {
  *
  */
 router.post('/context', function (req, res) {
+	if (!req.body.id) {
+		res.status(400).json({status: 400, message: 'Requested context ID is missing'}).end();
+	}
+
 	Models.Context(req.body.id, function (err, res1) {
 		if (err)
 			res.status(500).send({status: 500, message: 'Could not get context'});
@@ -421,6 +451,7 @@ router.post('/context', function (req, res) {
 	});
 });
 
+router.use('/context/add', security.tokenValidation, security.applicationIdValidation, security.adminAppValidation);
 /**
  * @api {post} /admin/context/add CreateContext
  * @apiDescription Creates a new context
@@ -470,6 +501,7 @@ router.post('/context/add', function (req, res) {
 	});
 });
 
+router.use('/context/remove', security.tokenValidation, security.applicationIdValidation, security.adminAppValidation);
 /**
  * @api {post} /admin/context/remove RemoveContext
  * @apiDescription Removes a context and all associated objects
@@ -494,6 +526,11 @@ router.post('/context/add', function (req, res) {
  *
  */
 router.post('/context/remove', function (req, res) {
+	if (!req.body.id) {
+		res.status(400).json({status: 400, message: "Requested context ID is missing"}).end();
+		return;
+	}
+
 	Models.Context.delete(req.body.id, function (err, res1) {
 		if (err)
 			res.status(500).send({status: 500, message: 'Could not remove context'});
@@ -503,6 +540,7 @@ router.post('/context/remove', function (req, res) {
 	});
 });
 
+router.use('/context/update', security.tokenValidation, security.applicationIdValidation, security.adminAppValidation);
 /**
  * @api {post} /admin/context/update UpdateContext
  * @apiDescription Updates the context object
@@ -528,6 +566,11 @@ router.post('/context/remove', function (req, res) {
  *
  */
 router.post('/context/update', function (req, res) {
+	if (!req.body.id) {
+		res.status(400).json({status: 400, message: "Requested context ID is missing"}).end();
+		return;
+	}
+
 	Models.Context.update(req.body.id, req.body, function (err, res1, updatedContext) {
 		if (err)
 			res.status(500).send({status: 500, message: 'Could not update context'});
@@ -537,6 +580,7 @@ router.post('/context/update', function (req, res) {
 	});
 });
 
+router.use('/schemas', security.tokenValidation, security.applicationIdValidation, security.adminAppValidation);
 /**
  * @api {post} /admin/schemas GetSchemas
  * @apiDescription Gets the model schema for an application
@@ -586,6 +630,7 @@ router.post('/schemas', function(req, res, next) {
 	});
 });
 
+router.use('/schema/update', security.tokenValidation, security.applicationIdValidation, security.adminAppValidation);
 /**
  * @api {post} /admin/schema/update UpdateSchema
  * @apiDescription Updates the model schema
@@ -605,6 +650,11 @@ router.post('/schemas', function(req, res, next) {
  * @apiError 404 NotFound If the App ID doesn't exist
  */
 router.post('/schema/update', function(req, res, next) {
+	if (!req.body.schema) {
+		res.status(400).json({status: 400, message: "Requested schema object is missing"}).end();
+		return;
+	}
+
 	var appId = req._telepat.application_id;
 	var schema = req.body.schema;
 
@@ -617,7 +667,7 @@ router.post('/schema/update', function(req, res, next) {
 	});
 });
 
-
+router.use('/users', security.tokenValidation, security.applicationIdValidation, security.adminAppValidation);
 /**
  * @api {post} /admin/users GetAppusers
  * @apiDescription Gets all users of the app
@@ -638,6 +688,7 @@ router.post('/schema/update', function(req, res, next) {
 
 router.post('/users', function(req, res, next) {
 	var appId = req._telepat.application_id;
+
 	Models.User.getByApplication(appId, function(err, results) {
 		if (err) return next(err);
 
@@ -649,7 +700,7 @@ router.post('/users', function(req, res, next) {
 	});
 });
 
-
+router.use('/user/update', security.tokenValidation);
 /**
  * @api {post} /admin/user/update EditUser
  * @apiDescription Updates an user from an app
@@ -670,8 +721,17 @@ router.post('/users', function(req, res, next) {
  * @apiError 404 NotFound If the App ID doesn't exist
  */
 router.post('/user/update', function(req, res, next) {
-	var appId = req._telepat.application_id;
 	var props = req.body.user;
+
+	if (!props) {
+		res.status(400).json({status: 400, message: "Object 'user' is missing from the request"}).end();
+		return;
+	}
+
+	if (!props.email) {
+		res.status(400).json({status: 400, message: "Object 'user' is missing email address field"}).end();
+		return;
+	}
 
 	if (props.password) {
 		var passwordSalt = req.app.get('password_salt');
@@ -679,13 +739,14 @@ router.post('/user/update', function(req, res, next) {
 		props.password = crypto.createHash('sha256').update(passwordSalt[0]+md5password+passwordSalt[1]).digest('hex');
 	}
 
-	Models.User.update(props.email, props, function(err, results) {
+	Models.User.update(props.email, props, function(err) {
 		if (err) return next(err);
 
 		res.status(200).json({status: 200, content: "User has been updated"}).end();
 	});
 });
 
+router.use('/user/update', security.tokenValidation, security.applicationIdValidation);
 /**
  * @api {post} /admin/user/delete Deleteuser
  * @apiDescription Deketes an user from an app
@@ -705,6 +766,11 @@ router.post('/user/update', function(req, res, next) {
  * @apiError 404 NotFound If the User does not belong to this application
  */
 router.post('/user/delete', function(req, res, next) {
+	if (!req.body.email) {
+		res.status(400).json({status: 400, message: "Requested email address is missing"}).end();
+		return;
+	}
+
 	var appId = req._telepat.application_id;
 	var userEmail = req.body.email;
 

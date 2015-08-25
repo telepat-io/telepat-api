@@ -104,6 +104,7 @@ var OnServicesConnect = function() {
 	});
 
 	app.use(security.corsValidation);
+	app.use(security.contentTypeValidation);
 	app.use(logger('dev'));
 	/*Automatically parses request body from json string to object*/
 	app.use(bodyParser.json());

@@ -4,7 +4,7 @@ var Models = require('telepat-models');
 var uuid = require('uuid');
 var security = require('./security');
 
-router.use(security.keyValidation);
+router.use(security.deviceIdValidation);
 
 /**
  * @api {post} /device/register Register
@@ -12,7 +12,7 @@ router.use(security.keyValidation);
  * to search for a device with this udid and return the device id.
  * @apiName DeviceRegister
  * @apiGroup Device
- * @apiVersion 0.1.2
+ * @apiVersion 0.2.0
  *
  * @apiExample {json} Register new device
  * {
@@ -26,7 +26,8 @@ router.use(security.keyValidation);
  * 		}
  * 		"persistent": {
  *   		"type": "android",
- *   		"token": "android pn token"
+ *   		"token": "android pn token",
+ *   		"active": 1
  * 		}
  * }
  *
@@ -62,7 +63,13 @@ router.use(security.keyValidation);
  */
 router.post('/register', function(req, res, next) {
 	if (req._telepat.device_id == '') {
+		if (!req.body.info)
+			return res.status(400).json({status: 400, message: "Field 'info' is missing from the request body"}).end();
+
 		var udid = req.body.info.udid;
+
+		if (!udid)
+			return res.status(400).json({status: 400, message: "'udid' in 'info' object is missing"}).end();
 
 		Models.Subscription.findDeviceByUdid(udid, function(err, result) {
 			if (err) return next(err);
@@ -83,6 +90,9 @@ router.post('/register', function(req, res, next) {
 		});
 	} else {
 		req.body.id = req._telepat.device_id;
+
+		if (Object.getOwnPropertyNames(req.body).length === 0)
+			return res.status(400).json({status: 400, message: "Request body is empty"}).end();
 
 		Models.Subscription.updateDevice(req._telepat.device_id, req.body, function(err, result) {
 			if (err && err.code == cb.errors.keyNotFound) {
