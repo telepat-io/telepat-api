@@ -59,7 +59,7 @@ router.post('/login', function (req, res, next) {
 
 	Models.Admin(req.body.email, function(err, admin) {
 		if (err && err.code == cb.errors.keyNotFound) {
-			res.status(404).json({status: 404, message: "Admin email address not found"}).end();
+			res.status(401).json({status: 401, message: 'Wrong user or password'}).end();
 			return;
 		} else if (err) {
 			return next(err);
@@ -114,9 +114,11 @@ router.post('/add', function (req, res) {
 	var md5password = crypto.createHash('md5').update(req.body.password).digest('hex');
 	var hashedPassword = crypto.createHash('sha256').update(passwordSalt[0]+md5password+passwordSalt[1]).digest('hex');
 
-	Models.Admin.create(req.body.email, { email: req.body.email, password: hashedPassword, name: req.body.name }, function (err, result) {
-		if (err)
-			res.status(500).send({status: 500, message : "Error adding account"});
+	Models.Admin.create(req.body.email, { email: req.body.email, password: hashedPassword, name: req.body.name }, function (err) {
+		if (err && err.code == cb.errors.keyAlreadyExists)
+			res.status(409).send({status: 409, message: "Admin with this email address already exists"}).end();
+		else if (err)
+			res.status(500).send({status: 500, message: "Error adding account"}).end();
 		else
 			res.status(200).json({status: 200, content: 'Admin added'}).end();
 	});
