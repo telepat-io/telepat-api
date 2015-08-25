@@ -286,7 +286,7 @@ router.post('/app/add', function (req, res) {
 	});
 });
 
-router.use('/app/remove', security.tokenValidation, security.applicationIdValidation, security.adminAppValidation);
+router.use('/app/remove', security.tokenValidation, security.apiKeyValidation, security.applicationIdValidation, security.adminAppValidation);
 /**
  * @api {post} /admin/app/remove RemoveApp
  * @apiDescription Removes an app from the admin.
@@ -322,7 +322,7 @@ router.post('/app/remove', function (req, res) {
 	});
 });
 
-router.use('/app/update', security.tokenValidation, security.applicationIdValidation, security.adminAppValidation);
+router.use('/app/update', security.tokenValidation, security.apiKeyValidation, security.applicationIdValidation, security.adminAppValidation);
 /**
  * @api {post} /admin/app/update UpdateApp
  * @apiDescription Updates an app
@@ -365,7 +365,7 @@ router.post('/app/update', function (req, res) {
 	});
 });
 
-router.use('/contexts', security.tokenValidation, security.applicationIdValidation, security.adminAppValidation);
+router.use('/contexts', security.tokenValidation, security.apiKeyValidation, security.applicationIdValidation, security.adminAppValidation);
 /**
  * @api {post} /admin/contexts GetContexts
  * @apiDescription Get all contexsts
@@ -408,7 +408,7 @@ router.post('/contexts', function (req, res) {
 	});
 });
 
-router.use('/context', security.tokenValidation, security.applicationIdValidation, security.adminAppValidation);
+router.use('/context', security.tokenValidation, security.apiKeyValidation, security.applicationIdValidation, security.adminAppValidation);
 /**
  * @api {post} /admin/context GetContext
  * @apiDescription Retrieves a context
@@ -458,7 +458,7 @@ router.post('/context', function (req, res) {
 	});
 });
 
-router.use('/context/add', security.tokenValidation, security.applicationIdValidation, security.adminAppValidation);
+router.use('/context/add', security.tokenValidation, security.apiKeyValidation, security.applicationIdValidation, security.adminAppValidation);
 /**
  * @api {post} /admin/context/add CreateContext
  * @apiDescription Creates a new context
@@ -510,7 +510,7 @@ router.post('/context/add', function (req, res) {
 	});
 });
 
-router.use('/context/remove', security.tokenValidation, security.applicationIdValidation, security.adminAppValidation);
+router.use('/context/remove', security.tokenValidation, security.apiKeyValidation, security.applicationIdValidation, security.adminAppValidation);
 /**
  * @api {post} /admin/context/remove RemoveContext
  * @apiDescription Removes a context and all associated objects
@@ -549,7 +549,7 @@ router.post('/context/remove', function (req, res) {
 	});
 });
 
-router.use('/context/update', security.tokenValidation, security.applicationIdValidation, security.adminAppValidation);
+router.use('/context/update', security.tokenValidation, security.apiKeyValidation, security.applicationIdValidation, security.adminAppValidation);
 /**
  * @api {post} /admin/context/update UpdateContext
  * @apiDescription Updates the context object
@@ -589,7 +589,7 @@ router.post('/context/update', function (req, res) {
 	});
 });
 
-router.use('/schemas', security.tokenValidation, security.applicationIdValidation, security.adminAppValidation);
+router.use('/schemas', security.tokenValidation, security.apiKeyValidation, security.applicationIdValidation, security.adminAppValidation);
 /**
  * @api {post} /admin/schemas GetSchemas
  * @apiDescription Gets the model schema for an application
@@ -632,7 +632,7 @@ router.post('/schemas', function(req, res, next) {
 	});
 });
 
-router.use('/schema/update', security.tokenValidation, security.applicationIdValidation, security.adminAppValidation);
+router.use('/schema/update', security.tokenValidation, security.apiKeyValidation, security.applicationIdValidation, security.adminAppValidation);
 /**
  * @api {post} /admin/schema/update UpdateSchema
  * @apiDescription Updates the model schema
@@ -667,7 +667,7 @@ router.post('/schema/update', function(req, res, next) {
 	});
 });
 
-router.use('/users', security.tokenValidation, security.applicationIdValidation, security.adminAppValidation);
+router.use('/users', security.tokenValidation, security.apiKeyValidation, security.applicationIdValidation, security.adminAppValidation);
 /**
  * @api {get} /admin/users GetAppusers
  * @apiDescription Gets all users of the app
@@ -754,7 +754,7 @@ router.post('/user/update', function(req, res, next) {
 	});
 });
 
-router.use('/user/update', security.tokenValidation, security.applicationIdValidation);
+router.use('/user/update', security.tokenValidation, security.apiKeyValidation, security.applicationIdValidation);
 /**
  * @api {post} /admin/user/delete Deleteuser
  * @apiDescription Deketes an user from an app
