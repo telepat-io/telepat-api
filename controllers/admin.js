@@ -23,10 +23,6 @@ var unless = function(paths, middleware) {
 
 router.use(security.contentTypeValidation);
 
-/*router.use(unless(['/add'], security.keyValidation));
-router.use(unless(['/add', '/login'], security.tokenValidation));
-router.use(['/apps/remove', 'apps/update'], security.adminAppValidation);*/
-
 /**
  * @api {post} /admin/login Authenticate
  * @apiDescription Authenticates an admin and returns the authorization token
@@ -39,14 +35,14 @@ router.use(['/apps/remove', 'apps/update'], security.adminAppValidation);*/
  *
  * @apiExample {json} Client Request
  * 	{
- * 		email: "email@example.com",
- * 		password: "5f4dcc3b5aa765d61d8327deb882cf99"
+ * 		"email": "email@example.com",
+ * 		"password": "5f4dcc3b5aa765d61d8327deb882cf99"
  * 	}
  *
  * 	@apiSuccessExample {json} Success Response
  * 	{
- * 		status: 200,
- * 		content:{
+ * 		"status": 200,
+ * 		"content": {
  * 			token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImdhYmlAYXBwc2NlbmQuY29tIiwiaXNBZG1pbiI6dHJ1ZSwiaWF0IjoxNDMyOTA2ODQwLCJleHAiOjE0MzI5MTA0NDB9.knhPevsK4cWewnx0LpSLrMg3Tk_OpchKu6it7FK9C2Q"
  * 		}
  * 	}
@@ -54,8 +50,8 @@ router.use(['/apps/remove', 'apps/update'], security.adminAppValidation);*/
  * @apiError Unauthorized If the provided email and password are not correct
  * @apiErrorExample {json} Error Response
  * 	{
- * 		status: 401,
- * 		message: "Wrong user or password"
+ * 		"status": 401,
+ * 		"message": "Wrong user or password"
  * 	}
  */
 router.post('/login', function (req, res, next) {
@@ -94,16 +90,16 @@ router.post('/login', function (req, res, next) {
  *
  * @apiExample {json} Client Request
  * 	{
- * 		email: "email@example.com",
- * 		password: "5f4dcc3b5aa765d61d8327deb882cf99",
- * 		name: "General Specific"
+ * 		"email": "email@example.com",
+ * 		"password": "5f4dcc3b5aa765d61d8327deb882cf99",
+ * 		"name": "General Specific"
  * 	}
  *
  * @apiError (500) Error Admin account with that email address already exists or internal server error.
  * @apiErrorExample {json} Error Response
  * 	{
- * 		status: 500,
- * 		message: "Error adding account"
+ * 		"status": 500,
+ * 		"message": "Error adding account"
  * 	}
  */
 router.post('/add', function (req, res) {
@@ -138,11 +134,14 @@ router.use('/me', security.tokenValidation);
  *
  * @apiSuccessExample {json} Success Response
  * 	{
- * 		  "id": 3,
- * 		  "email": "email@example.com",
- * 		  "password": "5f4dcc3b5aa765d61d8327deb882cf99",
- * 		  "name": "General Specific",
- * 		  "isAdmin": true
+ * 		"status": 200,
+ * 		"content": {
+ * 		  	"id": 3,
+ * 		  	"email": "email@example.com",
+ * 		  	"password": "5f4dcc3b5aa765d61d8327deb882cf99",
+ * 		  	"name": "General Specific",
+ * 		  	"isAdmin": true
+ * 		}
  * 	}
  */
 router.get('/me', function (req, res) {
@@ -159,16 +158,16 @@ router.use('/update', security.tokenValidation);
  *
  * @apiExample {json} Client Request
  * 	{
- * 		email: "email@example.com",
- * 		password: "d1e6b0b6b76039c9c42541f2da5891fa"
+ * 		"email": "email@example.com",
+ * 		"password": "d1e6b0b6b76039c9c42541f2da5891fa"
  * 	}
  *
  * 	@apiError (500) Error Admin account with that e-mail address doesn't exist or internal server error.
  *
  * 	@apiErrorExample {json} Error Response
  * 	{
- * 		status: 500,
- * 		message: "Error description"
+ * 		"status": 500,
+ * 		"message": "Error description"
  * 	}
  *
  */
@@ -195,16 +194,19 @@ router.use('/apps', security.tokenValidation);
  *
  * @apiSuccessExample {json} Success Response
  * 	{
- * 		"20": {
- * 			 "admin_id": "email@example.com",
- *			 "icon": "fa-bullhorn",
- *			 "name": "The Voice",
- *			 "type": "application",
- *			 "keys": [
- *			 	"3406870085495689e34d878f09faf52c"
- *			 ]
- * 		},
- * 		...
+ * 		"status": 200,
+ * 		"content": {
+ * 			"20": {
+ * 			 	"admin_id": "email@example.com",
+ *			 	"icon": "fa-bullhorn",
+ *			 	"name": "The Voice",
+ *			 	"type": "application",
+ *			 	"keys": [
+ *			 		"3406870085495689e34d878f09faf52c"
+ *			 	]
+ * 			},
+ * 			...
+ *		}
  * 	}
  *
  */
@@ -259,7 +261,8 @@ router.use('/app/add', security.tokenValidation);
  *
  * 	@apiErrorExample {json} Error Response
  * 	{
- * 		message: "Could not add app"
+ * 		"status": 500,
+ * 		"message": "Could not add app"
  * 	}
  *
  */
@@ -291,19 +294,18 @@ router.use('/app/remove', security.tokenValidation, security.applicationIdValida
  * @apiGroup Admin
  * @apiVersion 0.2.0
  *
- * @apiParam {Number} appId The ID of the app to remove
- *
- * @apiExample {json} Client Request
+ * @apiSuccessExample {json} Success Response
  * 	{
- * 		"appId": 20
+ * 		"status": 200,
+ * 		"content": "App removed"
  * 	}
  *
  * 	@apiError (500) Error Application with that ID doesn't exist or internal server error.
  *
  * 	@apiErrorExample {json} Error Response
  * 	{
- * 		status: 500,
- * 		message: "Could not remove app"
+ * 		"status": 500,
+ * 		"message": "Could not remove app"
  * 	}
  *
  */
@@ -332,16 +334,21 @@ router.use('/app/update', security.tokenValidation, security.applicationIdValida
  *
  * @apiExample {json} Client Request
  * 	{
- * 		"appId": 20,
  * 		"name": "New name"
+ * 	}
+ *
+ * @apiSuccessExample {json} Success Response
+ * 	{
+ * 		"status": 200,
+ * 		"content": "Updated"
  * 	}
  *
  * 	@apiError (500) Error Application with that ID doesn't exist or internal server error.
  *
  * 	@apiErrorExample {json} Error Response
  * 	{
- * 		status: 500,
- * 		message: "Could not update app"
+ * 		"status": 500,
+ * 		"message": "Could not update app"
  * 	}
  *
  */
@@ -353,7 +360,7 @@ router.post('/app/update', function (req, res) {
 			res.status(500).send({status: 500, message: 'Could not update app'});
 		else {
 			app.applications[appId] = updatedApp;
-			res.status(200).json({status: 200, content: 'Updated '}).end();
+			res.status(200).json({status: 200, content: 'Updated'}).end();
 		}
 	});
 });
@@ -384,8 +391,8 @@ router.use('/contexts', security.tokenValidation, security.applicationIdValidati
  *
  * 	@apiErrorExample {json} Error Response
  * 	{
- * 		status: 500,
- * 		message: "Could not get contexts"
+ * 		"status": 500,
+ * 		"message": "Could not get contexts"
  * 	}
  *
  */
@@ -433,7 +440,7 @@ router.use('/context', security.tokenValidation, security.applicationIdValidatio
  * 	@apiErrorExample {json} Error Response
  * 	{
  * 		"status": 500,
- * 		'message": "Could not get context"
+ * 		"message": "Could not get context"
  * 	}
  *
  */
@@ -464,8 +471,7 @@ router.use('/context/add', security.tokenValidation, security.applicationIdValid
  * @apiExample {json} Client Request
  * 	{
  * 		"name": "Episode 2",
- * 		"meta": {"info": "some meta info"},
- * 		"appId": 20
+ * 		"meta": {"info": "some meta info"}
  * 	}
  *
  * 	@apiSuccessExample {json} Success Response
@@ -588,13 +594,6 @@ router.use('/schemas', security.tokenValidation, security.applicationIdValidatio
  * @apiGroup Admin
  * @apiVersion 0.2.0
  *
- * @apiParam {Number} appId ID of the app from which to get the context
- *
- * @apiExample {json} Client Request
- * 	{
- * 		"appId": 20
- * 	}
- *
  * 	@apiSuccessExample {json} Success Response
  * 	{
  * 		"status": 200,
@@ -638,12 +637,10 @@ router.use('/schema/update', security.tokenValidation, security.applicationIdVal
  * @apiGroup Admin
  * @apiVersion 0.2.0
  *
- * @apiParam {Number} appId ID of the app of the schema to update
- * @apiParam {Object} props Updated schema object
+ * @apiParam {Object} schema Updated schema object
  *
  * @apiExample {json} Client Request
  * 	{
- * 		"appId": 20,
  * 		"schema": "see example at /schemas"
  * 	}
  *
@@ -669,7 +666,7 @@ router.post('/schema/update', function(req, res, next) {
 
 router.use('/users', security.tokenValidation, security.applicationIdValidation, security.adminAppValidation);
 /**
- * @api {post} /admin/users GetAppusers
+ * @api {get} /admin/users GetAppusers
  * @apiDescription Gets all users of the app
  * @apiName AdminGetUsers
  * @apiGroup Admin
@@ -686,7 +683,7 @@ router.use('/users', security.tokenValidation, security.applicationIdValidation,
  * @apiError 404 NotFound If the App ID doesn't exist
  */
 
-router.post('/users', function(req, res, next) {
+router.get('/users', function(req, res, next) {
 	var appId = req._telepat.application_id;
 
 	Models.User.getByApplication(appId, function(err, results) {
@@ -709,6 +706,14 @@ router.use('/user/update', security.tokenValidation);
  * @apiVersion 0.2.0
  *
  * @apiParam {Object} user The object that contains the user (must contain the email to identify him)
+ *
+ * @apiExample {json} Client Request
+ * 	{
+ * 		"user": {
+ * 			"email": "user@example.com",
+ * 			"name": "New Name"
+ * 		}
+ * 	}
  *
  * 	@apiSuccessExample {json} Success Response
  * 	{
@@ -755,6 +760,11 @@ router.use('/user/update', security.tokenValidation, security.applicationIdValid
  * @apiVersion 0.2.0
  *
  * @apiParam {String} email The email address of an user from an app
+ *
+ * @apiExample {json} Client Request
+ * 	{
+ * 		"email": "user@example.com"
+ * 	}
  *
  * 	@apiSuccessExample {json} Success Response
  * 	{
