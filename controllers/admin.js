@@ -21,8 +21,6 @@ var unless = function(paths, middleware) {
 	};
 };
 
-router.use(security.contentTypeValidation);
-
 /**
  * @api {post} /admin/login Authenticate
  * @apiDescription Authenticates an admin and returns the authorization token

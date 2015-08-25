@@ -10,6 +10,8 @@ router.use(security.applicationIdValidation);
 router.use(security.apiKeyValidation);
 router.use(security.deviceIdValidation);
 
+router.use(security.tokenValidation);
+
 /**
  * Middleware used to load application model schema
  */
