@@ -41,7 +41,7 @@ var validateContext = function(appId, context, callback) {
 		} else if (err) return callback(err)
 		else if (result === false) {
 			var error = new Error('Context with id "'+context+'" does not belong to app with id "'+appId+'"');
-			error.status = 404;
+			error.status = 401;
 			callback(error);
 		} else
 			callback();
