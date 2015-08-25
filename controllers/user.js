@@ -16,8 +16,8 @@ FB.options(options);
 
 router.use(security.contentTypeValidation);
 router.use(security.deviceIdValidation);
-router.use(security.apiKeyValidation);
 router.use(security.applicationIdValidation);
+router.use(security.apiKeyValidation);
 
 router.use('/logout', security.tokenValidation);
 router.use('/me', security.tokenValidation);

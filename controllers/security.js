@@ -37,7 +37,26 @@ security.contentTypeValidation = function(req, res, next) {
 security.apiKeyValidation = function(req, res, next) {
 	if (req.get('X-BLGREQ-SIGN') === undefined)
 		res.status(401).json({status: 401, message: "Unauthorized. Required authorization header not present."}).end();
-	else next();
+	else {
+		var clientHash = req.get('X-BLGREQ-SIGN').toLowerCase();
+		var serverHash = null;
+		var apiKeys = app.applications[req.get('X-BLGREQ-APPID')].keys;
+
+		async.detect(apiKeys, function(item ,cb) {
+			serverHash = crypto.createHash('sha256').update(item).digest('hex').toLowerCase();
+			cb(serverHash === clientHash);
+		}, function(result) {
+			if (result) {
+				if (req._telepat)
+					req._telepat.application_id = req.get('X-BLGREQ-APPID');
+				else
+					req._telepat = {application_id: req.get('X-BLGREQ-APPID')};
+				next();
+			}
+			else
+				res.status(401).json({status: 401, message: "Unauthorized. API key is not valid."}).end();
+		});
+	}
 };
 
 security.deviceIdValidation = function(req, res, next) {
@@ -63,25 +82,7 @@ security.applicationIdValidation = function(req, res, next) {
 			return next(error);
 		}
 
-		var clientHash = req.get('X-BLGREQ-SIGN').toLowerCase();
-		var serverHash = null;
-		var apiKeys = app.applications[req.get('X-BLGREQ-APPID')].keys;
-
-		async.detect(apiKeys, function(item ,cb) {
-			serverHash = crypto.createHash('sha256').update(item).digest('hex').toLowerCase();
-			cb(serverHash === clientHash);
-		}, function(result) {
-			if (result) {
-				if (req._telepat)
-					req._telepat.application_id = req.get('X-BLGREQ-APPID');
-				else
-					req._telepat = {application_id: req.get('X-BLGREQ-APPID')};
-				console.log(req._telepat);
-				next();
-			}
-			else
-				res.status(401).json({status: 401, message: "Unauthorized. API key is not valid."}).end();
-		});
+		next();
 	}
 };
 
