@@ -581,7 +581,9 @@ router.post('/context/update', function (req, res) {
 	}
 
 	Models.Context.update(req.body.id, req.body, function (err, res1, updatedContext) {
-		if (err)
+		if (err && err.code == cb.errors.keyNotFound)
+			res.status(404).send({status: 404, message: 'Context with id \''+req.body.id+'\' does not exist'}).end();
+		else if (err)
 			res.status(500).send({status: 500, message: 'Could not update context'});
 		else {
 			res.status(200).json({status: 200, content: 'Context updated'}).end();

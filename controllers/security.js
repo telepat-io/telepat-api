@@ -47,10 +47,6 @@ security.apiKeyValidation = function(req, res, next) {
 			cb(serverHash === clientHash);
 		}, function(result) {
 			if (result) {
-				if (req._telepat)
-					req._telepat.application_id = req.get('X-BLGREQ-APPID');
-				else
-					req._telepat = {application_id: req.get('X-BLGREQ-APPID')};
 				next();
 			}
 			else
@@ -81,6 +77,11 @@ security.applicationIdValidation = function(req, res, next) {
 
 			return next(error);
 		}
+
+		if (req._telepat)
+			req._telepat.application_id = req.get('X-BLGREQ-APPID');
+		else
+			req._telepat = {application_id: req.get('X-BLGREQ-APPID')};
 
 		next();
 	}
