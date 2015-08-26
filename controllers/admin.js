@@ -450,7 +450,9 @@ router.post('/context', function (req, res) {
 	}
 
 	Models.Context(req.body.id, function (err, res1) {
-		if (err)
+		if (err && err.code === cb.errors.keyNotFound)
+			res.status(404).json({status: 404, message: 'Context not found'}).end();
+		else if (err)
 			res.status(500).send({status: 500, message: 'Could not get context'});
 		else {
 			res.status(200).json({status: 200, content: res1}).end();
@@ -541,7 +543,9 @@ router.post('/context/remove', function (req, res) {
 	}
 
 	Models.Context.delete(req.body.id, function (err, res1) {
-		if (err)
+		if (err && err.code === cb.errors.keyNotFound)
+			res.status(404).json({status: 404, message: 'Context does not exist'}).end();
+		else if (err)
 			res.status(500).send({status: 500, message: 'Could not remove context'});
 		else {
 			res.status(200).json({status: 200, content: "Context removed"});
@@ -750,7 +754,9 @@ router.post('/user/update', function(req, res, next) {
 	}
 
 	Models.User.update(props.email, props, function(err) {
-		if (err) return next(err);
+		if (err && err.code === cb.errors.keyNotFound)
+			res.status(404).json({status: 404, message: 'User not found'}).end();
+		else if (err) return next(err);
 
 		res.status(200).json({status: 200, content: "User has been updated"}).end();
 	});
@@ -804,7 +810,9 @@ router.post('/user/delete', function(req, res, next) {
 			}
 		}
 	], function(error, results) {
-		if (error) return next(error);
+		if (error && error.code === cb.errors.keyNotFound)
+			return res.status(404).json({status: 404, message: 'User not found'}).end();
+		else if (error) return next(error);
 
 		if (results) {
 			async.each(results, function(item, c) {
