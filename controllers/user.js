@@ -24,7 +24,7 @@ router.use('/me', security.tokenValidation);
 
 /**
  * @api {post} /user/login Login
- * @apiDescription Log in the user and create it if it doesn't exist in database.
+ * @apiDescription Log in the user through facebook
  * @apiName UserLogin
  * @apiGroup User
  * @apiVersion 0.2.0
@@ -135,6 +135,38 @@ router.post('/login', function(req, res, next) {
 	});
 });
 
+/**
+ * @api {post} /user/register Register
+ * @apiDescription Registers a new user using a fb token or directly with an email and password
+ * @apiName UserLogin
+ * @apiGroup User
+ * @apiVersion 0.2.0
+ *
+ * @apiParam {String} access_token Facebook access token.
+ *
+ * @apiExample {json} Facebook Request
+ * 	{
+ * 		"access_token": "fb access token"
+ * 	}
+ *
+ * @apiExample {json} Client Request (with password)
+ *
+ * {
+ * 		"email": "example@appscend.com",
+ * 		"password": "secure_password1337",
+ * 		"name": "John Smith"
+ * }
+ *
+ * 	@apiSuccessExample {json} Success Response
+ * 	{
+ * 		"status": 202,
+ * 		"content": "User created"
+ * 	}
+ *
+ * 	@apiError 400 <code>InsufficientFacebookPermissions</code> User email is not publicly available (insufficient facebook permissions)
+ * 	@apiError 409 <code>UserAlreadyExists</code> User with that email address already exists
+ *
+ */
 router.post('/register', function(req, res, next) {
 	if (!req.body)
 		res.status(400).json({status: 400, message: "Request body is empty"}).end();
@@ -182,6 +214,12 @@ router.post('/register', function(req, res, next) {
 				callback();
 		},
 		function(callback) {
+			if (userProfile.email) {
+				var error = new Error('Email address is missing from the request body');
+				error.status = 400;
+				return callback(error);
+			}
+
 			Models.User(userProfile.email, function(err, result) {
 				if (!err) {
 					var error = new Error('User with that email address already exists');
@@ -250,7 +288,7 @@ router.post('/register', function(req, res, next) {
  * @apiDescription Logs in the user with a password; creates the user if it doesn't exist
  * @apiName UserLoginPassword
  * @apiGroup User
- * @apiVersion 0.2.1
+ * @apiVersion 0.2.0
  *
  * @apiParam {String} password The password
  * @apiParam {String} email The email
@@ -276,7 +314,7 @@ router.post('/register', function(req, res, next) {
 router.get('/me', function(req, res, next) {
 	Models.User(req.user.email, function(err, result) {
 		if (err && err.code == cb.errors.keyNotFound) {
-			var error = new Error('User not fount');
+			var error = new Error('User not found');
 			error.status = 404;
 
 			return next(error);
@@ -293,7 +331,7 @@ router.get('/me', function(req, res, next) {
  * @apiDescription Logs in the user with a password; creates the user if it doesn't exist
  * @apiName UserLoginPassword
  * @apiGroup User
- * @apiVersion 0.1.2
+ * @apiVersion 0.2.0
  *
  * @apiParam {String} password The password
  * @apiParam {String} email The email
@@ -308,10 +346,22 @@ router.get('/me', function(req, res, next) {
  * 	{
  * 		"content": {
  * 			"token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImdhYmlAYXBwc2NlbmQuY29tIiwiaXNBZG1pbiI6dHJ1ZSwiaWF0IjoxNDMyOTA2ODQwLCJleHAiOjE0MzI5MTA0NDB9.knhPevsK4cWewnx0LpSLrMg3Tk_OpchKu6it7FK9C2Q"
+ * 			"user": {
+ * 				"id": 31,
+ *				"type": "user",
+ * 				"email": "abcd@appscend.com",
+ * 				"fid": "",
+ * 				"devices": [
+ *					"466fa519-acb4-424b-8736-fc6f35d6b6cc"
+ *				],
+ *				"friends": [],
+ *				"password": "acb8a9cbb479b6079f59eabbb50780087859aba2e8c0c397097007444bba07c0"
+ * 			}
  * 		}
  * 	}
  *
  * 	@apiError 401 <code>InvalidCredentials</code> User email and password did not match
+ *  @apiError 404 <code>UserNotFound</code> User with that email address doesn't exist
  *
  */
 router.post('/login_password', function(req, res, next) {
@@ -369,7 +419,7 @@ router.post('/login_password', function(req, res, next) {
  * @apiDescription Logs out the user removing the device from his array of devices.
  * @apiName UserLogout
  * @apiGroup User
- * @apiVersion 0.1.2
+ * @apiVersion 0.2.0
  *
  * 	@apiSuccessExample {json} Success Response
  * 	{
@@ -513,7 +563,7 @@ router.post('/update_immediate', function(req, res, next) {
  * @apiDescription Deletes a user
  * @apiName UserDelete
  * @apiGroup User
- * @apiVersion 0.1.2
+ * @apiVersion 0.2.0
  *
  * @apiParam {number} id ID of the user
  * @apiParam {string} email Email of the user
