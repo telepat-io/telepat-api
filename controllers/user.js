@@ -220,7 +220,7 @@ router.post('/register', function(req, res, next) {
 			Models.User(userProfile.email, function(err, result) {
 				if (!err) {
 					var error = new Error('User with that email address already exists');
-					error.code = 409;
+					error.status = 409;
 					callback(error);
 				}
 				else if (err && err.code !== cb.errors.keyNotFound)
