@@ -88,15 +88,17 @@ router.get('/all', function (req, res) {
  * 	}
  *
  */
-router.post('/', function (req, res) {
+router.post('/', function (req, res, next) {
 	if (!req.body.id)
 		return res.status(400).json({status: 400, message: "Requested context ID is missing"}).end();
 
 	Models.Context(req.body.id, function (err, res1) {
-		if (err)
-			res.status(500).send({message: 'Could not get context'});
+		if (err && err.code === cb.errors.keyNotFound){
+			res.status(404).json({status: 404, message: "Context not found"}).end();
+		} else if (err)
+			next(err);
 		else {
-			res.json({status: 200, contet: res1});
+			res.status(200).json({status: 200, content: res1}).end();
 		}
 	});
 });
