@@ -171,9 +171,6 @@ router.post('/register', function(req, res, next) {
 	if (!req.body)
 		res.status(400).json({status: 400, message: "Request body is empty"}).end();
 
-	if (!req.body.access_token)
-		res.status(400).json({status: 400, message: "Facebook access token is missing"}).end();
-
 	var userProfile = req.body;
 	var accessToken = req.body.access_token;
 	var fbFriends = [];
@@ -215,7 +212,7 @@ router.post('/register', function(req, res, next) {
 		},
 		function(callback) {
 			if (userProfile.email) {
-				var error = new Error('Email address is missing from the request body');
+				var error = new Error('Email address is missing from the request body or facebook access token not provided');
 				error.status = 400;
 				return callback(error);
 			}
