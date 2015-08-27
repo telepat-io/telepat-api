@@ -138,7 +138,7 @@ router.post('/login', function(req, res, next) {
 /**
  * @api {post} /user/register Register
  * @apiDescription Registers a new user using a fb token or directly with an email and password
- * @apiName UserLogin
+ * @apiName UserRegister
  * @apiGroup User
  * @apiVersion 0.2.0
  *
