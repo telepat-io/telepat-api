@@ -36,7 +36,7 @@ security.contentTypeValidation = function(req, res, next) {
 
 security.apiKeyValidation = function(req, res, next) {
 	if (req.get('X-BLGREQ-SIGN') === undefined)
-		res.status(401).json({status: 401, message: "Unauthorized. Required authorization header not present."}).end();
+		res.status(400).json({status: 400, message: "API key signature is missing."}).end();
 	else {
 		var clientHash = req.get('X-BLGREQ-SIGN').toLowerCase();
 		var serverHash = null;
