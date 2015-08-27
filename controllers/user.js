@@ -231,7 +231,7 @@ router.post('/register', function(req, res, next) {
 			});
 		},
 		//send message to kafka if user doesn't exist in order to create it
-		function(result, callback) {
+		function(callback) {
 			/*var props = {
 				email: userProfile.email,
 				fid: userProfile.id,
