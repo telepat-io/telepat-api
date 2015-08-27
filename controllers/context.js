@@ -6,7 +6,6 @@ var security = require('./security');
 router.use(security.applicationIdValidation);
 router.use(security.apiKeyValidation);
 router.use(security.deviceIdValidation);
-router.use(security.tokenValidation);
 
 /**
  * @api {get} /context/all GetContexts
