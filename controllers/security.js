@@ -29,7 +29,7 @@ security.deviceIDExists = function(req, res, next) {
 };
 
 security.contentTypeValidation = function(req, res, next) {
-	if (req.get('Content-Type').substring(0, 16) !== 'application/json')
+	if (req.get('Content-Type') && req.get('Content-Type').substring(0, 16) !== 'application/json')
 		res.status(415).json({status: 415, message: "Request content type must pe application/json."}).end();
 	else next();
 };
