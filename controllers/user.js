@@ -211,7 +211,7 @@ router.post('/register', function(req, res, next) {
 				callback();
 		},
 		function(callback) {
-			if (userProfile.email) {
+			if (!userProfile.email) {
 				var error = new Error('Email address is missing from the request body or facebook access token not provided');
 				error.status = 400;
 				return callback(error);
