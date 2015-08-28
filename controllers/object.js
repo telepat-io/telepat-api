@@ -122,6 +122,9 @@ var validateContext = function(appId, context, callback) {
  * @apiError 400 <code>RequestedModelMissing</code> If the item model is not present from the request body
  */
 router.post('/subscribe', function(req, res, next) {
+	if (Object.getOwnPropertyNames(req.body).length === 0)
+		return res.status(400).json({status: 400, message: "Request body is empty"}).end();
+
 	var channel = req.body.channel;
 
 	if (!channel) {
@@ -374,6 +377,9 @@ router.post('/subscribe', function(req, res, next) {
  * @apiError 400 <code>RequestedModelMissing</code> If the item model is not present from the request body
  */
 router.post('/unsubscribe', function(req, res, next) {
+	if (Object.getOwnPropertyNames(req.body).length === 0)
+		return res.status(400).json({status: 400, message: "Request body is empty"}).end();
+
 	var channel = req.body.channel;
 
 	if (!channel) {
@@ -493,6 +499,9 @@ router.post('/unsubscribe', function(req, res, next) {
  * @apiError 400 <code>RequestedModelMissing</code> If the item model is not present from the request body
  */
 router.post('/create', function(req, res, next) {
+	if (Object.getOwnPropertyNames(req.body).length === 0)
+		return res.status(400).json({status: 400, message: "Request body is empty"}).end();
+
 	var content = req.body.content;
 	var mdl = req.body.model;
 	var context = parseInt(req.body.context);
@@ -630,6 +639,9 @@ router.post('/create', function(req, res, next) {
  * @apiError 400 <code>NoIdSupplied</code> If the requested item id has not been provided
  */
 router.post('/update', function(req, res, next) {
+	if (Object.getOwnPropertyNames(req.body).length === 0)
+		return res.status(400).json({status: 400, message: "Request body is empty"}).end();
+
 	var modifiedMicrotime = microtime.now();
 	var context = req.body.context;
 	var patch = req.body.patch;
@@ -739,6 +751,9 @@ router.post('/update', function(req, res, next) {
  * @apiError 400 <code>NoIdSupplied</code> If the requested item id has not been provided
  */
 router.post('/delete', function(req, res, next) {
+	if (Object.getOwnPropertyNames(req.body).length === 0)
+		return res.status(400).json({status: 400, message: "Request body is empty"}).end();
+
 	var id = req.body.id;
 	var context = req.body.context;
 	var mdl = req.body.model;
