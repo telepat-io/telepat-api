@@ -817,11 +817,37 @@ router.post('/delete', function(req, res, next) {
  * @apiError 403 <code>PermissionDenied</code> If the model requires other permissions other than the ones provided.
  */
 router.post('/count', function(req, res, next) {
-	var appId = req._telepat.application_id,
-		channel = req.body.channel,
-		filters = req.body.filters;
+	if (Object.getOwnPropertyNames(req.body).length === 0)
+		return res.status(400).json({status: 400, message: "Request body is empty"}).end();
 
-	Models.Subscription.getObjectCount(appId, channel, filters, function(err, result) {
+	var appId = req._telepat.application_id,
+		channel = req.body.channel;
+
+	var channelObject = new Models.Channel(appId);
+
+	if (channel.model)
+		channelObject.model(channel.model);
+
+	if (channel.context)
+		channelObject.context(channel.context);
+
+	if (channel.parent)
+		channelObject.parent(channel.parent);
+
+	if (channel.user)
+		channelObject.user(channel.user);
+
+	if (req.body.filters)
+		channelObject.setFilter(req.body.filters);
+
+	if (!channelObject.isValid()) {
+		var error = new Error('Could not subscribe to invalid channel');
+		error.status = 400;
+
+		return next(error);
+	}
+
+	Models.Subscription.getObjectCount(channel, function(err, result) {
 		if (err) return next(err);
 
 		res.status(200).json({status: 200, content: result}).end();
