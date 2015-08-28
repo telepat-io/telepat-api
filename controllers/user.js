@@ -412,7 +412,7 @@ router.post('/login_password', function(req, res, next) {
 });
 
 /**
- * @api {post} /user/logout Logout
+ * @api {get} /user/logout Logout
  * @apiDescription Logs out the user removing the device from his array of devices.
  * @apiName UserLogout
  * @apiGroup User
@@ -426,7 +426,7 @@ router.post('/login_password', function(req, res, next) {
  *
  * @apiError NotAuthenticated  Only authenticated users may access this endpoint.
  */
-router.post('/logout', function(req, res, next) {
+router.get('/logout', function(req, res, next) {
 	var deviceId = req._telepat.device_id;
 	var email = req.user.email;
 
