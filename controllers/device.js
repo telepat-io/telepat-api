@@ -68,26 +68,33 @@ router.post('/register', function(req, res, next) {
 
 		var udid = req.body.info.udid;
 
-		if (!udid)
-			return res.status(400).json({status: 400, message: "'udid' in 'info' object is missing"}).end();
+		if (!udid) {
+			Models.Subscription.addDevice(req.body, function (err) {
+				if (!err) {
+					return res.status(200).json({status: 200, content: {identifier: req.body.id}}).end();
+				}
 
-		Models.Subscription.findDeviceByUdid(udid, function(err, result) {
-			if (err) return next(err);
+				next(err);
+			});
+		} else {
+			Models.Subscription.findDeviceByUdid(udid, function(err, result) {
+				if (err) return next(err);
 
-			if (result === null) {
-				req.body.id = uuid.v4();
-				Models.Subscription.addDevice(req.body, function(err) {
-					if (!err) {
-						return res.status(200).json({status: 200, content: {identifier: req.body.id}}).end();
-					}
+				if (result === null) {
+					req.body.id = uuid.v4();
+					Models.Subscription.addDevice(req.body, function(err) {
+						if (!err) {
+							return res.status(200).json({status: 200, content: {identifier: req.body.id}}).end();
+						}
 
-					next(err);
-				});
-			} else {
-				return res.status(200).json({status: 200, content: {identifier: result}}).end();
-			}
+						next(err);
+					});
+				} else {
+					return res.status(200).json({status: 200, content: {identifier: result}}).end();
+				}
 
-		});
+			});
+		}
 	} else {
 		req.body.id = req._telepat.device_id;
 
