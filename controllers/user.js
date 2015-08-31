@@ -14,7 +14,6 @@ var options = {
 
 FB.options(options);
 
-router.use(security.contentTypeValidation);
 router.use(security.deviceIdValidation);
 router.use(security.applicationIdValidation);
 router.use(security.apiKeyValidation);
@@ -28,6 +27,11 @@ router.use('/me', security.tokenValidation);
  * @apiName UserLogin
  * @apiGroup User
  * @apiVersion 0.2.0
+ *
+ * @apiHeader {String} Content-type application/json
+ * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
+ * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
+ * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
  *
  * @apiParam {String} access_token Facebook access token.
  *
@@ -141,6 +145,11 @@ router.post('/login', function(req, res, next) {
  * @apiName UserRegister
  * @apiGroup User
  * @apiVersion 0.2.0
+ *
+ * @apiHeader {String} Content-type application/json
+ * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
+ * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
+ * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
  *
  * @apiParam {String} access_token Facebook access token.
  *
@@ -287,6 +296,12 @@ router.post('/register', function(req, res, next) {
  * @apiGroup User
  * @apiVersion 0.2.0
  *
+ * @apiHeader {String} Content-type application/json
+ * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
+ * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
+ * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
+ * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
+ *
  * @apiParam {String} password The password
  * @apiParam {String} email The email
  *
@@ -329,6 +344,11 @@ router.get('/me', function(req, res, next) {
  * @apiName UserLoginPassword
  * @apiGroup User
  * @apiVersion 0.2.0
+ *
+ * @apiHeader {String} Content-type application/json
+ * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
+ * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
+ * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
  *
  * @apiParam {String} password The password
  * @apiParam {String} email The email
@@ -418,6 +438,11 @@ router.post('/login_password', function(req, res, next) {
  * @apiGroup User
  * @apiVersion 0.2.0
  *
+ * @apiHeader {String} Content-type application/json
+ * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
+ * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
+ * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
+ *
  * 	@apiSuccessExample {json} Success Response
  * 	{
  * 		"status": 200,
@@ -460,6 +485,12 @@ router.get('/logout', function(req, res, next) {
  * @apiName RefreshToken
  * @apiGroup User
  * @apiVersion 0.1.2
+ *
+ * @apiHeader {String} Content-type application/json
+ * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
+ * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
+ * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
+ * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
  *
  * @apiSuccessExample {json} Success Response
  * 	{
@@ -561,6 +592,12 @@ router.post('/update_immediate', function(req, res, next) {
  * @apiName UserDelete
  * @apiGroup User
  * @apiVersion 0.2.0
+ *
+ * @apiHeader {String} Content-type application/json
+ * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
+ * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
+ * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
+ * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
  *
  * @apiParam {number} id ID of the user
  * @apiParam {string} email Email of the user

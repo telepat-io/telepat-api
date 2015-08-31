@@ -14,6 +14,12 @@ router.use(security.deviceIdValidation);
  * @apiGroup Context
  * @apiVersion 0.2.0
  *
+ * @apiHeader {String} Content-type application/json
+ * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
+ * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
+ * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
+ * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
+ *
  * @apiSuccessExample {json} Success Response
  * 	{
  * 		"status": 200,
@@ -56,6 +62,12 @@ router.get('/all', function (req, res) {
  * @apiName GetContext
  * @apiGroup Context
  * @apiVersion 0.2.0
+ *
+ * @apiHeader {String} Content-type application/json
+ * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
+ * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
+ * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
+ * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
  *
  * @apiParam {Number} id ID of the context to get
  *

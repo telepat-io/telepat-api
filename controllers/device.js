@@ -14,6 +14,10 @@ router.use(security.deviceIdValidation);
  * @apiGroup Device
  * @apiVersion 0.2.0
  *
+ * @apiHeader {String} Content-type application/json
+ * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID if you want to update device info, or empty
+ * string when you want to register a new device (a device id will be generated in this case)
+ *
  * @apiExample {json} Register new device
  * {
  * 		"info": {

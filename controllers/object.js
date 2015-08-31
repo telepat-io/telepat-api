@@ -5,7 +5,6 @@ var sizeof = require('object-sizeof');
 var security = require('./security');
 var microtime = require('microtime-nodejs');
 
-router.use(security.contentTypeValidation);
 router.use(security.applicationIdValidation);
 router.use(security.apiKeyValidation);
 router.use(security.deviceIdValidation);
@@ -55,6 +54,12 @@ var validateContext = function(appId, context, callback) {
  * @apiName ObjectSubscribe
  * @apiGroup Object
  * @apiVersion 0.2.0
+ *
+ * @apiHeader {String} Content-type application/json
+ * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
+ * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
+ * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
+ * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
  *
  * @apiParam {Object} channel Object representing the channel
  * @apiParam {Object} filters Author or parent model filters by ID.
@@ -356,6 +361,12 @@ router.post('/subscribe', function(req, res, next) {
  * @apiGroup Object
  * @apiVersion 0.2.0
  *
+ * @apiHeader {String} Content-type application/json
+ * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
+ * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
+ * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
+ * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
+ *
  * @apiParam {Object} channel Object representing the channel
  * @apiParam {Object} filters Author or parent model filters by ID.
  *
@@ -473,6 +484,12 @@ router.post('/unsubscribe', function(req, res, next) {
  * @apiName ObjectCreate
  * @apiGroup Object
  * @apiVersion 0.2.0
+ *
+ * @apiHeader {String} Content-type application/json
+ * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
+ * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
+ * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
+ * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
  *
  * @apiParam {String} model The type of object to subscribe to
  * @apiParam {Object} content Content of the object
@@ -603,6 +620,12 @@ router.post('/create', function(req, res, next) {
  * @apiGroup Object
  * @apiVersion 0.2.0
  *
+ * @apiHeader {String} Content-type application/json
+ * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
+ * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
+ * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
+ * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
+ *
  * @apiParam {Number} id ID of the object (optional)
  * @apiParam {Number} context Context of the object
  * @apiParam {String} model The type of object to subscribe to
@@ -725,6 +748,12 @@ router.post('/update', function(req, res, next) {
  * @apiGroup Object
  * @apiVersion 0.2.0
  *
+ * @apiHeader {String} Content-type application/json
+ * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
+ * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
+ * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
+ * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
+ *
  * @apiParam {Number} id ID of the object (optional)
  * @apiParam {Number} context Context of the object
  * @apiParam {String} model The type of object to delete
@@ -808,6 +837,12 @@ router.post('/delete', function(req, res, next) {
  * @apiName ObjectCount
  * @apiGroup Object
  * @apiVersion 0.2.0
+ *
+ * @apiHeader {String} Content-type application/json
+ * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
+ * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
+ * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
+ * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
  *
  * @apiParam {Object} channel The object reperesenting a channel
  * @apiParam {Object} filters Additional filters to the subscription channel

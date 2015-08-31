@@ -28,6 +28,8 @@ var unless = function(paths, middleware) {
  * @apiGroup Admin
  * @apiVersion 0.2.0
  *
+ * @apiHeader {String} Content-type application/json
+ *
  * @apiParam {String} email Email of admin
  * @apiParam {String} password Password of admin
  *
@@ -82,6 +84,8 @@ router.post('/login', function (req, res, next) {
  * @apiGroup Admin
  * @apiVersion 0.2.0
  *
+ * @apiHeader {String} Content-type application/json
+ *
  * @apiParam {String} email Admin e-mail
  * @apiParam {String} password The password
  * @apiParam {String} name Real name of the admin
@@ -132,6 +136,9 @@ router.use('/me', security.tokenValidation);
  * @apiGroup Admin
  * @apiVersion 0.2.0
  *
+ * @apiHeader {String} Content-type application/json
+ * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
+ *
  * @apiSuccessExample {json} Success Response
  * 	{
  * 		"status": 200,
@@ -155,6 +162,9 @@ router.use('/update', security.tokenValidation);
  * @apiName AdminUpdate
  * @apiGroup Admin
  * @apiVersion 0.2.0
+ *
+ * @apiHeader {String} Content-type application/json
+ * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
  *
  * @apiExample {json} Client Request
  * 	{
@@ -191,6 +201,9 @@ router.use('/apps', security.tokenValidation);
  * @apiName AdminApps
  * @apiGroup Admin
  * @apiVersion 0.2.0
+ *
+ * @apiHeader {String} Content-type application/json
+ * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
  *
  * @apiSuccessExample {json} Success Response
  * 	{
@@ -233,6 +246,9 @@ router.use('/app/add', security.tokenValidation);
  * @apiName AdminAppAdd
  * @apiGroup Admin
  * @apiVersion 0.2.0
+ *
+ * @apiHeader {String} Content-type application/json
+ * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
  *
  * @apiExample {json} Client Request
  * 	{
@@ -294,6 +310,10 @@ router.use('/app/remove', security.tokenValidation, security.applicationIdValida
  * @apiGroup Admin
  * @apiVersion 0.2.0
  *
+ * @apiHeader {String} Content-type application/json
+ * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
+ * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
+ *
  * @apiSuccessExample {json} Success Response
  * 	{
  * 		"status": 200,
@@ -329,6 +349,10 @@ router.use('/app/update', security.tokenValidation, security.applicationIdValida
  * @apiName AdminAppUpdate
  * @apiGroup Admin
  * @apiVersion 0.2.0
+ *
+ * @apiHeader {String} Content-type application/json
+ * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
+ * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  *
  * @apiParam {Number} appId ID of the app to update
  *
@@ -373,6 +397,10 @@ router.use('/contexts', security.tokenValidation, security.applicationIdValidati
  * @apiGroup Admin
  * @apiVersion 0.2.0
  *
+ * @apiHeader {String} Content-type application/json
+ * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
+ * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
+ *
  * @apiSuccessExample {json} Success Response
  * 	{
  * 		"status": 200,
@@ -415,6 +443,10 @@ router.use('/context', security.tokenValidation, security.applicationIdValidatio
  * @apiName AdminGetContext
  * @apiGroup Admin
  * @apiVersion 0.2.0
+ *
+ * @apiHeader {String} Content-type application/json
+ * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
+ * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  *
  * @apiParam {Number} id ID of the context to get
  *
@@ -468,6 +500,10 @@ router.use('/context/add', security.tokenValidation, security.applicationIdValid
  * @apiGroup Admin
  * @apiVersion 0.2.0
  *
+ * @apiHeader {String} Content-type application/json
+ * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
+ * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
+ *
  * @apiParam {Number} appId ID of the application
  *
  * @apiExample {json} Client Request
@@ -520,6 +556,10 @@ router.use('/context/remove', security.tokenValidation, security.applicationIdVa
  * @apiGroup Admin
  * @apiVersion 0.2.0
  *
+ * @apiHeader {String} Content-type application/json
+ * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
+ * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
+ *
  * @apiParam {Number} id ID of the context to remove
  *
  * @apiExample {json} Client Request
@@ -560,6 +600,10 @@ router.use('/context/update', security.tokenValidation, security.applicationIdVa
  * @apiName AdminUpdateContext
  * @apiGroup Admin
  * @apiVersion 0.2.0
+ *
+ * @apiHeader {String} Content-type application/json
+ * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
+ * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  *
  * @apiParam {Number} id ID of the context to update
  *
@@ -602,6 +646,10 @@ router.use('/schemas', security.tokenValidation, security.applicationIdValidatio
  * @apiName AdminGetSchemas
  * @apiGroup Admin
  * @apiVersion 0.2.0
+ *
+ * @apiHeader {String} Content-type application/json
+ * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
+ * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  *
  * 	@apiSuccessExample {json} Success Response
  * 	{
@@ -646,6 +694,10 @@ router.use('/schema/update', security.tokenValidation, security.applicationIdVal
  * @apiGroup Admin
  * @apiVersion 0.2.0
  *
+ * @apiHeader {String} Content-type application/json
+ * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
+ * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
+ *
  * @apiParam {Object} schema Updated schema object
  *
  * @apiExample {json} Client Request
@@ -681,6 +733,10 @@ router.use('/users', security.tokenValidation, security.applicationIdValidation,
  * @apiGroup Admin
  * @apiVersion 0.2.0
  *
+ * @apiHeader {String} Content-type application/json
+ * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
+ * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
+ *
  * 	@apiSuccessExample {json} Success Response
  * 	{
  * 		"status": 200,
@@ -714,6 +770,9 @@ router.use('/user/update', security.tokenValidation);
  * @apiGroup Admin
  * @apiVersion 0.2.0
  *
+ * @apiHeader {String} Content-type application/json
+ * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
+ *
  * @apiParam {Object} user The object that contains the user (must contain the email to identify him)
  *
  * @apiExample {json} Client Request
@@ -732,7 +791,6 @@ router.use('/user/update', security.tokenValidation);
  * 		]
  * 	}
  *
- * @apiError 404 NotFound If the App ID doesn't exist
  */
 router.post('/user/update', function(req, res, next) {
 	var props = req.body.user;
@@ -762,13 +820,17 @@ router.post('/user/update', function(req, res, next) {
 	});
 });
 
-router.use('/user/update', security.tokenValidation, security.applicationIdValidation);
+router.use('/user/update', security.tokenValidation);
 /**
  * @api {post} /admin/user/delete Deleteuser
  * @apiDescription Deketes an user from an app
  * @apiName AdminDeleteUser
  * @apiGroup Admin
  * @apiVersion 0.2.0
+ *
+ * @apiHeader {String} Content-type application/json
+ * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
+ * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  *
  * @apiParam {String} email The email address of an user from an app
  *
