@@ -15,8 +15,8 @@ router.use(security.deviceIdValidation);
  * @apiVersion 0.2.0
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID if you want to update device info, or empty
- * string when you want to register a new device (a device id will be generated in this case)
+ * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID if you want to update device info, or
+ * 'TP_EMPTY_UDID' string when you want to register a new device (a device id will be generated in this case)
  *
  * @apiExample {json} Register new device
  * {
@@ -66,7 +66,7 @@ router.use(security.deviceIdValidation);
  *
  */
 router.post('/register', function(req, res, next) {
-	if (req._telepat.device_id == '') {
+	if (req._telepat.device_id == 'TP_EMPTY_UDID' || req._telepat.device_id == '') {
 		if (!req.body.info)
 			return res.status(400).json({status: 400, message: "Field 'info' is missing from the request body"}).end();
 
