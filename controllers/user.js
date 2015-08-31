@@ -615,7 +615,7 @@ router.post('/delete', function(req, res, next) {
 
 	app.kafkaProducer.send([{
 		topic: 'aggregation',
-		message: [JSON.stringify({
+		messages: [JSON.stringify({
 			op: 'delete',
 			object: {id: id, email: email},
 			applicationId: req._telepat.application_id,
