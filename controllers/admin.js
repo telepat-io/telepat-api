@@ -284,6 +284,10 @@ router.use('/app/add', security.tokenValidation);
  */
 router.post('/app/add', function (req, res) {
 	var newApp = req.body;
+
+	if (!newApp.name)
+		return res.status(400).json({status: 400, message: "'name' field is missing"}).end();
+
 	newApp['admin_id'] = req.user.email;
 	Models.Application.create(newApp, function (err, res1) {
 		if (err) {
