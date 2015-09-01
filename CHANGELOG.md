@@ -34,6 +34,6 @@ property
 * Updated documentation
 * 200 status codes are now 202 when creating/deleting/updating objects
 
-# 0.1
+# 0.1.0
 
 * Initial pre-alpha release

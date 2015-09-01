@@ -824,7 +824,7 @@ router.post('/user/update', function(req, res, next) {
 	});
 });
 
-router.use('/user/update', security.tokenValidation);
+router.use('/user/delete', security.tokenValidation, security.applicationIdValidation, security.adminAppValidation);
 /**
  * @api {post} /admin/user/delete Deleteuser
  * @apiDescription Deketes an user from an app
