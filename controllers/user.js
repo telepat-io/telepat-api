@@ -530,10 +530,7 @@ router.get('/refresh_token', function(req, res, next) {
 
 		return res.status(200).json({status: 200, content: {token: newToken}}).end();
 	} else {
-		var error = new Error('Token not present or authorization header is invalid');
-		error.status = 400;
-
-		return next(error);
+		return res.status(400).json({status: 400, message: 'Token not present or authorization header is invalid'}).end();
 	}
 });
 
