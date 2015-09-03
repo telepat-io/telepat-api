@@ -504,7 +504,7 @@ router.get('/logout', function(req, res, next) {
  *
  * @apiErrorExample {json} Error Response
  * 	{
- * 		status: 401,
+ * 		status: 400,
  * 		message: "Token not present or authorization header is invalid"
  * 	}
  * 	@apiErrorExample {json} Error Response
@@ -531,7 +531,7 @@ router.get('/refresh_token', function(req, res, next) {
 		return res.status(200).json({status: 200, content: {token: newToken}}).end();
 	} else {
 		var error = new Error('Token not present or authorization header is invalid');
-		error.status = 401;
+		error.status = 400;
 
 		return next(error);
 	}
