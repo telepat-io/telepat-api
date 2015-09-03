@@ -120,7 +120,7 @@ var validateContext = function(appId, context, callback) {
  * 		]
  * 	}
  *
- * @apiError 402 <code>NotAuthenticated</code> Only authenticated users may access this endpoint.
+ * @apiError 401 <code>NotAuthenticated</code> Only authenticated users may access this endpoint.
  * @apiError 404 <code>NotFound</code> If <code>id</code> was supplied but object not found or device is not registered.
  * @apiError 400 <code>RequestedContextMissing</code> If context id is missing from the request body
  * @apiError 400 <code>RequestedChannelMissing</code> If the channel object is missing from the request body
@@ -381,7 +381,7 @@ router.post('/subscribe', function(req, res, next) {
  * 		"content": "Subscription removed"
  * 	}
  *
- * @apiError 402 <code>NotAuthenticated</code>  Only authenticated users may access this endpoint.
+ * @apiError 401 <code>NotAuthenticated</code>  Only authenticated users may access this endpoint.
  * @apiError 404 <code>NotFound</code> If device hasn't subscribed to this channel or if application model is not valid (doesn't exist)
  * @apiError 400 <code>RequestedContextMissing</code> If context id is missing from the request body
  * @apiError 400 <code>RequestedChannelMissing</code> If the channel object is missing from the request body
@@ -509,7 +509,7 @@ router.post('/unsubscribe', function(req, res, next) {
  * 		"content": "Created"
  * 	}
  *
- * @apiError 402 <code>NotAuthenticated</code>  Only authenticated users may access this endpoint.
+ * @apiError 401 <code>NotAuthenticated</code>  Only authenticated users may access this endpoint.
  * @apiError 404 <code>NotFound</code> If application object model doesn't exist
  * @apiError 403 <code>PermissionDenied</code> If the model requires other permissions other than the ones provided.
  * @apiError 400 <code>RequestedContextMissing</code> If context id is missing from the request body
@@ -652,7 +652,7 @@ router.post('/create', function(req, res, next) {
  * 		"content": "Created"
  * 	}
  *
- * @apiError 402 <code>NotAuthenticated</code>  Only authenticated users may access this endpoint
+ * @apiError 401 <code>NotAuthenticated</code>  Only authenticated users may access this endpoint
  * @apiError 404 <code>NotFound</code> If <code>id</code> was supplied but object not found or application model doesn't exist
  * @apiError 403 <code>PermissionDenied</code> If the model requires other permissions other than the ones provided
  * @apiError 400 <code>RequestedContextMissing</code> If context id is missing from the request body
@@ -771,7 +771,7 @@ router.post('/update', function(req, res, next) {
  * 		"content": "Deleted"
  * 	}
  *
- * @apiError 402 <code>NotAuthenticated</code>  Only authenticated users may access this endpoint.
+ * @apiError 401 <code>NotAuthenticated</code>  Only authenticated users may access this endpoint.
  * @apiError 404 <code>NotFound</code> If <code>id</code> was supplied but object not found.
  * @apiError 403 <code>PermissionDenied</code> If the model requires other permissions other than the ones provided.
  * @apiError 400 <code>RequestedContextMissing</code> If context id is missing from the request body
@@ -847,7 +847,7 @@ router.post('/delete', function(req, res, next) {
  * @apiParam {Object} channel The object reperesenting a channel
  * @apiParam {Object} filters Additional filters to the subscription channel
  *
- * @apiError 402 <code>NotAuthenticated</code>  Only authenticated users may access this endpoint.
+ * @apiError 401 <code>NotAuthenticated</code>  Only authenticated users may access this endpoint.
  * @apiError 404 <code>NotFound</code> If <code>id</code> was supplied but object not found.
  * @apiError 403 <code>PermissionDenied</code> If the model requires other permissions other than the ones provided.
  */
