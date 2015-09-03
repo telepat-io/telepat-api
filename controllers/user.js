@@ -18,7 +18,7 @@ router.use(security.deviceIdValidation);
 router.use(security.applicationIdValidation);
 router.use(security.apiKeyValidation);
 
-router.use('/logout', security.tokenValidation);
+router.use(['/logout'], security.tokenValidation);
 router.use('/me', security.tokenValidation);
 
 /**
@@ -479,12 +479,12 @@ router.get('/logout', function(req, res, next) {
 
 
 /**
- * @api {post} /user/refresh_token Refresh Token
+ * @api {get} /user/refresh_token Refresh Token
  * @apiDescription Sends a new authentification token to the user. The old token must be provide (and it may or not
  * may not be aleady expired).
  * @apiName RefreshToken
  * @apiGroup User
- * @apiVersion 0.1.2
+ * @apiVersion 0.2.0
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
@@ -507,11 +507,25 @@ router.get('/logout', function(req, res, next) {
  * 		status: 401,
  * 		message: "Token not present or authorization header is invalid"
  * 	}
+ * 	@apiErrorExample {json} Error Response
+ * 	{
+ * 		status: 400,
+ * 		message: "Malformed authorization token"
+ * 	}
  */
-router.post('/refresh_token', function(req, res, next) {
-	var oldToken = req.get('Authorization').split(' ')[1];
-	if (oldToken) {
-		var decoded = jwt.decode(oldToken);
+router.get('/refresh_token', function(req, res, next) {
+	var authHeader = req.get('Authorization').split(' ');
+	if (authHeader[0] == 'Bearer' && authHeader[1]) {
+		try {
+			var decoded = jwt.decode(authHeader[1]);
+		} catch (e) {
+			return res.status(400).json({status: 400, message: e.message}).end();
+		}
+
+		if (!decoded) {
+			return res.status(400).json({status: 400, message: 'Malformed authorization token'}).end();
+		}
+
 		var newToken = jwt.sign(decoded, security.authSecret, {expiresInMinutes: 60});
 
 		return res.status(200).json({status: 200, content: {token: newToken}}).end();
@@ -528,7 +542,7 @@ router.post('/refresh_token', function(req, res, next) {
  * @apiDescription Updates the user information
  * @apiName UserUpdate
  * @apiGroup User
- * @apiVersion 0.1.2
+ * @apiVersion 0.2.0
  *
  * @apiParam {Object[]} patches Array of patches that describe the modifications
  *
