@@ -848,7 +848,6 @@ router.post('/delete', function(req, res, next) {
  * @apiParam {Object} filters Additional filters to the subscription channel
  *
  * @apiError 401 <code>NotAuthenticated</code>  Only authenticated users may access this endpoint.
- * @apiError 404 <code>NotFound</code> If <code>id</code> was supplied but object not found.
  * @apiError 403 <code>PermissionDenied</code> If the model requires other permissions other than the ones provided.
  */
 router.post('/count', function(req, res, next) {
