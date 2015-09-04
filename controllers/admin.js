@@ -378,7 +378,14 @@ router.use('/app/update', security.tokenValidation, security.applicationIdValida
  * 		"content": "Updated"
  * 	}
  *
- * 	@apiError (500) Error Application with that ID doesn't exist or internal server error.
+ * 	@apiError (404) Error Application with that ID doesn't exist
+ * 	@apiError (500) Error Internal server error.
+ *
+ * 	@apiErrorExample {json} Error Response
+ * 	{
+ * 		"status": 404,
+ * 		"message": "Application with ID $APPID doest not exist."
+ * 	}
  *
  * 	@apiErrorExample {json} Error Response
  * 	{
