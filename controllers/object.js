@@ -53,7 +53,7 @@ var validateContext = function(appId, context, callback) {
  * Subsequent subscription on the same channel and filter will have no effect but will return the objects.
  * @apiName ObjectSubscribe
  * @apiGroup Object
- * @apiVersion 0.2.0
+ * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
@@ -359,7 +359,7 @@ router.post('/subscribe', function(req, res, next) {
  * @apiDescription Unsubscribe to an object or a collection of objects (by a filter)
  * @apiName ObjectUnsubscribe
  * @apiGroup Object
- * @apiVersion 0.2.0
+ * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
@@ -483,7 +483,7 @@ router.post('/unsubscribe', function(req, res, next) {
  * @apiDescription Creates a new object
  * @apiName ObjectCreate
  * @apiGroup Object
- * @apiVersion 0.2.0
+ * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
@@ -618,7 +618,7 @@ router.post('/create', function(req, res, next) {
  * @apiDescription Updates an existing object
  * @apiName ObjectUpdate
  * @apiGroup Object
- * @apiVersion 0.2.0
+ * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
@@ -746,7 +746,7 @@ router.post('/update', function(req, res, next) {
  * @apiDescription Deletes an object
  * @apiName ObjectDelete
  * @apiGroup Object
- * @apiVersion 0.2.0
+ * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
@@ -836,7 +836,7 @@ router.post('/delete', function(req, res, next) {
  * @apiDescription Gets the object count of a certain filter/subscription
  * @apiName ObjectCount
  * @apiGroup Object
- * @apiVersion 0.2.0
+ * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>

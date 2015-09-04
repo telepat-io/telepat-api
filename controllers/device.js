@@ -12,7 +12,7 @@ router.use(security.deviceIdValidation);
  * to search for a device with this udid and return the device id.
  * @apiName DeviceRegister
  * @apiGroup Device
- * @apiVersion 0.2.0
+ * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID if you want to update device info, or

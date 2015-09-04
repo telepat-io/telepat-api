@@ -26,7 +26,7 @@ var unless = function(paths, middleware) {
  * @apiDescription Authenticates an admin and returns the authorization token
  * @apiName AdminAuthenticate
  * @apiGroup Admin
- * @apiVersion 0.2.0
+ * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
  *
@@ -82,7 +82,7 @@ router.post('/login', function (req, res, next) {
  * @apiDescription Creates a new admin
  * @apiName AdminAdd
  * @apiGroup Admin
- * @apiVersion 0.2.0
+ * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
  *
@@ -134,7 +134,7 @@ router.use('/me', security.tokenValidation);
  * @apiDescription Gets information about the logged admin
  * @apiName AdminMe
  * @apiGroup Admin
- * @apiVersion 0.2.0
+ * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
@@ -161,7 +161,7 @@ router.use('/update', security.tokenValidation);
  * @apiDescription Updates a new admin. Every property in the request body is used to udpate the admin.
  * @apiName AdminUpdate
  * @apiGroup Admin
- * @apiVersion 0.2.0
+ * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
@@ -200,7 +200,7 @@ router.use('/apps', security.tokenValidation);
  * @apiDescription Lists the application for the current admin
  * @apiName AdminApps
  * @apiGroup Admin
- * @apiVersion 0.2.0
+ * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
@@ -245,7 +245,7 @@ router.use('/app/add', security.tokenValidation);
  * @apiDescription Creates a app for the admin. The request body should contain the app itself.
  * @apiName AdminAppAdd
  * @apiGroup Admin
- * @apiVersion 0.2.0
+ * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
@@ -312,7 +312,7 @@ router.use('/app/remove', security.tokenValidation, security.applicationIdValida
  * @apiDescription Removes an app from the admin.
  * @apiName AdminAppRemove
  * @apiGroup Admin
- * @apiVersion 0.2.0
+ * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
@@ -359,7 +359,7 @@ router.use('/app/update', security.tokenValidation, security.applicationIdValida
  * @apiDescription Updates an app
  * @apiName AdminAppUpdate
  * @apiGroup Admin
- * @apiVersion 0.2.0
+ * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
@@ -413,7 +413,7 @@ router.use('/contexts', security.tokenValidation, security.applicationIdValidati
  * @apiDescription Get all contexsts
  * @apiName AdminGetContexts
  * @apiGroup Admin
- * @apiVersion 0.2.0
+ * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
@@ -460,7 +460,7 @@ router.use('/context', security.tokenValidation, security.applicationIdValidatio
  * @apiDescription Retrieves a context
  * @apiName AdminGetContext
  * @apiGroup Admin
- * @apiVersion 0.2.0
+ * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
@@ -516,7 +516,7 @@ router.use('/context/add', security.tokenValidation, security.applicationIdValid
  * @apiDescription Creates a new context
  * @apiName AdminCreateContext
  * @apiGroup Admin
- * @apiVersion 0.2.0
+ * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
@@ -572,7 +572,7 @@ router.use('/context/remove', security.tokenValidation, security.applicationIdVa
  * @apiDescription Removes a context and all associated objects
  * @apiName AdminRemoveContext
  * @apiGroup Admin
- * @apiVersion 0.2.0
+ * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
@@ -617,7 +617,7 @@ router.use('/context/update', security.tokenValidation, security.applicationIdVa
  * @apiDescription Updates the context object
  * @apiName AdminUpdateContext
  * @apiGroup Admin
- * @apiVersion 0.2.0
+ * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
@@ -663,7 +663,7 @@ router.use('/schemas', security.tokenValidation, security.applicationIdValidatio
  * @apiDescription Gets the model schema for an application
  * @apiName AdminGetSchemas
  * @apiGroup Admin
- * @apiVersion 0.2.0
+ * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
@@ -710,7 +710,7 @@ router.use('/schema/update', security.tokenValidation, security.applicationIdVal
  * @apiDescription Updates the model schema
  * @apiName AdminUpdateSchema
  * @apiGroup Admin
- * @apiVersion 0.2.0
+ * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
@@ -749,7 +749,7 @@ router.use('/users', security.tokenValidation, security.applicationIdValidation,
  * @apiDescription Gets all users of the app
  * @apiName AdminGetUsers
  * @apiGroup Admin
- * @apiVersion 0.2.0
+ * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
@@ -786,7 +786,7 @@ router.use('/user/update', security.tokenValidation);
  * @apiDescription Updates an user from an app
  * @apiName AdminUpdateuser
  * @apiGroup Admin
- * @apiVersion 0.2.0
+ * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
@@ -844,7 +844,7 @@ router.use('/user/delete', security.tokenValidation, security.applicationIdValid
  * @apiDescription Deketes an user from an app
  * @apiName AdminDeleteUser
  * @apiGroup Admin
- * @apiVersion 0.2.0
+ * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>

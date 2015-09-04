@@ -26,7 +26,7 @@ router.use('/me', security.tokenValidation);
  * @apiDescription Log in the user through facebook
  * @apiName UserLogin
  * @apiGroup User
- * @apiVersion 0.2.0
+ * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
@@ -144,7 +144,7 @@ router.post('/login', function(req, res, next) {
  * @apiDescription Registers a new user using a fb token or directly with an email and password
  * @apiName UserRegister
  * @apiGroup User
- * @apiVersion 0.2.0
+ * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
@@ -294,7 +294,7 @@ router.post('/register', function(req, res, next) {
  * @apiDescription Logs in the user with a password; creates the user if it doesn't exist
  * @apiName UserLoginPassword
  * @apiGroup User
- * @apiVersion 0.2.0
+ * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
@@ -343,7 +343,7 @@ router.get('/me', function(req, res, next) {
  * @apiDescription Logs in the user with a password; creates the user if it doesn't exist
  * @apiName UserLoginPassword
  * @apiGroup User
- * @apiVersion 0.2.0
+ * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
@@ -436,7 +436,7 @@ router.post('/login_password', function(req, res, next) {
  * @apiDescription Logs out the user removing the device from his array of devices.
  * @apiName UserLogout
  * @apiGroup User
- * @apiVersion 0.2.0
+ * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
@@ -484,7 +484,7 @@ router.get('/logout', function(req, res, next) {
  * may not be aleady expired).
  * @apiName RefreshToken
  * @apiGroup User
- * @apiVersion 0.2.0
+ * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
@@ -539,7 +539,7 @@ router.get('/refresh_token', function(req, res, next) {
  * @apiDescription Updates the user information
  * @apiName UserUpdate
  * @apiGroup User
- * @apiVersion 0.2.0
+ * @apiVersion 0.2.2
  *
  * @apiParam {Object[]} patches Array of patches that describe the modifications
  *
@@ -602,7 +602,7 @@ router.post('/update_immediate', function(req, res, next) {
  * @apiDescription Deletes a user
  * @apiName UserDelete
  * @apiGroup User
- * @apiVersion 0.2.0
+ * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>

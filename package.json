@@ -1,6 +1,6 @@
 {
   "name": "telepat-api",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "scripts": {
 	"start": "./bin/www"
   },

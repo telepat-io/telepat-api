@@ -1,3 +1,16 @@
+# 0.2.2
+
+* Fixed lots of bugs and server crashes
+* User info is returned on login calls (user & admin)
+* Sepparated user login and user register endpoints
+* Admin endpoint for deleting users sends messages to aggregator to delete objects (1 message per object removed)
+* Standardized /admin endpoints responses
+* Each patch from /object/update is sent in 1 message to the aggregator
+* Standardized and fixed lots of inconsistencies in HTTP status codes in responses
+* Added more input validation, especially to /admin routes
+* `/user/logout`, `/user/refresh_token` uses GET method
+* Devices with no device ID should use the string `TP_EMPTY_UDID` in the `X-BLGREQ-UDID` header when registering
+
 # 0.2.1
 
 * Added context id to kafka messages in `/object/subscribe` and `/object/create`
@@ -5,7 +18,7 @@
 # 0.2.0
 
 * New api endpoint for users to login with a password: `/user/login_password`
-* Couchbase tate bucket replaced with redis database
+* Couchbase bucket replaced with redis database
 * Fixed lots of crashes and bugs
 * 404 status code is used when unsubscribing from a non existent subscription
 

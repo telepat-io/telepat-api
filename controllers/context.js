@@ -61,7 +61,7 @@ router.get('/all', function (req, res) {
  * @apiDescription Retrieves a context
  * @apiName GetContext
  * @apiGroup Context
- * @apiVersion 0.2.0
+ * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
