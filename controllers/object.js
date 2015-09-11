@@ -772,7 +772,6 @@ router.post('/update', function(req, res, next) {
  * 	}
  *
  * @apiError 401 <code>NotAuthenticated</code>  Only authenticated users may access this endpoint.
- * @apiError 404 <code>NotFound</code> If <code>id</code> was supplied but object not found.
  * @apiError 403 <code>PermissionDenied</code> If the model requires other permissions other than the ones provided.
  * @apiError 400 <code>RequestedContextMissing</code> If context id is missing from the request body
  * @apiError 400 <code>RequestedChannelMissing</code> If the channel object is missing from the request body

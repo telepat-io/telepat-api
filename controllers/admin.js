@@ -646,15 +646,28 @@ router.post('/context/update', function (req, res) {
 		return;
 	}
 
-	Models.Context.update(req.body.id, req.body, function (err, res1, updatedContext) {
-		if (err && err.code == cb.errors.keyNotFound)
-			res.status(404).send({status: 404, message: 'Context with id \''+req.body.id+'\' does not exist'}).end();
-		else if (err)
-			res.status(500).send({status: 500, message: 'Could not update context'});
-		else {
-			res.status(200).json({status: 200, content: 'Context updated'}).end();
+	async.waterfall([
+		function(callback) {
+			Models.Context(req.body.id, callback);
+		},
+		function(context, callback) {
+			if (context.application_id != req.user.application_id) {
+				res.status(403).send({status: 403, message: 'This context does not belong to you'}).end();
+				callback();
+			} else {
+				Models.Context.update(req.body.id, req.body, function (err, res1, updatedContext) {
+					if (err && err.code == cb.errors.keyNotFound)
+						res.status(404).send({status: 404, message: 'Context with id \''+req.body.id+'\' does not exist'}).end();
+					else if (err)
+						res.status(500).send({status: 500, message: 'Could not update context'});
+					else {
+						res.status(200).json({status: 200, content: 'Context updated'}).end();
+					}
+					callback();
+				});
+			}
 		}
-	});
+	]);
 });
 
 router.use('/schemas', security.tokenValidation, security.applicationIdValidation, security.adminAppValidation);
