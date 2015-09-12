@@ -77,7 +77,7 @@ router.post('/login', function(req, res, next) {
 		function(callback) {
 			FB.napi('/me', {access_token: accessToken}, function(err, result) {
 				if (err) return callback(err);
-				userProfile = result;
+				fbProfile = result;
 				email = result.email;
 
 				if (!email) {
@@ -101,6 +101,7 @@ router.post('/login', function(req, res, next) {
 					callback(err);
 				else {
 					userProfile = result;
+					callback();
 				}
 			});
 		},
@@ -113,11 +114,10 @@ router.post('/login', function(req, res, next) {
 			} else {
 				userProfile.devices = [deviceId];
 			}
-
 			//user first logged in with password then with fb
 			if (!userProfile.fid) {
-				var key = 'blg:'+User._model.namespace+':fid:'+fbProfile.id;
-				Application.bucket.insert(key, userProfile.email, function() {
+				var key = 'blg:'+Models.User._model.namespace+':fid:'+fbProfile.id;
+				Models.Application.bucket.insert(key, userProfile.email, function() {
 					userProfile.fid = fbProfile.id;
 					userProfile.name = fbProfile.name;
 					userProfile.gender = fbProfile.gender;
