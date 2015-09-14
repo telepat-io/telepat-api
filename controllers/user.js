@@ -550,7 +550,7 @@ router.get('/refresh_token', function(req, res, next) {
  * 	}
  *
  */
-/*router.post('/update', function(req, res, next) {
+router.post('/update', function(req, res, next) {
 	var patches = req.body.patches;
 	var id = req.user.id;
 	var email = req.user.email;
@@ -579,7 +579,7 @@ router.get('/refresh_token', function(req, res, next) {
 
 		res.status(202).json({status: 202, content: "User updated"}).end();
 	});
-});*/
+});
 
 router.post('/update_immediate', function(req, res, next) {
 	var user = req.body;
