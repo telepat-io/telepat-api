@@ -191,13 +191,13 @@ router.post('/register', function(req, res, next) {
 				FB.napi('/me', {access_token: accessToken}, function(err, result) {
 					if (err) return callback(err);
 
+					userProfile = result;
+
 					if (!userProfile.email) {
 						var error = new Error('User email is not publicly available (insufficient facebook permissions)');
 						error.status = 400;
 						callback(error);
 					}
-
-					userProfile = result;
 
 					callback();
 				});
