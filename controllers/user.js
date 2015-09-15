@@ -77,8 +77,8 @@ router.post('/login', function(req, res, next) {
 		function(callback) {
 			FB.napi('/me', {access_token: accessToken}, function(err, result) {
 				if (err) return callback(err);
-				userProfile = result;
 				email = result.email;
+				fbProfile = result;
 
 				if (!email) {
 					var error = new Error('User email is not publicly available (insufficient facebook permissions)');
@@ -115,10 +115,16 @@ router.post('/login', function(req, res, next) {
 				userProfile.devices = [deviceId];
 			}
 
+			userProfile.fid = fbProfile.id;
+			userProfile.name = fbProfile.name;
+			userProfile.gender = fbProfile.gender;
+
+			Models.User.update(userProfile.email, userProfile, callback);
+
 			//user first logged in with password then with fb
-			if (!userProfile.fid) {
-				var key = 'blg:'+User._model.namespace+':fid:'+fbProfile.id;
-				Application.bucket.insert(key, userProfile.email, function() {
+			/*if (!userProfile.fid) {
+				var key = 'blg:'+Models.User._model.namespace+':fid:'+fbProfile.id;
+				Models.Application.bucket.insert(key, userProfile.email, function() {
 					userProfile.fid = fbProfile.id;
 					userProfile.name = fbProfile.name;
 					userProfile.gender = fbProfile.gender;
@@ -127,7 +133,7 @@ router.post('/login', function(req, res, next) {
 				});
 			} else {
 				callback(null, true);
-			}
+			}*/
 		}
 		//final step: send authentification token
 	], function(err, results) {
