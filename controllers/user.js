@@ -184,6 +184,7 @@ router.post('/register', function(req, res, next) {
 	var accessToken = req.body.access_token;
 	var fbFriends = [];
 	var deviceId = req._telepat.device_id;
+	var appId = req._telepat.application_id;
 
 	async.waterfall([
 		function(callback) {
@@ -226,13 +227,13 @@ router.post('/register', function(req, res, next) {
 				return callback(error);
 			}
 
-			Models.User(userProfile.email, function(err, result) {
+			Models.User(userProfile.email, appId, function(err, result) {
 				if (!err) {
 					var error = new Error('User with that email address already exists');
 					error.status = 409;
 					callback(error);
 				}
-				else if (err && err.code !== cb.errors.keyNotFound)
+				else if (err && err.status != 404)
 					callback(err);
 				else {
 					callback();
@@ -290,7 +291,7 @@ router.post('/register', function(req, res, next) {
 });
 
 /**
- * @api {post} /user/me Info about logged user
+ * @api {get} /user/me Info about logged user
  * @apiDescription Logs in the user with a password; creates the user if it doesn't exist
  * @apiName UserLoginPassword
  * @apiGroup User
@@ -324,8 +325,8 @@ router.post('/register', function(req, res, next) {
  *
  */
 router.get('/me', function(req, res, next) {
-	Models.User(req.user.email, function(err, result) {
-		if (err && err.code == cb.errors.keyNotFound) {
+	Models.User(req.user.email, req._telepat.application_id, function(err, result) {
+		if (err && err.status == 404) {
 			var error = new Error('User not found');
 			error.status = 404;
 
@@ -334,7 +335,8 @@ router.get('/me', function(req, res, next) {
 		else if (err)
 			next(err);
 		else
-			next(null, result);
+			delete result.password;
+			res.status(200).json({status: 200, content: result}).end();
 	});
 });
 
@@ -392,6 +394,7 @@ router.post('/login_password', function(req, res, next) {
 	var email = req.body.email;
 	var password = req.body.password.toString();
 	var deviceId = req._telepat.device_id;
+	var appId = req._telepat.application_id;
 
 	var passwordSalt = req.app.get('password_salt');
 	var md5password = crypto.createHash('md5').update(password).digest('hex');
@@ -400,8 +403,8 @@ router.post('/login_password', function(req, res, next) {
 	async.series([
 		function(callback) {
 			//try and get user profile from DB
-			Models.User(email, function(err, result) {
-				if (err && err.code == cb.errors.keyNotFound) {
+			Models.User(email, appId, function(err, result) {
+				if (err && err.status == 404) {
 					var error = new Error('User with email address not found');
 					error.status = 404;
 					callback(error);

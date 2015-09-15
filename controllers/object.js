@@ -217,7 +217,7 @@ router.post('/subscribe', function(req, res, next) {
 					callback(null, results)
 				});
 			} else {
-				Models.Model.search(channel, callback);
+				Models.Model.search(channelObject, callback);
 			}
 		}/*,
 		function(results, callback) {
@@ -410,7 +410,7 @@ router.post('/create', function(req, res, next) {
 
 	var content = req.body.content;
 	var mdl = req.body.model;
-	var context = parseInt(req.body.context);
+	var context = req.body.context;
 	var appId = req._telepat.application_id;
 	var isAdmin = req.user.isAdmin;
 
