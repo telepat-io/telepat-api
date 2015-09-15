@@ -131,7 +131,7 @@ router.post('/login', function(req, res, next) {
 		//final step: send authentification token
 	], function(err, results) {
 		if (err)
-			res.status(400).json(err).end();
+			return next(err);
 		else {
 			var token = jwt.sign({email: userProfile.email}, security.authSecret, { expiresInMinutes: 60 });
 			res.json({status: 200, content: {token: token, user: userProfile}}).end();
