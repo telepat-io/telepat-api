@@ -10,6 +10,14 @@ elastic = require('elasticsearch');
 Models = require('telepat-models');
 redis = require('redis');
 
+
+// if(process.arg){
+// process.argv.forEach(function (val, index, array) {
+ // if(val == "Mock")
+	// cb = require('couchbase').Mock; 
+// });
+// }
+
 var security = require('./controllers/security');
 var adminRoute = require('./controllers/admin');
 var objectRoute = require('./controllers/object');

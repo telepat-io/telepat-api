@@ -273,7 +273,7 @@ describe('Api', function () {
 						.set('Authorization', authValue )
 						.send(admin)
 						.end(function(err, res) {
-						console.log(res);
+						//console.log(res);
 							res.statusCode.should.be.equal(200);
 							done();
 						});
@@ -318,8 +318,46 @@ describe('Api', function () {
 					});
 				});  
 			});
-			
 
+			it('should return a succes response indicating the admin account has NOT been updated because of missing request body', function(done) {
+					var randEmail = 'admin'+Math.round(Math.random()*1000000)+'@example.com';
+					var admin = {
+						email: randEmail,
+						password: "5f4dcc3b5aa765d61d8327deb882cf99"
+					};
+					  
+					request(url)
+					.post('/admin/add')
+					.send(admin)
+					.end(function(err, res) {
+						request(url)
+						.post('/admin/login')
+						.set('Content-type','application/json')
+						.send(admin)
+						.end(function(err, res) {
+						//	console.log(err);
+							authValue = 'Bearer ' + res.body.content.token;
+							var randEmail = 'admin'+Math.round(Math.random()*1000000)+'@example.com';
+							var admin = {
+								email: randEmail,
+								password: "5f4dcc3b5aa765d61d8327deb882cf99"
+							};
+							
+							request(url)
+							.post('/admin/update')
+							.set('Content-type','application/json')
+							.set('Authorization', authValue )
+							.send()
+							.end(function(err, res) {
+					//		console.log(res);
+								res.statusCode.should.be.equal(400);
+								done();
+							});
+						});
+					});  
+				});
+
+			
 		});
 		
 		describe('App', function() {
@@ -664,6 +702,24 @@ describe('Api', function () {
 					});
 			});
 			
+			it('should NOT return the requested context, requested context ID is missing', function(done) {
+					var clientrequest = {
+
+					}
+
+					request(url)
+					.post('/admin/context')
+					.set('Content-type','application/json')
+					.set('Authorization', authValue )
+					.set('X-BLGREQ-APPID', appID )
+					.send(clientrequest)
+					.end(function(err, res) {
+					//	console.log(res);
+						res.statusCode.should.be.equal(200);
+						done();
+					});
+			});
+			
 			it('should return an error response to indicate context NOT succesfully created because of bad client headers', function(done) {
 				var clientrequest = {
 					"name": "Episode 2",
@@ -682,6 +738,22 @@ describe('Api', function () {
 				});
 			});
 			
+			it('should return an error response to indicate context NOT succesfully created because request body is empty', function(done) {
+				var clientrequest = {
+				}
+
+				request(url)
+				.post('/admin/context/add')
+				.set('Content-type','application/json')
+				.set('Authorization', authValue )
+				.send(clientrequest)
+				.end(function(err, res) {
+					res.statusCode.should.be.equal(400);
+
+					done();
+				});
+			});
+			
 			it('should return an succes response to indicate context was updated', function(done) {
 					var clientrequest = {
 						"id": contextID,
@@ -695,13 +767,13 @@ describe('Api', function () {
 					.set('Authorization', authValue )
 					.send(clientrequest)
 					.end(function(err, res) {
-					//	console.log(res);
+						//console.log(res);
 						res.statusCode.should.be.equal(200);
 						done();
 					});
 			});
 			
-			it('should return an error response to indicate context was NOT updated', function(done) {
+			it('should return an error response to indicate context was NOT updated because context does not exist', function(done) {
 					var clientrequest = {
 						"id": Math.round(Math.random()*1000000)+100,
 						"name": "new name"
@@ -711,10 +783,27 @@ describe('Api', function () {
 					.post('/admin/context/update')
 					.set('Content-type','application/json')
 					.set('Authorization', authValue )
-					.set('X-BLGREQ-APPID', '1' )
+					.set('X-BLGREQ-APPID', appID )
 					.send(clientrequest)
 					.end(function(err, res) {
 						res.statusCode.should.be.equal(404);
+						done();
+					});
+			});
+			
+			it('should return an error response to indicate context was NOT updated because of missing context id', function(done) {
+					var clientrequest = {
+						"name": "new name"
+					}
+
+					request(url)
+					.post('/admin/context/update')
+					.set('Content-type','application/json')
+					.set('Authorization', authValue )
+					.set('X-BLGREQ-APPID', appID )
+					.send(clientrequest)
+					.end(function(err, res) {
+						res.statusCode.should.be.equal(400);
 						done();
 					});
 			});
@@ -761,7 +850,7 @@ describe('Api', function () {
 					.end(function(err, res) {
 						var objectKey = Object.keys(res.body.content)[0];
 						deletedcontextID = res.body.content.id;
-						console.log(deletedcontextID);
+						//console.log(deletedcontextID);
 						done();
 					});
 				});
@@ -928,7 +1017,7 @@ describe('Api', function () {
 				});
 			});
 			
-			it('should return an error response to indicate schema was NOT succesfully updated', function(done) {
+			it('should return an error response to indicate schema was NOT succesfully updated because of appID', function(done) {
 				var clientrequest = {
 				  "appId": "1",
 				  "schema": {
@@ -988,6 +1077,42 @@ describe('Api', function () {
 					done();
 				});
 			});
+			
+			it('should return an error response to indicate schema was NOT succesfully updated because of missing schema object', function(done) {
+				var clientrequest = {
+				  "appId": "1"
+				
+				};
+
+				request(url)
+				.post('/admin/schema/update')
+				.set('Content-type','application/json')
+				.set('Authorization', authValue )
+				.set('X-BLGREQ-APPID', appID )
+				.send(clientrequest)
+				.end(function(err, res) {
+					//console.log(authValue);
+					//console.log(res);
+					res.statusCode.should.be.equal(400);
+					done();
+				});
+			});
+			
+			it('should return an success response to indicate schema was retrived succesfully', function(done) {
+			
+				request(url)
+				.post('/admin/schemas')
+				.set('Content-type','application/json')
+				.set('Authorization', authValue )
+				.set('X-BLGREQ-APPID', appID )
+				.send()
+				.end(function(err, res) {
+					//console.log(authValue);
+					//console.log(res);
+					res.statusCode.should.be.equal(200);
+					done();
+				});
+			});
 		});
 		
 		describe('User', function() {
@@ -998,7 +1123,7 @@ describe('Api', function () {
 				"password": "secure_password1337",
 				"name": "John Smith"
 			};
-		//	 var authValue;
+			var appID;
 			
 			before(function(done){
 				request(url)
@@ -1043,6 +1168,7 @@ describe('Api', function () {
 				var clientrequest = {
 					"user": {
 						"email": userEmail,
+						"password": "secure_password1337",
 						"name": "New Name"
 					}
 				};
@@ -1061,6 +1187,48 @@ describe('Api', function () {
 				});
 			});
 			
+			it('should return an success response to indicate that an user was NOT updated, user was missing from the request', function(done) {
+
+				var clientrequest = {
+
+				};
+				
+				request(url)
+				.post('/admin/user/update')
+				.set('Content-type','application/json')
+				.set('X-BLGREQ-SIGN', appIDsha256 )
+				.set('X-BLGREQ-APPID', 1 )
+				.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+				.set('Authorization', authValue )
+				.send(clientrequest)
+				.end(function(err, res) {
+					res.statusCode.should.be.equal(400);
+					done();
+				});
+			});
+			
+			it('should return an success response to indicate that an user was NOT updated, user email address was missing from the request', function(done) {
+
+				var clientrequest = {
+					"user": {
+						"name": "New Name"
+					}
+				};
+				
+				request(url)
+				.post('/admin/user/update')
+				.set('Content-type','application/json')
+				.set('X-BLGREQ-SIGN', appIDsha256 )
+				.set('X-BLGREQ-APPID', 1 )
+				.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+				.set('Authorization', authValue )
+				.send(clientrequest)
+				.end(function(err, res) {
+					res.statusCode.should.be.equal(400);
+					done();
+				});
+			});
+				
 			it('should return an succes response indicating that a user has been deleted', function(done) {
 				this.timeout(25000);
 				var clientrequest = {
@@ -1068,7 +1236,7 @@ describe('Api', function () {
 					"name": "The Voice",
 					"keys": [ APPKey ]
 				};
-				var appID;
+	
 
 				request(url)
 				.post('/admin/app/add')
@@ -1078,7 +1246,7 @@ describe('Api', function () {
 				.end(function(err, res) {
 					//console.log(err);
 					appID =  Object.keys(res.body.content)[0];
-					var appIDsha256 =  '2a80f1666442062debc4fbc0055d8ba5efc29232a27868c0a8eb76dec23df794';
+			
 					var userEmail = "example1111@appscend.com";
 					var clientrequest = {
 						"email": userEmail,
@@ -1113,32 +1281,159 @@ describe('Api', function () {
 					});
 				});
 			});	
+			
+			it('should return an succes response indicating that a user has NOT been deleted, user does not belong to application', function(done) {
+				this.timeout(25000);
 		
-			// it('should return an success response to indicate that an user was NOT updated', function(done) {
+					var userEmail = "example1111@appscend.com";
+					var clientrequest = {
+						"email": userEmail,
+						"password": "secure_password1337",
+						"name": "John Smith"
+					};
 
-				// var clientrequest = {
-					// "user": {
-						// "email": "wrongexample@appscend.com",
-						// "name": "New Name"
-					// }
-				// };
+					request(url)
+					.post('/user/register')
+					.set('Content-type','application/json')
+					.set('X-BLGREQ-SIGN', appIDsha256 )
+					.set('X-BLGREQ-APPID', appID )
+					.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+					.send(clientrequest)
+					.end(function(err, res) {
+						//console.log(res);
+						
+					var userEmail = "example2@appscend.com";
+					var clientrequest = {
+						"email": userEmail,
+						"password": "secure_password1337",
+						"name": "John Smith"
+					};
+						setTimeout(function() {
+							request(url)
+							.post('/admin/user/delete')
+							.set('Content-type','application/json')
+							.set('X-BLGREQ-SIGN', appIDsha256 )
+							.set('X-BLGREQ-APPID', appID )
+							.set('Authorization', authValue )
+							.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+							.send(clientrequest)
+							.end(function(err, res) {
+								//console.log(res);
+								res.statusCode.should.be.equal(500);
+								done();
+							});
+						}, 2000);
+					});
+			});	
+			
+			it('should return an succes response indicating that a user has NOT been deleted because of missing email address', function(done) {
+				this.timeout(25000);
+		
+					var userEmail = "example1111@appscend.com";
+					var clientrequest = {
+						"email": userEmail,
+						"password": "secure_password1337",
+						"name": "John Smith"
+					};
+
+					request(url)
+					.post('/user/register')
+					.set('Content-type','application/json')
+					.set('X-BLGREQ-SIGN', appIDsha256 )
+					.set('X-BLGREQ-APPID', appID )
+					.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+					.send(clientrequest)
+					.end(function(err, res) {
+						//console.log(res);
+						
+
+					var clientrequest = {
+					
+						"password": "secure_password1337",
+						"name": "John Smith"
+					};
+						setTimeout(function() {
+							request(url)
+							.post('/admin/user/delete')
+							.set('Content-type','application/json')
+							.set('X-BLGREQ-SIGN', appIDsha256 )
+							.set('X-BLGREQ-APPID', appID )
+							.set('Authorization', authValue )
+							.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+							.send(clientrequest)
+							.end(function(err, res) {
+								//console.log(res);
+								res.statusCode.should.be.equal(400);
+								done();
+							});
+						}, 2000);
+					});
+			});	
+		
+			it('should return an succes response indicating that a user has NOT been deleted because of appID not found', function(done) {
+				this.timeout(25000);
+		
+					var userEmail = "example1111@appscend.com";
+					var clientrequest = {
+						"email": userEmail,
+						"password": "secure_password1337",
+						"name": "John Smith"
+					};
+
+					request(url)
+					.post('/user/register')
+					.set('Content-type','application/json')
+					.set('X-BLGREQ-SIGN', appIDsha256 )
+					.set('X-BLGREQ-APPID', appID )
+					.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+					.send(clientrequest)
+					.end(function(err, res) {
+						//console.log(res);
+						
+						setTimeout(function() {
+							request(url)
+							.post('/admin/user/delete')
+							.set('Content-type','application/json')
+							.set('X-BLGREQ-SIGN', appIDsha256 )
+							.set('X-BLGREQ-APPID', 	 Math.round(Math.random()*1000000)+1000 )
+							.set('Authorization', authValue )
+							.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+							.send(clientrequest)
+							.end(function(err, res) {
+								//console.log(res);
+								res.statusCode.should.be.equal(404);
+								done();
+							});
+						}, 2000);
+					});
+			});	
+		
+	
+			it('should return an success response to indicate that an user was NOT updated', function(done) {
+
+				var clientrequest = {
+					"user": {
+						"email": "wrongexample@appscend.com",
+						"name": "New Name"
+					}
+				};
 				
-				// request(url)
-				// .post('/admin/user/update')
-				// .set('Content-type','application/json')
-				// .set('X-BLGREQ-SIGN', appIDsha256 )
-				// .set('X-BLGREQ-APPID', 1 )
-				// .set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
-				// .set('Authorization', authValue )
-				// .send(clientrequest)
-				// .end(function(err, res) {
-				// //	console.log(authValue);
-				// //	console.log(res.body);
-					// res.statusCode.should.be.equal(404);
-					// res.body.message.should.be.equal("User not found");
-					// done();
-				// });
-			// });
+				request(url)
+				.post('/admin/user/update')
+				.set('Content-type','application/json')
+				.set('X-BLGREQ-SIGN', appIDsha256 )
+				.set('X-BLGREQ-APPID', 1 )
+				.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+				.set('Authorization', authValue )
+				.send(clientrequest)
+				.end(function(err, res) {
+				//	console.log(authValue);
+				//	console.log(res.body);
+					res.statusCode.should.be.equal(404);
+					res.body.message.should.be.equal("User not found");
+					done();
+				});
+			});
 			
 			it('should return an success response to indicate that a users list was retrived', function(done) {
 				
@@ -1240,6 +1535,24 @@ describe('Api', function () {
 			});
 		});
 		
+		it('should return an error response to indicate context wa NOT succesfully retrived because of missing context ID', function(done) {
+			var clientrequest = {}
+			
+			request(url)
+			.post('/context')
+			.set('Content-type','application/json')
+			.set('X-BLGREQ-SIGN', appIDsha256 )
+			.set('X-BLGREQ-APPID', 1 )
+			.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+			.set('Authorization', authValue )
+			.send(clientrequest)
+			.end(function(err, res) {
+
+				res.statusCode.should.be.equal(400);
+				done();
+			});
+		});
+		
 		it('should return an error response to indicate context NOT succesfully retrived', function(done) {
 			var clientrequest = {
 				"id": Math.round(Math.random()*1000000)+1000
@@ -1306,7 +1619,98 @@ describe('Api', function () {
 			});
 		});
 		
-		it('should return an error response to indicate device NOT succesfully registred', function(done) {
+		it('should return a success response to indicate device succesfully registred with random udid', function(done) {
+			var clientrequest = {
+				"info": {
+					"os": "Android",
+					"version": "4.4.3",
+					"sdk_level": 19,
+					"manufacturer": "HTC",
+					"model": "HTC One_M8",
+					"udid": Math.round(Math.random()*1000000)+1000
+				},
+				"persistent": {
+				"type": "android",
+				"token": "android pn token"
+				}
+			}
+			request(url)
+			.post('/device/register')
+			.set('X-BLGREQ-SIGN', appIDsha256)
+			.set('X-BLGREQ-UDID', '')
+			.set('X-BLGREQ-APPID',1)
+			.send(clientrequest)
+			.end(function(err, res) {
+				res.statusCode.should.be.equal(200);
+				res.body.content.identifier;
+				done();
+			});
+		});
+		
+		it('should return an error response to indicate device succesfully registred, uuid missing from request', function(done) {
+			var clientrequest = {
+				"info": {
+					"os": "Android",
+					"version": "4.4.3",
+					"sdk_level": 19,
+					"manufacturer": "HTC",
+					"model": "HTC One_M8",
+				
+				},
+				"persistent": {
+				"type": "android",
+				"token": "android pn token"
+				}
+			}
+			request(url)
+			.post('/device/register')
+			.set('X-BLGREQ-SIGN', appIDsha256)
+			.set('X-BLGREQ-UDID', '')
+			.set('X-BLGREQ-APPID',1)
+			.send(clientrequest)
+			.end(function(err, res) {
+				res.statusCode.should.be.equal(200);
+				done();
+			});
+		});
+		
+		
+		it('should return an error response to indicate device NOT succesfully registred because of missing info', function(done) {
+			var clientrequest = {
+				"persistent": {
+				"type": "android",
+				"token": "android pn token"
+				}
+			}
+			request(url)
+			.post('/device/register')
+			.set('X-BLGREQ-SIGN', appIDsha256)
+			.set('X-BLGREQ-UDID', '')
+			.set('X-BLGREQ-APPID',1)
+			.send(clientrequest)
+			.end(function(err, res) {
+				res.statusCode.should.be.equal(400);
+				done();
+			});
+		});
+		
+		it('should return an error response to indicate device NOT succesfully registred because of missing body', function(done) {
+			var clientrequest = {}
+			request(url)
+			.post('/device/register')
+			.set('X-BLGREQ-SIGN', appIDsha256)
+			.set('X-BLGREQ-UDID', '')
+			.set('X-BLGREQ-APPID',1)
+			.send(clientrequest)
+			.end(function(err, res) {
+				//console.log(res)
+				res.statusCode.should.be.equal(400);
+				done();
+			});
+		});
+		
+		
+		it('should return an error response to indicate device NOT succesfully registred because of invalid UDID', function(done) {
 			var clientrequest = {
 				"info": {
 					"os": "Android",
@@ -1719,53 +2123,121 @@ describe('Api', function () {
 			});
 		});
 		
-		// it('should return an succes response to indicate that a object has been subscribed', function(done) {
+		it('should return an succes response to indicate that a object has been subscribed', function(done) {
 
-			// var subclientrequest = {
-				// "channel": {
-					// "id": 1,
-					// "context": 1,
-					// "model": "comments",
-					// "parent": {
-						// "id": 1,
-						// "model": "events"
-					// },
-					// "user": 2
-				// },
-			// };
+			var subclientrequest = {
+				"channel": {
+					"id": 1,
+					"context": 1,
+					"model": "comments",
+					"parent": {
+						"id": 1,
+						"model": "events"
+					},
+					 "user": 2
+				}
+			};
+
+			request(url)
+			.post('/object/subscribe')
+			.set('Content-type','application/json')
+			.set('X-BLGREQ-SIGN', appIDsha256)
+			.set('X-BLGREQ-UDID', deviceIdentification)
+			.set('X-BLGREQ-APPID',1)
+			.set('Authorization', authValue )
+			.send()
+			.end(function(err, res) {
+
+				 //console.log(res);
+				res.statusCode.should.be.equal(200);
+				done();
+			});
+		});
 		
-			// request(url)
-			// .post('/object/subscribe')
-			// .set('X-BLGREQ-SIGN', appIDsha256)
-			// .set('X-BLGREQ-UDID', deviceIdentification)
-			// .set('X-BLGREQ-APPID',1)
-			// .set('Authorization', authValue )
-			// .send(subclientrequest)
-			// .end(function(err, res) {
-				// console.log(deviceIdentification);
-				// console.log(appIDsha256);
-				// console.log(authValue);
-				// console.log(err);
-				// console.log(res);
-				// res.statusCode.should.be.equal(200);
-				// done();
-			// });
-		// });
+		it('should return an error response to indicate that a object has NOT been subscribed because of empty body', function(done) {
+
+			var subclientrequest = {};
+
+			request(url)
+			.post('/object/subscribe')
+			.set('Content-type','application/json')
+			.set('X-BLGREQ-SIGN', appIDsha256)
+			.set('X-BLGREQ-UDID', deviceIdentification)
+			.set('X-BLGREQ-APPID',1)
+			.set('Authorization', authValue )
+			.send()
+			.end(function(err, res) {
+				res.statusCode.should.be.equal(400);
+				done();
+			});
+		});
 		
-		// it('should return an succes response to indicate that a object has been unsubscribed', function(done) {
+		it('should return an error response to indicate that a object has NOT been subscribed because of missing channel', function(done) {
+
+			var subclientrequest = {
+					"filters": {
+						"or": [
+							{
+								"and": [
+									{
+									  "is": {
+										"gender": "male",
+										"age": 23
+									  }
+									},
+									{
+									  "range": {
+										"experience": {
+										  "gte": 1,
+										  "lte": 6
+										}
+									  }
+									}
+								  ]
+								},
+								{
+								  "and": [
+									{
+									  "like": {
+										"image_url": "png",
+										"website": "png"
+									  }
+									}
+								  ]
+								}
+							  ]
+					}
+			};
+
+			request(url)
+			.post('/object/subscribe')
+			.set('Content-type','application/json')
+			.set('X-BLGREQ-SIGN', appIDsha256)
+			.set('X-BLGREQ-UDID', deviceIdentification)
+			.set('X-BLGREQ-APPID',1)
+			.set('Authorization', authValue )
+			.send()
+			.end(function(err, res) {
+				res.statusCode.should.be.equal(400);
+				done();
+			});
+		});
 		
-			// request(url)
-			// .post('/object/unsubscribe')
-			// .set('X-BLGREQ-SIGN', appIDsha256)
-			// .set('X-BLGREQ-UDID', deviceIdentification)
-			// .set('X-BLGREQ-APPID',1)
-			// .set('Authorization', authValue )
-			// .send(subclientrequest)
-			// .end(function(err, res) {
-				// res.statusCode.should.be.equal(200);
-				// done();
-			// });
-		// })
+		it('should return an succes response to indicate that a object has been unsubscribed', function(done) {
+
+			request(url)
+			.post('/object/unsubscribe')
+			.set('X-BLGREQ-SIGN', appIDsha256)
+			.set('X-BLGREQ-UDID', deviceIdentification)
+			.set('X-BLGREQ-APPID',1)
+			.set('Authorization', authValue )
+			.send(subclientrequest)
+			.end(function(err, res) {
+						 //console.log(res);
+				res.statusCode.should.be.equal(200);
+				done();
+			});
+		})
 		
 		it('should return an succes response to indicate that a object has been deleted', function(done) {
 			
@@ -1950,6 +2422,23 @@ describe('Api', function () {
 			});
 			
 		});
+		
+		// it('should return an error response to indicate that the user has NOT logged via FACEBOOK because of missing access token', function(done) {
+
+			// var clientrequest = {};
+
+			// request(url)
+			// .post('/user/login')
+			// .set('Content-type','application/json')
+			// .set('X-BLGREQ-SIGN', appIDsha256 )
+			// .set('X-BLGREQ-APPID', 1 )
+			// .set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+			// .send(clientrequest)
+			// .end(function(err, res) {
+				// res.statusCode.should.be.equal(400);
+				// done();
+			// });
+		// });
 
 		it('should return an succes response to indicate that the user has logged in via user & password', function(done) {
 			//TODO
@@ -1985,6 +2474,22 @@ describe('Api', function () {
 						done();
 					});
 				}, 1000);
+			});
+		});
+		
+		it('should return an succes response to indicate that the user info was retrived', function(done) {
+
+			request(url)
+			.get('/user/me')
+			.set('Content-type','application/json')
+			.set('X-BLGREQ-SIGN', appIDsha256 )
+			.set('X-BLGREQ-APPID', 1 )
+			.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+			.set('Authorization', authValue )
+			.send()
+			.end(function(err, res) {
+				res.statusCode.should.be.equal(200);
+				done();
 			});
 		});
 		
