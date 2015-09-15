@@ -49,6 +49,7 @@ describe('Api', function () {
 		app.set('port', port);
 		server = http.createServer(app);
 		server.listen(port);
+
 		server.on('listening', function() {
 			setTimeout(done, 5000);
 		});
@@ -247,76 +248,76 @@ describe('Api', function () {
 				}); 
 			});
 			
-			// it('should return a succes response indicating the admin account has been updated', function(done) {
-				// var randEmail = 'admin'+Math.round(Math.random()*1000000)+'@example.com';
-				// var admin = {
-					// email: randEmail,
-					// password: "5f4dcc3b5aa765d61d8327deb882cf99"
-				// };
+			it('should return a succes response indicating the admin account has been updated', function(done) {
+				var randEmail = 'admin'+Math.round(Math.random()*1000000)+'@example.com';
+				var admin = {
+					email: randEmail,
+					password: "5f4dcc3b5aa765d61d8327deb882cf99"
+				};
 				  
-				// request(url)
-				// .post('/admin/add')
-				// .send(admin)
-				// .end(function(err, res) {
-					// request(url)
-					// .post('/admin/login')
-					// .set('Content-type','application/json')
-					// .send(admin)
-					// .end(function(err, res) {
+				request(url)
+				.post('/admin/add')
+				.send(admin)
+				.end(function(err, res) {
+					request(url)
+					.post('/admin/login')
+					.set('Content-type','application/json')
+					.send(admin)
+					.end(function(err, res) {
 				
-						// authValue = 'Bearer ' + res.body.content.token;
+						authValue = 'Bearer ' + res.body.content.token;
 						
-						// request(url)
-						// .post('/admin/update')
-						// .set('Content-type','application/json')
-						// .set('Authorization', authValue )
-						// .send(admin)
-						// .end(function(err, res) {
-						//console.log(res);
-							// res.statusCode.should.be.equal(200);
-							// done();
-						// });
-					// });
-				// });  
-			// });
+						request(url)
+						.post('/admin/update')
+						.set('Content-type','application/json')
+						.set('Authorization', authValue )
+						.send(admin)
+						.end(function(err, res) {
+						console.log(res);
+							res.statusCode.should.be.equal(200);
+							done();
+						});
+					});
+				});  
+			});
 			
-			// it('should return a succes response indicating the admin account has NOT been updated', function(done) {
-				// var randEmail = 'admin'+Math.round(Math.random()*1000000)+'@example.com';
-				// var admin = {
-					// email: randEmail,
-					// password: "5f4dcc3b5aa765d61d8327deb882cf99"
-				// };
+			it('should return a succes response indicating the admin account has NOT been updated', function(done) {
+				var randEmail = 'admin'+Math.round(Math.random()*1000000)+'@example.com';
+				var admin = {
+					email: randEmail,
+					password: "5f4dcc3b5aa765d61d8327deb882cf99"
+				};
 				  
-				// request(url)
-				// .post('/admin/add')
-				// .send(admin)
-				// .end(function(err, res) {
-					// request(url)
-					// .post('/admin/login')
-					// .set('Content-type','application/json')
-					// .send(admin)
-					// .end(function(err, res) {
-						// console.log(err);
-						// authValue = 'Bearer ' + res.body.content.token;
-						// var randEmail = 'admin'+Math.round(Math.random()*1000000)+'@example.com';
-						// var admin = {
-							// email: randEmail,
-							// password: "5f4dcc3b5aa765d61d8327deb882cf99"
-						// };
+				request(url)
+				.post('/admin/add')
+				.send(admin)
+				.end(function(err, res) {
+					request(url)
+					.post('/admin/login')
+					.set('Content-type','application/json')
+					.send(admin)
+					.end(function(err, res) {
+					//	console.log(err);
+						authValue = 'Bearer ' + res.body.content.token;
+						var randEmail = 'admin'+Math.round(Math.random()*1000000)+'@example.com';
+						var admin = {
+							email: randEmail,
+							password: "5f4dcc3b5aa765d61d8327deb882cf99"
+						};
 						
-						// request(url)
-						// .post('/admin/update')
-						// .set('Content-type','application/json')
-						// .set('Authorization', authValue )
-						// .send(admin)
-						// .end(function(err, res) {
-						// console.log(res);
-							// res.statusCode.should.be.equal(500);
-							// done();
-						// });
-					// });
-				// });  
-			// });
+						request(url)
+						.post('/admin/update')
+						.set('Content-type','application/json')
+						.set('Authorization', authValue )
+						.send(admin)
+						.end(function(err, res) {
+				//		console.log(res);
+							res.statusCode.should.be.equal(500);
+							done();
+						});
+					});
+				});  
+			});
 			
 
 		});
@@ -398,7 +399,7 @@ describe('Api', function () {
 				.set('Authorization', authValue )
 				.send(clientrequest)
 				.end(function(err, res) {
-					console.log(res.body);
+				//	console.log(res.body);
 					res.statusCode.should.be.equal(400);
 					done();
 				});
@@ -571,6 +572,7 @@ describe('Api', function () {
 			/////////////////////////////////////////////////////////////
 			
 			before(function(done){
+				this.timeout(10000);
 				request(url)
 				.post('/admin/add')
 				.send(admin)
@@ -584,21 +586,36 @@ describe('Api', function () {
 						
 						token = res.body.content.token;
 						authValue = 'Bearer ' + token;
-						
+						var clientrequest = {
+							"icon": "fa-bullhorn",
+							"name": "The Voice",
+							"keys": [ APPKey ]
+						};
+				
 						request(url)
-						.post('/admin/add')
-						.send(admin)
+						.post('/admin/app/add')
+						.set('Content-type','application/json')
+						.set('Authorization', authValue )
+						.send(clientrequest)
 						.end(function(err, res) {
-							
+							//console.log(err);
+							appID =  Object.keys(res.body.content)[0];
+						
 							request(url)
-							.post('/admin/login')
-							.set('Content-type','application/json')
-							.send(admin)
+							.post('/admin/add')
+							.send(admin2)
 							.end(function(err, res) {
+					
+								request(url)
+								.post('/admin/login')
+								.set('Content-type','application/json')
+								.send(admin2)
+								.end(function(err, res) {
 								
-								token2 = res.body.content.token;
-								authValue2 = 'Bearer ' + token2;
-								done();
+									token2 = res.body.content.token;
+									authValue2 = 'Bearer ' + token2;
+									done();
+								});
 							});
 						});
 					});
@@ -616,17 +633,17 @@ describe('Api', function () {
 					.post('/admin/context/add')
 					.set('Content-type','application/json')
 					.set('Authorization', authValue )
-					.set('X-BLGREQ-APPID', '1' )
+					.set('X-BLGREQ-APPID', appID )
 					.send(clientrequest)
 					.end(function(err, res) {
 						var objectKey = Object.keys(res.body.content)[0];
 						contextID = res.body.content.id;
-						console.log(res.body);
 						(res.body.content[objectKey].name == clientrequest.name).should.be.ok;
 						res.statusCode.should.be.equal(200);
 						done();
 					});
 
+					
 			});
 			
 			it('should return the requested context', function(done) {
@@ -638,7 +655,7 @@ describe('Api', function () {
 					.post('/admin/context')
 					.set('Content-type','application/json')
 					.set('Authorization', authValue )
-					.set('X-BLGREQ-APPID', '1' )
+					.set('X-BLGREQ-APPID', appID )
 					.send(clientrequest)
 					.end(function(err, res) {
 					//	console.log(res);
@@ -674,12 +691,11 @@ describe('Api', function () {
 					request(url)
 					.post('/admin/context/update')
 					.set('Content-type','application/json')
-					.set('X-BLGREQ-SIGN', appIDsha256)
-					.set('X-BLGREQ-APPID', '1' )
+					.set('X-BLGREQ-APPID', appID )
 					.set('Authorization', authValue )
 					.send(clientrequest)
 					.end(function(err, res) {
-						console.log(res);
+					//	console.log(res);
 						res.statusCode.should.be.equal(200);
 						done();
 					});
@@ -713,7 +729,7 @@ describe('Api', function () {
 					.post('/admin/context/update')
 					.set('Content-type','application/json')
 					.set('Authorization', authValue2 )
-					.set('X-BLGREQ-APPID', '1' )
+					.set('X-BLGREQ-APPID', appID )
 					.send(clientrequest)
 					.end(function(err, res) {
 						res.statusCode.should.be.equal(403);
@@ -726,20 +742,28 @@ describe('Api', function () {
 				"name": "Episode 2",
 				"meta": {"info": "some meta info"},
 				}
-
-				request(url)
-				.post('/admin/context/add')
+				
+							request(url)
+				.post('/admin/app/add')
 				.set('Content-type','application/json')
 				.set('Authorization', authValue )
-				.set('X-BLGREQ-APPID', '1' )
 				.send(clientrequest)
 				.end(function(err, res) {
-					var objectKey = Object.keys(res.body.content)[0];
-					deletedcontextID = res.body.content.id;
-				//	console.log(res.body);
-					(res.body.content[objectKey].name == clientrequest.name).should.be.ok;
-					res.statusCode.should.be.equal(200);
-					done();
+					//console.log(err);
+					appID =  Object.keys(res.body.content)[0];
+
+					request(url)
+					.post('/admin/context/add')
+					.set('Content-type','application/json')
+					.set('Authorization', authValue )
+					.set('X-BLGREQ-APPID', appID )
+					.send(clientrequest)
+					.end(function(err, res) {
+						var objectKey = Object.keys(res.body.content)[0];
+						deletedcontextID = res.body.content.id;
+						console.log(deletedcontextID);
+						done();
+					});
 				});
 			});
 			
@@ -894,7 +918,7 @@ describe('Api', function () {
 				.post('/admin/schema/update')
 				.set('Content-type','application/json')
 				.set('Authorization', authValue )
-				.set('X-BLGREQ-APPID', '1' )
+				.set('X-BLGREQ-APPID', appID )
 				.send(clientrequest)
 				.end(function(err, res) {
 					//console.log(authValue);

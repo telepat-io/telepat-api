@@ -189,7 +189,7 @@ router.post('/update', function (req, res) {
 			if (err)
 				res.status(500).json({status: 500, message: err}).end();
 			else
-				res.send(200).json({status: 200, content: "Admin updated"});
+				res.status(200).json({status: 200, content: "Admin updated"}).end();
 		})
 	}
 });
