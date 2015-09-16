@@ -68,7 +68,7 @@ router.post('/login', function (req, res, next) {
 		}
 
 		if (hashedPassword == admin.password) {
-			res.json({status: 200, content: {user: admin, token: security.createToken({email: req.body.email, isAdmin: true, application_id: admin.application_id})}});
+			res.json({status: 200, content: {user: admin, token: security.createToken({id: admin.id, email: req.body.email, isAdmin: true})}});
 		}
 		else {
 			res.status(401).json({status: 401, message: 'Wrong user or password'});
@@ -119,10 +119,8 @@ router.post('/add', function (req, res) {
 	var hashedPassword = crypto.createHash('sha256').update(passwordSalt[0]+md5password+passwordSalt[1]).digest('hex');
 
 	Models.Admin.create(req.body.email, { email: req.body.email, password: hashedPassword, name: req.body.name }, function (err) {
-		if (err && err.code == cb.errors.keyAlreadyExists)
-			res.status(409).send({status: 409, message: "Admin with this email address already exists"}).end();
-		else if (err)
-			res.status(500).send({status: 500, message: "Error adding account"}).end();
+		if (err)
+			res.status(500).send({status: 500, message: "Error adding account ("+err.message+")"}).end();
 		else
 			res.status(200).json({status: 200, content: 'Admin added'}).end();
 	});
@@ -158,7 +156,7 @@ router.get('/me', function (req, res) {
 router.use('/update', security.tokenValidation);
 /**
  * @api {post} /admin/update Update
- * @apiDescription Updates a new admin. Every property in the request body is used to udpate the admin.
+ * @apiDescription Updates the currently logged admin. Every property in the request body is used to udpate the admin.
  * @apiName AdminUpdate
  * @apiGroup Admin
  * @apiVersion 0.2.2
@@ -224,10 +222,10 @@ router.use('/apps', security.tokenValidation);
  *
  */
 router.get('/apps', function (req, res) {
-	var adminApps = {};
+	var adminApps = [];
 	async.each(Object.keys(app.applications), function(applicationId, c){
-		if (app.applications[applicationId].admin_id == req.user.email)
-			adminApps[applicationId] = app.applications[applicationId];
+		if (app.applications[applicationId].admins.indexOf(req.user.id) != -1)
+			adminApps.push(app.applications[applicationId]);
 		c();
 	}, function(err) {
 		if (err) {
@@ -288,19 +286,13 @@ router.post('/app/add', function (req, res) {
 	if (!newApp.name)
 		return res.status(400).json({status: 400, message: "'name' field is missing"}).end();
 
-	newApp['admin_id'] = req.user.email;
+	newApp['admins'] = [req.user.id];
 	Models.Application.create(newApp, function (err, res1) {
 		if (err) {
 			res.status(500).send({status: 500, message: 'Could not add app'});
 		}
 		else {
-			var newIndex;
-			for (var key in res1) {
-				if (res1.hasOwnProperty(key)) {
-					newIndex = key;
-				}
-			}
-			app.applications[newIndex] = res1[newIndex];
+			app.applications[res1.id] = res1;
 			res.status(200).json({status: 200, content: res1});
 		}
 	});
@@ -397,11 +389,11 @@ router.use('/app/update', security.tokenValidation, security.applicationIdValida
 router.post('/app/update', function (req, res) {
 	var appId = req._telepat.application_id;
 
-	Models.Application.update(appId, req.body, function (err, res1, updatedApp) {
+	Models.Application.update(appId, req.body, function (err, result) {
 		if (err)
 			res.status(500).send({status: 500, message: 'Could not update app'});
 		else {
-			app.applications[appId] = updatedApp;
+			app.applications[appId] = result;
 			res.status(200).json({status: 200, content: 'Updated'}).end();
 		}
 	});
@@ -442,7 +434,7 @@ router.use('/contexts', security.tokenValidation, security.applicationIdValidati
  * 	}
  *
  */
-router.post('/contexts', function (req, res) {
+router.get('/contexts', function (req, res) {
 	var appId = req._telepat.application_id;
 
 	Models.Context.getAll(appId, function (err, res1) {
@@ -601,10 +593,10 @@ router.post('/context/remove', function (req, res) {
 	}
 
 	Models.Context.delete(req.body.id, function (err, res1) {
-		if (err && err.code === cb.errors.keyNotFound)
+		if (err && err.status == 404)
 			res.status(404).json({status: 404, message: 'Context does not exist'}).end();
 		else if (err)
-			res.status(500).send({status: 500, message: 'Could not remove context'});
+			res.status(500).send({status: 500, message: err.message});
 		else {
 			res.status(200).json({status: 200, content: "Context removed"});
 		}
@@ -624,11 +616,18 @@ router.use('/context/update', security.tokenValidation, security.applicationIdVa
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  *
  * @apiParam {Number} id ID of the context to update
+ * @apiParam {Array} patches An array of patches
  *
  * @apiExample {json} Client Request
  * 	{
  * 		"id": 1,
- * 		"name": "new name"
+ * 		"patches": [
+ * 			{
+ * 				"op": "replace",
+ * 				"path": "context/context_id/field_name",
+ * 				"value" "New value"
+ * 			}
+ * 		]
  * 	}
  *
  * 	@apiError (500) Error Context not found or internal server error.
@@ -646,20 +645,25 @@ router.post('/context/update', function (req, res) {
 		return;
 	}
 
+	if (!req.body.patches) {
+		res.status(400).json({status: 400, message: "Requested patches array is missing"}).end();
+		return;
+	}
+
 	async.waterfall([
 		function(callback) {
 			Models.Context(req.body.id, callback);
 		},
 		function(context, callback) {
-			if (context.application_id != req.user.application_id) {
+			if (app.applications[context.application_id].admins.indexOf(req.user.id) == -1) {
 				res.status(403).send({status: 403, message: 'This context does not belong to you'}).end();
 				callback();
 			} else {
-				Models.Context.update(req.body.id, req.body, function (err, res1, updatedContext) {
-					if (err && err.code == cb.errors.keyNotFound)
+				Models.Context.update(req.body.id, req.body.patches, function (err, res1) {
+					if (err && err.status == 404)
 						res.status(404).send({status: 404, message: 'Context with id \''+req.body.id+'\' does not exist'}).end();
 					else if (err)
-						res.status(500).send({status: 500, message: 'Could not update context'});
+						res.status(500).send({status: 500, message: 'Could not update context'}).end();
 					else {
 						res.status(200).json({status: 200, content: 'Context updated'}).end();
 					}
@@ -705,14 +709,14 @@ router.use('/schemas', security.tokenValidation, security.applicationIdValidatio
  * 	}
  *
  */
-router.post('/schemas', function(req, res, next) {
+router.get('/schemas', function(req, res, next) {
 	var appId = req._telepat.application_id;
 
 	Models.Application.getAppSchema(appId, function(err, result) {
 		if (err){
 			next(err);
 		} else {
-			res.status(200).json({status: 200, content: result.value}).end();
+			res.status(200).json({status: 200, content: result}).end();
 		}
 	});
 });
@@ -751,6 +755,53 @@ router.post('/schema/update', function(req, res, next) {
 		if (err){
 			next(err);
 		} else {
+			app.applications[appId].schema = schema;
+			res.status(200).json({status: 200, content: "Schema updated"}).end();
+		}
+	});
+});
+
+router.use('/schema/remove_model', security.tokenValidation, security.applicationIdValidation, security.adminAppValidation);
+/**
+ * @api {post} /admin/schema/remove_model RemoveAppModel
+ * @apiDescription Removes a model from the application (all items of this type will be deleted)
+ * @apiName AdminRemoveAppModel
+ * @apiGroup Admin
+ * @apiVersion 0.2.2
+ *
+ * @apiHeader {String} Content-type application/json
+ * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
+ * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
+ *
+ * @apiParam {Object} schema Updated schema object
+ *
+ * @apiExample {json} Client Request
+ * 	{
+ * 		"model_name": "events"
+ * 	}
+ *
+ * @apiError 404 NotFound If the App ID doesn't exist
+ * @apiError 404 NotFound If the App does not have a model with that name
+ */
+router.post('/schema/remove_model', function(req, res, next) {
+	if (!req.body.model_name) {
+		res.status(400).json({status: 400, message: "Requested model name object is missing"}).end();
+		return;
+	}
+
+	var appId = req._telepat.application_id;
+	var modelName = req.body.model_name;
+
+	if (!app.applications[appId].schema[modelName]) {
+		res.status(404).json({status: 404, message: "Application with ID '"+appId+"' does not have a model named '"+modelName+"'"}).end();
+		return;
+	}
+
+	Models.Application.deleteModel(appId, modelName, function(err) {
+		if (err){
+			next(err);
+		} else {
+			delete app.applications[appId].schema[modelName];
 			res.status(200).json({status: 200, content: "Schema updated"}).end();
 		}
 	});
@@ -782,7 +833,7 @@ router.use('/users', security.tokenValidation, security.applicationIdValidation,
 router.get('/users', function(req, res, next) {
 	var appId = req._telepat.application_id;
 
-	Models.User.getByApplication(appId, function(err, results) {
+	Models.User.getAll(appId, function(err, results) {
 		if (err) return next(err);
 
 		results.forEach(function(item, index, originalArray) {
@@ -793,7 +844,7 @@ router.get('/users', function(req, res, next) {
 	});
 });
 
-router.use('/user/update', security.tokenValidation);
+router.use('/user/update', security.tokenValidation, security.applicationIdValidation, security.adminAppValidation);
 /**
  * @api {post} /admin/user/update EditUser
  * @apiDescription Updates an user from an app
@@ -803,6 +854,7 @@ router.use('/user/update', security.tokenValidation);
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
+ * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  *
  * @apiParam {Object} user The object that contains the user (must contain the email to identify him)
  *
@@ -824,26 +876,28 @@ router.use('/user/update', security.tokenValidation);
  *
  */
 router.post('/user/update', function(req, res, next) {
-	var props = req.body.user;
+	var patches = req.body.patches;
 
-	if (!props) {
+	if (!patches) {
 		res.status(400).json({status: 400, message: "Object 'user' is missing from the request"}).end();
 		return;
 	}
 
-	if (!props.email) {
+	if (!req.body.email) {
 		res.status(400).json({status: 400, message: "Object 'user' is missing email address field"}).end();
 		return;
 	}
 
-	if (props.password) {
-		var passwordSalt = req.app.get('password_salt');
-		var md5password = crypto.createHash('md5').update(props.password).digest('hex');
-		props.password = crypto.createHash('sha256').update(passwordSalt[0]+md5password+passwordSalt[1]).digest('hex');
-	}
+	patches.forEach(function(patch, i, originalArray) {
+		if (patch[i].path.split('/')[2] == 'password') {
+			var passwordSalt = req.app.get('password_salt');
+			var md5password = crypto.createHash('md5').update(patch[i].value).digest('hex');
+			originalArray[i].value = crypto.createHash('sha256').update(passwordSalt[0]+md5password+passwordSalt[1]).digest('hex');
+		}
+	});
 
-	Models.User.update(props.email, props, function(err) {
-		if (err && err.code === cb.errors.keyNotFound)
+	Models.User.update(req.body.email, req._telepat.application_id, patches, function(err) {
+		if (err && err.status == 404)
 			res.status(404).json({status: 404, message: 'User not found'}).end();
 		else if (err) return next(err);
 
@@ -890,7 +944,7 @@ router.post('/user/delete', function(req, res, next) {
 
 	async.waterfall([
 		function(callback) {
-			Models.User(userEmail, callback);
+			Models.User(userEmail, appId, callback);
 		},
 		function(user, callback) {
 			if (user.application_id != appId) {
@@ -899,11 +953,11 @@ router.post('/user/delete', function(req, res, next) {
 
 				return callback(error);
 			} else {
-				Models.User.delete(userEmail, callback);
+				Models.User.delete(userEmail, appId, callback);
 			}
 		}
 	], function(error, results) {
-		if (error && error.code === cb.errors.keyNotFound)
+		if (error && error.status == 404)
 			return res.status(404).json({status: 404, message: 'User not found'}).end();
 		else if (error) return next(error);
 

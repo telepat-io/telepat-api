@@ -77,8 +77,8 @@ router.post('/login', function(req, res, next) {
 		function(callback) {
 			FB.napi('/me', {access_token: accessToken}, function(err, result) {
 				if (err) return callback(err);
-				fbProfile = result;
 				email = result.email;
+				fbProfile = result;
 
 				if (!email) {
 					var error = new Error('User email is not publicly available (insufficient facebook permissions)');
@@ -114,8 +114,15 @@ router.post('/login', function(req, res, next) {
 			} else {
 				userProfile.devices = [deviceId];
 			}
+
+			userProfile.fid = fbProfile.id;
+			userProfile.name = fbProfile.name;
+			userProfile.gender = fbProfile.gender;
+
+			Models.User.update(userProfile.email, userProfile, callback);
+
 			//user first logged in with password then with fb
-			if (!userProfile.fid) {
+			/*if (!userProfile.fid) {
 				var key = 'blg:'+Models.User._model.namespace+':fid:'+fbProfile.id;
 				Models.Application.bucket.insert(key, userProfile.email, function() {
 					userProfile.fid = fbProfile.id;
@@ -126,12 +133,12 @@ router.post('/login', function(req, res, next) {
 				});
 			} else {
 				callback(null, true);
-			}
+			}*/
 		}
 		//final step: send authentification token
 	], function(err, results) {
 		if (err)
-			res.status(400).json(err).end();
+			return next(err);
 		else {
 			var token = jwt.sign({email: userProfile.email}, security.authSecret, { expiresInMinutes: 60 });
 			res.json({status: 200, content: {token: token, user: userProfile}}).end();
@@ -184,6 +191,7 @@ router.post('/register', function(req, res, next) {
 	var accessToken = req.body.access_token;
 	var fbFriends = [];
 	var deviceId = req._telepat.device_id;
+	var appId = req._telepat.application_id;
 
 	async.waterfall([
 		function(callback) {
@@ -191,13 +199,13 @@ router.post('/register', function(req, res, next) {
 				FB.napi('/me', {access_token: accessToken}, function(err, result) {
 					if (err) return callback(err);
 
+					userProfile = result;
+
 					if (!userProfile.email) {
 						var error = new Error('User email is not publicly available (insufficient facebook permissions)');
 						error.status = 400;
 						callback(error);
 					}
-
-					userProfile = result;
 
 					callback();
 				});
@@ -226,13 +234,13 @@ router.post('/register', function(req, res, next) {
 				return callback(error);
 			}
 
-			Models.User(userProfile.email, function(err, result) {
+			Models.User(userProfile.email, appId, function(err, result) {
 				if (!err) {
 					var error = new Error('User with that email address already exists');
 					error.status = 409;
 					callback(error);
 				}
-				else if (err && err.code !== cb.errors.keyNotFound)
+				else if (err && err.status != 404)
 					callback(err);
 				else {
 					callback();
@@ -290,7 +298,7 @@ router.post('/register', function(req, res, next) {
 });
 
 /**
- * @api {post} /user/me Info about logged user
+ * @api {get} /user/me Info about logged user
  * @apiDescription Logs in the user with a password; creates the user if it doesn't exist
  * @apiName UserLoginPassword
  * @apiGroup User
@@ -324,8 +332,8 @@ router.post('/register', function(req, res, next) {
  *
  */
 router.get('/me', function(req, res, next) {
-	Models.User(req.user.email, function(err, result) {
-		if (err && err.code == cb.errors.keyNotFound) {
+	Models.User(req.user.email, req._telepat.application_id, function(err, result) {
+		if (err && err.status == 404) {
 			var error = new Error('User not found');
 			error.status = 404;
 
@@ -334,7 +342,8 @@ router.get('/me', function(req, res, next) {
 		else if (err)
 			next(err);
 		else
-			next(null, result);
+			delete result.password;
+			res.status(200).json({status: 200, content: result}).end();
 	});
 });
 
@@ -392,6 +401,7 @@ router.post('/login_password', function(req, res, next) {
 	var email = req.body.email;
 	var password = req.body.password.toString();
 	var deviceId = req._telepat.device_id;
+	var appId = req._telepat.application_id;
 
 	var passwordSalt = req.app.get('password_salt');
 	var md5password = crypto.createHash('md5').update(password).digest('hex');
@@ -400,8 +410,8 @@ router.post('/login_password', function(req, res, next) {
 	async.series([
 		function(callback) {
 			//try and get user profile from DB
-			Models.User(email, function(err, result) {
-				if (err && err.code == cb.errors.keyNotFound) {
+			Models.User(email, appId, function(err, result) {
+				if (err && err.status == 404) {
 					var error = new Error('User with email address not found');
 					error.status = 404;
 					callback(error);
@@ -550,7 +560,7 @@ router.get('/refresh_token', function(req, res, next) {
  * 	}
  *
  */
-/*router.post('/update', function(req, res, next) {
+router.post('/update', function(req, res, next) {
 	var patches = req.body.patches;
 	var id = req.user.id;
 	var email = req.user.email;
@@ -579,7 +589,7 @@ router.get('/refresh_token', function(req, res, next) {
 
 		res.status(202).json({status: 202, content: "User updated"}).end();
 	});
-});*/
+});
 
 router.post('/update_immediate', function(req, res, next) {
 	var user = req.body;

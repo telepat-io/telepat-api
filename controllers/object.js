@@ -142,10 +142,8 @@ router.post('/subscribe', function(req, res, next) {
 		parent = channel.parent,// eg: {model: "event", id: 1}
 		user = channel.user,
 		filters = req.body.filters,
-		userEmail = req.user.email,
 		deviceId = req._telepat.device_id,
-		appId = req._telepat.application_id,
-		elasticQuery = filters ? true : false;
+		appId = req._telepat.application_id;
 
 	if (!context)
 		return res.status(400).json({status: 400, message: "Requested context is missing."}).end();
@@ -213,108 +211,13 @@ router.post('/subscribe', function(req, res, next) {
 		},
 		function(callback) {
 			if (id) {
-				new Models.Model(mdl, context, appId, id, context, function(err, results) {
-					if (err) return callback(err, null);
+				new Models.Model(mdl, appId, context, id, function(err, results) {
+					if (err) return callback(err);
 
-					var message = {};
-					message[id] = results.value;
-
-					callback(null, message)
+					callback(null, results)
 				});
-				return;
-			}
-
-			//we have a channel
-			if (parent || user) {
-				//with filters
-				if (filters) {
-					var userQuery = {};
-					var parentQuery = {};
-					var elasticSearchQuery = {
-						query: {
-							filtered: {
-								query: {
-									bool: {
-										must: [
-											{term: {'doc.type': mdl}},
-											{term: {'doc.context_id': context}}
-										]
-									}
-								}
-							}
-						},
-						_source: ['doc.*']
-					};
-
-					if (user) {
-						userQuery['doc.user_id'] = user;
-						elasticSearchQuery.query.filtered.query.bool.must.push({term: userQuery});
-					}
-
-					if(parent) {
-						parentQuery['doc.'+parent.model+'_id'] = parent.id;
-						elasticSearchQuery.query.filtered.query.bool.must.push({term: parentQuery});
-					}
-
-					elasticSearchQuery.query.filtered.filter = Models.utils.parseQueryObject(filters);
-					app.get('elastic-db').client.search({
-						index: 'couchbasereplica',
-						type: 'couchbaseDocument',
-						body: elasticSearchQuery
-					}, function(err, result) {
-						if (err) return callback(err);
-
-						callback(null, result.hits.hits);
-					});
-				//no filters
-				} else {
-					Models.Model.lookup(channelObject, function(err, results) {
-						if (err)
-							return callback(err);
-
-						if (results.length) {
-							Models.Model.multiGet(mdl, results, appId, context, callback);
-						} else {
-							callback(null, []);
-						}
-					});
-				}
-			//no channel (AKA all items)
 			} else {
-				//with filters
-				if (filters) {
-					var elasticSearchQuery = {
-						query: {
-							filtered: {
-								query: {
-									bool: {
-										must: [
-											{term: {'doc.type': mdl}},
-											{term: {'doc.context_id': context}}
-										]
-									}
-								}
-							}
-						},
-						_source: ['doc.*']
-					};
-
-					elasticSearchQuery.query.filtered.filter = Models.utils.parseQueryObject(filters);
-					app.get('elastic-db').client.search({
-						index: 'couchbasereplica',
-						type: 'couchbaseDocument',
-						body: elasticSearchQuery
-					}, function(err, result) {
-						if (err) return callback(err);
-
-						callback(null, result.hits.hits);
-					});
-				//with no filters
-				} else {
-					Models.Model.getAll(mdl, appId, context, function(err, results) {
-						callback(err, results);
-					});
-				}
+				Models.Model.search(channelObject, callback);
 			}
 		}/*,
 		function(results, callback) {
@@ -336,21 +239,7 @@ router.post('/subscribe', function(req, res, next) {
 		if (err)
 			return next(err);
 
-		if(elasticQuery) {
-			var elasticsearchResult = [];
-			async.each(result, function(item, c) {
-				if (item._source.doc)
-					elasticsearchResult.push(item._source.doc);
-				c();
-			}, function(err) {
-				if (err)
-					return next(err);
-
-				res.json({status: 200, content: elasticsearchResult}).end();
-			});
-		} else {
-			res.json({status: 200, content: result}).end();
-		}
+		res.json({status: 200, content: result}).end();
 	});
 });
 
@@ -521,7 +410,7 @@ router.post('/create', function(req, res, next) {
 
 	var content = req.body.content;
 	var mdl = req.body.model;
-	var context = parseInt(req.body.context);
+	var context = req.body.context;
 	var appId = req._telepat.application_id;
 	var isAdmin = req.user.isAdmin;
 
@@ -563,7 +452,7 @@ router.post('/create', function(req, res, next) {
 					callback();
 				});
 			} else {
-				Models.User(req.user.email, function(err, result) {
+				Models.User(req.user.email, appId, function(err, result) {
 					if (err) return callback(err);
 					content.user_id = result.id;
 					callback();
@@ -874,13 +763,13 @@ router.post('/count', function(req, res, next) {
 		channelObject.setFilter(req.body.filters);
 
 	if (!channelObject.isValid()) {
-		var error = new Error('Could not subscribe to invalid channel');
+		var error = new Error('Could not count objects in an invalid channel');
 		error.status = 400;
 
 		return next(error);
 	}
 
-	Models.Subscription.getObjectCount(channel, function(err, result) {
+	Models.Model.getObjectCount(channel, function(err, result) {
 		if (err) return next(err);
 
 		res.status(200).json({status: 200, content: result}).end();
