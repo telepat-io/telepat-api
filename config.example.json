@@ -1,16 +1,16 @@
 {
   "main_database": "ElasticSearch",
   "ElasticSearch": {
-	"host": "10.32.0.11",
+	"host": "hostname",
 	"port": 9200,
 	"index": "default"
   },
   "redis": {
-	"host": "10.32.0.13",
+	"host": "10.0.0.1",
 	"port": 6379
   },
   "kafka": {
-	"host": "10.32.0.7",
+	"host": "10.0.0.2",
 	"port": 2181,
 	"clientName": "telepat-producer"
   },

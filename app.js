@@ -28,6 +28,19 @@ app.use('/documentation', express.static(__dirname+'/documentation'));
 
 process.title = "octopus-api";
 
+try {
+	require('./config.json');
+} catch (e) {
+	if (e.code == 'MODULE_NOT_FOUND') {
+		console.log('Fatal error:'.red+' configuration file is missing or not accessible. Aborting...');
+		process.exit(-1);
+	} else
+		throw e;
+}
+
+var mainConfiguration = require('./config.json');
+var mainDatabase = mainConfiguration.main_database;
+
 if (process.env.TP_KFK_HOST) {
 	app.kafkaConfig = {
 		host: process.env.TP_KFK_HOST,
@@ -35,7 +48,7 @@ if (process.env.TP_KFK_HOST) {
 		clientName: process.env.TP_KFK_CLIENT
 	};
 } else {
-	app.kafkaConfig = require('./config.json').kafka;
+	app.kafkaConfig = mainConfiguration.kafka;
 }
 
 var redisConfig = {};
@@ -46,13 +59,13 @@ if (process.env.TP_REDIS_HOST) {
 		port: process.env.TP_REDIS_PORT
 	};
 } else {
-	redisConfig = require('./config.json').redis;
+	redisConfig = mainConfiguration.redis;
 }
 
 Models.Application.datasource = new Models.Datasource();
-Models.Application.datasource.setMainDatabase(new Models.ElasticSearch(require('./config.json').elasticsearch));
+Models.Application.datasource.setMainDatabase(new Models[mainDatabase](mainConfiguration[mainDatabase]));
 
-app.set('password_salt', require('./config.json').password_salt);
+app.set('password_salt', mainConfiguration.password_salt);
 
 app.applications = {};
 
