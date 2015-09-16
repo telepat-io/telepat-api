@@ -77,8 +77,12 @@ router.post('/login', function(req, res, next) {
 		function(callback) {
 			FB.napi('/me', {access_token: accessToken}, function(err, result) {
 				if (err) return callback(err);
+<<<<<<< HEAD
 				fbProfile = result;
+=======
+>>>>>>> ad367ca69f381d92dd72713bc9352e3822216d38
 				email = result.email;
+				fbProfile = result;
 
 				if (!email) {
 					var error = new Error('User email is not publicly available (insufficient facebook permissions)');
@@ -114,8 +118,20 @@ router.post('/login', function(req, res, next) {
 			} else {
 				userProfile.devices = [deviceId];
 			}
+<<<<<<< HEAD
 			//user first logged in with password then with fb
 			if (!userProfile.fid) {
+=======
+
+			userProfile.fid = fbProfile.id;
+			userProfile.name = fbProfile.name;
+			userProfile.gender = fbProfile.gender;
+
+			Models.User.update(userProfile.email, userProfile, callback);
+
+			//user first logged in with password then with fb
+			/*if (!userProfile.fid) {
+>>>>>>> ad367ca69f381d92dd72713bc9352e3822216d38
 				var key = 'blg:'+Models.User._model.namespace+':fid:'+fbProfile.id;
 				Models.Application.bucket.insert(key, userProfile.email, function() {
 					userProfile.fid = fbProfile.id;
@@ -126,12 +142,12 @@ router.post('/login', function(req, res, next) {
 				});
 			} else {
 				callback(null, true);
-			}
+			}*/
 		}
 		//final step: send authentification token
 	], function(err, results) {
 		if (err)
-			res.status(400).json(err).end();
+			return next(err);
 		else {
 			var token = jwt.sign({email: userProfile.email}, security.authSecret, { expiresInMinutes: 60 });
 			res.json({status: 200, content: {token: token, user: userProfile}}).end();
@@ -191,13 +207,13 @@ router.post('/register', function(req, res, next) {
 				FB.napi('/me', {access_token: accessToken}, function(err, result) {
 					if (err) return callback(err);
 
+					userProfile = result;
+
 					if (!userProfile.email) {
 						var error = new Error('User email is not publicly available (insufficient facebook permissions)');
 						error.status = 400;
 						callback(error);
 					}
-
-					userProfile = result;
 
 					callback();
 				});
