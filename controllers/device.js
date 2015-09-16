@@ -73,7 +73,8 @@ router.post('/register', function(req, res, next) {
 		var udid = req.body.info.udid;
 
 		if (!udid) {
-			Models.Subscription.addDevice(req.body, function (err) {
+			req.body.id = uuid.v4();
+			Models.Subscription.addDevice(req.body, function (err, result) {
 				if (!err) {
 					return res.status(200).json({status: 200, content: {identifier: req.body.id}}).end();
 				}

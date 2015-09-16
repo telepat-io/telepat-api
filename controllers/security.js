@@ -113,7 +113,7 @@ security.adminAppValidation = function (req, res, next) {
 	if (!req.user)
 		return next();
 
-	if (app.applications[appId].admin_id != req.user.email) {
+	if (app.applications[appId].admins.indexOf(req.user.id) === -1) {
 		res.status(401).json({status: 401, message: "This application does not belong to you"}).end();
 		return ;
 	}

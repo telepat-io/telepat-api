@@ -28,7 +28,18 @@ app.use('/documentation', express.static(__dirname+'/documentation'));
 
 process.title = "octopus-api";
 
-Models.Application.setCB(cb);
+try {
+	require('./config.json');
+} catch (e) {
+	if (e.code == 'MODULE_NOT_FOUND') {
+		console.log('Fatal error:'.red+' configuration file is missing or not accessible. Aborting...');
+		process.exit(-1);
+	} else
+		throw e;
+}
+
+var mainConfiguration = require('./config.json');
+var mainDatabase = mainConfiguration.main_database;
 
 if (process.env.TP_KFK_HOST) {
 	app.kafkaConfig = {
@@ -37,45 +48,24 @@ if (process.env.TP_KFK_HOST) {
 		clientName: process.env.TP_KFK_CLIENT
 	};
 } else {
-	app.kafkaConfig = require('./config.json').kafka;
+	app.kafkaConfig = mainConfiguration.kafka;
 }
 
-app.datasources = {};
-
-if (process.env.TP_CB_HOST) {
-	app.datasources.couchbase = {
-		host: process.env.TP_CB_HOST,
-		bucket: process.env.TP_CB_BUCKET
-	};
-} else {
-	app.datasources.couchbase = require('./config.json').couchbase;
-}
+var redisConfig = {};
 
 if (process.env.TP_REDIS_HOST) {
-	app.datasources.redis = {
+	redisConfig = {
 		host: process.env.TP_REDIS_HOST,
 		port: process.env.TP_REDIS_PORT
 	};
 } else {
-	app.datasources.redis = require('./config.json').redis;
+	redisConfig = mainConfiguration.redis;
 }
 
-if (process.env.TP_ES_HOST) {
-	app.datasources.elasticsearch = {
-		host: process.env.TP_ES_HOST,
-		port: process.env.TP_ES_PORT
-	}
-} else {
-	app.datasources.elasticsearch = require('./config.json').elasticsearch;
-}
+Models.Application.datasource = new Models.Datasource();
+Models.Application.datasource.setMainDatabase(new Models[mainDatabase](mainConfiguration[mainDatabase]));
 
-app.set('password_salt', require('./config.json').password_salt);
-
-ds = app.datasources;
-app.set('couchbase-db', {
-	Couchbase: new cb.Cluster('couchbase://'+ds.couchbase.host)
-});
-db = app.get('couchbase-db');
+app.set('password_salt', mainConfiguration.password_salt);
 
 app.applications = {};
 
@@ -88,8 +78,6 @@ app.use(function(req, res, next) {
 
 var OnServicesConnect = function() {
 	dbConnected = true;
-	Models.Application.setBucket(db.Couchbase.bucket);
-	Models.Application.setElasticClient(app.get('elastic-db').client);
 	Models.Application.getAll(function(err, results) {
 		if (err) {
 			console.log("Fatal error: ".red, err);
@@ -97,8 +85,7 @@ var OnServicesConnect = function() {
 		}
 
 		async.each(results, function(item, c){
-			var appId = item.id.split(':').slice(-1)[0];
-			app.applications[appId] = item.value;
+			app.applications[item.id] = item;
 			c();
 		});
 	});
@@ -148,8 +135,6 @@ var OnServicesConnect = function() {
 
 	//signal sent by nodemon when restarting the server
 	process.on('SIGUSR2', function() {
-		db.Couchbase.bucket.disconnect();
-		db.Couchbase.stateBucket.disconnect();
 		app.kafkaClient.close();
 	});
 
@@ -157,19 +142,7 @@ var OnServicesConnect = function() {
 
 async.waterfall([
 	function DataBucket(callback) {
-		if (db.Couchbase.bucket)
-			delete db.Couchbase.bucket;
-		db.Couchbase.bucket = db.Couchbase.openBucket(ds.couchbase.bucket);
-		db.Couchbase.bucket.on('error', function(err) {
-			var d = new Date();
-			console.log('Failed'.bold.red+' connecting to Data Bucket on couchbase "'+ds.couchbase.host+'": '+err.message);
-			console.log('Retrying...');
-			setTimeout(function () {
-				DataBucket(callback);
-			}, 1000);
-		});
-		db.Couchbase.bucket.on('connect', function() {
-			console.log('Connected to Data bucket on couchbase.'.green);
+		Models.Application.datasource.dataStorage.onReady(function() {
 			callback();
 		});
 	},
@@ -177,37 +150,14 @@ async.waterfall([
 		if (Models.Application.redisClient)
 			Models.Application.redisClient = null;
 
-		Models.Application.redisClient = redis.createClient(ds.redis.port, ds.redis.host);
+		Models.Application.redisClient = redis.createClient(redisConfig.port, redisConfig.host);
 		Models.Application.redisClient.on('error', function(err) {
-			console.log('Failed'.bold.red+' connecting to Redis "'+ds.redis.host+'": '+err.message);
+			console.log('Failed'.bold.red+' connecting to Redis "'+redisConfig.host+'": '+err.message);
 			console.log('Retrying...');
 		});
 		Models.Application.redisClient.on('ready', function() {
 			console.log('Client connected to Redis.'.green);
 			callback();
-		});
-	},
-	function Elasticsearch(callback) {
-		if (app.get('elastic-db'))
-			app.disable('elastic-db');
-
-		app.set('elastic-db', {
-			client: new elastic.Client({host: ds.elasticsearch.host+':'+ds.elasticsearch.port})
-		});
-		app.get('elastic-db').client.ping({
-			requestTimeout: Infinity
-		}, function(err) {
-			if (err) {
-				var d = new Date();
-				console.log('Failed'.bold.red+' connecting to Elasticsearch "'+ds.elasticsearch.host+'": '+err.message);
-				console.log('Retrying...');
-				setTimeout(function () {
-					Elasticsearch(callback);
-				}, 1000);
-			} else {
-				console.log('Connected to Elasticsearch.'.green);
-				callback();
-			}
 		});
 	},
 	function Kafka(callback) {
