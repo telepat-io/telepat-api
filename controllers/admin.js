@@ -616,11 +616,18 @@ router.use('/context/update', security.tokenValidation, security.applicationIdVa
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  *
  * @apiParam {Number} id ID of the context to update
+ * @apiParam {Array} patches An array of patches
  *
  * @apiExample {json} Client Request
  * 	{
  * 		"id": 1,
- * 		"name": "new name"
+ * 		"patches": [
+ * 			{
+ * 				"op": "replace",
+ * 				"path": "context/context_id/field_name",
+ * 				"value" "New value"
+ * 			}
+ * 		]
  * 	}
  *
  * 	@apiError (500) Error Context not found or internal server error.
@@ -937,7 +944,7 @@ router.post('/user/delete', function(req, res, next) {
 
 	async.waterfall([
 		function(callback) {
-			Models.User(userEmail, callback);
+			Models.User(userEmail, appId, callback);
 		},
 		function(user, callback) {
 			if (user.application_id != appId) {
@@ -946,7 +953,7 @@ router.post('/user/delete', function(req, res, next) {
 
 				return callback(error);
 			} else {
-				Models.User.delete(userEmail, callback);
+				Models.User.delete(userEmail, appId, callback);
 			}
 		}
 	], function(error, results) {
