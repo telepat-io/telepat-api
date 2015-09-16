@@ -102,11 +102,11 @@ var OnServicesConnect = function() {
 	if (app.get('env') === 'development') {
 		app.use(function(err, req, res, next) {
 			res.status(err.status || 500);
-			res.send(JSON.stringify({
+			res.json({
 				status: err.status || 500,
 				stack: err.stack,
 				message: err.message
-			}));
+			}).end();
 		});
 	}
 
@@ -114,10 +114,10 @@ var OnServicesConnect = function() {
 	// no stacktraces leaked to user
 	app.use(function(err, req, res, next) {
 		res.status(err.status || 500);
-		res.send(JSON.stringify({
+		res.json({
 			status: err.status || 500,
 			message: err.message
-		}));
+		}).end();
 	});
 
 	//signal sent by nodemon when restarting the server
