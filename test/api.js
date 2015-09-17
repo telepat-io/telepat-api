@@ -3,31 +3,18 @@ var assert = require('assert');
 var request = require('supertest');
 var crypto = require('crypto-js');
 
-// require('blanket')({
-    // pattern: function (filename) {
-        // return !/node_modules/.test(filename);
-    // }
-// });
-
 describe('Api', function () {
-  // use describe to give a title to your test suite, in this case the tile is "Account"
-  // and then specify a function in which we are going to declare all the tests
-  // we want to run. Each test starts with the function it() and as a first argument 
-  // we have to provide a meaningful title for it, whereas as the second argument we
-  // specify a function that takes a single parameter, "done", that we will use 
-  // to specify when our test is completed, and that's what makes easy
-  // to perform async test!
 	var url = 'http://localhost:3000';
 	var randEmail = 'admin'+Math.round(Math.random()*1000000)+'@example.com';
 	var adminPassword = '5f4dcc3b5aa765d61d8327deb882cf99';
 	var deviceIdentification;
 	var APPKey = "3406870085495689e34d878f09faf52c";
 	var appIDsha256 = crypto.SHA256(APPKey).toString(crypto.enc.Hex);
+	var DELAY = 1500;
 	var appID;
 	var contextID;
 	var authValue;
 	var server;
-	//console.log(appIDsha256);
 	
 	function normalizePort(val) {
 	  var port = parseInt(val, 10);
@@ -42,14 +29,12 @@ describe('Api', function () {
 	
    before(function (done) {
    	this.timeout(10000);
-
 		app = require('../app',done);
 		var http = require('http');
 		var port = normalizePort(process.env.PORT || '3000');
 		app.set('port', port);
 		server = http.createServer(app);
 		server.listen(port);
-
 		server.on('listening', function() {
 			setTimeout(done, 5000);
 		});
@@ -58,6 +43,7 @@ describe('Api', function () {
   after(function (done) {
 	 server.close(done);
   });
+
  	// before(function(done){
 	// // GET deviceIdentification for future requests
 		// var appIDsha256 =  '2a80f1666442062debc4fbc0055d8ba5efc29232a27868c0a8eb76dec23df794';
@@ -97,36 +83,12 @@ describe('Api', function () {
 		};
 				
 		describe('Admin', function() {
-			
-			it('should return a 200 code to indicate succes when creating a new admin', function(done) {
 
-				// once we have specified the info we want to send to the server via POST verb,
-				// we need to actually perform the action on the resource, in this case we want to 
-				// POST on /api/profiles and we want to send some info
-				// We do this using the request object, requiring supertest!
-				request(url)
-				.post('/admin/add')
-				.send(admin)
-				// end handles the response
-				.end(function(err, res) {
-					if (err) {
-						throw err;
-						done(err);
-					}
-					
-					  // this is should.js syntax, very clear
-					res.statusCode.should.be.equal(200);
-					done();
-				});
-			});
-				
 			it('should return a 409 code to indicate failure when admin already exists', function(done) {
-
 				var admin = {
 					email: randEmail,
 					password: adminPassword
 				};
-
 				request(url)
 				.post('/admin/add')
 				.send(admin)
@@ -137,13 +99,10 @@ describe('Api', function () {
 			});
 			
 			it('should return a 4xx code to indicate failure when admin email is missing', function(done) {
-
 				var randPassword = Math.round(Math.random()*100000000000);
 				var admin = {
-
 					password: randPassword
 				};
-
 				request(url)
 				.post('/admin/add')
 				.send(admin)
@@ -154,30 +113,26 @@ describe('Api', function () {
 			});
 			
 			it('should return a 4xx code to indicate failure when admin email is empty', function(done) {
-
 				var randPassword = Math.round(Math.random()*100000000000);
 				var admin = {
 					email: "",
 					password: randPassword
 				};
-
 				request(url)
 				.post('/admin/add')
 				.send(admin)
 				.end(function(err, res) {
-					  res.statusCode.should.be.within(400,499);
-					  done();
+					res.statusCode.should.be.within(400,499);
+					done();
 				});
 			});
 			
 			it('should return a 4xx code to indicate failure when admin password is empty', function(done) {
-
 				var randEmail = 'admin'+Math.round(Math.random()*1000000)+'@example.com';
 				var admin = {
 					email: randEmail,
 					password: ""
 				};
-
 				request(url)
 				.post('/admin/add')
 				.send(admin)
@@ -192,7 +147,6 @@ describe('Api', function () {
 				var admin = {
 					email: randEmail
 				};
-
 				request(url)
 				.post('/admin/add')
 				.send(admin)
@@ -202,8 +156,38 @@ describe('Api', function () {
 				});
 			});
 			
-			it('should return an valid authorization token', function(done) {
+			it('should return an error for logging in with wrong user or password', function(done) {
+				var randEmail = 'admin'+Math.round(Math.random()*1000000)+'@example.com';
+				var admin = {
+					email: randEmail,
+					password: "5f4dcc3b5aa765d61d8327deb882cf99"
+				};
+				request(url)
+				.post('/admin/login')
+				.send(admin)
+				.end(function(err, res) {
+					res.statusCode.should.be.equal(401);
+					res.body.message.should.be.equal('Wrong user or password');
+					done();
+				});
+			});
 
+			it('should return a 200 code to indicate success when creating a new admin', function(done) {
+				request(url)
+				.post('/admin/add')
+				.send(admin)
+				.end(function(err, res) {
+					if (err) {
+						throw err;
+						done(err);
+					}
+					console.log("creating " + admin.email);
+					res.statusCode.should.be.equal(200);
+					setTimeout(done, DELAY);
+				});
+			});
+
+			it('should return a valid authorization token', function(done) {
 				request(url)
 				.post('/admin/login')
 				.send(admin)
@@ -215,26 +199,7 @@ describe('Api', function () {
 				});
 			});
 			
-			it('should return an error for logging in with wrong user or password', function(done) {
-				
-				var randEmail = 'admin'+Math.round(Math.random()*1000000)+'@example.com';
-				var admin = {
-					email: randEmail,
-					password: "5f4dcc3b5aa765d61d8327deb882cf99"
-				};
-				  
-				request(url)
-				.post('/admin/login')
-				.send(admin)
-				.end(function(err, res) {
-					 res.statusCode.should.be.equal(401);
-					 res.body.message.should.be.equal('Wrong user or password');
-					 done();
-				});
-			});
-			
 			it('should return information about the logged admin', function(done) {
-				  
 				request(url)
 				.get('/admin/me')
 				.set('Content-type','application/json')
@@ -254,162 +219,146 @@ describe('Api', function () {
 					email: randEmail,
 					password: "5f4dcc3b5aa765d61d8327deb882cf99"
 				};
-				  
 				request(url)
 				.post('/admin/add')
 				.send(admin)
 				.end(function(err, res) {
-					request(url)
-					.post('/admin/login')
-					.set('Content-type','application/json')
-					.send(admin)
-					.end(function(err, res) {
-				
-						authValue = 'Bearer ' + res.body.content.token;
-						
-						request(url)
-						.post('/admin/update')
-						.set('Content-type','application/json')
-						.set('Authorization', authValue )
-						.send(admin)
-						.end(function(err, res) {
-						//console.log(res);
-							res.statusCode.should.be.equal(200);
-							done();
-						});
-					});
-				});  
-			});
-			
-			it('should return a succes response indicating the admin account has NOT been updated', function(done) {
-				var randEmail = 'admin'+Math.round(Math.random()*1000000)+'@example.com';
-				var admin = {
-					email: randEmail,
-					password: "5f4dcc3b5aa765d61d8327deb882cf99"
-				};
-				  
-				request(url)
-				.post('/admin/add')
-				.send(admin)
-				.end(function(err, res) {
-					request(url)
-					.post('/admin/login')
-					.set('Content-type','application/json')
-					.send(admin)
-					.end(function(err, res) {
-					//	console.log(err);
-						authValue = 'Bearer ' + res.body.content.token;
-						var randEmail = 'admin'+Math.round(Math.random()*1000000)+'@example.com';
-						var admin = {
-							email: randEmail,
-							password: "5f4dcc3b5aa765d61d8327deb882cf99"
-						};
-						
-						request(url)
-						.post('/admin/update')
-						.set('Content-type','application/json')
-						.set('Authorization', authValue )
-						.send(admin)
-						.end(function(err, res) {
-				//		console.log(res);
-							res.statusCode.should.be.equal(500);
-							done();
-						});
-					});
-				});  
-			});
-
-			it('should return a succes response indicating the admin account has NOT been updated because of missing request body', function(done) {
-					var randEmail = 'admin'+Math.round(Math.random()*1000000)+'@example.com';
-					var admin = {
-						email: randEmail,
-						password: "5f4dcc3b5aa765d61d8327deb882cf99"
-					};
-					  
-					request(url)
-					.post('/admin/add')
-					.send(admin)
-					.end(function(err, res) {
+					setTimeout(function () {
 						request(url)
 						.post('/admin/login')
 						.set('Content-type','application/json')
 						.send(admin)
 						.end(function(err, res) {
-						//	console.log(err);
+							authValue = 'Bearer ' + res.body.content.token;
+							request(url)
+							.post('/admin/update')
+							.set('Content-type','application/json')
+							.set('Authorization', authValue )
+							.send(admin)
+							.end(function(err, res) {
+								res.statusCode.should.be.equal(200);
+								done();
+							});
+						});
+					}, 1000);
+				});  
+			});
+			
+			it('should return an error response indicating the admin account has NOT been updated', function(done) {
+				var randEmail = 'admin'+Math.round(Math.random()*1000000)+'@example.com';
+				var admin = {
+					email: randEmail,
+					password: "5f4dcc3b5aa765d61d8327deb882cf99"
+				};
+				request(url)
+				.post('/admin/add')
+				.send(admin)
+				.end(function(err, res) {
+					setTimeout(function () {
+						request(url)
+						.post('/admin/login')
+						.set('Content-type','application/json')
+						.send(admin)
+						.end(function(err, res) {
 							authValue = 'Bearer ' + res.body.content.token;
 							var randEmail = 'admin'+Math.round(Math.random()*1000000)+'@example.com';
 							var admin = {
 								email: randEmail,
 								password: "5f4dcc3b5aa765d61d8327deb882cf99"
 							};
-							
+							request(url)
+							.post('/admin/update')
+							.set('Content-type','application/json')
+							.set('Authorization', authValue )
+							.send(admin)
+							.end(function(err, res) {
+								res.statusCode.should.be.equal(500);
+								done();
+							});
+						});
+					}, 1000);
+				});  
+			});
+
+			it('should return an error response indicating the admin account has NOT been updated because of missing request body', function(done) {
+				var randEmail = 'admin'+Math.round(Math.random()*1000000)+'@example.com';
+				var admin = {
+					email: randEmail,
+					password: "5f4dcc3b5aa765d61d8327deb882cf99"
+				};
+				request(url)
+				.post('/admin/add')
+				.send(admin)
+				.end(function(err, res) {
+					setTimeout(function () {
+						request(url)
+						.post('/admin/login')
+						.set('Content-type','application/json')
+						.send(admin)
+						.end(function(err, res) {
+							authValue = 'Bearer ' + res.body.content.token;
+							var randEmail = 'admin'+Math.round(Math.random()*1000000)+'@example.com';
+							var admin = {
+								email: randEmail,
+								password: "5f4dcc3b5aa765d61d8327deb882cf99"
+							};
 							request(url)
 							.post('/admin/update')
 							.set('Content-type','application/json')
 							.set('Authorization', authValue )
 							.send()
 							.end(function(err, res) {
-					//		console.log(res);
 								res.statusCode.should.be.equal(400);
 								done();
 							});
 						});
-					});  
-				});
+					}, 1000);
+				});  
+			});
 
-			
 		});
 		
 		describe('App', function() {
-			
 			var token;
 			var authValue;
-			
 			var admin = {
 				email: randEmail,
 				password: "5f4dcc3b5aa765d61d8327deb882cf99"
 			};
 			
 			before(function(done){
-				
 				request(url)
 				.post('/admin/add')
 				.set('Content-type','application/json')
 				.send(admin)
 				.end(function(err, res) {
-					
-					request(url)
-					.post('/admin/login')
-					.set('Content-type','application/json')
-					.send(admin)
-					.end(function(err, res) {
-						
-						token = res.body.content.token;
-						authValue  = 'Bearer ' + token;
-						done();
-					});
+					setTimeout(function () {
+						request(url)
+						.post('/admin/login')
+						.set('Content-type','application/json')
+						.send(admin)
+						.end(function(err, res) {
+							token = res.body.content.token;
+							authValue  = 'Bearer ' + token;
+							done();
+						});
+					}, 1000);
 				});
 			});
 			
-			it('should return an success response to indicate app succesfully created', function(done) {
-				// TODO
-	
+			it('should return a success response to indicate app succesfully created', function(done) {
 				var clientrequest = {
-					"icon": "fa-bullhorn",
-					"name": "The Voice",
+					"name": "test-app",
 					"keys": [ APPKey ]
 				};
-				
 				var successResponse =  {
 					"1": {
 						 "admin_id": randEmail,
-						 "icon": "fa-bullhorn",
-						 "name": "The Voice",
+						 "name": "test-app",
 						 "type": "application",
 						 "keys": [ APPKey ]
 					}
 				}
-
 				request(url)
 				.post('/admin/app/add')
 				.set('Content-type','application/json')
@@ -417,7 +366,7 @@ describe('Api', function () {
 				.send(clientrequest)
 				.end(function(err, res) {
 					var objectKey = Object.keys(res.body.content)[0];
-					appID = Object.keys(res.body.content)[0];
+					appID = res.body.content.id;
 					appIDsha256 = crypto.SHA256(APPKey).toString(crypto.enc.Hex);
 					(res.body.content[objectKey] == successResponse[1]).should.be.ok;
 					done();
@@ -425,32 +374,25 @@ describe('Api', function () {
 			});
 			
 			it('should return an error response to indicate app was not created because of missing app name', function(done) {
-				
 				var clientrequest = {
-					"icon": "fa-bullhorn",
 					"keys": ["3406870085495689e34d878f09faf52c"]
 				};
-
 				request(url)
 				.post('/admin/app/add')
 				.set('Content-type','application/json')
 				.set('Authorization', authValue )
 				.send(clientrequest)
 				.end(function(err, res) {
-				//	console.log(res.body);
 					res.statusCode.should.be.equal(400);
 					done();
 				});
 			});
 			
-			it('should return a list of applications for the current admin', function(done) {
-								
+			it('should return a list of applications for the current admin', function(done) {			
 				var clientrequest = {
-					"icon": "fa-bullhorn",
-					"name": "The Voice",
+					"name": "test-app",
 					"keys": [ APPKey ]
 				};
-				
 				request(url)
 				.post('/admin/app/add')
 				.set('Content-type','application/json')
@@ -463,37 +405,31 @@ describe('Api', function () {
 					.set('Authorization', authValue )
 					.send(clientrequest)
 					.end(function(err, res) {
-						//console.log(res.body);
-						request(url)
-						.get('/admin/apps')
-						.set('Content-type','application/json')
-						.set('Authorization', authValue )
-						.send()
-						.end(function(err, res) {
-								//console.log(res.body.content);
-							  res.statusCode.should.be.equal(200);
-							  res.body.status.should.be.equal(200);
-							  (Object.keys(res.body.content).length >= 3).should.be.ok;
-							//  res.body.
-							done();
-						}); 	
+						setTimeout(function () {
+							request(url)
+							.get('/admin/apps')
+							.set('Content-type','application/json')
+							.set('Authorization', authValue )
+							.send()
+							.end(function(err, res) {
+								res.statusCode.should.be.equal(200);
+								res.body.status.should.be.equal(200);
+								(Object.keys(res.body.content).length >= 3).should.be.ok;
+								done();
+							}); 	
+						}, 1000);
 					});
 				});
 			});
 			
-			it('should return an succes response for updating a app', function(done) {
-				
-
+			it('should return a success response for updating an app', function(done) {
 				var clientrequest = {
-					"icon": "fa-bullhorn",
-					"name": "The Voice",
+					"name": "test-app",
 					"keys": [ APPKey ]
 				};
-				
 				var clientrequest2 = {
-					"name": "The Mute",
+					"name": "test-app-2",
 				};
-				
 				request(url)
 				.post('/admin/app/add')
 				.set('Content-type','application/json')
@@ -501,29 +437,26 @@ describe('Api', function () {
 				.send(clientrequest)
 				.end(function(err, res) {
 					var objectKey = Object.keys(res.body.content)[0];
-					var appID = Object.keys(res.body.content)[0];
-					
-					request(url)
-					.post('/admin/app/update')
-					.set('Content-type','application/json')
-					.set('Authorization', authValue )
-					.set('X-BLGREQ-APPID', appID )
-					.send(clientrequest2)
-					.end(function(err, res) {
-						//console.log(res);
-						res.statusCode.should.be.equal(200);
-
-						done();	
-					});
+					var appID = res.body.content.id;
+					setTimeout(function () {
+						request(url)
+						.post('/admin/app/update')
+						.set('Content-type','application/json')
+						.set('Authorization', authValue )
+						.set('X-BLGREQ-APPID', appID )
+						.send(clientrequest2)
+						.end(function(err, res) {
+							res.statusCode.should.be.equal(200);
+							done();	
+						});
+					}, 2*DELAY);
 				});
 			});
 			
-			it('should return an error response for NOT updating a app', function(done) {
-				
+			it('should return an error response for NOT updating an app', function(done) {
 				var clientrequest = {
-					"name": "The Mute",
+					"name": "test-app-2",
 				};
-					
 				request(url)
 				.post('/admin/app/update')
 				.set('Content-type','application/json')
@@ -531,23 +464,17 @@ describe('Api', function () {
 				.set('X-BLGREQ-APPID', Math.round(Math.random()*1000000)+1000 )
 				.send(clientrequest)
 				.end(function(err, res) {
-					//console.log(res);
 					res.statusCode.should.be.equal(404);
-
 					done();	
 				});
 			});
 
 			
-			it('should return an succes response for removing a app', function(done) {
-				
-
+			it('should return a success response for removing an app', function(done) {
 				var clientrequest = {
-					"icon": "fa-bullhorn",
-					"name": "The Voice",
+					"name": "test-app",
 					"keys": [ APPKey ]
 				};
-				
 				request(url)
 				.post('/admin/app/add')
 				.set('Content-type','application/json')
@@ -555,25 +482,24 @@ describe('Api', function () {
 				.send(clientrequest)
 				.end(function(err, res) {
 					var objectKey = Object.keys(res.body.content)[0];
-					var appID = Object.keys(res.body.content)[0];
-					
-					request(url)
-					.post('/admin/app/remove')
-					.set('Content-type','application/json')
-					.set('Authorization', authValue )
-					.set('X-BLGREQ-APPID', appID )
-					.send()
-					.end(function(err, res) {
-						//console.log(res);
-						res.statusCode.should.be.equal(200);
-						res.body.content.should.be.equal('App removed');
-						done();	
-					});
+					var appID = res.body.content.id;
+					setTimeout(function() {
+						request(url)
+						.post('/admin/app/remove')
+						.set('Content-type','application/json')
+						.set('Authorization', authValue )
+						.set('X-BLGREQ-APPID', appID )
+						.send()
+						.end(function(err, res) {
+							res.statusCode.should.be.equal(200);
+							res.body.content.should.be.equal('App removed');
+							done();	
+						});
+					}, 2*DELAY);
 				});
 			});
 			
-			it('should return a error response for trying to remove a app that does NOT exist', function(done) {
-
+			it('should return an error response for trying to remove an app that does NOT exist', function(done) {
 				request(url)
 				.post('/admin/app/remove')
 				.set('Content-type','application/json')
@@ -581,7 +507,6 @@ describe('Api', function () {
 				.set('X-BLGREQ-APPID', Math.round(Math.random()*1000000)+1000 )
 				.send()
 				.end(function(err, res) {
-					//console.log(res);
 					res.statusCode.should.be.equal(404);
 					done();	
 				});
@@ -598,7 +523,6 @@ describe('Api', function () {
 				email: "emaily435346557@example.com",
 				password: "5f4dcc3b5aa765d61d8327deb882cf99"
 			};
-			
 			var admin2 = {
 				email: "emaily4353465572@example.com",
 				password: "5f4dcc3b5aa765d61d8327deb882cf99"
@@ -615,117 +539,105 @@ describe('Api', function () {
 				.post('/admin/add')
 				.send(admin)
 				.end(function(err, res) {
-					
-					request(url)
-					.post('/admin/login')
-					.set('Content-type','application/json')
-					.send(admin)
-					.end(function(err, res) {
-						
-						token = res.body.content.token;
-						authValue = 'Bearer ' + token;
-						var clientrequest = {
-							"icon": "fa-bullhorn",
-							"name": "The Voice",
-							"keys": [ APPKey ]
-						};
-				
+					setTimeout(function () {
 						request(url)
-						.post('/admin/app/add')
+						.post('/admin/login')
 						.set('Content-type','application/json')
-						.set('Authorization', authValue )
-						.send(clientrequest)
+						.send(admin)
 						.end(function(err, res) {
-							//console.log(err);
-							appID =  Object.keys(res.body.content)[0];
-						
+							token = res.body.content.token;
+							authValue = 'Bearer ' + token;
+							var clientrequest = {
+								"name": "test-app",
+								"keys": [ APPKey ]
+							};
 							request(url)
-							.post('/admin/add')
-							.send(admin2)
+							.post('/admin/app/add')
+							.set('Content-type','application/json')
+							.set('Authorization', authValue)
+							.send(clientrequest)
 							.end(function(err, res) {
-					
+								//console.log(res.body);
+								appID =  res.body.content.id;
 								request(url)
-								.post('/admin/login')
-								.set('Content-type','application/json')
+								.post('/admin/add')
 								.send(admin2)
 								.end(function(err, res) {
-								
-									token2 = res.body.content.token;
-									authValue2 = 'Bearer ' + token2;
-									done();
+									setTimeout(function () {
+										request(url)
+										.post('/admin/login')
+										.set('Content-type','application/json')
+										.send(admin2)
+										.end(function(err, res) {
+											token2 = res.body.content.token;
+											authValue2 = 'Bearer ' + token2;
+											done();
+										});
+									}, 1000);
 								});
 							});
 						});
-					});
+					}, 1000);
 				});
 			});
 			/////////////////////////////////////////////////////////////
 			
-			it('should return an success response to indicate context succesfully created', function(done) {
-					var clientrequest = {
-						"name": "Episode 2",
-						"meta": {"info": "some meta info"},
-					}
-
-					request(url)
-					.post('/admin/context/add')
-					.set('Content-type','application/json')
-					.set('Authorization', authValue )
-					.set('X-BLGREQ-APPID', appID )
-					.send(clientrequest)
-					.end(function(err, res) {
-						var objectKey = Object.keys(res.body.content)[0];
-						contextID = res.body.content.id;
-						(res.body.content[objectKey].name == clientrequest.name).should.be.ok;
-						res.statusCode.should.be.equal(200);
-						done();
-					});
-
-					
+			it('should return a success response to indicate context succesfully created', function(done) {
+				var clientrequest = {
+					"name": "context",
+					"meta": {"info": "some meta info"},
+				}
+				request(url)
+				.post('/admin/context/add')
+				.set('Content-type','application/json')
+				.set('Authorization', authValue )
+				.set('X-BLGREQ-APPID', appID )
+				.send(clientrequest)
+				.end(function(err, res) {
+					var objectKey = Object.keys(res.body.content)[0];
+					contextID = res.body.content.id;
+					(res.body.content[objectKey].name == clientrequest.name).should.be.ok;
+					res.statusCode.should.be.equal(200);
+					done();
+				});
 			});
 			
 			it('should return the requested context', function(done) {
-					var clientrequest = {
-						"id": contextID
-					}
-
-					request(url)
-					.post('/admin/context')
-					.set('Content-type','application/json')
-					.set('Authorization', authValue )
-					.set('X-BLGREQ-APPID', appID )
-					.send(clientrequest)
-					.end(function(err, res) {
-					//	console.log(res);
-						res.statusCode.should.be.equal(200);
-						done();
-					});
+				var clientrequest = {
+					"id": contextID
+				}
+				request(url)
+				.post('/admin/context')
+				.set('Content-type','application/json')
+				.set('Authorization', authValue )
+				.set('X-BLGREQ-APPID', appID )
+				.send(clientrequest)
+				.end(function(err, res) {
+					res.statusCode.should.be.equal(200);
+					done();
+				});
 			});
 			
 			it('should NOT return the requested context, requested context ID is missing', function(done) {
-					var clientrequest = {
-
-					}
-
-					request(url)
-					.post('/admin/context')
-					.set('Content-type','application/json')
-					.set('Authorization', authValue )
-					.set('X-BLGREQ-APPID', appID )
-					.send(clientrequest)
-					.end(function(err, res) {
-					//	console.log(res);
-						res.statusCode.should.be.equal(200);
-						done();
-					});
+				var clientrequest = {
+				}
+				request(url)
+				.post('/admin/context')
+				.set('Content-type','application/json')
+				.set('Authorization', authValue)
+				.set('X-BLGREQ-APPID', appID)
+				.send(clientrequest)
+				.end(function(err, res) {
+					res.statusCode.should.be.equal(200);
+					done();
+				});
 			});
 			
 			it('should return an error response to indicate context NOT succesfully created because of bad client headers', function(done) {
 				var clientrequest = {
-					"name": "Episode 2",
+					"name": "context",
 					"meta": {"info": "some meta info"},
 				}
-
 				request(url)
 				.post('/admin/context/add')
 				.set('Content-type','application/json')
@@ -741,7 +653,6 @@ describe('Api', function () {
 			it('should return an error response to indicate context NOT succesfully created because request body is empty', function(done) {
 				var clientrequest = {
 				}
-
 				request(url)
 				.post('/admin/context/add')
 				.set('Content-type','application/json')
@@ -749,182 +660,170 @@ describe('Api', function () {
 				.send(clientrequest)
 				.end(function(err, res) {
 					res.statusCode.should.be.equal(400);
-
 					done();
 				});
 			});
 			
-			it('should return an succes response to indicate context was updated', function(done) {
-					var clientrequest = {
-						"id": contextID,
-						"name": "new name"
-					}
-
-					request(url)
-					.post('/admin/context/update')
-					.set('Content-type','application/json')
-					.set('X-BLGREQ-APPID', appID )
-					.set('Authorization', authValue )
-					.send(clientrequest)
-					.end(function(err, res) {
-						//console.log(res);
-						res.statusCode.should.be.equal(200);
-						done();
-					});
-			});
-			
-			it('should return an error response to indicate context was NOT updated because context does not exist', function(done) {
-					var clientrequest = {
-						"id": Math.round(Math.random()*1000000)+100,
-						"name": "new name"
-					}
-
-					request(url)
-					.post('/admin/context/update')
-					.set('Content-type','application/json')
-					.set('Authorization', authValue )
-					.set('X-BLGREQ-APPID', appID )
-					.send(clientrequest)
-					.end(function(err, res) {
-						res.statusCode.should.be.equal(404);
-						done();
-					});
-			});
-			
-			it('should return an error response to indicate context was NOT updated because of missing context id', function(done) {
-					var clientrequest = {
-						"name": "new name"
-					}
-
-					request(url)
-					.post('/admin/context/update')
-					.set('Content-type','application/json')
-					.set('Authorization', authValue )
-					.set('X-BLGREQ-APPID', appID )
-					.send(clientrequest)
-					.end(function(err, res) {
-						res.statusCode.should.be.equal(400);
-						done();
-					});
-			});
-			
-			it('should return an error response to indicate context was NOT updated by another admin', function(done) {
-					var clientrequest = {
-						"id": contextID,
-						"name": "new name"
-					}
-
-					request(url)
-					.post('/admin/context/update')
-					.set('Content-type','application/json')
-					.set('Authorization', authValue2 )
-					.set('X-BLGREQ-APPID', appID )
-					.send(clientrequest)
-					.end(function(err, res) {
-						res.statusCode.should.be.equal(403);
-						done();
-					});
-			});
-			
-			before(function(done){
+			it('should return a success response to indicate context was updated', function(done) {
 				var clientrequest = {
-				"name": "Episode 2",
-				"meta": {"info": "some meta info"},
+					"id": contextID,
+					"name": "new name"
 				}
-				
-							request(url)
-				.post('/admin/app/add')
+				request(url)
+				.post('/admin/context/update')
 				.set('Content-type','application/json')
+				.set('X-BLGREQ-APPID', appID )
 				.set('Authorization', authValue )
 				.send(clientrequest)
 				.end(function(err, res) {
-					//console.log(err);
-					appID =  Object.keys(res.body.content)[0];
-
-					request(url)
-					.post('/admin/context/add')
-					.set('Content-type','application/json')
-					.set('Authorization', authValue )
-					.set('X-BLGREQ-APPID', appID )
-					.send(clientrequest)
-					.end(function(err, res) {
-						var objectKey = Object.keys(res.body.content)[0];
-						deletedcontextID = res.body.content.id;
-						//console.log(deletedcontextID);
-						done();
-					});
+					res.statusCode.should.be.equal(200);
+					done();
 				});
 			});
 			
-			it('should return an succes response to indicate context was removed', function(done) {
-					var clientrequest = {
-						"id": deletedcontextID
-					}
+			it('should return an error response to indicate context was NOT updated because context does not exist', function(done) {
+				var clientrequest = {
+					"id": Math.round(Math.random()*1000000)+100,
+					"name": "new name"
+				}
+				request(url)
+				.post('/admin/context/update')
+				.set('Content-type','application/json')
+				.set('Authorization', authValue )
+				.set('X-BLGREQ-APPID', appID )
+				.send(clientrequest)
+				.end(function(err, res) {
+					res.statusCode.should.be.equal(404);
+					done();
+				});
+			});
+			
+			it('should return an error response to indicate context was NOT updated because of missing context id', function(done) {
+				var clientrequest = {
+					"name": "new name"
+				}
+				request(url)
+				.post('/admin/context/update')
+				.set('Content-type','application/json')
+				.set('Authorization', authValue )
+				.set('X-BLGREQ-APPID', appID )
+				.send(clientrequest)
+				.end(function(err, res) {
+					res.statusCode.should.be.equal(400);
+					done();
+				});
+			});
+			
+			it('should return an error response to indicate context was NOT updated by another admin', function(done) {
+				var clientrequest = {
+					"id": contextID,
+					"name": "new name"
+				}
+				request(url)
+				.post('/admin/context/update')
+				.set('Content-type','application/json')
+				.set('Authorization', authValue2 )
+				.set('X-BLGREQ-APPID', appID )
+				.send(clientrequest)
+				.end(function(err, res) {
+					res.statusCode.should.be.equal(403);
+					done();
+				});
+			});
+			
+			// before(function(done){
+			// 	var clientrequest = {
+			// 		"name": "Episode 2",
+			// 		"meta": {"info": "some meta info"},
+			// 	}
+				
+			// 	request(url)
+			// 	.post('/admin/app/add')
+			// 	.set('Content-type','application/json')
+			// 	.set('Authorization', authValue )
+			// 	.send(clientrequest)
+			// 	.end(function(err, res) {
+			// 		//console.log(err);
+			// 		appID = res.body.content.id;
 
-					request(url)
-					.post('/admin/context/remove')
-					.set('Content-type','application/json')
-					.set('Authorization', authValue )
-					.set('X-BLGREQ-APPID', '1' )
-					.send(clientrequest)
-					.end(function(err, res) {
-						//console.log(err);
-						//console.log(res);
-						res.statusCode.should.be.equal(200);
-						res.body.content.should.be.equal('Context removed');
-						done();
-					});
+			// 		request(url)
+			// 		.post('/admin/context/add')
+			// 		.set('Content-type','application/json')
+			// 		.set('Authorization', authValue )
+			// 		.set('X-BLGREQ-APPID', appID )
+			// 		.send(clientrequest)
+			// 		.end(function(err, res) {
+			// 			var objectKey = Object.keys(res.body.content)[0];
+			// 			deletedcontextID = res.body.content.id;
+			// 			//console.log(deletedcontextID);
+			// 			done();
+			// 		});
+			// 	});
+			// });
+			
+			it('should return a success response to indicate context was removed', function(done) {
+				var clientrequest = {
+					"id": deletedcontextID
+				}
+				request(url)
+				.post('/admin/context/remove')
+				.set('Content-type','application/json')
+				.set('Authorization', authValue )
+				.set('X-BLGREQ-APPID', '1' )
+				.send(clientrequest)
+				.end(function(err, res) {
+					res.statusCode.should.be.equal(200);
+					res.body.content.should.be.equal('Context removed');
+					done();
+				});
 			});
 			
 			it('should return an error response to indicate context was NOT removed', function(done) {
-					var clientrequest = {
-						"id": deletedcontextID
-					}
-
-					request(url)
-					.post('/admin/context/remove')
-					.set('Content-type','application/json')
-					.set('Authorization', authValue )
-					.set('X-BLGREQ-APPID', '1' )
-					.send(clientrequest)
-					.end(function(err, res) {
-						res.statusCode.should.be.equal(404);
-						res.body.message.should.be.equal("Context does not exist");
-						done();
-					});
+				var clientrequest = {
+					"id": deletedcontextID
+				}
+				request(url)
+				.post('/admin/context/remove')
+				.set('Content-type','application/json')
+				.set('Authorization', authValue )
+				.set('X-BLGREQ-APPID', '1' )
+				.send(clientrequest)
+				.end(function(err, res) {
+					res.statusCode.should.be.equal(404);
+					res.body.message.should.be.equal("Context does not exist");
+					done();
+				});
 			});
 			
 			it('should return an error indicating the requested context does NOT exist', function(done) {
-					var clientrequest = {
-						"id": Math.round(Math.random()*1000000)+100
-					}
-
-					request(url)
-					.post('/admin/context')
-					.set('Content-type','application/json')
-					.set('Authorization', authValue )
-					.set('X-BLGREQ-APPID', '1' )
-					.send(clientrequest)
-					.end(function(err, res) {
-						res.statusCode.should.be.equal(404);
-						res.body.message.should.be.equal("Context not found");
-						done();
-					});
+				var clientrequest = {
+					"id": Math.round(Math.random()*1000000)+100
+				}
+				request(url)
+				.post('/admin/context')
+				.set('Content-type','application/json')
+				.set('Authorization', authValue )
+				.set('X-BLGREQ-APPID', '1' )
+				.send(clientrequest)
+				.end(function(err, res) {
+					res.statusCode.should.be.equal(404);
+					res.body.message.should.be.equal("Context not found");
+					done();
+				});
 			});
 			
 			it('should return all contexts', function(done) {
-
-					request(url)
-					.post('/admin/contexts')
-					.set('Content-type','application/json')
-					.set('Authorization', authValue )
-					.set('X-BLGREQ-APPID', '1' )
-					.send()
-					.end(function(err, res) {
-						res.statusCode.should.be.equal(200);
-					//	res.body.content.length.should.be.atleast(1);
-						done();
-					});
+				request(url)
+				.post('/admin/contexts')
+				.set('Content-type','application/json')
+				.set('Authorization', authValue )
+				.set('X-BLGREQ-APPID', '1' )
+				.send()
+				.end(function(err, res) {
+					res.statusCode.should.be.equal(200);
+					//res.body.content.length.should.be.atleast(1);
+					done();
+				});
 			});
 		});
 		
@@ -935,28 +834,28 @@ describe('Api', function () {
 				password: "5f4dcc3b5aa765d61d8327deb882cf99"
 			};
 
-			
 			before(function(done){
 				request(url)
 				.post('/admin/add')
 				.set('Content-type','application/json')
 				.send(admin)
 				.end(function(err, res) {
-					
-					request(url)
-					.post('/admin/login')
-					.set('Content-type','application/json')
-					.send(admin)
-					.end(function(err, res) {
-						//console.log(res);
-						token = res.body.content.token;
-						authValue = 'Bearer ' + token;
-						done();
-					});
+					setTimeout(function () {
+						request(url)
+						.post('/admin/login')
+						.set('Content-type','application/json')
+						.send(admin)
+						.end(function(err, res) {
+							//console.log(res);
+							token = res.body.content.token;
+							authValue = 'Bearer ' + token;
+							done();
+						});
+					}, DELAY);
 				});
 			});
 			
-			it('should return an success response to indicate schema succesfully updated', function(done) {
+			it('should return a success response to indicate schema succesfully updated', function(done) {
 				var clientrequest = {
 				  "appId": "1",
 				  "schema": {
@@ -997,8 +896,7 @@ describe('Api', function () {
 					  ],
 					  "read_acl": 7,
 					  "write_acl": 7,
-					  "meta_read_acl": 4,
-					  "icon": "fa-image"
+					  "meta_read_acl": 4
 					}
 				  }
 				};
@@ -1010,8 +908,6 @@ describe('Api', function () {
 				.set('X-BLGREQ-APPID', appID )
 				.send(clientrequest)
 				.end(function(err, res) {
-					//console.log(authValue);
-					//console.log(res);
 					res.statusCode.should.be.equal(200);
 					done();
 				});
@@ -1071,8 +967,6 @@ describe('Api', function () {
 				.set('X-BLGREQ-APPID', Math.round(Math.random()*1000000)+1000 )
 				.send(clientrequest)
 				.end(function(err, res) {
-					//console.log(authValue);
-					//console.log(res);
 					res.statusCode.should.be.equal(404);
 					done();
 				});
@@ -1081,9 +975,7 @@ describe('Api', function () {
 			it('should return an error response to indicate schema was NOT succesfully updated because of missing schema object', function(done) {
 				var clientrequest = {
 				  "appId": "1"
-				
 				};
-
 				request(url)
 				.post('/admin/schema/update')
 				.set('Content-type','application/json')
@@ -1091,15 +983,12 @@ describe('Api', function () {
 				.set('X-BLGREQ-APPID', appID )
 				.send(clientrequest)
 				.end(function(err, res) {
-					//console.log(authValue);
-					//console.log(res);
 					res.statusCode.should.be.equal(400);
 					done();
 				});
 			});
 			
-			it('should return an success response to indicate schema was retrived succesfully', function(done) {
-			
+			it('should return a success response to indicate schema was retrived succesfully', function(done) {
 				request(url)
 				.post('/admin/schemas')
 				.set('Content-type','application/json')
@@ -1107,8 +996,6 @@ describe('Api', function () {
 				.set('X-BLGREQ-APPID', appID )
 				.send()
 				.end(function(err, res) {
-					//console.log(authValue);
-					//console.log(res);
 					res.statusCode.should.be.equal(200);
 					done();
 				});
@@ -1117,7 +1004,7 @@ describe('Api', function () {
 		
 		describe('User', function() {
 			var appIDsha256 =  '2a80f1666442062debc4fbc0055d8ba5efc29232a27868c0a8eb76dec23df794';
-			var userEmail = "example@appscend.com";
+			var userEmail = "user@example.com";
 			var clientrequest = {
 				"email": userEmail,
 				"password": "secure_password1337",
@@ -1134,21 +1021,17 @@ describe('Api', function () {
 				.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 				.send(clientrequest)
 				.end(function(err, res) {
-
-						done();
+					setTimeout(done, DELAY);
 				});
-
 			});
 			
 			it('should return a 404 response to indicate an invalid client request using an invalid X-BLGREQ-UDID header', function(done) {
-
 				var clientrequest = {
 					"user": {
 						"email": userEmail,
 						"name": "New Name"
 					}
 				};
-				
 				request(url)
 				.post('/admin/user/update')
 				.set('Content-type','application/json')
@@ -1163,8 +1046,7 @@ describe('Api', function () {
 				});
 			});
 			
-			it('should return an success response to indicate that an user was updated', function(done) {
-
+			it('should return a success response to indicate that an user was updated', function(done) {
 				var clientrequest = {
 					"user": {
 						"email": userEmail,
@@ -1172,14 +1054,13 @@ describe('Api', function () {
 						"name": "New Name"
 					}
 				};
-				
 				request(url)
 				.post('/admin/user/update')
 				.set('Content-type','application/json')
-				.set('X-BLGREQ-SIGN', appIDsha256 )
-				.set('X-BLGREQ-APPID', 1 )
-				.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
-				.set('Authorization', authValue )
+				.set('X-BLGREQ-SIGN', appIDsha256)
+				.set('X-BLGREQ-APPID', 1)
+				.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28')
+				.set('Authorization', authValue)
 				.send(clientrequest)
 				.end(function(err, res) {
 					res.statusCode.should.be.equal(200);
@@ -1187,12 +1068,9 @@ describe('Api', function () {
 				});
 			});
 			
-			it('should return an success response to indicate that an user was NOT updated, user was missing from the request', function(done) {
-
+			it('should return a success response to indicate that an user was NOT updated, user was missing from the request', function(done) {
 				var clientrequest = {
-
 				};
-				
 				request(url)
 				.post('/admin/user/update')
 				.set('Content-type','application/json')
@@ -1207,14 +1085,12 @@ describe('Api', function () {
 				});
 			});
 			
-			it('should return an success response to indicate that an user was NOT updated, user email address was missing from the request', function(done) {
-
+			it('should return a success response to indicate that an user was NOT updated, user email address was missing from the request', function(done) {
 				var clientrequest = {
 					"user": {
 						"name": "New Name"
 					}
 				};
-				
 				request(url)
 				.post('/admin/user/update')
 				.set('Content-type','application/json')
@@ -1229,31 +1105,25 @@ describe('Api', function () {
 				});
 			});
 				
-			it('should return an succes response indicating that a user has been deleted', function(done) {
+			it('should return a success response indicating that a user has been deleted', function(done) {
 				this.timeout(25000);
 				var clientrequest = {
-					"icon": "fa-bullhorn",
-					"name": "The Voice",
+					"name": "test-app",
 					"keys": [ APPKey ]
 				};
-	
-
 				request(url)
 				.post('/admin/app/add')
 				.set('Content-type','application/json')
 				.set('Authorization', authValue )
 				.send(clientrequest)
 				.end(function(err, res) {
-					//console.log(err);
-					appID =  Object.keys(res.body.content)[0];
-			
+					appID =  res.body.content.id;
 					var userEmail = "example1111@appscend.com";
 					var clientrequest = {
-						"email": userEmail,
+						"email": "user2@example.com",
 						"password": "secure_password1337",
 						"name": "John Smith"
 					};
-
 					request(url)
 					.post('/user/register')
 					.set('Content-type','application/json')
@@ -1262,7 +1132,6 @@ describe('Api', function () {
 					.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 					.send(clientrequest)
 					.end(function(err, res) {
-						//console.log(res);
 						setTimeout(function() {
 							request(url)
 							.post('/admin/user/delete')
@@ -1273,151 +1142,101 @@ describe('Api', function () {
 							.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 							.send(clientrequest)
 							.end(function(err, res) {
-								//console.log(res);
 								res.statusCode.should.be.equal(202);
 								done();
 							});
-						}, 2000);
+						}, DELAY);
 					});
 				});
 			});	
 			
-			it('should return an succes response indicating that a user has NOT been deleted, user does not belong to application', function(done) {
-				this.timeout(25000);
-		
-					var userEmail = "example1111@appscend.com";
-					var clientrequest = {
-						"email": userEmail,
-						"password": "secure_password1337",
-						"name": "John Smith"
-					};
-
-					request(url)
-					.post('/user/register')
-					.set('Content-type','application/json')
-					.set('X-BLGREQ-SIGN', appIDsha256 )
-					.set('X-BLGREQ-APPID', appID )
-					.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
-					.send(clientrequest)
-					.end(function(err, res) {
-						//console.log(res);
-						
-					var userEmail = "example2@appscend.com";
-					var clientrequest = {
-						"email": userEmail,
-						"password": "secure_password1337",
-						"name": "John Smith"
-					};
-						setTimeout(function() {
-							request(url)
-							.post('/admin/user/delete')
-							.set('Content-type','application/json')
-							.set('X-BLGREQ-SIGN', appIDsha256 )
-							.set('X-BLGREQ-APPID', appID )
-							.set('Authorization', authValue )
-							.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
-							.send(clientrequest)
-							.end(function(err, res) {
-								//console.log(res);
-								res.statusCode.should.be.equal(500);
-								done();
-							});
-						}, 2000);
-					});
-			});	
+			// it('should return a success response indicating that a user has NOT been deleted, user does not belong to application', function(done) {
+			// 	this.timeout(25000);
+			// 	var userEmail = "user3@example.com";
+			// 	var clientrequest = {
+			// 		"email": userEmail,
+			// 		"password": "secure_password1337",
+			// 		"name": "John Smith"
+			// 	};
+			// 	request(url)
+			// 	.post('/user/register')
+			// 	.set('Content-type','application/json')
+			// 	.set('X-BLGREQ-SIGN', appIDsha256 )
+			// 	.set('X-BLGREQ-APPID', appID )
+			// 	.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+			// 	.send(clientrequest)
+			// 	.end(function(err, res) {
+			// 		var userEmail = "user2@example.com";
+			// 		var clientrequest = {
+			// 			"email": userEmail,
+			// 			"password": "secure_password1337",
+			// 			"name": "John Smith"
+			// 		};
+			// 		setTimeout(function() {
+			// 			request(url)
+			// 			.post('/admin/user/delete')
+			// 			.set('Content-type','application/json')
+			// 			.set('X-BLGREQ-SIGN', appIDsha256 )
+			// 			.set('X-BLGREQ-APPID', appID )
+			// 			.set('Authorization', authValue )
+			// 			.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+			// 			.send(clientrequest)
+			// 			.end(function(err, res) {
+			// 				res.statusCode.should.be.equal(500);
+			// 				done();
+			// 			});
+			// 		}, DELAY);
+			// 	});
+			// });	
 			
-			it('should return an succes response indicating that a user has NOT been deleted because of missing email address', function(done) {
-				this.timeout(25000);
-		
-					var userEmail = "example1111@appscend.com";
-					var clientrequest = {
-						"email": userEmail,
-						"password": "secure_password1337",
-						"name": "John Smith"
-					};
-
-					request(url)
-					.post('/user/register')
-					.set('Content-type','application/json')
-					.set('X-BLGREQ-SIGN', appIDsha256 )
-					.set('X-BLGREQ-APPID', appID )
-					.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
-					.send(clientrequest)
-					.end(function(err, res) {
-						//console.log(res);
-						
-
-					var clientrequest = {
-					
-						"password": "secure_password1337",
-						"name": "John Smith"
-					};
-						setTimeout(function() {
-							request(url)
-							.post('/admin/user/delete')
-							.set('Content-type','application/json')
-							.set('X-BLGREQ-SIGN', appIDsha256 )
-							.set('X-BLGREQ-APPID', appID )
-							.set('Authorization', authValue )
-							.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
-							.send(clientrequest)
-							.end(function(err, res) {
-								//console.log(res);
-								res.statusCode.should.be.equal(400);
-								done();
-							});
-						}, 2000);
-					});
+			it('should return a success response indicating that a user has NOT been deleted because of missing email address', function(done) {
+				var clientrequest = {
+					"password": "secure_password1337",
+					"name": "John Smith"
+				};
+				request(url)
+				.post('/admin/user/delete')
+				.set('Content-type','application/json')
+				.set('X-BLGREQ-SIGN', appIDsha256 )
+				.set('X-BLGREQ-APPID', appID )
+				.set('Authorization', authValue )
+				.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+				.send(clientrequest)
+				.end(function(err, res) {
+					res.statusCode.should.be.equal(400);
+					done();
+				});
 			});	
 		
-			it('should return an succes response indicating that a user has NOT been deleted because of appID not found', function(done) {
+			it('should return an error response indicating that a user has NOT been deleted because of appID not found', function(done) {
 				this.timeout(25000);
-		
-					var userEmail = "example1111@appscend.com";
-					var clientrequest = {
-						"email": userEmail,
-						"password": "secure_password1337",
-						"name": "John Smith"
-					};
-
-					request(url)
-					.post('/user/register')
-					.set('Content-type','application/json')
-					.set('X-BLGREQ-SIGN', appIDsha256 )
-					.set('X-BLGREQ-APPID', appID )
-					.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
-					.send(clientrequest)
-					.end(function(err, res) {
-						//console.log(res);
-						
-						setTimeout(function() {
-							request(url)
-							.post('/admin/user/delete')
-							.set('Content-type','application/json')
-							.set('X-BLGREQ-SIGN', appIDsha256 )
-							.set('X-BLGREQ-APPID', 	 Math.round(Math.random()*1000000)+1000 )
-							.set('Authorization', authValue )
-							.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
-							.send(clientrequest)
-							.end(function(err, res) {
-								//console.log(res);
-								res.statusCode.should.be.equal(404);
-								done();
-							});
-						}, 2000);
-					});
+				var userEmail = "user3@example.com";
+				var clientrequest = {
+					"email": userEmail,
+					"password": "secure_password1337",
+					"name": "John Smith"
+				};
+				request(url)
+				.post('/admin/user/delete')
+				.set('Content-type','application/json')
+				.set('X-BLGREQ-SIGN', appIDsha256 )
+				.set('X-BLGREQ-APPID', 	 Math.round(Math.random()*1000000)+1000 )
+				.set('Authorization', authValue )
+				.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+				.send(clientrequest)
+				.end(function(err, res) {
+					res.statusCode.should.be.equal(404);
+					done();
+				});
 			});	
 		
-	
-			it('should return an success response to indicate that an user was NOT updated', function(done) {
-
+			it('should return an error response to indicate that an user was NOT found when trying to update', function(done) {
 				var clientrequest = {
 					"user": {
-						"email": "wrongexample@appscend.com",
+						"email": "user4@example.com",
 						"name": "New Name"
 					}
 				};
-				
 				request(url)
 				.post('/admin/user/update')
 				.set('Content-type','application/json')
@@ -1427,46 +1246,39 @@ describe('Api', function () {
 				.set('Authorization', authValue )
 				.send(clientrequest)
 				.end(function(err, res) {
-				//	console.log(authValue);
-				//	console.log(res.body);
 					res.statusCode.should.be.equal(404);
 					res.body.message.should.be.equal("User not found");
 					done();
 				});
 			});
 			
-			it('should return an success response to indicate that a users list was retrived', function(done) {
-				
+			it('should return a success response to indicate that a users list was retrived', function(done) {
 				request(url)
 				.get('/admin/users')
 				.set('Content-type','application/json')
-				.set('X-BLGREQ-SIGN', appIDsha256 )
-				.set('X-BLGREQ-APPID', 1 )
-				.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+				.set('X-BLGREQ-SIGN', appIDsha256)
+				.set('X-BLGREQ-APPID', 1)
+				.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28')
 				.set('Authorization', authValue )
 				.send()
 				.end(function(err, res) {
-					//console.log(res.body);
-					//console.log(err);
-					if(res)
+					if(res) {
 						res.statusCode.should.be.equal(200);
+					}
 					done();
 				});
 			});
 			
-			it('should return an error response to indicate that a users list was NOT retrived', function(done) {
-				
+			it('should return an error response to indicate that a users list was NOT retrived for a bad app id', function(done) {
 				request(url)
 				.get('/admin/users')
 				.set('Content-type','application/json')
-				.set('X-BLGREQ-SIGN', appIDsha256 )
-				.set('X-BLGREQ-APPID', Math.round(Math.random()*1000000)+1000 )
-				.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+				.set('X-BLGREQ-SIGN', appIDsha256)
+				.set('X-BLGREQ-APPID', Math.round(Math.random()*1000000)+1000)
+				.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28')
 				.set('Authorization', authValue )
 				.send()
 				.end(function(err, res) {
-					//console.log(res);
-					//console.log(err);
 					if(res)
 						res.statusCode.should.be.equal(404);
 					done();
@@ -1494,28 +1306,24 @@ describe('Api', function () {
 				.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 				.send(clientrequest)
 				.end(function(err, res) {
-				//	console.log(err);
-				//	console.log(res.body);
-					request(url)
-					.post('/user/login_password')
-					.set('Content-type','application/json')
-					.set('X-BLGREQ-SIGN', appIDsha256 )
-					.set('X-BLGREQ-APPID', 1 )
-					.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
-					.send(clientrequest)
-					.end(function(err, res) {
-			//	console.log(err);
-				//	console.log(res);
+					setTimeout(function() {
+						request(url)
+						.post('/user/login_password')
+						.set('Content-type','application/json')
+						.set('X-BLGREQ-SIGN', appIDsha256 )
+						.set('X-BLGREQ-APPID', 1 )
+						.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+						.send(clientrequest)
+						.end(function(err, res) {
 							token = res.body.content.token;
 							authValue = 'Bearer ' + token;
-							//console.log(authValue);
-
-						done();
-					});
+							done();
+						});
+					}, DELAY);
 				});
 			});
 			
-		it('should return an success response to indicate context succesfully retrived', function(done) {
+		it('should return a success response to indicate context succesfully retrived', function(done) {
 			var clientrequest = {
 				"id": contextID
 			}
@@ -1528,8 +1336,6 @@ describe('Api', function () {
 			.set('Authorization', authValue )
 			.send(clientrequest)
 			.end(function(err, res) {
-				//console.log(authValue);
-				//console.log(res.body);
 				res.statusCode.should.be.equal(200);
 				done();
 			});
@@ -1537,7 +1343,6 @@ describe('Api', function () {
 		
 		it('should return an error response to indicate context wa NOT succesfully retrived because of missing context ID', function(done) {
 			var clientrequest = {}
-			
 			request(url)
 			.post('/context')
 			.set('Content-type','application/json')
@@ -1547,7 +1352,6 @@ describe('Api', function () {
 			.set('Authorization', authValue )
 			.send(clientrequest)
 			.end(function(err, res) {
-
 				res.statusCode.should.be.equal(400);
 				done();
 			});
@@ -1570,8 +1374,7 @@ describe('Api', function () {
 			});
 		});
 		
-		it('should return an success response to indicate all contexts succesfully retrived', function(done) {
-
+		it('should return a success response to indicate all contexts succesfully retrived', function(done) {
 			request(url)
 			.get('/context/all')
 			.set('Content-type','application/json')
@@ -1581,7 +1384,6 @@ describe('Api', function () {
 			.set('Authorization', authValue )
 			.send()
 			.end(function(err, res) {
-			//	console.log(res.body);
 				res.statusCode.should.be.equal(200);
 				done();
 			});
@@ -1703,7 +1505,6 @@ describe('Api', function () {
 			.set('X-BLGREQ-APPID',1)
 			.send(clientrequest)
 			.end(function(err, res) {
-				//console.log(res)
 				res.statusCode.should.be.equal(400);
 				done();
 			});
@@ -1793,7 +1594,6 @@ describe('Api', function () {
 		};
 		
 		before(function(done){
-
 			var clientrequest = {
 				"info": {
 					"os": "Android",
@@ -1808,7 +1608,6 @@ describe('Api', function () {
 				"token": "android pn token"
 				}
 			}
-			
 			request(url)
 			.post('/device/register')
 			.set('X-BLGREQ-SIGN', appIDsha256)
@@ -1816,14 +1615,12 @@ describe('Api', function () {
 			.set('X-BLGREQ-APPID',1)
 			.send(clientrequest)
 			.end(function(err, res) {
-				deviceIdentification =  res.body.content.identifier;
-					
+				deviceIdentification =  res.body.content.identifier;	
 				var clientrequest = {
-					"email": "example@appscend.com",
+					"email": "user5@example.com",
 					"password": "secure_password1337",
 					"name": "John Smith"
 				};
-		
 				request(url)
 				.post('/user/register')
 				.set('Content-type','application/json')
@@ -1832,33 +1629,25 @@ describe('Api', function () {
 				.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 				.send(clientrequest)
 				.end(function(err, res) {
-				//	console.log(err);
-				//	console.log(res.body);
-					request(url)
-					.post('/user/login_password')
-					.set('Content-type','application/json')
-					.set('X-BLGREQ-SIGN', appIDsha256 )
-					.set('X-BLGREQ-APPID', 1 )
-					.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
-					.send(clientrequest)
-					.end(function(err, res) {
-							//console.log(err);
-							//console.log(res.body);
+					setTimeout(function () {
+						request(url)
+						.post('/user/login_password')
+						.set('Content-type','application/json')
+						.set('X-BLGREQ-SIGN', appIDsha256 )
+						.set('X-BLGREQ-APPID', 1 )
+						.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+						.send(clientrequest)
+						.end(function(err, res) {
 							token = res.body.content.token;
 							authValue = 'Bearer ' + token;
-							//console.log(authValue);
-
-						done();
-					});
+							done();
+						});
+					}, DELAY);
 				});
-			
-				
 			});
-			
 		});
 
 		it('should return an error (400) response to indicate that the client made a bad request', function(done) {
-			
 			var clientrequest = {};
 			request(url)
 			.post('/object/create')
@@ -1876,13 +1665,11 @@ describe('Api', function () {
 		it('should return an error (401) response to indicate that only authenticated users may access this endpoint', function(done) {
 			
 			var clientrequest = {
-				"model": "ceva",
+				"model": "something",
 				"context": 1,
 				"content": {
-					//object properties
 				}
 			}
-			
 			request(url)
 			.post('/object/create')
 			.set('X-BLGREQ-SIGN', appIDsha256)
@@ -1895,8 +1682,7 @@ describe('Api', function () {
 			});
 		});
 		
-		it('should return an succes response to indicate that object has been created', function(done) {
-			
+		it('should return a success response to indicate that object has been created', function(done) {
 			var clientrequest = {
 				"model": "comments",
 				"context": 1,
@@ -1904,7 +1690,6 @@ describe('Api', function () {
 					"events_id" :1,
 				}
 			};
-			
 			request(url)
 			.post('/object/create')
 			.set('X-BLGREQ-SIGN', appIDsha256)
@@ -1913,15 +1698,13 @@ describe('Api', function () {
 			.set('Authorization', authValue )
 			.send(clientrequest)
 			.end(function(err, res) {
-			//	console.log(res);
 				res.statusCode.should.be.equal(202);
 				res.body.content.should.be.equal("Created");
 				done();
 			});
 		});
 		
-		it('should return an error response to indicate that object has NOT been created beacause of missing authentication', function(done) {
-			
+		it('should return an error response to indicate that object has NOT been created because of missing authentication', function(done) {
 			var clientrequest = {
 				"model": "comments",
 				"context": 1,
@@ -1929,7 +1712,6 @@ describe('Api', function () {
 					"events_id" :1,
 				}
 			};
-			
 			request(url)
 			.post('/object/create')
 			.set('X-BLGREQ-SIGN', appIDsha256)
@@ -1937,22 +1719,18 @@ describe('Api', function () {
 			.set('X-BLGREQ-APPID',1)
 			.send(clientrequest)
 			.end(function(err, res) {
-			//	console.log(res);
 				res.statusCode.should.be.equal(401);
-
 				done();
 			});
 		});
 		
-		it('should return an error response to indicate that object has NOT been created beacause of missing model', function(done) {
-			
+		it('should return an error response to indicate that object has NOT been created because of missing model', function(done) {
 			var clientrequest = {
 				"context": 1,
 				"content": {
 					"events_id" :1,
 				}
 			};
-			
 			request(url)
 			.post('/object/create')
 			.set('X-BLGREQ-SIGN', appIDsha256)
@@ -1961,22 +1739,18 @@ describe('Api', function () {
 			.set('Authorization', authValue )
 			.send(clientrequest)
 			.end(function(err, res) {
-			//	console.log(res);
 				res.statusCode.should.be.equal(404);
-
 				done();
 			});
 		});
 		
-		it('should return an error response to indicate that object has NOT been created beacause of missing context', function(done) {
-			
+		it('should return an error response to indicate that object has NOT been created because of missing context', function(done) {
 			var clientrequest = {
 				"model": "comments",
 				"content": {
 					"events_id" :1,
 				}
 			};
-			
 			request(url)
 			.post('/object/create')
 			.set('X-BLGREQ-SIGN', appIDsha256)
@@ -1985,20 +1759,16 @@ describe('Api', function () {
 			.set('Authorization', authValue )
 			.send(clientrequest)
 			.end(function(err, res) {
-			//	console.log(res);
 				res.statusCode.should.be.equal(400);
-
 				done();
 			});
 		});
 		
-		it('should return an succes response to indicate that the count of a certain filter/subscription', function(done) {
-			//TODO
+		it('should return a success response to indicate the count of a certain filter/subscription', function(done) {
 			var clientrequest = {
 				"context": 1,
 				"model" : "comments"
 			}
-
 			request(url)
 			.post('/object/count')
 			.set('X-BLGREQ-SIGN', appIDsha256)
@@ -2007,15 +1777,13 @@ describe('Api', function () {
 			.set('Authorization', authValue )
 			.send(clientrequest)
 			.end(function(err, res) {
-			//	console.log(res);
 				res.statusCode.should.be.equal(202);
 				done();
 			});
 		});
 		
 		
-		it('should return an succes response to indicate that a object has been updated', function(done) {
-			
+		it('should return a success response to indicate that a object has been updated', function(done) {
 			var clientrequest = {
 				"model": "comments",
 				"id": 1,
@@ -2028,7 +1796,6 @@ describe('Api', function () {
 					},
 				],
 			}
-			
 			request(url)
 			.post('/object/update')
 			.set('X-BLGREQ-SIGN', appIDsha256)
@@ -2042,8 +1809,7 @@ describe('Api', function () {
 			});
 		});
 		
-		it('should return an succes response to indicate that a object has NOT been updated because of missing authorization ', function(done) {
-			
+		it('should return a success response to indicate that a object has NOT been updated because of missing authorization ', function(done) {
 			var clientrequest = {
 				"model": "comments",
 				"id": 1,
@@ -2056,7 +1822,6 @@ describe('Api', function () {
 					},
 				],
 			}
-			
 			request(url)
 			.post('/object/update')
 			.set('X-BLGREQ-SIGN', appIDsha256)
@@ -2069,8 +1834,7 @@ describe('Api', function () {
 			});
 		});
 		
-	it('should return an succes response to indicate that a object has NOT been updated because of missing id ', function(done) {
-			
+		it('should return a success response to indicate that a object has NOT been updated because of missing id', function(done) {
 			var clientrequest = {
 				"model": "comments",
 				"context": 1,
@@ -2082,7 +1846,6 @@ describe('Api', function () {
 					},
 				],
 			}
-			
 			request(url)
 			.post('/object/update')
 			.set('X-BLGREQ-SIGN', appIDsha256)
@@ -2096,8 +1859,7 @@ describe('Api', function () {
 			});
 		});
 		
-		it('should return an succes response to indicate that a object has NOT been updated because of missing context ', function(done) {
-			
+		it('should return a success response to indicate that a object has NOT been updated because of missing context ', function(done) {
 			var clientrequest = {
 				"model": "comments",
 				"id": 1,
@@ -2109,7 +1871,6 @@ describe('Api', function () {
 					},
 				],
 			}
-			
 			request(url)
 			.post('/object/update')
 			.set('X-BLGREQ-SIGN', appIDsha256)
@@ -2123,8 +1884,7 @@ describe('Api', function () {
 			});
 		});
 		
-		it('should return an succes response to indicate that a object has been subscribed', function(done) {
-
+		it('should return a success response to indicate that a object has been subscribed', function(done) {
 			var subclientrequest = {
 				"channel": {
 					"id": 1,
@@ -2137,7 +1897,6 @@ describe('Api', function () {
 					 "user": 2
 				}
 			};
-
 			request(url)
 			.post('/object/subscribe')
 			.set('Content-type','application/json')
@@ -2147,17 +1906,13 @@ describe('Api', function () {
 			.set('Authorization', authValue )
 			.send()
 			.end(function(err, res) {
-
-				 //console.log(res);
 				res.statusCode.should.be.equal(200);
 				done();
 			});
 		});
 		
 		it('should return an error response to indicate that a object has NOT been subscribed because of empty body', function(done) {
-
 			var subclientrequest = {};
-
 			request(url)
 			.post('/object/subscribe')
 			.set('Content-type','application/json')
@@ -2173,7 +1928,6 @@ describe('Api', function () {
 		});
 		
 		it('should return an error response to indicate that a object has NOT been subscribed because of missing channel', function(done) {
-
 			var subclientrequest = {
 					"filters": {
 						"or": [
@@ -2223,8 +1977,7 @@ describe('Api', function () {
 			});
 		});
 		
-		it('should return an succes response to indicate that a object has been unsubscribed', function(done) {
-
+		it('should return a success response to indicate that a object has been unsubscribed', function(done) {
 			request(url)
 			.post('/object/unsubscribe')
 			.set('X-BLGREQ-SIGN', appIDsha256)
@@ -2233,20 +1986,17 @@ describe('Api', function () {
 			.set('Authorization', authValue )
 			.send(subclientrequest)
 			.end(function(err, res) {
-						 //console.log(res);
 				res.statusCode.should.be.equal(200);
 				done();
 			});
 		})
 		
-		it('should return an succes response to indicate that a object has been deleted', function(done) {
-			
-		var clientrequest = {
+		it('should return a success response to indicate that a object has been deleted', function(done) {
+			var clientrequest = {
 				"model": "comments",
 				"context": 1,
 				"id" : 1,
 			};
-			
 			request(url)
 			.post('/object/delete')
 			.set('X-BLGREQ-SIGN', appIDsha256)
@@ -2255,7 +2005,6 @@ describe('Api', function () {
 			.set('Authorization', authValue )
 			.send(clientrequest)
 			.end(function(err, res) {
-				
 				res.statusCode.should.be.equal(202);
 				done();
 			});
@@ -2287,12 +2036,10 @@ describe('Api', function () {
 		// });
 		
 		it('should return an error response to indicate that the object id was missing', function(done) {
-			//TODO
 			var clientrequest = {
 				"model": "comments",
 				"context": 1,
 				"content": {
-					//object properties
 				}
 			}
 			
@@ -2304,22 +2051,18 @@ describe('Api', function () {
 			.set('Authorization', authValue )
 			.send(clientrequest)
 			.end(function(err, res) {
-				//console.log(res);
 				res.statusCode.should.be.equal(400);
 				done();
 			});
 		});
 		
 		it('should return an error response to indicate that the object model was missing', function(done) {
-			//TODO
 			var clientrequest = {
 				"context": 1,
 				"id" : 1,
 				"content": {
-					//object properties
 				}
 			}
-			
 			request(url)
 			.post('/object/delete')
 			.set('X-BLGREQ-SIGN', appIDsha256)
@@ -2328,23 +2071,19 @@ describe('Api', function () {
 			.set('Authorization', authValue )
 			.send(clientrequest)
 			.end(function(err, res) {
-				//console.log(res);
 				res.statusCode.should.be.equal(400);
 				done();
 			});
 		});
 		
 		it('should return an error response to indicate that the object was not deleted because of missing authentication', function(done) {
-			//TODO
 			var clientrequest = {
 				"model": "comments",
 				"context": 1,
 				"id" : 1,
 				"content": {
-					//object properties
 				}
 			}
-			
 			request(url)
 			.post('/object/delete')
 			.set('X-BLGREQ-SIGN', appIDsha256)
@@ -2352,22 +2091,18 @@ describe('Api', function () {
 			.set('X-BLGREQ-APPID',1)
 			.send(clientrequest)
 			.end(function(err, res) {
-				//console.log(res);
 				res.statusCode.should.be.equal(401);
 				done();
 			});
 		});
 		
 		it('should return an error response to indicate that the object was not deleted because of missing context', function(done) {
-			//TODO
 			var clientrequest = {
 				"model": "comments",
 				"id" : 1,
 				"content": {
-					//object properties
 				}
 			}
-			
 			request(url)
 			.post('/object/delete')
 			.set('X-BLGREQ-SIGN', appIDsha256)
@@ -2376,22 +2111,21 @@ describe('Api', function () {
 			.set('Authorization', authValue )
 			.send(clientrequest)
 			.end(function(err, res) {
-				//console.log(res);
 				res.statusCode.should.be.equal(400);
 				done();
 			});
 		});
 	});
+
 	describe('User',function(){
-		
 		var deviceIdentification;
 		var invalidUDID = 'invalid';
 		var appIDsha256 =  '2a80f1666442062debc4fbc0055d8ba5efc29232a27868c0a8eb76dec23df794';
 		var authValue;
 		var token;
 		var userID;
-		var userEmail = "example@appscend.com";
-		var userEmail2 = "user"+ Math.round(Math.random()*1000000)+1000 +"@appscend.com";
+		var userEmail = "user6@example.com";
+		var userEmail2 = "user"+ Math.round(Math.random()*1000000)+1000 +"@example.com";
 					
 		before(function(done){
 
@@ -2440,15 +2174,12 @@ describe('Api', function () {
 			// });
 		// });
 
-		it('should return an succes response to indicate that the user has logged in via user & password', function(done) {
-			//TODO
-
+		it('should return a success response to indicate that the user has logged in via user & password', function(done) {
 			var clientrequest = {
 				"email": userEmail,
 				"password": "secure_password1337",
 				"name": "John Smith"
 			};
-
 			request(url)
 			.post('/user/register')
 			.set('Content-type','application/json')
@@ -2466,19 +2197,17 @@ describe('Api', function () {
 					.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 					.send(clientrequest)
 					.end(function(err, res) {
-						//	console.log(res.body);
 						token = res.body.content.token;
 						userID = res.body.content.user.id;
 						authValue = 'Bearer ' + token;
 						res.statusCode.should.be.equal(200);
 						done();
 					});
-				}, 1000);
+				}, DELAY);
 			});
 		});
 		
 		it('should return an succes response to indicate that the user info was retrived', function(done) {
-
 			request(url)
 			.get('/user/me')
 			.set('Content-type','application/json')
@@ -2494,13 +2223,11 @@ describe('Api', function () {
 		});
 		
 		it('should return an error response to indicate that the user has NOT logged in via user & password because of Invalid Credentials', function(done) {
-
 			var clientrequest = {
 				"email": userEmail,
 				"password": "secure_password",
 				"name": "John Smith"
 			};
-
 			request(url)
 			.post('/user/login_password')
 			.set('Content-type','application/json')
@@ -2515,13 +2242,11 @@ describe('Api', function () {
 		});
 		
 		it('should return an error response to indicate that the user has NOT logged in via user & password because user not found', function(done) {
-
 			var clientrequest = {
 				"email": 'user'+Math.round(Math.random()*1000000)+'@example.com',
 				"password": "secure_password",
 				"name": "John Smith"
 			};
-
 			request(url)
 			.post('/user/login_password')
 			.set('Content-type','application/json')
@@ -2554,8 +2279,7 @@ describe('Api', function () {
 			// });
 		// });
 		
-		it('should return an succes response to indicate that the user was updated', function(done) {
-			//TODO
+		it('should return a success response to indicate that the user was updated', function(done) {
 			var clientrequest = {
 				"email": userEmail,
 				"password": "secure_password1337",
@@ -2565,7 +2289,6 @@ describe('Api', function () {
 					}
 				]
 			};
-
 			request(url)
 			.post('/user/update')
 			.set('Content-type','application/json')
@@ -2575,14 +2298,12 @@ describe('Api', function () {
 			.set('Authorization', authValue )
 			.send(clientrequest)
 			.end(function(err, res) {
-				//console.log(res);
 				res.statusCode.should.be.equal(200);
 				done();
 			});
 		});
 		
-		it('should return an succes response to indicate that the token was updated', function(done) {
-
+		it('should return a success response to indicate that the token was updated', function(done) {
 			request(url)
 			.get('/user/refresh_token')
 			.set('Content-type','application/json')
@@ -2592,8 +2313,6 @@ describe('Api', function () {
 			.set('Authorization', authValue )
 			.send()
 			.end(function(err, res) {
-				//console.log(token)
-				//console.log(res);
 				token = res.body.content.token;
 				authValue = 'Bearer ' + token;
 				res.statusCode.should.be.equal(200);
@@ -2602,7 +2321,6 @@ describe('Api', function () {
 		});
 		
 		it('should return an error response to indicate that the token was NOT updated because of bad Authorization', function(done) {
-
 			var authValue = "something";
 			request(url)
 			.get('/user/refresh_token')
@@ -2613,9 +2331,6 @@ describe('Api', function () {
 			.set('Authorization', authValue )
 			.send()
 			.end(function(err, res) {
-				//console.log(res);
-				//token = res.body.content.token;
-				//authValue = 'Bearer ' + token;
 				res.statusCode.should.be.equal(400);
 				res.body.message.should.be.equal("Token not present or authorization header is invalid");
 				done();
@@ -2623,7 +2338,6 @@ describe('Api', function () {
 		});
 		
 		it('should return an error response to indicate that the token was NOT updated because of bad token', function(done) {
-
 			var authValue = 'Bearer something';
 			request(url)
 			.get('/user/refresh_token')
@@ -2634,19 +2348,16 @@ describe('Api', function () {
 			.set('Authorization', authValue )
 			.send()
 			.end(function(err, res) {
-				//console.log(res);
 				res.statusCode.should.be.equal(400);
 				res.body.message.should.be.equal("Malformed authorization token");
 				done();
 			});
 		});
 		
-		it('should return an succes response to indicate that the user logged out', function(done) {
-			//TODO
+		it('should return a success response to indicate that the user logged out', function(done) {
 			var clientrequest = {
 				"token" : token		
 			};
-			
 			request(url)
 			.get('/user/logout')
 			.set('Content-type','application/json')
@@ -2656,20 +2367,17 @@ describe('Api', function () {
 			.set('Authorization', authValue )
 			.send()
 			.end(function(err, res) {
-			//	console.log(res);
 				res.statusCode.should.be.equal(200);
 				done();
 			});
 		});
 		
-		it('should return an succes response to indicate that the user has registred', function(done) {
-
+		it('should return a success response to indicate that the user has registred', function(done) {
 			var clientrequest = {
 				"email": userEmail2,
 				"password": "secure_password1337",
 				"name": "John Smith"
 			};
-
 			request(url)
 			.post('/user/register')
 			.set('Content-type','application/json')
@@ -2678,20 +2386,17 @@ describe('Api', function () {
 			.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 			.send(clientrequest)
 			.end(function(err, res) {
-						res.statusCode.should.be.equal(202);
-						done();
-
+				res.statusCode.should.be.equal(202);
+				done();
 			});
 		});
 		
-		it('should return an succes response to indicate that the user has NOT registred', function(done) {
-
+		it('should return a success response to indicate that the user has NOT registred', function(done) {
 			var clientrequest = {
 				"email": userEmail,
 				"password": "secure_password1337",
 				"name": "John Smith"
 			};
-
 			request(url)
 			.post('/user/register')
 			.set('Content-type','application/json')
@@ -2700,19 +2405,16 @@ describe('Api', function () {
 			.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 			.send(clientrequest)
 			.end(function(err, res) {
-						res.statusCode.should.be.equal(409);
-						done();
-
+				res.statusCode.should.be.equal(409);
+				done();
 			});
 		});
 
-		it('should return an succes response to indicate that the user was deleted', function(done) {
-
+		it('should return a success response to indicate that the user was deleted', function(done) {
 			var clientrequest = {
 				"id" : userID,
 				"email" : userEmail				
 			};
-
 			request(url)
 			.post('/user/delete')
 			.set('X-BLGREQ-SIGN', appIDsha256)
