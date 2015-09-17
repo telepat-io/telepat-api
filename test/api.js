@@ -5,8 +5,7 @@ var crypto = require('crypto-js');
 
 describe('Api', function () {
 	var url = 'http://localhost:3000';
-	var adminEmail = 'admin@example.com';
-	var adminEmail2 = 'admin2@example.com';
+	var adminEmail = 'admin'+Math.round(Math.random()*1000000)+'@example.com';
 	var adminPassword = '5f4dcc3b5aa765d61d8327deb882cf99';
 	var deviceIdentification;
 	var APPKey = "3406870085495689e34d878f09faf52c";
@@ -86,34 +85,20 @@ describe('Api', function () {
 		describe('Admin', function() {
 
 			it('should return a 200 code to indicate succes when creating a new admin', function(done) {
-
-				// once we have specified the info we want to send to the server via POST verb,
-				// we need to actually perform the action on the resource, in this case we want to 
-				// POST on /api/profiles and we want to send some info
-				// We do this using the request object, requiring supertest!
 				request(url)
 				.post('/admin/add')
 				.send(admin)
-				// end handles the response
 				.end(function(err, res) {
 					if (err) {
 						throw err;
 						done(err);
 					}
-					setTimeout(function() {
-						// this is should.js syntax, very clear
-						res.statusCode.should.be.equal(200);
-						done();
-					}, DELAY);
-
+					res.statusCode.should.be.equal(200);
+					done();
 				});
 			});
 		
 			it('should return a 409 code to indicate failure when admin already exists', function(done) {
-				var admin = {
-					email: adminEmail,
-					password: adminPassword
-				};
 				request(url)
 				.post('/admin/add')
 				.send(admin)
@@ -124,7 +109,6 @@ describe('Api', function () {
 			});
 			
 			it('should return a 4xx code to indicate failure when admin email is missing', function(done) {
-
 				var admin = {
 					password: adminPassword
 				};
@@ -138,7 +122,6 @@ describe('Api', function () {
 			});
 			
 			it('should return a 4xx code to indicate failure when admin email is empty', function(done) {
-				
 				var admin = {
 					email: "",
 					password: adminPassword
@@ -153,7 +136,6 @@ describe('Api', function () {
 			});
 			
 			it('should return a 4xx code to indicate failure when admin password is empty', function(done) {
-
 				var admin = {
 					email: adminEmail,
 					password: ""
@@ -168,7 +150,6 @@ describe('Api', function () {
 			});
 			
 			it('should return a 4xx code to indicate failure when admin password is missing', function(done) {
-
 				var admin = {
 					email: adminEmail
 				};
@@ -182,11 +163,10 @@ describe('Api', function () {
 			});
 			
 			it('should return an error for logging in with wrong user or password', function(done) {
-				
-				var randEmail = 'admin'+Math.round(Math.random()*1000000)+'@example.com';
+				var randEmail = 'adminx@example.com';
 				var admin = {
 					email: randEmail,
-					password: "5f4dcc3b5aa765d61d8327deb882cf99"
+					password: adminPassword
 				};
 				request(url)
 				.post('/admin/login')
@@ -199,7 +179,6 @@ describe('Api', function () {
 			});
 
 			it('should return a valid authorization token', function(done) {
-				
 				request(url)
 				.post('/admin/login')
 				.send(admin)
@@ -212,7 +191,6 @@ describe('Api', function () {
 			});
 			
 			it('should return information about the logged admin', function(done) {
-				
 				request(url)
 				.get('/admin/me')
 				.set('Content-type','application/json')
@@ -227,140 +205,52 @@ describe('Api', function () {
 			});
 			
 			it('should return a succes response indicating the admin account has been updated', function(done) {
-				var randEmail = 'admin'+Math.round(Math.random()*1000000)+'@example.com';
+				request(url)
+				.post('/admin/update')
+				.set('Content-type','application/json')
+				.set('Authorization', authValue )
+				.send(admin)
+				.end(function(err, res) {
+					res.statusCode.should.be.equal(200);
+					done();
+				});
+			});
+
+			it('should return an error response indicating the admin account has NOT been deleted', function(done) {
+				var randEmail = 'adminx@example.com';
 				var admin = {
 					email: randEmail,
-					password: "5f4dcc3b5aa765d61d8327deb882cf99"
+					password: adminPassword
 				};
 				request(url)
-				.post('/admin/add')
+				.post('/admin/delete')
+				.set('Content-type','application/json')
+				.set('Authorization', authValue )
 				.send(admin)
 				.end(function(err, res) {
-					setTimeout(function () {
-						request(url)
-						.post('/admin/login')
-						.set('Content-type','application/json')
-						.send(admin)
-						.end(function(err, res) {
-							authValue = 'Bearer ' + res.body.content.token;
-							request(url)
-							.post('/admin/update')
-							.set('Content-type','application/json')
-							.set('Authorization', authValue )
-							.send(admin)
-							.end(function(err, res) {
-								res.statusCode.should.be.equal(200);
-								done();
-							});
-						});
-					}, 1000);
-				});  
+					res.statusCode.should.be.equal(404);
+					done();
+				}); 
 			});
 			
-			it('should return a succes response indicating the admin account has been deleted', function(done) {
-				var randEmail = 'admin'+Math.round(Math.random()*1000000)+'@example.com';
+			it('should return an error response indicating the admin account has NOT been updated because of invalid email', function(done) {
+				var randEmail = 'adminx@example.com';
 				var admin = {
 					email: randEmail,
-					password: "5f4dcc3b5aa765d61d8327deb882cf99"
+					password: adminPassword
 				};
 				request(url)
-				.post('/admin/add')
+				.post('/admin/update')
+				.set('Content-type','application/json')
+				.set('Authorization', authValue )
 				.send(admin)
 				.end(function(err, res) {
-					setTimeout(function () {
-						request(url)
-						.post('/admin/login')
-						.set('Content-type','application/json')
-						.send(admin)
-						.end(function(err, res) {
-							authValue = 'Bearer ' + res.body.content.token;
-									console.log(authValue);
-							request(url)
-							.post('/admin/delete')
-							.set('Content-type','application/json')
-							.set('Authorization', authValue )
-							.send(admin)
-							.end(function(err, res) {
-								console.log(res);
-								res.statusCode.should.be.equal(200);
-								done();
-							});
-						});
-					}, 1000);
-				});  
-			});
-			
-			it('should return a succes response indicating the admin account has NOT been deleted', function(done) {
-				var randEmail = 'admin'+Math.round(Math.random()*1000000)+'@example.com';
-				var admin2 = {
-					email: randEmail,
-					password: "5f4dcc3b5aa765d61d8327deb882cf99"
-				};
-				request(url)
-				.post('/admin/add')
-				.send(admin)
-				.end(function(err, res) {
-					setTimeout(function () {
-						request(url)
-						.post('/admin/login')
-						.set('Content-type','application/json')
-						.send(admin)
-						.end(function(err, res) {
-							authValue = 'Bearer ' + res.body.content.token;
-									console.log(authValue);
-							request(url)
-							.post('/admin/delete')
-							.set('Content-type','application/json')
-							.set('Authorization', authValue )
-							.send(admin2)
-							.end(function(err, res) {
-								console.log(res);
-								res.statusCode.should.be.equal(404);
-								done();
-							});
-						});
-					}, 1000);
-				});  
-			});
-			
-			it('should return an error response indicating the admin account has NOT been updated', function(done) {
-				var randEmail = 'admin'+Math.round(Math.random()*1000000)+'@example.com';
-				var admin = {
-					email: randEmail,
-					password: "5f4dcc3b5aa765d61d8327deb882cf99"
-				};
-				request(url)
-				.post('/admin/add')
-				.send(admin)
-				.end(function(err, res) {
-					setTimeout(function () {
-						request(url)
-						.post('/admin/login')
-						.set('Content-type','application/json')
-						.send(admin)
-						.end(function(err, res) {
-							authValue = 'Bearer ' + res.body.content.token;
-							var randEmail = 'admin'+Math.round(Math.random()*1000000)+'@example.com';
-							var admin = {
-								email: randEmail,
-								password: "5f4dcc3b5aa765d61d8327deb882cf99"
-							};
-							request(url)
-							.post('/admin/update')
-							.set('Content-type','application/json')
-							.set('Authorization', authValue )
-							.send(admin)
-							.end(function(err, res) {
-								res.statusCode.should.be.equal(404);
-								done();
-							});
-						});
-					}, 1000);
-				});  
+					res.statusCode.should.be.equal(404);
+					done();
+				}); 
 			});
 
 			it('should return an error response indicating the admin account has NOT been updated because of missing request body', function(done) {
-	
 				request(url)
 				.post('/admin/update')
 				.set('Content-type','application/json')
@@ -372,6 +262,18 @@ describe('Api', function () {
 				});
 				
 			});
+			
+			it('should return a succes response indicating the admin account has been deleted', function(done) {
+				request(url)
+				.post('/admin/delete')
+				.set('Content-type','application/json')
+				.set('Authorization', authValue )
+				.send(admin)
+				.end(function(err, res) {
+					res.statusCode.should.be.equal(200);
+					done();
+				});
+			});
 
 		});
 		
@@ -380,7 +282,7 @@ describe('Api', function () {
 			// var authValue;
 			// var admin = {
 				// email: randEmail,
-				// password: "5f4dcc3b5aa765d61d8327deb882cf99"
+				// password: adminPassword
 			// };
 			
 			// before(function(done){
@@ -563,7 +465,7 @@ describe('Api', function () {
 
 			var admin2 = {
 				email: "emaily4353465572@example.com",
-				password: "5f4dcc3b5aa765d61d8327deb882cf99"
+				password: adminPassword
 			};
 		//	var authValue;
 			var authValue2;
@@ -584,7 +486,6 @@ describe('Api', function () {
 							.set('Authorization', authValue)
 							.send(clientrequest)
 							.end(function(err, res) {
-								//console.log(res.body);
 								appID =  res.body.content.id;
 								request(url)
 								.post('/admin/add')
@@ -856,7 +757,7 @@ describe('Api', function () {
 			var token;
 			var admin = {
 				email: "emaily435346557@example.com",
-				password: "5f4dcc3b5aa765d61d8327deb882cf99"
+				password: adminPassword
 			};
 
 			before(function(done){
@@ -871,7 +772,6 @@ describe('Api', function () {
 						.set('Content-type','application/json')
 						.send(admin)
 						.end(function(err, res) {
-							//console.log(res);
 							token = res.body.content.token;
 							authValue = 'Bearer ' + token;
 							done();
@@ -1257,8 +1157,6 @@ describe('Api', function () {
 				.set('Authorization', authValue )
 				.send(clientrequest)
 				.end(function(err, res) {
-				//	console.log(authValue);
-				//	console.log(res.body);
 					res.statusCode.should.be.equal(404);
 					res.body.message.should.be.equal("User not found");
 					done();
@@ -1343,7 +1241,6 @@ describe('Api', function () {
 				.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 				.send(clientrequest)
 				.end(function(err, res) {
-				console.log("appID= " + appID);
 					setTimeout(function() {
 						request(url)
 						.post('/user/login_password')
@@ -2246,7 +2143,7 @@ describe('Api', function () {
 			});
 		});
 		
-		it('should return an succes response to indicate that the user info was retrived', function(done) {
+		it('should return a success response to indicate that the user info was retrived', function(done) {
 			request(url)
 			.get('/user/me')
 			.set('Content-type','application/json')
