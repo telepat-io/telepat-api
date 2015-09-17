@@ -274,48 +274,15 @@ describe('Api', function () {
 						.send(admin)
 						.end(function(err, res) {
 							authValue = 'Bearer ' + res.body.content.token;
-									console.log(authValue);
+								//	console.log(authValue);
 							request(url)
-							.post('/admin/delete')
+							.delete('/admin/delete')
 							.set('Content-type','application/json')
 							.set('Authorization', authValue )
 							.send(admin)
 							.end(function(err, res) {
 								console.log(res);
 								res.statusCode.should.be.equal(200);
-								done();
-							});
-						});
-					}, 1000);
-				});  
-			});
-			
-			it('should return a succes response indicating the admin account has NOT been deleted', function(done) {
-				var randEmail = 'admin'+Math.round(Math.random()*1000000)+'@example.com';
-				var admin2 = {
-					email: randEmail,
-					password: "5f4dcc3b5aa765d61d8327deb882cf99"
-				};
-				request(url)
-				.post('/admin/add')
-				.send(admin)
-				.end(function(err, res) {
-					setTimeout(function () {
-						request(url)
-						.post('/admin/login')
-						.set('Content-type','application/json')
-						.send(admin)
-						.end(function(err, res) {
-							authValue = 'Bearer ' + res.body.content.token;
-									console.log(authValue);
-							request(url)
-							.post('/admin/delete')
-							.set('Content-type','application/json')
-							.set('Authorization', authValue )
-							.send(admin2)
-							.end(function(err, res) {
-								console.log(res);
-								res.statusCode.should.be.equal(404);
 								done();
 							});
 						});
