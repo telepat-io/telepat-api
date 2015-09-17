@@ -5,7 +5,8 @@ var crypto = require('crypto-js');
 
 describe('Api', function () {
 	var url = 'http://localhost:3000';
-	var randEmail = 'admin'+Math.round(Math.random()*1000000)+'@example.com';
+	var adminEmail = 'admin@example.com';
+	var adminEmail2 = 'admin2@example.com';
 	var adminPassword = '5f4dcc3b5aa765d61d8327deb882cf99';
 	var deviceIdentification;
 	var APPKey = "3406870085495689e34d878f09faf52c";
@@ -78,15 +79,37 @@ describe('Api', function () {
 	describe('Admin',function(){	
 
 		var admin = {
-			email: randEmail,
+			email: adminEmail,
 			password: adminPassword
 		};
 				
 		describe('Admin', function() {
 
+			it('should return a 200 code to indicate succes when creating a new admin', function(done) {
+
+				// once we have specified the info we want to send to the server via POST verb,
+				// we need to actually perform the action on the resource, in this case we want to 
+				// POST on /api/profiles and we want to send some info
+				// We do this using the request object, requiring supertest!
+				request(url)
+				.post('/admin/add')
+				.send(admin)
+				// end handles the response
+				.end(function(err, res) {
+					if (err) {
+						throw err;
+						done(err);
+					}
+					
+					  // this is should.js syntax, very clear
+					res.statusCode.should.be.equal(200);
+					done();
+				});
+			});
+		
 			it('should return a 409 code to indicate failure when admin already exists', function(done) {
 				var admin = {
-					email: randEmail,
+					email: adminEmail,
 					password: adminPassword
 				};
 				request(url)
@@ -99,9 +122,9 @@ describe('Api', function () {
 			});
 			
 			it('should return a 4xx code to indicate failure when admin email is missing', function(done) {
-				var randPassword = Math.round(Math.random()*100000000000);
+
 				var admin = {
-					password: randPassword
+					password: adminPassword
 				};
 				request(url)
 				.post('/admin/add')
@@ -113,10 +136,10 @@ describe('Api', function () {
 			});
 			
 			it('should return a 4xx code to indicate failure when admin email is empty', function(done) {
-				var randPassword = Math.round(Math.random()*100000000000);
+				
 				var admin = {
 					email: "",
-					password: randPassword
+					password: adminPassword
 				};
 				request(url)
 				.post('/admin/add')
@@ -128,7 +151,7 @@ describe('Api', function () {
 			});
 			
 			it('should return a 4xx code to indicate failure when admin password is empty', function(done) {
-				var randEmail = 'admin'+Math.round(Math.random()*1000000)+'@example.com';
+
 				var admin = {
 					email: randEmail,
 					password: ""
@@ -143,9 +166,9 @@ describe('Api', function () {
 			});
 			
 			it('should return a 4xx code to indicate failure when admin password is missing', function(done) {
-				var randEmail = 'admin'+Math.round(Math.random()*1000000)+'@example.com';
+
 				var admin = {
-					email: randEmail
+					email: adminEmail
 				};
 				request(url)
 				.post('/admin/add')
@@ -157,6 +180,7 @@ describe('Api', function () {
 			});
 			
 			it('should return an error for logging in with wrong user or password', function(done) {
+				
 				var randEmail = 'admin'+Math.round(Math.random()*1000000)+'@example.com';
 				var admin = {
 					email: randEmail,
@@ -172,22 +196,8 @@ describe('Api', function () {
 				});
 			});
 
-			it('should return a 200 code to indicate success when creating a new admin', function(done) {
-				request(url)
-				.post('/admin/add')
-				.send(admin)
-				.end(function(err, res) {
-					if (err) {
-						throw err;
-						done(err);
-					}
-					console.log("creating " + admin.email);
-					res.statusCode.should.be.equal(200);
-					setTimeout(done, DELAY);
-				});
-			});
-
 			it('should return a valid authorization token', function(done) {
+				
 				request(url)
 				.post('/admin/login')
 				.send(admin)
@@ -200,6 +210,7 @@ describe('Api', function () {
 			});
 			
 			it('should return information about the logged admin', function(done) {
+				
 				request(url)
 				.get('/admin/me')
 				.set('Content-type','application/json')
@@ -272,7 +283,7 @@ describe('Api', function () {
 							.set('Authorization', authValue )
 							.send(admin)
 							.end(function(err, res) {
-								res.statusCode.should.be.equal(500);
+								res.statusCode.should.be.equal(404);
 								done();
 							});
 						});
@@ -281,70 +292,48 @@ describe('Api', function () {
 			});
 
 			it('should return an error response indicating the admin account has NOT been updated because of missing request body', function(done) {
-				var randEmail = 'admin'+Math.round(Math.random()*1000000)+'@example.com';
-				var admin = {
-					email: randEmail,
-					password: "5f4dcc3b5aa765d61d8327deb882cf99"
-				};
+	
 				request(url)
-				.post('/admin/add')
-				.send(admin)
+				.post('/admin/update')
+				.set('Content-type','application/json')
+				.set('Authorization', authValue )
+				.send()
 				.end(function(err, res) {
-					setTimeout(function () {
-						request(url)
-						.post('/admin/login')
-						.set('Content-type','application/json')
-						.send(admin)
-						.end(function(err, res) {
-							authValue = 'Bearer ' + res.body.content.token;
-							var randEmail = 'admin'+Math.round(Math.random()*1000000)+'@example.com';
-							var admin = {
-								email: randEmail,
-								password: "5f4dcc3b5aa765d61d8327deb882cf99"
-							};
-							request(url)
-							.post('/admin/update')
-							.set('Content-type','application/json')
-							.set('Authorization', authValue )
-							.send()
-							.end(function(err, res) {
-								res.statusCode.should.be.equal(400);
-								done();
-							});
-						});
-					}, 1000);
-				});  
+					res.statusCode.should.be.equal(400);
+					done();
+				});
+				
 			});
 
 		});
 		
 		describe('App', function() {
-			var token;
-			var authValue;
-			var admin = {
-				email: randEmail,
-				password: "5f4dcc3b5aa765d61d8327deb882cf99"
-			};
+			// var token;
+			// var authValue;
+			// var admin = {
+				// email: randEmail,
+				// password: "5f4dcc3b5aa765d61d8327deb882cf99"
+			// };
 			
-			before(function(done){
-				request(url)
-				.post('/admin/add')
-				.set('Content-type','application/json')
-				.send(admin)
-				.end(function(err, res) {
-					setTimeout(function () {
-						request(url)
-						.post('/admin/login')
-						.set('Content-type','application/json')
-						.send(admin)
-						.end(function(err, res) {
-							token = res.body.content.token;
-							authValue  = 'Bearer ' + token;
-							done();
-						});
-					}, 1000);
-				});
-			});
+			// before(function(done){
+				// request(url)
+				// .post('/admin/add')
+				// .set('Content-type','application/json')
+				// .send(admin)
+				// .end(function(err, res) {
+					// setTimeout(function () {
+						// request(url)
+						// .post('/admin/login')
+						// .set('Content-type','application/json')
+						// .send(admin)
+						// .end(function(err, res) {
+							// token = res.body.content.token;
+							// authValue  = 'Bearer ' + token;
+							// done();
+						// });
+					// }, 1000);
+				// });
+			// });
 			
 			it('should return a success response to indicate app succesfully created', function(done) {
 				var clientrequest = {
@@ -452,22 +441,6 @@ describe('Api', function () {
 					}, 2*DELAY);
 				});
 			});
-			
-			it('should return an error response for NOT updating an app', function(done) {
-				var clientrequest = {
-					"name": "test-app-2",
-				};
-				request(url)
-				.post('/admin/app/update')
-				.set('Content-type','application/json')
-				.set('Authorization', authValue )
-				.set('X-BLGREQ-APPID', Math.round(Math.random()*1000000)+1000 )
-				.send(clientrequest)
-				.end(function(err, res) {
-					res.statusCode.should.be.equal(404);
-					done();	
-				});
-			});
 
 			
 			it('should return a success response for removing an app', function(done) {
@@ -517,17 +490,14 @@ describe('Api', function () {
 		describe('Context', function() {
 			
 			/////////////////////////////////////////////////////////////
-			var token;
+		//	var token;
 			var token2;
-			var admin = {
-				email: "emaily435346557@example.com",
-				password: "5f4dcc3b5aa765d61d8327deb882cf99"
-			};
+
 			var admin2 = {
 				email: "emaily4353465572@example.com",
 				password: "5f4dcc3b5aa765d61d8327deb882cf99"
 			};
-			var authValue;
+		//	var authValue;
 			var authValue2;
 			var deletedcontextID;
 
@@ -535,18 +505,7 @@ describe('Api', function () {
 			
 			before(function(done){
 				this.timeout(10000);
-				request(url)
-				.post('/admin/add')
-				.send(admin)
-				.end(function(err, res) {
-					setTimeout(function () {
-						request(url)
-						.post('/admin/login')
-						.set('Content-type','application/json')
-						.send(admin)
-						.end(function(err, res) {
-							token = res.body.content.token;
-							authValue = 'Bearer ' + token;
+			
 							var clientrequest = {
 								"name": "test-app",
 								"keys": [ APPKey ]
@@ -576,10 +535,8 @@ describe('Api', function () {
 									}, 1000);
 								});
 							});
-						});
-					}, 1000);
 				});
-			});
+
 			/////////////////////////////////////////////////////////////
 			
 			it('should return a success response to indicate context succesfully created', function(done) {
@@ -1229,6 +1186,34 @@ describe('Api', function () {
 					done();
 				});
 			});	
+			
+			it('should return an success response to indicate that an user was NOT updated', function(done) {
+
+				var clientrequest = {
+					"user": {
+						"email": "wrongexample@appscend.com",
+						"name": "New Name"
+					}
+				};
+				
+				request(url)
+				.post('/admin/user/update')
+				.set('Content-type','application/json')
+				.set('X-BLGREQ-SIGN', appIDsha256 )
+				.set('X-BLGREQ-APPID', 1 )
+				.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+				.set('Authorization', authValue )
+				.send(clientrequest)
+				.end(function(err, res) {
+				//	console.log(authValue);
+				//	console.log(res.body);
+					res.statusCode.should.be.equal(404);
+					res.body.message.should.be.equal("User not found");
+					done();
+				});
+			});
+			
+			
 		
 			it('should return an error response to indicate that an user was NOT found when trying to update', function(done) {
 				var clientrequest = {
@@ -1302,10 +1287,12 @@ describe('Api', function () {
 				.post('/user/register')
 				.set('Content-type','application/json')
 				.set('X-BLGREQ-SIGN', appIDsha256 )
-				.set('X-BLGREQ-APPID', 1 )
+				.set('X-BLGREQ-APPID', appID )
 				.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 				.send(clientrequest)
 				.end(function(err, res) {
+						//console.log(err);
+						//	console.log(res);
 					setTimeout(function() {
 						request(url)
 						.post('/user/login_password')
@@ -1315,6 +1302,7 @@ describe('Api', function () {
 						.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 						.send(clientrequest)
 						.end(function(err, res) {
+						
 							token = res.body.content.token;
 							authValue = 'Bearer ' + token;
 							done();
