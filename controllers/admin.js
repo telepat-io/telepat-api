@@ -97,11 +97,18 @@ router.post('/login', function (req, res, next) {
  * 		"name": "General Specific"
  * 	}
  *
- * @apiError (500) Error Admin account with that email address already exists or internal server error.
+ * @apiError (409) AdminAlreadyExists Admin account with that email address already exists.
+ * @apiErrorExample {json} Error Response
+ * 	{
+ * 		"status": 409,
+ * 		"message": "Error adding account"
+ * 	}
+ *
+ * @apiError (500) Error Internal server error.
  * @apiErrorExample {json} Error Response
  * 	{
  * 		"status": 500,
- * 		"message": "Error adding account"
+ * 		"message": "message describing the server error"
  * 	}
  */
 router.post('/add', function (req, res, next) {
@@ -170,7 +177,15 @@ router.use('/update', security.tokenValidation);
  * 		"password": "d1e6b0b6b76039c9c42541f2da5891fa"
  * 	}
  *
- * 	@apiError (500) Error Admin account with that e-mail address doesn't exist or internal server error.
+ * @apiError (404) AdminNotFound Admin account with that e-mail address doesn't exist.
+ *
+ * 	@apiErrorExample {json} Error Response
+ * 	{
+ * 		"status": 404,
+ * 		"message": "Error description"
+ * 	}
+ *
+ * 	@apiError (500) Error Internal server error.
  *
  * 	@apiErrorExample {json} Error Response
  * 	{
@@ -179,17 +194,56 @@ router.use('/update', security.tokenValidation);
  * 	}
  *
  */
-router.post('/update', function (req, res) {
+router.post('/update', function (req, res, next) {
 	if (Object.getOwnPropertyNames(req.body).length == 0) {
 		res.status(400).json({status: 400, message: "Missing request body"}).end();
 	} else {
 		Models.Admin.update(req.user.email, req.body, function (err, res1) {
 			if (err)
-				res.status(500).json({status: 500, message: err}).end();
+				next(err);
 			else
 				res.status(200).json({status: 200, content: "Admin updated"}).end();
 		})
 	}
+});
+
+router.use('/delete', security.tokenValidation);
+
+/**
+ * @api {post} /admin/delete Delete
+ * @apiDescription Deletes the currently logged admin.
+ * @apiName AdminDelete
+ * @apiGroup Admin
+ * @apiVersion 0.2.2
+ *
+ * @apiHeader {String} Content-type application/json
+ * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
+ *
+ * @apiError (404) AdminNotFound Admin account with that e-mail address doesn't exist.
+ *
+ * 	@apiErrorExample {json} Error Response
+ * 	{
+ * 		"status": 404,
+ * 		"message": "Error description"
+ * 	}
+ *
+ * 	@apiError (500) Error Internal server error.
+ *
+ * 	@apiErrorExample {json} Error Response
+ * 	{
+ * 		"status": 500,
+ * 		"message": "Error description"
+ * 	}
+ *
+ */
+router.post('/delete', function(req, res, next) {
+	var emailAddress = req.user.email;
+
+	Models.Admin.delete(emailAddress, function(err) {
+		if (err) return next(err);
+
+		res.status(200).json({status: 200, content: 'Admin deleted'}).end();
+	});
 });
 
 router.use('/apps', security.tokenValidation);
@@ -239,7 +293,7 @@ router.get('/apps', function (req, res) {
 
 router.use('/app/add', security.tokenValidation);
 /**
- * @api {post} /admin/add/app AppCreate
+ * @api {post} /admin/app/add AppCreate
  * @apiDescription Creates a app for the admin. The request body should contain the app itself.
  * @apiName AdminAppAdd
  * @apiGroup Admin
