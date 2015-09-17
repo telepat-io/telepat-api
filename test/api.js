@@ -100,7 +100,7 @@ describe('Api', function () {
 						throw err;
 						done(err);
 					}
-					
+					//console.log(res);
 					  // this is should.js syntax, very clear
 					res.statusCode.should.be.equal(200);
 					done();
@@ -153,7 +153,7 @@ describe('Api', function () {
 			it('should return a 4xx code to indicate failure when admin password is empty', function(done) {
 
 				var admin = {
-					email: randEmail,
+					email: adminEmail,
 					password: ""
 				};
 				request(url)
@@ -1064,47 +1064,31 @@ describe('Api', function () {
 				
 			it('should return a success response indicating that a user has been deleted', function(done) {
 				this.timeout(25000);
-				var clientrequest = {
-					"name": "test-app",
-					"keys": [ APPKey ]
-				};
+	
 				request(url)
-				.post('/admin/app/add')
+				.post('/user/register')
 				.set('Content-type','application/json')
-				.set('Authorization', authValue )
+				.set('X-BLGREQ-SIGN', appIDsha256 )
+				.set('X-BLGREQ-APPID', appID )
+				.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 				.send(clientrequest)
 				.end(function(err, res) {
-					appID =  res.body.content.id;
-					var userEmail = "example1111@appscend.com";
-					var clientrequest = {
-						"email": "user2@example.com",
-						"password": "secure_password1337",
-						"name": "John Smith"
-					};
-					request(url)
-					.post('/user/register')
-					.set('Content-type','application/json')
-					.set('X-BLGREQ-SIGN', appIDsha256 )
-					.set('X-BLGREQ-APPID', appID )
-					.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
-					.send(clientrequest)
-					.end(function(err, res) {
-						setTimeout(function() {
-							request(url)
-							.post('/admin/user/delete')
-							.set('Content-type','application/json')
-							.set('X-BLGREQ-SIGN', appIDsha256 )
-							.set('X-BLGREQ-APPID', appID )
-							.set('Authorization', authValue )
-							.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
-							.send(clientrequest)
-							.end(function(err, res) {
-								res.statusCode.should.be.equal(202);
-								done();
-							});
-						}, DELAY);
-					});
+					setTimeout(function() {
+						request(url)
+						.post('/admin/user/delete')
+						.set('Content-type','application/json')
+						.set('X-BLGREQ-SIGN', appIDsha256 )
+						.set('X-BLGREQ-APPID', appID )
+						.set('Authorization', authValue )
+						.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+						.send(clientrequest)
+						.end(function(err, res) {
+							res.statusCode.should.be.equal(202);
+							done();
+						});
+					}, DELAY);
 				});
+
 			});	
 			
 			// it('should return a success response indicating that a user has NOT been deleted, user does not belong to application', function(done) {
@@ -1200,7 +1184,7 @@ describe('Api', function () {
 				.post('/admin/user/update')
 				.set('Content-type','application/json')
 				.set('X-BLGREQ-SIGN', appIDsha256 )
-				.set('X-BLGREQ-APPID', 1 )
+				.set('X-BLGREQ-APPID', appID )
 				.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 				.set('Authorization', authValue )
 				.send(clientrequest)
@@ -1226,7 +1210,7 @@ describe('Api', function () {
 				.post('/admin/user/update')
 				.set('Content-type','application/json')
 				.set('X-BLGREQ-SIGN', appIDsha256 )
-				.set('X-BLGREQ-APPID', 1 )
+				.set('X-BLGREQ-APPID', appID )
 				.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 				.set('Authorization', authValue )
 				.send(clientrequest)
@@ -1242,7 +1226,7 @@ describe('Api', function () {
 				.get('/admin/users')
 				.set('Content-type','application/json')
 				.set('X-BLGREQ-SIGN', appIDsha256)
-				.set('X-BLGREQ-APPID', 1)
+				.set('X-BLGREQ-APPID', appID)
 				.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28')
 				.set('Authorization', authValue )
 				.send()
@@ -1291,18 +1275,17 @@ describe('Api', function () {
 				.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 				.send(clientrequest)
 				.end(function(err, res) {
-						//console.log(err);
-						//	console.log(res);
+				console.log("appID= " + appID);
 					setTimeout(function() {
 						request(url)
 						.post('/user/login_password')
 						.set('Content-type','application/json')
 						.set('X-BLGREQ-SIGN', appIDsha256 )
-						.set('X-BLGREQ-APPID', 1 )
+						.set('X-BLGREQ-APPID', appID )
 						.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 						.send(clientrequest)
 						.end(function(err, res) {
-						
+							
 							token = res.body.content.token;
 							authValue = 'Bearer ' + token;
 							done();
@@ -1319,7 +1302,7 @@ describe('Api', function () {
 			.post('/context')
 			.set('Content-type','application/json')
 			.set('X-BLGREQ-SIGN', appIDsha256 )
-			.set('X-BLGREQ-APPID', 1 )
+			.set('X-BLGREQ-APPID', appID )
 			.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 			.set('Authorization', authValue )
 			.send(clientrequest)
@@ -1335,7 +1318,7 @@ describe('Api', function () {
 			.post('/context')
 			.set('Content-type','application/json')
 			.set('X-BLGREQ-SIGN', appIDsha256 )
-			.set('X-BLGREQ-APPID', 1 )
+			.set('X-BLGREQ-APPID', appID )
 			.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 			.set('Authorization', authValue )
 			.send(clientrequest)
@@ -1352,7 +1335,7 @@ describe('Api', function () {
 			request(url)
 			.post('/context')
 			.set('X-BLGREQ-SIGN', appIDsha256 )
-			.set('X-BLGREQ-APPID', 1 )
+			.set('X-BLGREQ-APPID', appID )
 			.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 			.set('Authorization', authValue )
 			.send(clientrequest)
@@ -1367,7 +1350,7 @@ describe('Api', function () {
 			.get('/context/all')
 			.set('Content-type','application/json')
 			.set('X-BLGREQ-SIGN', appIDsha256 )
-			.set('X-BLGREQ-APPID', 1 )
+			.set('X-BLGREQ-APPID', appID )
 			.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 			.set('Authorization', authValue )
 			.send()
@@ -1400,7 +1383,7 @@ describe('Api', function () {
 			.post('/device/register')
 			.set('X-BLGREQ-SIGN', appIDsha256)
 			.set('X-BLGREQ-UDID', '')
-			.set('X-BLGREQ-APPID',1)
+			.set('X-BLGREQ-APPID', appID)
 			.send(clientrequest)
 			.end(function(err, res) {
 				res.statusCode.should.be.equal(200);
