@@ -104,7 +104,7 @@ router.post('/login', function (req, res, next) {
  * 		"message": "Error adding account"
  * 	}
  */
-router.post('/add', function (req, res) {
+router.post('/add', function (req, res, next) {
 	if (!req.body.email) {
 		res.status(400).json({status: 400, message: "Missing requested email address"}).end();
 		return;
@@ -120,7 +120,7 @@ router.post('/add', function (req, res) {
 
 	Models.Admin.create(req.body.email, { email: req.body.email, password: hashedPassword, name: req.body.name }, function (err) {
 		if (err)
-			res.status(500).send({status: 500, message: "Error adding account ("+err.message+")"}).end();
+			next(err);
 		else
 			res.status(200).json({status: 200, content: 'Admin added'}).end();
 	});
