@@ -75,7 +75,7 @@ var validateContext = function(appId, context, callback) {
  *				"model": "event"
  *			},
  *			"user": 2
- * 		}
+ * 		},
  *		"filters": {
 *			"or": [
 *				{
