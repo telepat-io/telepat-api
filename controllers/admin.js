@@ -60,19 +60,19 @@ router.post('/login', function (req, res, next) {
 	var hashedPassword = crypto.createHash('sha256').update(passwordSalt[0]+md5password+passwordSalt[1]).digest('hex');
 
 	Models.Admin(req.body.email, function(err, admin) {
-		if (err && err.code == cb.errors.keyNotFound) {
+		if (err && err.status == 404) {
 			res.status(401).json({status: 401, message: 'Wrong user or password'}).end();
+
 			return;
 		} else if (err) {
 			return next(err);
 		}
 
 		if (hashedPassword == admin.password) {
-			res.json({status: 200, content: {user: admin, token: security.createToken({id: admin.id, email: req.body.email, isAdmin: true})}});
+			res.status(200).json({status: 200, content: {user: admin, token: security.createToken({id: admin.id, email: req.body.email, isAdmin: true})}}).end();
 		}
 		else {
-			res.status(401).json({status: 401, message: 'Wrong user or password'});
-			return;
+			res.status(401).json({status: 401, message: 'Wrong user or password'}).end();
 		}
 	})
 });
@@ -219,24 +219,16 @@ router.use('/delete', security.tokenValidation);
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
  *
- * @apiError (404) AdminNotFound Admin account with that e-mail address doesn't exist.
- *
- * 	@apiErrorExample {json} Error Response
- * 	{
- * 		"status": 404,
- * 		"message": "Error description"
- * 	}
- *
  * 	@apiError (500) Error Internal server error.
  *
- * 	@apiErrorExample {json} Error Response
+ * 	@apiErrorExample {json} Error Internal Server Error
  * 	{
  * 		"status": 500,
  * 		"message": "Error description"
  * 	}
  *
  */
-router.post('/delete', function(req, res, next) {
+router.delete('/delete', function(req, res, next) {
 	var emailAddress = req.user.email;
 
 	Models.Admin.delete(emailAddress, function(err) {
@@ -546,7 +538,7 @@ router.post('/context', function (req, res) {
 	}
 
 	Models.Context(req.body.id, function (err, res1) {
-		if (err && err.code === cb.errors.keyNotFound)
+		if (err && err.status == 404)
 			res.status(404).json({status: 404, message: 'Context not found'}).end();
 		else if (err)
 			res.status(500).send({status: 500, message: 'Could not get context'});
