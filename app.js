@@ -28,38 +28,57 @@ app.use('/documentation', express.static(__dirname+'/documentation'));
 
 process.title = "octopus-api";
 
-try {
-	require('./config.json');
-} catch (e) {
-	if (e.code == 'MODULE_NOT_FOUND') {
-		console.log('Fatal error:'.red+' configuration file is missing or not accessible. Aborting...');
-		process.exit(-1);
-	} else
-		throw e;
+var envVariables = {
+	TP_KFK_HOST: process.env.TP_KFK_HOST,
+	TP_KFK_PORT: process.env.TP_KFK_PORT,
+	TP_KFK_CLIENT: process.env.TP_KFK_CLIENT,
+	TP_REDIS_HOST: process.env.TP_REDIS_HOST,
+	TP_REDIS_PORT: process.env.TP_REDIS_PORT,
+	TP_MAIN_DB: process.env.TP_MAIN_DB,
+	TP_PW_SALT1: process.env.TP_PW_SALT1,
+	TP_PW_SALT2: process.env.TP_PW_SALT2
+};
+
+var validEnvVariables = true;
+var mainConfiguration = {};
+var redisConfig = {};
+var mainDatabase = null;
+
+for(var varName in envVariables) {
+	if (envVariables[varName] === undefined) {
+		console.log('Missing'.yellow+' environment variable "'+varName+'". Trying configuration file.');
+		try {
+			mainConfiguration = require('./config.json');
+		} catch (e) {
+			if (e.code == 'MODULE_NOT_FOUND') {
+				console.log('Fatal error:'.red+' configuration file is missing or not accessible. Please add a configuration file from the example.');
+				process.exit(-1);
+			} else
+				throw e;
+		}
+
+		validEnvVariables = false;
+		break;
+	}
 }
 
-var mainConfiguration = require('./config.json');
-var mainDatabase = mainConfiguration.main_database;
-
-if (process.env.TP_KFK_HOST) {
+if (validEnvVariables) {
 	app.kafkaConfig = {
-		host: process.env.TP_KFK_HOST,
-		port: process.env.TP_KFK_PORT,
-		clientName: process.env.TP_KFK_CLIENT
+		host: envVariables.TP_KFK_HOST,
+		port: envVariables.TP_KFK_PORT,
+		clientName: envVariables.TP_KFK_CLIENT
 	};
+	redisConfig = {
+		host: envVariables.TP_REDIS_HOST,
+		port: envVariables.TP_REDIS_PORT
+	};
+	mainDatabase = envVariables.TP_MAIN_DB;
+	//is null just so the adapter constructor will try to check envVariables
+	mainConfiguration[mainDatabase] = null;
 } else {
 	app.kafkaConfig = mainConfiguration.kafka;
-}
-
-var redisConfig = {};
-
-if (process.env.TP_REDIS_HOST) {
-	redisConfig = {
-		host: process.env.TP_REDIS_HOST,
-		port: process.env.TP_REDIS_PORT
-	};
-} else {
 	redisConfig = mainConfiguration.redis;
+	mainDatabase = mainConfiguration.main_database;
 }
 
 Models.Application.datasource = new Models.Datasource();
