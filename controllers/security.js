@@ -2,6 +2,7 @@ var jwt = require('jsonwebtoken');
 var crypto = require('crypto');
 var Models = require('telepat-models');
 var expressJwt = require('express-jwt');
+var bcrypt = require('bcrypt');
 
 ACL_UNAUTHENTICATED = 1;
 ACL_AUTHENTICATED = 2;
@@ -13,6 +14,10 @@ security.authSecret = '835hoyubg#@$#2wfsda';
 
 security.createToken = function (data) {
 	return jwt.sign(data, this.authSecret, { expiresInMinutes: 60 });
+};
+
+security.encryptPassword = function(password, callback) {
+	bcrypt.hash(password, app.get('password_salt'), callback);
 };
 
 security.deviceIDExists = function(req, res, next) {

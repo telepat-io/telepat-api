@@ -55,26 +55,34 @@ var unless = function(paths, middleware) {
  * 	}
  */
 router.post('/login', function (req, res, next) {
-	var passwordSalt = req.app.get('password_salt');
-	var md5password = crypto.createHash('md5').update(req.body.password).digest('hex');
-	var hashedPassword = crypto.createHash('sha256').update(passwordSalt[0]+md5password+passwordSalt[1]).digest('hex');
+	if (!req.body.email)
+		return res.status(400).json({status: 400, message: "Missing email address"}).end();
 
-	Models.Admin(req.body.email, function(err, admin) {
-		if (err && err.status == 404) {
-			res.status(401).json({status: 401, message: 'Wrong user or password'}).end();
+	if (!req.body.password)
+		return res.status(400).json({status: 400, message: "Missing password"}).end();
 
-			return;
-		} else if (err) {
-			return next(err);
-		}
+	async.waterfall([
+		function(callback) {
+			security.encryptPassword(req.body.password, callback);
+		},
+		function(hashedPassword) {
+			Models.Admin(req.body.email, function(err, admin) {
+				if (err && err.status == 404) {
+					res.status(401).json({status: 401, message: 'Wrong user or password'}).end();
 
-		if (hashedPassword == admin.password) {
-			res.status(200).json({status: 200, content: {user: admin, token: security.createToken({id: admin.id, email: req.body.email, isAdmin: true})}}).end();
+					return;
+				} else if (err) {
+					return next(err);
+				}
+
+				if (hashedPassword == admin.password) {
+					res.status(200).json({status: 200, content: {user: admin, token: security.createToken({id: admin.id, email: req.body.email, isAdmin: true})}}).end();
+				} else {
+					res.status(401).json({status: 401, message: 'Wrong user or password'}).end();
+				}
+			})
 		}
-		else {
-			res.status(401).json({status: 401, message: 'Wrong user or password'}).end();
-		}
-	})
+	]);
 });
 
 /**
@@ -121,16 +129,21 @@ router.post('/add', function (req, res, next) {
 		return;
 	}
 
-	var passwordSalt = req.app.get('password_salt');
-	var md5password = crypto.createHash('md5').update(req.body.password).digest('hex');
-	var hashedPassword = crypto.createHash('sha256').update(passwordSalt[0]+md5password+passwordSalt[1]).digest('hex');
+	async.waterfall([
+		function(callback) {
+			security.encryptPassword(req.body.password, callback);
+		},
+		function(hashedPassword) {
+			req.body.password = hashedPassword;
 
-	Models.Admin.create(req.body.email, { email: req.body.email, password: hashedPassword, name: req.body.name }, function (err) {
-		if (err)
-			next(err);
-		else
-			res.status(200).json({status: 200, content: 'Admin added'}).end();
-	});
+			Models.Admin.create(req.body.email, req.body, function (err) {
+				if (err)
+					next(err);
+				else
+					res.status(200).json({status: 200, content: 'Admin added'}).end();
+			});
+		}
+	]);
 });
 
 router.use('/me', security.tokenValidation);
@@ -175,14 +188,6 @@ router.use('/update', security.tokenValidation);
  * 	{
  * 		"email": "email@example.com",
  * 		"password": "d1e6b0b6b76039c9c42541f2da5891fa"
- * 	}
- *
- * @apiError (404) AdminNotFound Admin account with that e-mail address doesn't exist.
- *
- * 	@apiErrorExample {json} Error Response
- * 	{
- * 		"status": 404,
- * 		"message": "Error description"
  * 	}
  *
  * 	@apiError (500) Error Internal server error.

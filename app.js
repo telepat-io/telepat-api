@@ -35,8 +35,7 @@ var envVariables = {
 	TP_REDIS_HOST: process.env.TP_REDIS_HOST,
 	TP_REDIS_PORT: process.env.TP_REDIS_PORT,
 	TP_MAIN_DB: process.env.TP_MAIN_DB,
-	TP_PW_SALT1: process.env.TP_PW_SALT1,
-	TP_PW_SALT2: process.env.TP_PW_SALT2
+	TP_PW_SALT: process.env.TP_PW_SALT
 };
 
 var validEnvVariables = true;

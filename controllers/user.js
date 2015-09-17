@@ -250,23 +250,20 @@ router.post('/register', function(req, res, next) {
 		//send message to kafka if user doesn't exist in order to create it
 		function(callback) {
 			/*var props = {
-				email: userProfile.email,
-				fid: userProfile.id,
-				name: userProfile.name,
-				gender: userProfile.gender,
-				friends: fbFriends,
-				devices: [deviceId]
-			};*/
+			 email: userProfile.email,
+			 fid: userProfile.id,
+			 name: userProfile.name,
+			 gender: userProfile.gender,
+			 friends: fbFriends,
+			 devices: [deviceId]
+			 };*/
 
 			userProfile.friends = fbFriends;
 			userProfile.type = 'user';
 			userProfile.devices = [deviceId];
-
-			if (userProfile.password) {
-				var passwordSalt = req.app.get('password_salt');
-				var md5password = crypto.createHash('md5').update(userProfile.password).digest('hex');
-				userProfile.password = crypto.createHash('sha256').update(passwordSalt[0]+md5password+passwordSalt[1]).digest('hex');
-			}
+			security.encryptPassword(userProfile.password, callback);
+		}, function(hash, callback) {
+			userProfile.password = hash;
 
 			app.kafkaProducer.send([{
 				topic: 'aggregation',
@@ -403,9 +400,7 @@ router.post('/login_password', function(req, res, next) {
 	var deviceId = req._telepat.device_id;
 	var appId = req._telepat.application_id;
 
-	var passwordSalt = req.app.get('password_salt');
-	var md5password = crypto.createHash('md5').update(password).digest('hex');
-	var hashedPassword = crypto.createHash('sha256').update(passwordSalt[0]+md5password+passwordSalt[1]).digest('hex');
+	var hashedPassword = null;
 
 	async.series([
 		function(callback) {
@@ -422,6 +417,16 @@ router.post('/login_password', function(req, res, next) {
 					userProfile = result;
 					callback();
 				}
+			});
+		},
+		function(callback) {
+			security.encryptPassword(req.body.password, function(err, hash) {
+				if (err)
+					return callback(err);
+
+				hashedPassword = hash;
+
+				callback();
 			});
 		}
 	], function(err) {
@@ -572,32 +577,40 @@ router.post('/update', function(req, res, next) {
 	var email = req.user.email;
 	var modifiedMicrotime = microtime.now();
 
-	for(var p in patches) {
-		patches[p].email = email;
-		if (patches[p].path.split('/')[2] == 'password') {
-			var passwordSalt = req.app.get('password_salt');
-			var md5password = crypto.createHash('md5').update(patches[p].value).digest('hex');
-			patches[p].value = crypto.createHash('sha256').update(passwordSalt[0]+md5password+passwordSalt[1]).digest('hex');
+	var i = 0;
+	async.eachSeries(patches, function(p, c) {
+		patches[i].email = email;
+
+		if (patches[i].path.split('/')[2] == 'password') {
+
+			security.encryptPassword(patches[p].value, function(err, hash) {
+				patches[p].value = hash;
+				i++;
+				c();
+			});
+		} else {
+			i++;
+			c();
 		}
-	}
+	}, function() {
+		async.eachSeries(patches, function(patch, c) {
+			app.kafkaProducer.send([{
+				topic: 'aggregation',
+				messages: [JSON.stringify({
+					op: 'update',
+					object: patch,
+					id: id,
+					applicationId: req._telepat.application_id,
+					isUser: true,
+					ts: modifiedMicrotime
+				})],
+				attributes: 0
+			}], c);
+		}, function(err) {
+			if (err) return next(err);
 
-	async.eachSeries(patches, function(patch, c) {
-		app.kafkaProducer.send([{
-			topic: 'aggregation',
-			messages: [JSON.stringify({
-				op: 'update',
-				object: patch,
-				id: id,
-				applicationId: req._telepat.application_id,
-				isUser: true,
-				ts: modifiedMicrotime
-			})],
-			attributes: 0
-		}], c);
-	}, function(err) {
-		if (err) return next(err);
-
-		res.status(202).json({status: 202, content: "User updated"}).end();
+			res.status(202).json({status: 202, content: "User updated"}).end();
+		});
 	});
 });
 
@@ -606,15 +619,24 @@ router.post('/update_immediate', function(req, res, next) {
 
 	if (user.password) {
 		var passwordSalt = req.app.get('password_salt');
-		var md5password = crypto.createHash('md5').update(props.password).digest('hex');
+		var md5password = crypto.createHash('md5').update(user.password).digest('hex');
 		user.password = crypto.createHash('sha256').update(passwordSalt[0]+md5password+passwordSalt[1]).digest('hex');
 	}
 
-	Models.User.update(user.email, user, function(err, result) {
-		if (err) return next(err);
+	async.waterfall([
+		function(callback) {
+			security.encryptPassword(user.password, callback);
+		},
+		function(hash, callback) {
+			user.password = hash;
 
-		res.status(200).json({status: 200, content: "User updated"}).end();
-	});
+			Models.User.update(user.email, user, function(err, result) {
+				if (err) return next(err);
+
+				res.status(200).json({status: 200, content: "User updated"}).end();
+			});
+		}
+	]);
 });
 
 /**
@@ -650,7 +672,7 @@ router.post('/delete', function(req, res, next) {
 			op: 'delete',
 			object: {id: id, email: email},
 			applicationId: req._telepat.application_id,
-			user: true
+			isUser: true
 		})],
 		attributes: 0
 	}], function(err) {
