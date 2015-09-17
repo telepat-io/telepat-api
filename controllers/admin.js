@@ -177,14 +177,6 @@ router.use('/update', security.tokenValidation);
  * 		"password": "d1e6b0b6b76039c9c42541f2da5891fa"
  * 	}
  *
- * @apiError (404) AdminNotFound Admin account with that e-mail address doesn't exist.
- *
- * 	@apiErrorExample {json} Error Response
- * 	{
- * 		"status": 404,
- * 		"message": "Error description"
- * 	}
- *
  * 	@apiError (500) Error Internal server error.
  *
  * 	@apiErrorExample {json} Error Response
