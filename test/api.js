@@ -281,7 +281,7 @@ describe('Api', function () {
 							.set('Authorization', authValue )
 							.send(admin)
 							.end(function(err, res) {
-								console.log(res);
+								//console.log(res);
 								res.statusCode.should.be.equal(200);
 								done();
 							});
@@ -290,42 +290,6 @@ describe('Api', function () {
 				});  
 			});
 			
-			it('should return an error response indicating the admin account has NOT been updated', function(done) {
-				var randEmail = 'admin'+Math.round(Math.random()*1000000)+'@example.com';
-				var admin = {
-					email: randEmail,
-					password: "5f4dcc3b5aa765d61d8327deb882cf99"
-				};
-				request(url)
-				.post('/admin/add')
-				.send(admin)
-				.end(function(err, res) {
-					setTimeout(function () {
-						request(url)
-						.post('/admin/login')
-						.set('Content-type','application/json')
-						.send(admin)
-						.end(function(err, res) {
-							authValue = 'Bearer ' + res.body.content.token;
-							var randEmail = 'admin'+Math.round(Math.random()*1000000)+'@example.com';
-							var admin = {
-								email: randEmail,
-								password: "5f4dcc3b5aa765d61d8327deb882cf99"
-							};
-							request(url)
-							.post('/admin/update')
-							.set('Content-type','application/json')
-							.set('Authorization', authValue )
-							.send(admin)
-							.end(function(err, res) {
-								res.statusCode.should.be.equal(404);
-								done();
-							});
-						});
-					}, 1000);
-				});  
-			});
-
 			it('should return an error response indicating the admin account has NOT been updated because of missing request body', function(done) {
 	
 				request(url)
@@ -377,7 +341,7 @@ describe('Api', function () {
 				};
 				var successResponse =  {
 					"1": {
-						 "admin_id": randEmail,
+						 "admin_id": adminEmail,
 						 "name": "test-app",
 						 "type": "application",
 						 "keys": [ APPKey ]
@@ -1310,7 +1274,7 @@ describe('Api', function () {
 				.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 				.send(clientrequest)
 				.end(function(err, res) {
-				console.log("appID= " + appID);
+				//console.log("appID= " + appID);
 					setTimeout(function() {
 						request(url)
 						.post('/user/login_password')
@@ -1320,7 +1284,7 @@ describe('Api', function () {
 						.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 						.send(clientrequest)
 						.end(function(err, res) {
-							
+						//	console.log(res);
 							token = res.body.content.token;
 							authValue = 'Bearer ' + token;
 							done();
@@ -1618,7 +1582,7 @@ describe('Api', function () {
 			.post('/device/register')
 			.set('X-BLGREQ-SIGN', appIDsha256)
 			.set('X-BLGREQ-UDID', '')
-			.set('X-BLGREQ-APPID',1)
+			.set('X-BLGREQ-APPID',appID)
 			.send(clientrequest)
 			.end(function(err, res) {
 				deviceIdentification =  res.body.content.identifier;	
@@ -1631,7 +1595,7 @@ describe('Api', function () {
 				.post('/user/register')
 				.set('Content-type','application/json')
 				.set('X-BLGREQ-SIGN', appIDsha256 )
-				.set('X-BLGREQ-APPID', 1 )
+				.set('X-BLGREQ-APPID', appID )
 				.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 				.send(clientrequest)
 				.end(function(err, res) {
@@ -1640,7 +1604,7 @@ describe('Api', function () {
 						.post('/user/login_password')
 						.set('Content-type','application/json')
 						.set('X-BLGREQ-SIGN', appIDsha256 )
-						.set('X-BLGREQ-APPID', 1 )
+						.set('X-BLGREQ-APPID', appID )
 						.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 						.send(clientrequest)
 						.end(function(err, res) {
@@ -1659,7 +1623,7 @@ describe('Api', function () {
 			.post('/object/create')
 			.set('X-BLGREQ-SIGN', appIDsha256)
 			.set('X-BLGREQ-UDID', '')
-			.set('X-BLGREQ-APPID',1)
+			.set('X-BLGREQ-APPID',appID)
 			.set('Authorization', authValue )
 			.send(clientrequest)
 			.end(function(err, res) {
@@ -1680,7 +1644,7 @@ describe('Api', function () {
 			.post('/object/create')
 			.set('X-BLGREQ-SIGN', appIDsha256)
 			.set('X-BLGREQ-UDID', '')
-			.set('X-BLGREQ-APPID',1)
+			.set('X-BLGREQ-APPID',appID)
 			.send(clientrequest)
 			.end(function(err, res) {
 				res.statusCode.should.be.equal(401);
@@ -1700,7 +1664,7 @@ describe('Api', function () {
 			.post('/object/create')
 			.set('X-BLGREQ-SIGN', appIDsha256)
 			.set('X-BLGREQ-UDID', deviceIdentification)
-			.set('X-BLGREQ-APPID',1)
+			.set('X-BLGREQ-APPID',appID)
 			.set('Authorization', authValue )
 			.send(clientrequest)
 			.end(function(err, res) {
@@ -1722,7 +1686,7 @@ describe('Api', function () {
 			.post('/object/create')
 			.set('X-BLGREQ-SIGN', appIDsha256)
 			.set('X-BLGREQ-UDID', deviceIdentification)
-			.set('X-BLGREQ-APPID',1)
+			.set('X-BLGREQ-APPID',appID)
 			.send(clientrequest)
 			.end(function(err, res) {
 				res.statusCode.should.be.equal(401);
@@ -1741,7 +1705,7 @@ describe('Api', function () {
 			.post('/object/create')
 			.set('X-BLGREQ-SIGN', appIDsha256)
 			.set('X-BLGREQ-UDID', deviceIdentification)
-			.set('X-BLGREQ-APPID',1)
+			.set('X-BLGREQ-APPID',appID)
 			.set('Authorization', authValue )
 			.send(clientrequest)
 			.end(function(err, res) {
@@ -1761,7 +1725,7 @@ describe('Api', function () {
 			.post('/object/create')
 			.set('X-BLGREQ-SIGN', appIDsha256)
 			.set('X-BLGREQ-UDID', deviceIdentification)
-			.set('X-BLGREQ-APPID',1)
+			.set('X-BLGREQ-APPID',appID)
 			.set('Authorization', authValue )
 			.send(clientrequest)
 			.end(function(err, res) {
@@ -1779,7 +1743,7 @@ describe('Api', function () {
 			.post('/object/count')
 			.set('X-BLGREQ-SIGN', appIDsha256)
 			.set('X-BLGREQ-UDID', deviceIdentification)
-			.set('X-BLGREQ-APPID',1)
+			.set('X-BLGREQ-APPID',appID)
 			.set('Authorization', authValue )
 			.send(clientrequest)
 			.end(function(err, res) {
@@ -1806,7 +1770,7 @@ describe('Api', function () {
 			.post('/object/update')
 			.set('X-BLGREQ-SIGN', appIDsha256)
 			.set('X-BLGREQ-UDID', deviceIdentification)
-			.set('X-BLGREQ-APPID',1)
+			.set('X-BLGREQ-APPID',appID)
 			.set('Authorization', authValue )
 			.send(clientrequest)
 			.end(function(err, res) {
@@ -1832,7 +1796,7 @@ describe('Api', function () {
 			.post('/object/update')
 			.set('X-BLGREQ-SIGN', appIDsha256)
 			.set('X-BLGREQ-UDID', deviceIdentification)
-			.set('X-BLGREQ-APPID',1)
+			.set('X-BLGREQ-APPID',appID)
 			.send(clientrequest)
 			.end(function(err, res) {
 				res.statusCode.should.be.equal(401);
@@ -1856,7 +1820,7 @@ describe('Api', function () {
 			.post('/object/update')
 			.set('X-BLGREQ-SIGN', appIDsha256)
 			.set('X-BLGREQ-UDID', deviceIdentification)
-			.set('X-BLGREQ-APPID',1)
+			.set('X-BLGREQ-APPID',appID)
 			.set('Authorization', authValue )
 			.send(clientrequest)
 			.end(function(err, res) {
@@ -1881,7 +1845,7 @@ describe('Api', function () {
 			.post('/object/update')
 			.set('X-BLGREQ-SIGN', appIDsha256)
 			.set('X-BLGREQ-UDID', deviceIdentification)
-			.set('X-BLGREQ-APPID',1)
+			.set('X-BLGREQ-APPID',appID)
 			.set('Authorization', authValue )
 			.send(clientrequest)
 			.end(function(err, res) {
@@ -1908,7 +1872,7 @@ describe('Api', function () {
 			.set('Content-type','application/json')
 			.set('X-BLGREQ-SIGN', appIDsha256)
 			.set('X-BLGREQ-UDID', deviceIdentification)
-			.set('X-BLGREQ-APPID',1)
+			.set('X-BLGREQ-APPID',appID)
 			.set('Authorization', authValue )
 			.send()
 			.end(function(err, res) {
@@ -1924,7 +1888,7 @@ describe('Api', function () {
 			.set('Content-type','application/json')
 			.set('X-BLGREQ-SIGN', appIDsha256)
 			.set('X-BLGREQ-UDID', deviceIdentification)
-			.set('X-BLGREQ-APPID',1)
+			.set('X-BLGREQ-APPID',appID)
 			.set('Authorization', authValue )
 			.send()
 			.end(function(err, res) {
@@ -1974,7 +1938,7 @@ describe('Api', function () {
 			.set('Content-type','application/json')
 			.set('X-BLGREQ-SIGN', appIDsha256)
 			.set('X-BLGREQ-UDID', deviceIdentification)
-			.set('X-BLGREQ-APPID',1)
+			.set('X-BLGREQ-APPID',appID)
 			.set('Authorization', authValue )
 			.send()
 			.end(function(err, res) {
@@ -1988,7 +1952,7 @@ describe('Api', function () {
 			.post('/object/unsubscribe')
 			.set('X-BLGREQ-SIGN', appIDsha256)
 			.set('X-BLGREQ-UDID', deviceIdentification)
-			.set('X-BLGREQ-APPID',1)
+			.set('X-BLGREQ-APPID',appID)
 			.set('Authorization', authValue )
 			.send(subclientrequest)
 			.end(function(err, res) {
@@ -2007,7 +1971,7 @@ describe('Api', function () {
 			.post('/object/delete')
 			.set('X-BLGREQ-SIGN', appIDsha256)
 			.set('X-BLGREQ-UDID', deviceIdentification)
-			.set('X-BLGREQ-APPID',1)
+			.set('X-BLGREQ-APPID',appID)
 			.set('Authorization', authValue )
 			.send(clientrequest)
 			.end(function(err, res) {
@@ -2053,7 +2017,7 @@ describe('Api', function () {
 			.post('/object/delete')
 			.set('X-BLGREQ-SIGN', appIDsha256)
 			.set('X-BLGREQ-UDID', deviceIdentification)
-			.set('X-BLGREQ-APPID',1)
+			.set('X-BLGREQ-APPID',appID)
 			.set('Authorization', authValue )
 			.send(clientrequest)
 			.end(function(err, res) {
@@ -2073,7 +2037,7 @@ describe('Api', function () {
 			.post('/object/delete')
 			.set('X-BLGREQ-SIGN', appIDsha256)
 			.set('X-BLGREQ-UDID', deviceIdentification)
-			.set('X-BLGREQ-APPID',1)
+			.set('X-BLGREQ-APPID',appID)
 			.set('Authorization', authValue )
 			.send(clientrequest)
 			.end(function(err, res) {
@@ -2094,7 +2058,7 @@ describe('Api', function () {
 			.post('/object/delete')
 			.set('X-BLGREQ-SIGN', appIDsha256)
 			.set('X-BLGREQ-UDID', deviceIdentification)
-			.set('X-BLGREQ-APPID',1)
+			.set('X-BLGREQ-APPID',appID)
 			.send(clientrequest)
 			.end(function(err, res) {
 				res.statusCode.should.be.equal(401);
@@ -2113,7 +2077,7 @@ describe('Api', function () {
 			.post('/object/delete')
 			.set('X-BLGREQ-SIGN', appIDsha256)
 			.set('X-BLGREQ-UDID', deviceIdentification)
-			.set('X-BLGREQ-APPID',1)
+			.set('X-BLGREQ-APPID',appID)
 			.set('Authorization', authValue )
 			.send(clientrequest)
 			.end(function(err, res) {
@@ -2154,7 +2118,7 @@ describe('Api', function () {
 			.post('/device/register')
 			.set('X-BLGREQ-SIGN', appIDsha256)
 			.set('X-BLGREQ-UDID', '')
-			.set('X-BLGREQ-APPID',1)
+			.set('X-BLGREQ-APPID',appID)
 			.send(clientrequest)
 			.end(function(err, res) {
 				deviceIdentification =  res.body.content.identifier;
@@ -2190,7 +2154,7 @@ describe('Api', function () {
 			.post('/user/register')
 			.set('Content-type','application/json')
 			.set('X-BLGREQ-SIGN', appIDsha256 )
-			.set('X-BLGREQ-APPID', 1 )
+			.set('X-BLGREQ-APPID', appID )
 			.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 			.send(clientrequest)
 			.end(function(err, res) {
@@ -2199,7 +2163,7 @@ describe('Api', function () {
 					.post('/user/login_password')
 					.set('Content-type','application/json')
 					.set('X-BLGREQ-SIGN', appIDsha256 )
-					.set('X-BLGREQ-APPID', 1 )
+					.set('X-BLGREQ-APPID', appID )
 					.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 					.send(clientrequest)
 					.end(function(err, res) {
@@ -2218,7 +2182,7 @@ describe('Api', function () {
 			.get('/user/me')
 			.set('Content-type','application/json')
 			.set('X-BLGREQ-SIGN', appIDsha256 )
-			.set('X-BLGREQ-APPID', 1 )
+			.set('X-BLGREQ-APPID', appID )
 			.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 			.set('Authorization', authValue )
 			.send()
@@ -2238,7 +2202,7 @@ describe('Api', function () {
 			.post('/user/login_password')
 			.set('Content-type','application/json')
 			.set('X-BLGREQ-SIGN', appIDsha256 )
-			.set('X-BLGREQ-APPID', 1 )
+			.set('X-BLGREQ-APPID', appID )
 			.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 			.send(clientrequest)
 			.end(function(err, res) {
@@ -2257,7 +2221,7 @@ describe('Api', function () {
 			.post('/user/login_password')
 			.set('Content-type','application/json')
 			.set('X-BLGREQ-SIGN', appIDsha256 )
-			.set('X-BLGREQ-APPID', 1 )
+			.set('X-BLGREQ-APPID', appID )
 			.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 			.send(clientrequest)
 			.end(function(err, res) {
@@ -2299,7 +2263,7 @@ describe('Api', function () {
 			.post('/user/update')
 			.set('Content-type','application/json')
 			.set('X-BLGREQ-SIGN', appIDsha256 )
-			.set('X-BLGREQ-APPID', 1 )
+			.set('X-BLGREQ-APPID', appID )
 			.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 			.set('Authorization', authValue )
 			.send(clientrequest)
@@ -2315,7 +2279,7 @@ describe('Api', function () {
 			.set('Content-type','application/json')
 			.set('X-BLGREQ-SIGN', appIDsha256)
 			.set('X-BLGREQ-UDID', deviceIdentification)
-			.set('X-BLGREQ-APPID',1)
+			.set('X-BLGREQ-APPID',appID)
 			.set('Authorization', authValue )
 			.send()
 			.end(function(err, res) {
@@ -2333,7 +2297,7 @@ describe('Api', function () {
 			.set('Content-type','application/json')
 			.set('X-BLGREQ-SIGN', appIDsha256)
 			.set('X-BLGREQ-UDID', deviceIdentification)
-			.set('X-BLGREQ-APPID',1)
+			.set('X-BLGREQ-APPID',appID)
 			.set('Authorization', authValue )
 			.send()
 			.end(function(err, res) {
@@ -2350,7 +2314,7 @@ describe('Api', function () {
 			.set('Content-type','application/json')
 			.set('X-BLGREQ-SIGN', appIDsha256)
 			.set('X-BLGREQ-UDID', deviceIdentification)
-			.set('X-BLGREQ-APPID',1)
+			.set('X-BLGREQ-APPID',appID)
 			.set('Authorization', authValue )
 			.send()
 			.end(function(err, res) {
@@ -2369,7 +2333,7 @@ describe('Api', function () {
 			.set('Content-type','application/json')
 			.set('X-BLGREQ-SIGN', appIDsha256)
 			.set('X-BLGREQ-UDID', deviceIdentification)
-			.set('X-BLGREQ-APPID',1)
+			.set('X-BLGREQ-APPID',appID)
 			.set('Authorization', authValue )
 			.send()
 			.end(function(err, res) {
@@ -2388,7 +2352,7 @@ describe('Api', function () {
 			.post('/user/register')
 			.set('Content-type','application/json')
 			.set('X-BLGREQ-SIGN', appIDsha256 )
-			.set('X-BLGREQ-APPID', 1 )
+			.set('X-BLGREQ-APPID', appID )
 			.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 			.send(clientrequest)
 			.end(function(err, res) {
@@ -2407,7 +2371,7 @@ describe('Api', function () {
 			.post('/user/register')
 			.set('Content-type','application/json')
 			.set('X-BLGREQ-SIGN', appIDsha256 )
-			.set('X-BLGREQ-APPID', 1 )
+			.set('X-BLGREQ-APPID', appID)
 			.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 			.send(clientrequest)
 			.end(function(err, res) {
@@ -2425,7 +2389,7 @@ describe('Api', function () {
 			.post('/user/delete')
 			.set('X-BLGREQ-SIGN', appIDsha256)
 			.set('X-BLGREQ-UDID', deviceIdentification)
-			.set('X-BLGREQ-APPID',1)
+			.set('X-BLGREQ-APPID',appID)
 			.send(clientrequest)
 			.end(function(err, res) {
 				res.statusCode.should.be.equal(202);
