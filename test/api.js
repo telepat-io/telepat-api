@@ -100,10 +100,12 @@ describe('Api', function () {
 						throw err;
 						done(err);
 					}
-					//console.log(res);
-					  // this is should.js syntax, very clear
-					res.statusCode.should.be.equal(200);
-					done();
+					setTimeout(function() {
+						// this is should.js syntax, very clear
+						res.statusCode.should.be.equal(200);
+						done();
+					}, DELAY);
+
 				});
 			});
 		
@@ -248,6 +250,72 @@ describe('Api', function () {
 							.send(admin)
 							.end(function(err, res) {
 								res.statusCode.should.be.equal(200);
+								done();
+							});
+						});
+					}, 1000);
+				});  
+			});
+			
+			it('should return a succes response indicating the admin account has been deleted', function(done) {
+				var randEmail = 'admin'+Math.round(Math.random()*1000000)+'@example.com';
+				var admin = {
+					email: randEmail,
+					password: "5f4dcc3b5aa765d61d8327deb882cf99"
+				};
+				request(url)
+				.post('/admin/add')
+				.send(admin)
+				.end(function(err, res) {
+					setTimeout(function () {
+						request(url)
+						.post('/admin/login')
+						.set('Content-type','application/json')
+						.send(admin)
+						.end(function(err, res) {
+							authValue = 'Bearer ' + res.body.content.token;
+									console.log(authValue);
+							request(url)
+							.post('/admin/delete')
+							.set('Content-type','application/json')
+							.set('Authorization', authValue )
+							.send(admin)
+							.end(function(err, res) {
+								console.log(res);
+								res.statusCode.should.be.equal(200);
+								done();
+							});
+						});
+					}, 1000);
+				});  
+			});
+			
+			it('should return a succes response indicating the admin account has NOT been deleted', function(done) {
+				var randEmail = 'admin'+Math.round(Math.random()*1000000)+'@example.com';
+				var admin2 = {
+					email: randEmail,
+					password: "5f4dcc3b5aa765d61d8327deb882cf99"
+				};
+				request(url)
+				.post('/admin/add')
+				.send(admin)
+				.end(function(err, res) {
+					setTimeout(function () {
+						request(url)
+						.post('/admin/login')
+						.set('Content-type','application/json')
+						.send(admin)
+						.end(function(err, res) {
+							authValue = 'Bearer ' + res.body.content.token;
+									console.log(authValue);
+							request(url)
+							.post('/admin/delete')
+							.set('Content-type','application/json')
+							.set('Authorization', authValue )
+							.send(admin2)
+							.end(function(err, res) {
+								console.log(res);
+								res.statusCode.should.be.equal(404);
 								done();
 							});
 						});
@@ -967,14 +1035,14 @@ describe('Api', function () {
 				"password": "secure_password1337",
 				"name": "John Smith"
 			};
-			var appID;
+
 			
 			before(function(done){
 				request(url)
 				.post('/user/register')
 				.set('Content-type','application/json')
 				.set('X-BLGREQ-SIGN', appIDsha256 )
-				.set('X-BLGREQ-APPID', 1 )
+				.set('X-BLGREQ-APPID', appID )
 				.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 				.send(clientrequest)
 				.end(function(err, res) {
@@ -993,7 +1061,7 @@ describe('Api', function () {
 				.post('/admin/user/update')
 				.set('Content-type','application/json')
 				.set('X-BLGREQ-SIGN', appIDsha256 )
-				.set('X-BLGREQ-APPID', 1 )
+				.set('X-BLGREQ-APPID', appID )
 				.set('X-BLGREQ-UDID', Math.round(Math.random()*1000000)+1000 )
 				.set('Authorization', authValue )
 				.send(clientrequest)
@@ -1015,7 +1083,7 @@ describe('Api', function () {
 				.post('/admin/user/update')
 				.set('Content-type','application/json')
 				.set('X-BLGREQ-SIGN', appIDsha256)
-				.set('X-BLGREQ-APPID', 1)
+				.set('X-BLGREQ-APPID', appID)
 				.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28')
 				.set('Authorization', authValue)
 				.send(clientrequest)
@@ -1032,7 +1100,7 @@ describe('Api', function () {
 				.post('/admin/user/update')
 				.set('Content-type','application/json')
 				.set('X-BLGREQ-SIGN', appIDsha256 )
-				.set('X-BLGREQ-APPID', 1 )
+				.set('X-BLGREQ-APPID', appID )
 				.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 				.set('Authorization', authValue )
 				.send(clientrequest)
@@ -1052,7 +1120,7 @@ describe('Api', function () {
 				.post('/admin/user/update')
 				.set('Content-type','application/json')
 				.set('X-BLGREQ-SIGN', appIDsha256 )
-				.set('X-BLGREQ-APPID', 1 )
+				.set('X-BLGREQ-APPID', appID )
 				.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 				.set('Authorization', authValue )
 				.send(clientrequest)
