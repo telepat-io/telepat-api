@@ -6,6 +6,7 @@ var Models = require('telepat-models');
 var security = require('./security');
 var jwt = require('jsonwebtoken');
 var crypto = require('crypto');
+var microtime = require('microtime-nodejs');
 
 var options = {
 	client_id:          '1086083914753251',
@@ -18,8 +19,7 @@ router.use(security.deviceIdValidation);
 router.use(security.applicationIdValidation);
 router.use(security.apiKeyValidation);
 
-router.use(['/logout'], security.tokenValidation);
-router.use('/me', security.tokenValidation);
+router.use(['/logout', '/me', '/update'], security.tokenValidation);
 
 /**
  * @api {post} /user/login Login
@@ -140,7 +140,7 @@ router.post('/login', function(req, res, next) {
 		if (err)
 			return next(err);
 		else {
-			var token = jwt.sign({email: userProfile.email}, security.authSecret, { expiresInMinutes: 60 });
+			var token = jwt.sign({email: userProfile.email, id: userProfile.id}, security.authSecret, { expiresInMinutes: 60 });
 			res.json({status: 200, content: {token: token, user: userProfile}}).end();
 		}
 	});
@@ -436,7 +436,7 @@ router.post('/login_password', function(req, res, next) {
 
 		delete userProfile.password;
 
-		var token = jwt.sign({email: email}, security.authSecret, { expiresInMinutes: 60 });
+		var token = jwt.sign({email: email, id: userProfile.id}, security.authSecret, { expiresInMinutes: 60 });
 		res.json({status: 200, content: {user: userProfile, token: token }}).end();
 	});
 });
@@ -524,6 +524,12 @@ router.get('/logout', function(req, res, next) {
  * 	}
  */
 router.get('/refresh_token', function(req, res, next) {
+	if (!req.get('Authorization')) {
+		res.status(400).json({status: 400, message: 'Required Authorization header is missing'}).end();
+
+		return;
+	}
+
 	var authHeader = req.get('Authorization').split(' ');
 	if (authHeader[0] == 'Bearer' && authHeader[1]) {
 		try {
@@ -564,6 +570,7 @@ router.post('/update', function(req, res, next) {
 	var patches = req.body.patches;
 	var id = req.user.id;
 	var email = req.user.email;
+	var modifiedMicrotime = microtime.now();
 
 	for(var p in patches) {
 		patches[p].email = email;
@@ -574,17 +581,20 @@ router.post('/update', function(req, res, next) {
 		}
 	}
 
-	app.kafkaProducer.send([{
-		topic: 'aggregator',
-		message: [JSON.stringify({
-			op: 'edit',
-			object: patches,
-			id: id,
-			applicationId: req._telepat.application_id,
-			user: true
-		})],
-		attributes: 0
-	}], function(err, result) {
+	async.eachSeries(patches, function(patch, c) {
+		app.kafkaProducer.send([{
+			topic: 'aggregation',
+			messages: [JSON.stringify({
+				op: 'update',
+				object: patch,
+				id: id,
+				applicationId: req._telepat.application_id,
+				isUser: true,
+				ts: modifiedMicrotime
+			})],
+			attributes: 0
+		}], c);
+	}, function(err) {
 		if (err) return next(err);
 
 		res.status(202).json({status: 202, content: "User updated"}).end();
