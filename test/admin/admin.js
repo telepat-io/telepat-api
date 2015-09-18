@@ -840,49 +840,35 @@ describe('User', function() {
     "name": "John Smith"
   };
 
-  
+
   before(function(done){
-    request(url)
-    .post('/user/register')
-    .set('Content-type','application/json')
-    .set('X-BLGREQ-SIGN', appIDsha256 )
-    .set('X-BLGREQ-APPID', appID )
-    .set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
-    .send(clientrequest)
-    .end(function(err, res) {
-      setTimeout(done, DELAY);
-    });
-  });
-  
-  it('should return a 404 response to indicate an invalid client request using an invalid X-BLGREQ-UDID header', function(done) {
-    var clientrequest = {
-      "user": {
-        "email": userEmail,
-        "name": "New Name"
-      }
-    };
-    request(url)
-    .post('/admin/user/update')
-    .set('Content-type','application/json')
-    .set('X-BLGREQ-SIGN', appIDsha256 )
-    .set('X-BLGREQ-APPID', appID )
-    .set('X-BLGREQ-UDID', Math.round(Math.random()*1000000)+1000 )
-    .set('Authorization', authValue )
-    .send(clientrequest)
-    .end(function(err, res) {
-      res.statusCode.should.be.equal(404);
-      done();
-    });
+		this.timeout(11*DELAY);
+		request(url)
+		.post('/user/register')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256 )
+		.set('X-BLGREQ-APPID', appID )
+		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+		.send(clientrequest)
+		.end(function(err, res) {
+		//	console.log(res.body);
+		  setTimeout(done, 10*DELAY);
+		});
   });
   
   it('should return a success response to indicate that an user was updated', function(done) {
     var clientrequest = {
-      "user": {
-        "email": userEmail,
-        "password": "secure_password1337",
-        "name": "New Name"
-      }
+	"email" : userEmail,
+	"patches": [
+		{
+			"op": "replace",
+			"path": "user/"+userEmail+"/name",
+			"value": "new value"
+		}
+	]
+	  
     };
+	
     request(url)
     .post('/admin/user/update')
     .set('Content-type','application/json')
