@@ -15,7 +15,6 @@ var clientrequest = {
 };
 var authValue;
 
-//process.exit(0);
 before(function(done){
 	this.timeout(10*DELAY);
 	//console.log(appID);
@@ -46,6 +45,24 @@ before(function(done){
   });
 });
   
+  before(function(done){
+      var clientrequest = {
+      "name": "context",
+      "meta": {"info": "some meta info"},
+    }
+    request(url)
+    .post('/admin/context/add')
+    .set('Content-type','application/json')
+    .set('Authorization', adminAuth )
+    .set('X-BLGREQ-APPID', appID )
+    .send(clientrequest)
+    .end(function(err, res) {
+      var objectKey = Object.keys(res.body.content)[0];
+      contextID = res.body.content.id;
+
+      done();
+    });
+	});
 it('should return a success response to indicate context succesfully retrived', function(done) {
   var clientrequest = {
     "id": contextID

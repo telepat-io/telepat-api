@@ -128,6 +128,7 @@ describe('Admin', function() {
     .send(admin)
     .end(function(err, res) {
       authValue = 'Bearer ' + res.body.content.token;
+	  adminAuth = authValue;
       res.statusCode.should.be.equal(200);
       done();
     });
@@ -857,6 +858,8 @@ describe('User', function() {
   });
   
   it('should return a success response to indicate that an user was updated', function(done) {
+	  this.timeout(10*DELAY);
+	 
     var clientrequest = {
 	"email" : userEmail,
 	"patches": [
@@ -878,8 +881,9 @@ describe('User', function() {
     .set('Authorization', authValue)
     .send(clientrequest)
     .end(function(err, res) {
+		//console.log(res);
       res.statusCode.should.be.equal(200);
-      done();
+      setTimeout(done, 6*DELAY);
     });
   });
   
@@ -1045,37 +1049,12 @@ describe('User', function() {
     .set('Authorization', authValue )
     .send(clientrequest)
     .end(function(err, res) {
-		///console.log(res);
       res.statusCode.should.be.equal(404);
       res.body.message.should.be.equal("User not found");
       done();
     });
   });
-  
-  
 
-  it('should return an error response to indicate that an user was NOT found when trying to update', function(done) {
-    var clientrequest = {
-      "user": {
-        "email": "user4@example.com",
-        "name": "New Name"
-      }
-    };
-    request(url)
-    .post('/admin/user/update')
-    .set('Content-type','application/json')
-    .set('X-BLGREQ-SIGN', appIDsha256 )
-    .set('X-BLGREQ-APPID', appID )
-    .set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
-    .set('Authorization', authValue )
-    .send(clientrequest)
-    .end(function(err, res) {
-      res.statusCode.should.be.equal(404);
-      res.body.message.should.be.equal("User not found");
-      done();
-    });
-  });
-  
   it('should return a success response to indicate that a users list was retrived', function(done) {
     request(url)
     .get('/admin/users')

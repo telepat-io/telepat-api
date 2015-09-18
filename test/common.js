@@ -12,6 +12,7 @@ exports.crypto = crypto;
 
 exports.url = 'http://localhost:3000';
 appID = '1';
+
 exports.appKey = appKey;
 exports.appIDsha256 = crypto.SHA256(appKey).toString(crypto.enc.Hex);
 exports.DELAY = 300;

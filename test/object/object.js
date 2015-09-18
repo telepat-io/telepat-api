@@ -60,7 +60,7 @@ var subclientrequest = {
 };
 
 before(function(done){
-	this.timeout(10*DELAY);
+	this.timeout(13*DELAY);
   var clientrequest = {
     "info": {
       "os": "Android",
@@ -93,7 +93,7 @@ before(function(done){
     .set('Content-type','application/json')
     .set('X-BLGREQ-SIGN', appIDsha256 )
     .set('X-BLGREQ-APPID', appID )
-    .set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+    .set('X-BLGREQ-UDID', deviceIdentification )
     .send(clientrequest)
     .end(function(err, res) {
       setTimeout(function () {
@@ -102,14 +102,14 @@ before(function(done){
         .set('Content-type','application/json')
         .set('X-BLGREQ-SIGN', appIDsha256 )
         .set('X-BLGREQ-APPID', appID )
-        .set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+        .set('X-BLGREQ-UDID', deviceIdentification )
         .send(clientrequest)
         .end(function(err, res) {
           token = res.body.content.token;
           authValue = 'Bearer ' + token;
           done();
         });
-      }, 3*DELAY);
+      }, 6*DELAY);
     });
   });
 });
@@ -119,11 +119,12 @@ it('should return an error (400) response to indicate that the client made a bad
   request(url)
   .post('/object/create')
   .set('X-BLGREQ-SIGN', appIDsha256)
-  .set('X-BLGREQ-UDID', '')
+  .set('X-BLGREQ-UDID', deviceIdentification )
   .set('X-BLGREQ-APPID',appID)
   .set('Authorization', authValue )
   .send(clientrequest)
   .end(function(err, res) {
+	  //console.log(res);
     res.statusCode.should.be.equal(400);
     done();
   });
@@ -140,7 +141,7 @@ it('should return an error (401) response to indicate that only authenticated us
   request(url)
   .post('/object/create')
   .set('X-BLGREQ-SIGN', appIDsha256)
-  .set('X-BLGREQ-UDID', '')
+  .set('X-BLGREQ-UDID', deviceIdentification)
   .set('X-BLGREQ-APPID',appID)
   .send(clientrequest)
   .end(function(err, res) {

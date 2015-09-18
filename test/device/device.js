@@ -5,7 +5,7 @@ var assert = common.assert;
 var crypto = common.crypto;
 var url = common.url;
 var DELAY = common.DELAY;
-var appID = common.appID;
+
 var appIDsha256 = common.appIDsha256;
 
 var invalidUDID = 'invalid';
@@ -146,10 +146,10 @@ it('should return an error response to indicate device NOT succesfully registred
   .post('/device/register')
   .set('X-BLGREQ-SIGN', appIDsha256)
   .set('X-BLGREQ-UDID', invalidUDID)
-  .set('X-BLGREQ-APPID',1)
+  .set('X-BLGREQ-APPID',appID)
   .send(clientrequest)
   .end(function(err, res) {
-    res.statusCode.should.be.equal(500);
+    res.statusCode.should.be.equal(404);
     done();
   });
 });
