@@ -939,12 +939,12 @@ router.post('/user/update', function(req, res, next) {
 	var patches = req.body.patches;
 
 	if (!patches) {
-		res.status(400).json({status: 400, message: "Object 'user' is missing from the request"}).end();
+		res.status(400).json({status: 400, message: "Patches array missing from request body"}).end();
 		return;
 	}
 
 	if (!req.body.email) {
-		res.status(400).json({status: 400, message: "Object 'user' is missing email address field"}).end();
+		res.status(400).json({status: 400, message: "Email missing from request body"}).end();
 		return;
 	}
 
