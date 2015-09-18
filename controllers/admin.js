@@ -722,7 +722,11 @@ router.post('/context/update', function (req, res) {
 				});
 			}
 		}
-	]);
+	], function (err, result) {
+			if (err) {
+				res.status(404).send({status: 404, message: 'Context with id \''+req.body.id+'\' does not exist'}).end();
+			}
+	});
 });
 
 router.use('/schemas', security.tokenValidation, security.applicationIdValidation, security.adminAppValidation);
