@@ -14,5 +14,5 @@
 	"port": 2181,
 	"clientName": "telepat-producer"
   },
-  "password_salt": ""
+  "password_salt": "$2a$10$N9qo8uLOickgx2ZMRZoMye"
 }
