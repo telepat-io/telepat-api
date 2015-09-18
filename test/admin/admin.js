@@ -5,7 +5,7 @@ var assert = common.assert;
 var crypto = common.crypto;
 var url = common.url;
 var DELAY = common.DELAY;
-var appID = common.appID;
+
 var appIDsha256 = common.appIDsha256;
 var appKey = common.appKey;
 
@@ -25,20 +25,19 @@ var admin2 = {
 describe('Admin', function() {
   
   it('should return a 200 code to indicate success when creating a new admin', function(done) {
-	  this.timeout(10000);
+		this.timeout(10000);
 
-    request(url)
-    .post('/admin/add')
-    .send(admin)
-    .end(function(err, res) {
-      if (err) {
-        throw err;
-        done(err);
-      }
-
-      res.statusCode.should.be.equal(200);
-      setTimeout(done, 3*DELAY);
-    });
+		request(url)
+		.post('/admin/add')
+		.send(admin)
+		.end(function(err, res) {
+			if (err) {
+				throw err;
+				done(err);
+			}
+			res.statusCode.should.be.equal(200);
+			setTimeout(done, 3*DELAY);
+		});
   });
 
   it('should return a 409 code to indicate failure when admin already exists', function(done) {
@@ -621,17 +620,22 @@ describe('Context', function() {
   });
   
   it('should return all contexts', function(done) {
-    request(url)
-    .get('/admin/contexts')
-    .set('Content-type','application/json')
-    .set('Authorization', authValue)
-    .set('X-BLGREQ-APPID', appID)
-    .send()
-    .end(function(err, res) {
-      res.statusCode.should.be.equal(200);
-      res.body.content.should.have.length(1);
-      done();
-    });
+	this.timeout(9*DELAY);
+	setTimeout(function () {
+		request(url)
+		.get('/admin/contexts')
+		.set('Content-type','application/json')
+		.set('Authorization', authValue)
+		.set('X-BLGREQ-APPID', appID)
+		.send()
+		.end(function(err, res) {
+			console.log(res.body);
+		  res.statusCode.should.be.equal(200);
+		  res.body.content.should.have.length(1);
+		  done();
+		});
+	}, 6*DELAY);
+
   });
 
   it('should return a success response to indicate context was removed', function(done) {
@@ -653,31 +657,31 @@ describe('Context', function() {
 });
 
 describe('Schema', function() {
-  var token;
-  var admin = {
-    email: 'admin'+Math.round(Math.random()*1000000)+'@example.com',
-    password: adminPassword
-  };
+  // var token;
+  // var admin = {
+    // email: 'admin'+Math.round(Math.random()*1000000)+'@example.com',
+    // password: adminPassword
+  // };
 
-  before(function(done){
-    request(url)
-    .post('/admin/add')
-    .set('Content-type','application/json')
-    .send(admin)
-    .end(function(err, res) {
-      setTimeout(function () {
-        request(url)
-        .post('/admin/login')
-        .set('Content-type','application/json')
-        .send(admin)
-        .end(function(err, res) {
-          token = res.body.content.token;
-          authValue = 'Bearer ' + token;
-          done();
-        });
-      }, 3*DELAY);
-    });
-  });
+  // before(function(done){
+    // request(url)
+    // .post('/admin/add')
+    // .set('Content-type','application/json')
+    // .send(admin)
+    // .end(function(err, res) {
+      // setTimeout(function () {
+        // request(url)
+        // .post('/admin/login')
+        // .set('Content-type','application/json')
+        // .send(admin)
+        // .end(function(err, res) {
+          // token = res.body.content.token;
+          // authValue = 'Bearer ' + token;
+          // done();
+        // });
+      // }, 3*DELAY);
+    // });
+  // });
   
   it('should return a success response to indicate schema succesfully updated', function(done) {
     var clientrequest = {
@@ -814,12 +818,13 @@ describe('Schema', function() {
   
   it('should return a success response to indicate schema was retrived succesfully', function(done) {
     request(url)
-    .post('/admin/schemas')
+    .get('/admin/schemas')
     .set('Content-type','application/json')
     .set('Authorization', authValue )
     .set('X-BLGREQ-APPID', appID )
     .send()
     .end(function(err, res) {
+		//console.log(res.body);
       res.statusCode.should.be.equal(200);
       done();
     });

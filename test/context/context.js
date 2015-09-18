@@ -5,7 +5,6 @@ var assert = common.assert;
 var crypto = common.crypto;
 var url = common.url;
 var DELAY = common.DELAY;
-var appID = common.appID;
 var appIDsha256 = common.appIDsha256;
 
 var token;
@@ -16,7 +15,10 @@ var clientrequest = {
 };
 var authValue;
 
+//process.exit(0);
 before(function(done){
+	this.timeout(10*DELAY);
+	//console.log(appID);
   request(url)
   .post('/user/register')
   .set('Content-type','application/json')
@@ -34,11 +36,13 @@ before(function(done){
       .set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
       .send(clientrequest)
       .end(function(err, res) {
+		 // console.log(err);
+		   // console.log(res);
         token = res.body.content.token;
         authValue = 'Bearer ' + token;
         done();
       });
-    }, DELAY);
+    }, 5*DELAY);
   });
 });
   

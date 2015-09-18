@@ -17,7 +17,7 @@ describe('API', function () {
 	}
 	
   before(function (done) {
-   	this.timeout(10000);
+   	this.timeout(15000);
 		app = require('../app',done);
 		var http = require('http');
 		var port = normalizePort(process.env.PORT || '3000');
@@ -25,7 +25,7 @@ describe('API', function () {
 		server = http.createServer(app);
 		server.listen(port);
 		server.on('listening', function() {
-			setTimeout(done, 5000);
+			setTimeout(done, 3000);
 		});
   });
   
