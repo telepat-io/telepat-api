@@ -71,6 +71,7 @@ router.post('/login', function(req, res, next) {
 	var userProfile = null;
 	var fbProfile = null;
 	var deviceId = req._telepat.device_id;
+	var appId = req._telepat.application_id;
 
 	async.waterfall([
 		//Retrieve facebook information
@@ -91,7 +92,7 @@ router.post('/login', function(req, res, next) {
 		},
 		function(callback) {
 			//try and get user profile from DB
-			Models.User(email, function(err, result) {
+			Models.User(email, appId, function(err, result) {
 				if (err && err.code == cb.errors.keyNotFound) {
 					var error = new Error('User with email address not found');
 					error.status = 404;
@@ -114,12 +115,15 @@ router.post('/login', function(req, res, next) {
 			} else {
 				userProfile.devices = [deviceId];
 			}
+			var patches = [];
+			patches.push({'op': 'replace', 'path': 'user/'+appId+'/'+userProfile.id, 'value': userProfile.devices});
 
+			//TODO create patches with these properties, if needed.
 			userProfile.fid = fbProfile.id;
 			userProfile.name = fbProfile.name;
 			userProfile.gender = fbProfile.gender;
 
-			Models.User.update(userProfile.email, userProfile, callback);
+			Models.User.update(userProfile.email, appId, patches, callback);
 
 			//user first logged in with password then with fb
 			/*if (!userProfile.fid) {
@@ -261,6 +265,7 @@ router.post('/register', function(req, res, next) {
 			userProfile.friends = fbFriends;
 			userProfile.type = 'user';
 			userProfile.devices = [deviceId];
+			//TODO check this out for facebook users:
 			security.encryptPassword(userProfile.password, callback);
 		}, function(hash, callback) {
 			userProfile.password = hash;
