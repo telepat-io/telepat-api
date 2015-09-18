@@ -19,7 +19,7 @@ router.use(security.deviceIdValidation);
 router.use(security.applicationIdValidation);
 router.use(security.apiKeyValidation);
 
-router.use(['/logout', '/me', '/update'], security.tokenValidation);
+router.use(['/logout', '/me', '/update', '/delete'], security.tokenValidation);
 
 /**
  * @api {post} /user/login Login
@@ -660,7 +660,6 @@ router.post('/update_immediate', function(req, res, next) {
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
- * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
  *
  * @apiParam {number} id ID of the user
  * @apiParam {string} email Email of the user
@@ -673,14 +672,14 @@ router.post('/update_immediate', function(req, res, next) {
  *
  */
 router.post('/delete', function(req, res, next) {
-	var id = req.body.id;
-	var email = req.body.email;
+	var id = req.user.id;
+	var email = req.user.email;
 
 	app.kafkaProducer.send([{
 		topic: 'aggregation',
 		messages: [JSON.stringify({
 			op: 'delete',
-			object: {id: id, email: email},
+			object: {path: 'user/'+id, email: email},
 			applicationId: req._telepat.application_id,
 			isUser: true
 		})],
