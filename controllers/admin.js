@@ -452,7 +452,7 @@ router.post('/app/update', function (req, res) {
 
 router.use('/contexts', security.tokenValidation, security.applicationIdValidation, security.adminAppValidation);
 /**
- * @api {post} /admin/contexts GetContexts
+ * @api {get} /admin/contexts GetContexts
  * @apiDescription Get all contexsts
  * @apiName AdminGetContexts
  * @apiGroup Admin
