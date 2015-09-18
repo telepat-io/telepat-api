@@ -235,7 +235,7 @@ router.use('/delete', security.tokenValidation);
  * 	}
  *
  */
-router.delete('/delete', function(req, res, next) {
+router.post('/delete', function(req, res, next) {
 	var emailAddress = req.user.email;
 
 	Models.Admin.delete(emailAddress, function(err) {
@@ -454,7 +454,7 @@ router.post('/app/update', function (req, res) {
 
 router.use('/contexts', security.tokenValidation, security.applicationIdValidation, security.adminAppValidation);
 /**
- * @api {post} /admin/contexts GetContexts
+ * @api {get} /admin/contexts GetContexts
  * @apiDescription Get all contexsts
  * @apiName AdminGetContexts
  * @apiGroup Admin
@@ -541,7 +541,7 @@ router.use('/context', security.tokenValidation, security.applicationIdValidatio
  */
 router.post('/context', function (req, res) {
 	if (!req.body.id) {
-		res.status(400).json({status: 400, message: 'Requested context ID is missing'}).end();
+		return res.status(400).json({status: 400, message: 'Requested context ID is missing'}).end();
 	}
 
 	Models.Context(req.body.id, function (err, res1) {
@@ -724,7 +724,11 @@ router.post('/context/update', function (req, res) {
 				});
 			}
 		}
-	]);
+	], function (err, result) {
+			if (err) {
+				res.status(404).send({status: 404, message: 'Context with id \''+req.body.id+'\' does not exist'}).end();
+			}
+	});
 });
 
 router.use('/schemas', security.tokenValidation, security.applicationIdValidation, security.adminAppValidation);
