@@ -5,7 +5,7 @@ var assert = common.assert;
 var crypto = common.crypto;
 var url = common.url;
 var DELAY = common.DELAY;
-var appID = common.appID;
+
 var appIDsha256 = common.appIDsha256;
 
 var deviceIdentification;

@@ -36,6 +36,6 @@ describe('API', function () {
 	importTest("Admin", './admin/admin');
 	importTest("Context", './context/context');
 	importTest("Device", './device/device');
-	importTest("User", './user/user');
 	importTest("Object", './object/object');
+	importTest("User", './user/user');
 });

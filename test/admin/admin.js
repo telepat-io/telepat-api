@@ -629,7 +629,7 @@ describe('Context', function() {
 		.set('X-BLGREQ-APPID', appID)
 		.send()
 		.end(function(err, res) {
-			console.log(res.body);
+			//console.log(res.body);
 		  res.statusCode.should.be.equal(200);
 		  res.body.content.should.have.length(1);
 		  done();
