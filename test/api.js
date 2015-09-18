@@ -25,7 +25,7 @@ describe('API', function () {
 		server = http.createServer(app);
 		server.listen(port);
 		server.on('listening', function() {
-			setTimeout(done, 3000);
+			setTimeout(done, 5000);
 		});
   });
   

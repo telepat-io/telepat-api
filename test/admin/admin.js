@@ -23,8 +23,10 @@ var admin2 = {
 }
     
 describe('Admin', function() {
-
+  
   it('should return a 200 code to indicate success when creating a new admin', function(done) {
+	  this.timeout(10000);
+
     request(url)
     .post('/admin/add')
     .send(admin)
@@ -33,12 +35,14 @@ describe('Admin', function() {
         throw err;
         done(err);
       }
+
       res.statusCode.should.be.equal(200);
       setTimeout(done, 3*DELAY);
     });
   });
 
   it('should return a 409 code to indicate failure when admin already exists', function(done) {
+	  
     request(url)
     .post('/admin/add')
     .send(admin)
@@ -46,6 +50,7 @@ describe('Admin', function() {
       res.statusCode.should.be.equal(409);
       done();
     });
+	
   });
   
   it('should return a 4xx code to indicate failure when admin email is missing', function(done) {

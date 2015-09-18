@@ -2,7 +2,8 @@
   "name": "telepat-api",
   "version": "0.2.2",
   "scripts": {
-    "start": "./bin/www"
+    "start": "./bin/www",
+	  "test": "mocha test/api.js -R spec"
   },
   "dependencies": {
     "async": "1.2.0",
@@ -63,6 +64,9 @@
     "assert": "^1.3.0",
     "crypto-js": "^3.1.5",
     "should": "^7.1.0",
-    "supertest": "^1.1.0"
+    "supertest": "^1.1.0",
+	"common" : "*",
+	"mocha" : "*",
+	"istanbul" : "*"
   }
 }
