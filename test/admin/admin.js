@@ -988,7 +988,7 @@ describe('User', function() {
   //  });
   // });  
   
-  it('should return a success response indicating that a user has NOT been deleted because of missing email address', function(done) {
+  it('should return a error response indicating that a user has NOT been deleted because of missing email address', function(done) {
     var clientrequest = {
       "password": "secure_password1337",
       "name": "John Smith"
@@ -1029,13 +1029,11 @@ describe('User', function() {
     });
   }); 
   
-  it('should return an success response to indicate that an user was NOT updated', function(done) {
+  it('should return an error response to indicate that an user was NOT updated, because user dosent exist', function(done) {
 
     var clientrequest = {
-      "user": {
-        "email": "wrongexample@appscend.com",
-        "name": "New Name"
-      }
+      "email": "wrongexample@appscend.com",
+	  "patches" : [ { "op" : "replace" , "path" : "user/something/name"} ]
     };
     
     request(url)
@@ -1047,6 +1045,7 @@ describe('User', function() {
     .set('Authorization', authValue )
     .send(clientrequest)
     .end(function(err, res) {
+		///console.log(res);
       res.statusCode.should.be.equal(404);
       res.body.message.should.be.equal("User not found");
       done();
