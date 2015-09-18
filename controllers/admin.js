@@ -905,7 +905,7 @@ router.use('/user/update', security.tokenValidation, security.applicationIdValid
 /**
  * @api {post} /admin/user/update EditUser
  * @apiDescription Updates an user from an app
- * @apiName AdminUpdateuser
+ * @apiName AdminUpdateUser
  * @apiGroup Admin
  * @apiVersion 0.2.2
  *
@@ -917,10 +917,13 @@ router.use('/user/update', security.tokenValidation, security.applicationIdValid
  *
  * @apiExample {json} Client Request
  * 	{
- * 		"user": {
- * 			"email": "user@example.com",
- * 			"name": "New Name"
- * 		}
+ * 		"patches": [
+ * 			{
+ * 				"op": "replace",
+ * 				"path": "user/user_id/field_name",
+ * 				"value": "new value
+ * 			}
+ * 		]
  * 	}
  *
  * 	@apiSuccessExample {json} Success Response
@@ -945,18 +948,38 @@ router.post('/user/update', function(req, res, next) {
 		return;
 	}
 
-	patches.forEach(function(patch, i, originalArray) {
-		if (patch[i].path.split('/')[2] == 'password') {
-			var passwordSalt = req.app.get('password_salt');
-			var md5password = crypto.createHash('md5').update(patch[i].value).digest('hex');
-			originalArray[i].value = crypto.createHash('sha256').update(passwordSalt[0]+md5password+passwordSalt[1]).digest('hex');
-		}
-	});
+	async.series([
+		function(callback) {
+			var i = 0;
+			async.each(patches, function(patch, c) {
+				if (patches[i].path.split('/')[2] == 'password') {
+					security.encryptPassword(patches[i].value, function(err, hash) {
+						if (err) return c(err);
+						patches[i].value = hash;
+						i++;
+						c();
+					})
+				} else {
+					i++;
+					c();
+				}
+			}, callback);
+		},
+		function(callback) {
+			Models.User.update(req.body.email, req._telepat.application_id, patches, function(err) {
+				if (err && err.status == 404) {
+					var error = new Error('User not found');
+					error.status = 404;
+					callback(error);
+				} else if (err)
+					return callback(err);
+				else
+					callback();
 
-	Models.User.update(req.body.email, req._telepat.application_id, patches, function(err) {
-		if (err && err.status == 404)
-			res.status(404).json({status: 404, message: 'User not found'}).end();
-		else if (err) return next(err);
+			});
+		}
+	], function(err) {
+		if (err) return next(err);
 
 		res.status(200).json({status: 200, content: "User has been updated"}).end();
 	});
