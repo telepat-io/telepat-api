@@ -93,7 +93,7 @@ router.post('/login', function(req, res, next) {
 		function(callback) {
 			//try and get user profile from DB
 			Models.User(email, appId, function(err, result) {
-				if (err && err.code == cb.errors.keyNotFound) {
+				if (err && err.status == 404) {
 					var error = new Error('User with email address not found');
 					error.status = 404;
 					callback(error);
@@ -116,12 +116,12 @@ router.post('/login', function(req, res, next) {
 				userProfile.devices = [deviceId];
 			}
 			var patches = [];
-			patches.push({'op': 'replace', 'path': 'user/'+appId+'/'+userProfile.id, 'value': userProfile.devices});
+			patches.push({op: 'replace', path: 'user/'+userProfile.id+'/devices', value: userProfile.devices});
 
-			//TODO create patches with these properties, if needed.
-			userProfile.fid = fbProfile.id;
-			userProfile.name = fbProfile.name;
-			userProfile.gender = fbProfile.gender;
+			if (userProfile.name != fbProfile.name)
+				patches.push({op: 'replace', path: 'user/'+userProfile.id+'/name', value: fbProfile.name});
+			if (userProfile.gender != fbProfile.gender)
+				patches.push({op: 'replace', path: 'user/'+userProfile.id+'/gender', value: fbProfile.gender});
 
 			Models.User.update(userProfile.email, appId, patches, callback);
 
@@ -265,10 +265,15 @@ router.post('/register', function(req, res, next) {
 			userProfile.friends = fbFriends;
 			userProfile.type = 'user';
 			userProfile.devices = [deviceId];
-			//TODO check this out for facebook users:
-			security.encryptPassword(userProfile.password, callback);
+
+			if (userProfile.password)
+				security.encryptPassword(userProfile.password, callback);
+			else
+				callback(null, false);
+
 		}, function(hash, callback) {
-			userProfile.password = hash;
+			if (hash !== false)
+				userProfile.password = hash;
 
 			app.kafkaProducer.send([{
 				topic: 'aggregation',

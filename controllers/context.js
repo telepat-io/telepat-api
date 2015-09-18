@@ -44,14 +44,14 @@ router.use(security.deviceIdValidation);
  * 	}
  *
  */
-router.get('/all', function (req, res) {
+router.get('/all', function (req, res, next) {
 	var appId = req._telepat.application_id;
 
 	Models.Context.getAll(appId, function (err, res1) {
 		if (err)
-			res.status(500).send({message: 'Could not get contexts'});
+			next(err);
 		else {
-			res.json({status: 200, content: res1});
+			res.status(200).json({status: 200, content: res1}).end();
 		}
 	});
 });
@@ -104,7 +104,7 @@ router.post('/', function (req, res, next) {
 		return res.status(400).json({status: 400, message: "Requested context ID is missing"}).end();
 
 	Models.Context(req.body.id, function (err, res1) {
-		if (err && err.code === cb.errors.keyNotFound){
+		if (err && err.status === 404){
 			res.status(404).json({status: 404, message: "Context not found"}).end();
 		} else if (err)
 			next(err);
