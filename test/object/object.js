@@ -60,6 +60,7 @@ var subclientrequest = {
 };
 
 before(function(done){
+	this.timeout(10*DELAY);
   var clientrequest = {
     "info": {
       "os": "Android",
@@ -108,7 +109,7 @@ before(function(done){
           authValue = 'Bearer ' + token;
           done();
         });
-      }, DELAY);
+      }, 3*DELAY);
     });
   });
 });

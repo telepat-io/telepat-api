@@ -852,7 +852,7 @@ describe('User', function() {
 		.send(clientrequest)
 		.end(function(err, res) {
 		//	console.log(res.body);
-		  setTimeout(done, 10*DELAY);
+		  setTimeout(done, 3*DELAY);
 		});
   });
   
