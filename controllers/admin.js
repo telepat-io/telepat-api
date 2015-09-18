@@ -539,7 +539,7 @@ router.use('/context', security.tokenValidation, security.applicationIdValidatio
  */
 router.post('/context', function (req, res) {
 	if (!req.body.id) {
-		res.status(400).json({status: 400, message: 'Requested context ID is missing'}).end();
+		return res.status(400).json({status: 400, message: 'Requested context ID is missing'}).end();
 	}
 
 	Models.Context(req.body.id, function (err, res1) {
