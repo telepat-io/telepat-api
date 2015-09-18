@@ -143,7 +143,9 @@ router.post('/add', function (req, res, next) {
 					res.status(200).json({status: 200, content: 'Admin added'}).end();
 			});
 		}
-	]);
+	], function(err) {
+		if (err) next(err);
+	});
 });
 
 router.use('/me', security.tokenValidation);
