@@ -233,7 +233,7 @@ router.use('/delete', security.tokenValidation);
  * 	}
  *
  */
-router.delete('/delete', function(req, res, next) {
+router.post('/delete', function(req, res, next) {
 	var emailAddress = req.user.email;
 
 	Models.Admin.delete(emailAddress, function(err) {
