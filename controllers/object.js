@@ -33,14 +33,14 @@ router.use(['/count'], security.objectACL('meta_read_acl'));
 
 var validateContext = function(appId, context, callback) {
 	Models.Application.hasContext(appId, context, function(err, result) {
-		if (err && err.code == cb.errors.keyNotFound) {
+		if (err && err.status == 404) {
 			var error = new Error('Application with id "'+appId+'" does not exist.');
 			error.status = 404;
 			callback(error);
 		} else if (err) return callback(err)
 		else if (result === false) {
 			var error = new Error('Context with id "'+context+'" does not belong to app with id "'+appId+'"');
-			error.status = 401;
+			error.status = 403;
 			callback(error);
 		} else
 			callback();
@@ -188,14 +188,9 @@ router.post('/subscribe', function(req, res, next) {
 		},
 		//see if device exists
 		function(callback) {
-			Models.Subscription.getDevice(deviceId, function(err, results) {
+			Models.Subscription.getDevice(deviceId, function(err) {
 				if (err) {
-					if (err.code == 13) {
-						var error = new Error('Device is not registered');
-						error.status = 404;
-						return callback(error);
-					} else
-						return callback(err);
+					callback(err);
 				}
 
 				callback();
@@ -239,7 +234,7 @@ router.post('/subscribe', function(req, res, next) {
 		if (err)
 			return next(err);
 
-		res.json({status: 200, content: result}).end();
+		res.status(200).json({status: 200, content: result}).end();
 	});
 });
 

@@ -107,7 +107,7 @@ router.post('/register', function(req, res, next) {
 			return res.status(400).json({status: 400, message: "Request body is empty"}).end();
 
 		Models.Subscription.updateDevice(req._telepat.device_id, req.body, function(err, result) {
-			if (err && err.code == cb.errors.keyNotFound) {
+			if (err && err.code == 404) {
 				var error = new Error('Device with ID "'+req._telepat.device_id+'" does not exist.');
 				error.status = 404;
 
