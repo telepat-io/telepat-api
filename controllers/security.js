@@ -128,7 +128,7 @@ security.adminAppValidation = function (req, res, next) {
 
 security.objectACL = function (accessControl) {
 	return function(req, res, next) {
-		if (req.body.model || req.body.channel.model) {
+		if (req.body.model || (req.body.channel && req.body.channel.model)) {
 			var mdl = req.body.model || req.body.channel.model;
 
 			if (['user', 'context', 'application'].indexOf(mdl) !== -1)
