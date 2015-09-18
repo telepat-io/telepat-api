@@ -1060,7 +1060,7 @@ router.post('/user/delete', function(req, res, next) {
 			});
 		}
 
-		res.status(200).json({status: 200, content: 'User deleted'}).end();
+		res.status(202).json({status: 202, content: 'User deleted'}).end();
 	})
 });
 
