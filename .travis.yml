@@ -19,9 +19,7 @@ before_install:
   - kafka/bin/kafka-topics.sh --create --partitions 1 --replication-factor 1 --topic android_transport --zookeeper localhost:2181
   - kafka/bin/kafka-topics.sh --create --partitions 1 --replication-factor 1 --topic ios_transport --zookeeper localhost:2181
   - kafka/bin/kafka-topics.sh --create --partitions 1 --replication-factor 1 --topic sockets_transport --zookeeper localhost:2181
-  - sleep 5
 before_script:
-  - sleep 5
   - bash .travis/setup_es.sh
 node_js:
   - "0.12"
