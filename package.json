@@ -3,7 +3,7 @@
   "version": "0.2.2",
   "scripts": {
     "start": "./bin/www",
-	  "test": "mocha test/api.js -R spec"
+	  "test": "istanbul cover _mocha -- test/api.js -R spec"
   },
   "dependencies": {
     "async": "1.2.0",

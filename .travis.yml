@@ -27,6 +27,8 @@ before_install:
 before_script:
   - telepat configure elasticsearch
   - bash .travis/start.sh
+after_script:
+    - codeclimate-test-reporter < coverage/lcov.info
 node_js:
   - "0.10"
   - "0.12"
