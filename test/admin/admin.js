@@ -33,6 +33,7 @@ describe('Admin', function() {
 		.post('/admin/add')
 		.send(admin)
 		.end(function(err, res) {
+      console.log(res.body);
 			if (err) {
 				throw err;
 				done(err);
