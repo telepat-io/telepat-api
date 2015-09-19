@@ -52,7 +52,7 @@ before(function(done){
   });
 });
 
-it('should return a success response to indicate device succesfully registred', function(done) {
+it('should return a success response to indicate device succesfully registered', function(done) {
   var clientrequest = {
     "info": {
       "os": "Android",
@@ -80,7 +80,7 @@ it('should return a success response to indicate device succesfully registred', 
   });
 });
 
-it('should return a success response to indicate device succesfully registred with random udid', function(done) {
+it('should return a success response to indicate device succesfully registered with random udid', function(done) {
   var clientrequest = {
     "info": {
       "os": "Android",
@@ -108,7 +108,7 @@ it('should return a success response to indicate device succesfully registred wi
   });
 });
 
-it('should return an error response to indicate device succesfully registred, uuid missing from request', function(done) {
+it('should return an error response to indicate device succesfully registered, uuid missing from request', function(done) {
   var clientrequest = {
     "info": {
       "os": "Android",
@@ -135,7 +135,7 @@ it('should return an error response to indicate device succesfully registred, uu
   });
 });
 
-it('should return an error response to indicate device NOT succesfully registred because of missing info', function(done) {
+it('should return an error response to indicate device NOT succesfully registered because of missing info', function(done) {
   var clientrequest = {
     "persistent": {
     "type": "android",
@@ -154,7 +154,7 @@ it('should return an error response to indicate device NOT succesfully registred
   });
 });
 
-it('should return an error response to indicate device NOT succesfully registred because of missing body', function(done) {
+it('should return an error response to indicate device NOT succesfully registered because of missing body', function(done) {
   var clientrequest = {}
   request(url)
   .post('/device/register')
@@ -168,7 +168,7 @@ it('should return an error response to indicate device NOT succesfully registred
   });
 });
 
-it('should return an error response to indicate device NOT succesfully registred because of invalid UDID', function(done) {
+it('should return an error response to indicate device NOT succesfully registered because of invalid UDID', function(done) {
   var clientrequest = {
     "info": {
       "os": "Android",

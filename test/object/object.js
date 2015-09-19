@@ -205,7 +205,6 @@ it('should return an error (400) response to indicate that the client made a bad
   .set('Authorization', authValue )
   .send(clientrequest)
   .end(function(err, res) {
-	  //console.log(res);
     res.statusCode.should.be.equal(400);
     done();
   });
