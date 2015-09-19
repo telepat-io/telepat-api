@@ -20,8 +20,8 @@ before_install:
   - kafka/bin/kafka-topics.sh --create --partitions 1 --replication-factor 1 --topic android_transport --zookeeper localhost:2181
   - kafka/bin/kafka-topics.sh --create --partitions 1 --replication-factor 1 --topic ios_transport --zookeeper localhost:2181
   - kafka/bin/kafka-topics.sh --create --partitions 1 --replication-factor 1 --topic sockets_transport --zookeeper localhost:2181
+  - npm install -g telepat-cli
 before_script:
-  - sudo npm install -g telepat-cli
   - telepat configure elasticsearch
 node_js:
   - "0.12"
