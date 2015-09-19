@@ -1,3 +1,5 @@
+/* jshint maxlen: 120 */
+
 var express = require('express');
 var router = express.Router();
 
@@ -56,10 +58,10 @@ var unless = function(paths, middleware) {
  */
 router.post('/login', function (req, res, next) {
 	if (!req.body.email)
-		return res.status(400).json({status: 400, message: "Missing email address"}).end();
+		return res.status(400).json({status: 400, message: 'Missing email address'}).end();
 
 	if (!req.body.password)
-		return res.status(400).json({status: 400, message: "Missing password"}).end();
+		return res.status(400).json({status: 400, message: 'Missing password'}).end();
 
 	async.waterfall([
 		function(callback) {
@@ -67,7 +69,7 @@ router.post('/login', function (req, res, next) {
 		},
 		function(hashedPassword) {
 			Models.Admin(req.body.email, function(err, admin) {
-				if (err && err.status == 404) {
+				if (err && err.status === 404) {
 					res.status(401).json({status: 401, message: 'Wrong user or password'}).end();
 
 					return;
@@ -75,7 +77,7 @@ router.post('/login', function (req, res, next) {
 					return next(err);
 				}
 
-				if (hashedPassword == admin.password) {
+				if (hashedPassword === admin.password) {
 					res.status(200).json({status: 200, content: {user: admin, token: security.createToken({id: admin.id, email: req.body.email, isAdmin: true})}}).end();
 				} else {
 					res.status(401).json({status: 401, message: 'Wrong user or password'}).end();
@@ -121,11 +123,15 @@ router.post('/login', function (req, res, next) {
  */
 router.post('/add', function (req, res, next) {
 	if (!req.body.email) {
-		res.status(400).json({status: 400, message: "Missing requested email address"}).end();
+		res.status(400)
+				.json({status: 400, message: 'Missing requested email address'})
+				.end();
 		return;
 	}
 	if (!req.body.password) {
-		res.status(400).json({status: 400, message: "Missing requested password"}).end();
+		res.status(400)
+				.json({status: 400, message: 'Missing requested password'})
+				.end();
 		return;
 	}
 
@@ -203,7 +209,9 @@ router.use('/update', security.tokenValidation);
  */
 router.post('/update', function (req, res, next) {
 	if (Object.getOwnPropertyNames(req.body).length == 0) {
-		res.status(400).json({status: 400, message: "Missing request body"}).end();
+		res.status(400)
+				.json({status: 400, message: "Missing request body"})
+				.end();
 	} else {
 		Models.Admin.update(req.user.email, req.body, function (err, res1) {
 			if (err)
