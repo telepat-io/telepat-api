@@ -6,8 +6,10 @@ var crypto = common.crypto;
 var url = common.url;
 var DELAY = common.DELAY;
 
+var authValue;
+var appID;
 var appIDsha256 = common.appIDsha256;
-var appKey = common.appKey;
+var appKey;
 
 var adminEmail = 'admin'+Math.round(Math.random()*1000000)+'@example.com';
 var adminPassword = '5f4dcc3b5aa765d61d8327deb882cf99';
@@ -239,7 +241,6 @@ describe('App', function() {
     .end(function(err, res) {
       var objectKey = Object.keys(res.body.content)[0];
       appID = res.body.content.id;
-      appIDsha256 = crypto.SHA256(appKey).toString(crypto.enc.Hex);
       (res.body.content[objectKey] == successResponse[1]).should.be.ok;
       done();
     });
@@ -629,7 +630,6 @@ describe('Context', function() {
 		.set('X-BLGREQ-APPID', appID)
 		.send()
 		.end(function(err, res) {
-			//console.log(res.body);
 		  res.statusCode.should.be.equal(200);
 		  res.body.content.should.have.length(1);
 		  done();
@@ -657,35 +657,9 @@ describe('Context', function() {
 });
 
 describe('Schema', function() {
-  // var token;
-  // var admin = {
-    // email: 'admin'+Math.round(Math.random()*1000000)+'@example.com',
-    // password: adminPassword
-  // };
-
-  // before(function(done){
-    // request(url)
-    // .post('/admin/add')
-    // .set('Content-type','application/json')
-    // .send(admin)
-    // .end(function(err, res) {
-      // setTimeout(function () {
-        // request(url)
-        // .post('/admin/login')
-        // .set('Content-type','application/json')
-        // .send(admin)
-        // .end(function(err, res) {
-          // token = res.body.content.token;
-          // authValue = 'Bearer ' + token;
-          // done();
-        // });
-      // }, 3*DELAY);
-    // });
-  // });
-  
   it('should return a success response to indicate schema succesfully updated', function(done) {
     var clientrequest = {
-      "appId": "1",
+      "appId": appID,
       "schema": {
       "comments": {
         "namespace": "comments",
@@ -824,7 +798,6 @@ describe('Schema', function() {
     .set('X-BLGREQ-APPID', appID )
     .send()
     .end(function(err, res) {
-		//console.log(res.body);
       res.statusCode.should.be.equal(200);
       done();
     });
@@ -832,8 +805,7 @@ describe('Schema', function() {
 });
 
 describe('User', function() {
-  var appIDsha256 =  '2a80f1666442062debc4fbc0055d8ba5efc29232a27868c0a8eb76dec23df794';
-  var userEmail = "user@example.com";
+  var userEmail = 'user'+Math.round(Math.random()*1000000)+'@example.com';
   var clientrequest = {
     "email": userEmail,
     "password": "secure_password1337",
@@ -851,24 +823,21 @@ describe('User', function() {
 		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 		.send(clientrequest)
 		.end(function(err, res) {
-		//	console.log(res.body);
 		  setTimeout(done, 3*DELAY);
 		});
   });
   
   it('should return a success response to indicate that an user was updated', function(done) {
     var clientrequest = {
-	"email" : userEmail,
-	"patches": [
-		{
-			"op": "replace",
-			"path": "user/"+userEmail+"/name",
-			"value": "new value"
-		}
-	]
-	  
+    	"email" : userEmail,
+    	"patches": [
+    		{
+    			"op": "replace",
+    			"path": "user/"+userEmail+"/name",
+    			"value": "new value"
+    		}
+    	]
     };
-	
     request(url)
     .post('/admin/user/update')
     .set('Content-type','application/json')
@@ -944,7 +913,7 @@ describe('User', function() {
           res.statusCode.should.be.equal(202);
           done();
         });
-      }, DELAY);
+      }, 2*DELAY);
     });
 
   }); 
@@ -1029,38 +998,16 @@ describe('User', function() {
     });
   }); 
   
-  it('should return an success response to indicate that an user was NOT updated', function(done) {
-
-    var clientrequest = {
-      "user": {
-        "email": "wrongexample@appscend.com",
-        "name": "New Name"
-      }
-    };
-    
-    request(url)
-    .post('/admin/user/update')
-    .set('Content-type','application/json')
-    .set('X-BLGREQ-SIGN', appIDsha256 )
-    .set('X-BLGREQ-APPID', appID )
-    .set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
-    .set('Authorization', authValue )
-    .send(clientrequest)
-    .end(function(err, res) {
-      res.statusCode.should.be.equal(404);
-      res.body.message.should.be.equal("User not found");
-      done();
-    });
-  });
-  
-  
-
   it('should return an error response to indicate that an user was NOT found when trying to update', function(done) {
     var clientrequest = {
-      "user": {
-        "email": "user4@example.com",
-        "name": "New Name"
-      }
+      "email" : "wrong@example.com",
+      "patches": [
+        {
+          "op": "replace",
+          "path": "user/"+userEmail+"/name",
+          "value": "new value"
+        }
+      ]
     };
     request(url)
     .post('/admin/user/update')

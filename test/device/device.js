@@ -5,11 +5,52 @@ var assert = common.assert;
 var crypto = common.crypto;
 var url = common.url;
 var DELAY = common.DELAY;
-var appID = common.appID;
+
+var appID;
+var authValue;
 var appIDsha256 = common.appIDsha256;
 
+var adminEmail = 'admin'+Math.round(Math.random()*1000000)+'@example.com';
+var adminPassword = '5f4dcc3b5aa765d61d8327deb882cf99';
+
+var admin = {
+  email: adminEmail,
+  password: adminPassword
+};
+
 var invalidUDID = 'invalid';
-var appIDsha256 =  '2a80f1666442062debc4fbc0055d8ba5efc29232a27868c0a8eb76dec23df794';
+
+before(function(done){
+  this.timeout(10000);
+  var clientrequest = {
+    "name": "test-app",
+    "keys": [ common.appKey ]
+  };
+  request(url)
+  .post('/admin/add')
+  .send(admin)
+  .end(function(err, res) {
+    setTimeout(function () {
+      request(url)
+      .post('/admin/login')
+      .set('Content-type','application/json')
+      .send(admin)
+      .end(function(err, res) {
+        var token = res.body.content.token;
+        authValue = 'Bearer ' + token;
+        request(url)
+        .post('/admin/app/add')
+        .set('Content-type','application/json')
+        .set('Authorization', authValue)
+        .send(clientrequest)
+        .end(function(err, res) {
+          appID =  res.body.content.id;
+          done();
+        });
+      });
+    }, 3*DELAY);
+  });
+});
 
 it('should return a success response to indicate device succesfully registred', function(done) {
   var clientrequest = {

@@ -10,15 +10,24 @@ var appIDsha256 = common.appIDsha256;
 
 var deviceIdentification;
 var invalidUDID = 'invalid';
-var appIDsha256 =  '2a80f1666442062debc4fbc0055d8ba5efc29232a27868c0a8eb76dec23df794';
+var appIDsha256 =  common.appIDsha256;
 var authValue;
+var adminAuthValue;
 var token;
+var appID;
 var userID;
-var userEmail = "user6@example.com";
+
+var userEmail = "user"+ Math.round(Math.random()*1000000)+1000 +"@example.com";
 var userEmail2 = "user"+ Math.round(Math.random()*1000000)+1000 +"@example.com";
+var adminEmail = 'admin'+Math.round(Math.random()*1000000)+'@example.com';
+var adminPassword = '5f4dcc3b5aa765d61d8327deb882cf99';
+
+var admin = {
+  email: adminEmail,
+  password: adminPassword
+};
       
 before(function(done){
-  console.log("Executing user before...");
   var clientrequest = {
     "info": {
       "os": "Android",
@@ -34,17 +43,58 @@ before(function(done){
     }
   }
   
+  this.timeout(10000);
+  var clientrequest = {
+    "name": "test-app",
+    "keys": [ common.appKey ]
+  };
   request(url)
-  .post('/device/register')
-  .set('X-BLGREQ-SIGN', appIDsha256)
-  .set('X-BLGREQ-UDID', '')
-  .set('X-BLGREQ-APPID',appID)
-  .send(clientrequest)
+  .post('/admin/add')
+  .send(admin)
   .end(function(err, res) {
-    deviceIdentification =  res.body.content.identifier;
-    done();
+    setTimeout(function () {
+      request(url)
+      .post('/admin/login')
+      .set('Content-type','application/json')
+      .send(admin)
+      .end(function(err, res) {
+        var token = res.body.content.token;
+        adminAuthValue = 'Bearer ' + token;
+        request(url)
+        .post('/admin/app/add')
+        .set('Content-type','application/json')
+        .set('Authorization', adminAuthValue)
+        .send(clientrequest)
+        .end(function(err, res) {
+          appID =  res.body.content.id;
+          var clientrequest = {
+            "info": {
+              "os": "Android",
+              "version": "4.4.3",
+              "sdk_level": 19,
+              "manufacturer": "HTC",
+              "model": "HTC One_M8",
+              "udid": invalidUDID
+            },
+            "persistent": {
+            "type": "android",
+            "token": "android pn token"
+            }
+          }
+          request(url)
+          .post('/device/register')
+          .set('X-BLGREQ-SIGN', appIDsha256)
+          .set('X-BLGREQ-UDID', '')
+          .set('X-BLGREQ-APPID',appID)
+          .send(clientrequest)
+          .end(function(err, res) {
+            deviceIdentification =  res.body.content.identifier;
+            done();
+          });
+        });
+      });
+    }, 3*DELAY);
   });
-  
 });
 
 // it('should return an error response to indicate that the user has NOT logged via FACEBOOK because of missing access token', function(done) {
@@ -93,7 +143,7 @@ it('should return a success response to indicate that the user has logged in via
         res.statusCode.should.be.equal(200);
         done();
       });
-    }, DELAY);
+    }, 4*DELAY);
   });
 });
 
@@ -175,7 +225,9 @@ it('should return a success response to indicate that the user was updated', fun
     "password": "secure_password1337",
     "patches" : [
       {
-      "name": "Johnny Smith"
+        "op": "replace",
+        "path": "user/"+userEmail+"/name",
+        "value": "new value"
       }
     ]
   };
@@ -188,7 +240,7 @@ it('should return a success response to indicate that the user was updated', fun
   .set('Authorization', authValue )
   .send(clientrequest)
   .end(function(err, res) {
-    res.statusCode.should.be.equal(200);
+    res.statusCode.should.be.equal(202);
     done();
   });
 });
