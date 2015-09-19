@@ -2,6 +2,9 @@ language: node_js
 services:
   - elasticsearch
   - redis
+addons:
+    code_climate:
+        repo_token: 7c04f55c7ed08e2c694492e9b39cd73e5cc9bedce02d0a372f3101dc598dcfaa
 env:
   global:
   - ZOOKEEPER_PEERS=localhost:2181
