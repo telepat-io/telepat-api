@@ -1,8 +1,27 @@
 language: node_js
 services:
   - elasticsearch
+  - redis
+env:
+  global:
+  - ZOOKEEPER_PEERS=localhost:2181
+  - KAFKA_PEERS=localhost:9092
+  - KAFKA_ADVERTISED_HOST_NAME: 127.0.0.1
+before_install:
+  - wget http://www.us.apache.org/dist/kafka/0.8.2.1/kafka_2.10-0.8.2.1.tgz -O kafka.tgz
+  - mkdir -p kafka && tar xzf kafka.tgz -C kafka --strip-components 1
+  - nohup bash -c "cd kafka && bin/zookeeper-server-start.sh config/zookeeper.properties &"
+  - nohup bash -c "cd kafka && bin/kafka-server-start.sh config/server.properties &"
+  - sleep 5
+  - kafka/bin/kafka-topics.sh --create --partitions 1 --replication-factor 1 --topic aggregation --zookeeper localhost:2181
+  - kafka/bin/kafka-topics.sh --create --partitions 1 --replication-factor 1 --topic write --zookeeper localhost:2181
+  - kafka/bin/kafka-topics.sh --create --partitions 1 --replication-factor 1 --topic update_friends --zookeeper localhost:2181
+  - kafka/bin/kafka-topics.sh --create --partitions 1 --replication-factor 1 --topic android_transport --zookeeper localhost:2181
+  - kafka/bin/kafka-topics.sh --create --partitions 1 --replication-factor 1 --topic ios_transport --zookeeper localhost:2181
+  - kafka/bin/kafka-topics.sh --create --partitions 1 --replication-factor 1 --topic sockets_transport --zookeeper localhost:2181
+  - sleep 5
 before_script:
-  - sleep 15
-  - sh .travis/setup_es.sh
+  - sleep 5
+  - bash .travis/setup_es.sh
 node_js:
   - "0.12"
