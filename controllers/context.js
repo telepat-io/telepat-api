@@ -1,3 +1,4 @@
+/* jshint maxlen: 120 */
 var express = require('express');
 var router = express.Router();
 var Models = require('telepat-models');
