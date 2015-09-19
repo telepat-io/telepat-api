@@ -187,7 +187,7 @@ it('should return an error response to indicate device NOT succesfully registred
   .post('/device/register')
   .set('X-BLGREQ-SIGN', appIDsha256)
   .set('X-BLGREQ-UDID', invalidUDID)
-  .set('X-BLGREQ-APPID',1)
+  .set('X-BLGREQ-APPID',appID)
   .send(clientrequest)
   .end(function(err, res) {
     res.statusCode.should.be.equal(500);

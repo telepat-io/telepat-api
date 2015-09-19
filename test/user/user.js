@@ -93,7 +93,7 @@ before(function(done){
           });
         });
       });
-    }, 3*DELAY);
+    }, 4*DELAY);
   });
 });
 
@@ -297,16 +297,13 @@ it('should return an error response to indicate that the token was NOT updated b
 });
 
 it('should return a success response to indicate that the user logged out', function(done) {
-  var clientrequest = {
-    "token" : token   
-  };
   request(url)
   .get('/user/logout')
   .set('Content-type','application/json')
   .set('X-BLGREQ-SIGN', appIDsha256)
   .set('X-BLGREQ-UDID', deviceIdentification)
   .set('X-BLGREQ-APPID',appID)
-  .set('Authorization', authValue )
+  .set('Authorization', authValue)
   .send()
   .end(function(err, res) {
     res.statusCode.should.be.equal(200);
@@ -354,17 +351,35 @@ it('should return a success response to indicate that the user has NOT registere
 
 it('should return a success response to indicate that the user was deleted', function(done) {
   var clientrequest = {
-    "id" : userID,
-    "email" : userEmail       
+    "email": userEmail,
+    "password": "secure_password1337",
+    "name": "John Smith"
   };
   request(url)
-  .post('/user/delete')
-  .set('X-BLGREQ-SIGN', appIDsha256)
-  .set('X-BLGREQ-UDID', deviceIdentification)
-  .set('X-BLGREQ-APPID',appID)
+  .post('/user/login_password')
+  .set('Content-type','application/json')
+  .set('X-BLGREQ-SIGN', appIDsha256 )
+  .set('X-BLGREQ-APPID', appID )
+  .set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
   .send(clientrequest)
   .end(function(err, res) {
-    res.statusCode.should.be.equal(202);
-    done();
+    token = res.body.content.token;
+    userID = res.body.content.user.id;
+    authValue = 'Bearer ' + token;
+    var subclientrequest = {
+      "id" : userID,
+      "email" : userEmail       
+    };
+    request(url)
+    .post('/user/delete')
+    .set('X-BLGREQ-SIGN', appIDsha256)
+    .set('X-BLGREQ-UDID', deviceIdentification)
+    .set('X-BLGREQ-APPID',appID)
+    .set('Authorization', authValue)
+    .send(subclientrequest)
+    .end(function(err, res) {
+      res.statusCode.should.be.equal(202);
+      done();
+    });
   });
 });

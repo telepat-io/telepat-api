@@ -130,6 +130,7 @@ describe('Admin', function() {
     .send(admin)
     .end(function(err, res) {
       authValue = 'Bearer ' + res.body.content.token;
+      adminAuth = authValue;
       res.statusCode.should.be.equal(200);
       done();
     });
@@ -206,6 +207,7 @@ describe('Admin', function() {
   });
   
   it('should return a succes response indicating the admin account has been deleted', function(done) {
+    this.timeout(10*DELAY);
     request(url)
     .post('/admin/delete')
     .set('Content-type','application/json')
@@ -213,7 +215,25 @@ describe('Admin', function() {
     .send()
     .end(function(err, res) {
       res.statusCode.should.be.equal(200);
-      done();
+      setTimeout(function() {
+        request(url)
+        .post('/admin/add')
+        .send(admin)
+        .end(function(err, res) {
+          res.statusCode.should.be.equal(200);
+          setTimeout(function () {
+            request(url)
+            .post('/admin/login')
+            .send(admin)
+            .end(function(err, res) {
+              authValue = 'Bearer ' + res.body.content.token;
+              adminAuth = authValue;
+              res.statusCode.should.be.equal(200);
+              done();
+            });
+          }, 4*DELAY);
+        });
+      }, 4*DELAY);
     });
   });
 
@@ -384,7 +404,7 @@ describe('Context', function() {
     this.timeout(10000);
     var clientrequest = {
       "name": "test-app",
-      "keys": [ appKey ]
+      "keys": [ common.appKey ]
     };
     request(url)
     .post('/admin/app/add')
@@ -812,7 +832,6 @@ describe('User', function() {
     "name": "John Smith"
   };
 
-
   before(function(done){
 		this.timeout(11*DELAY);
 		request(url)
@@ -823,11 +842,14 @@ describe('User', function() {
 		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 		.send(clientrequest)
 		.end(function(err, res) {
+
 		  setTimeout(done, 3*DELAY);
 		});
   });
   
   it('should return a success response to indicate that an user was updated', function(done) {
+	  this.timeout(10*DELAY);
+	 
     var clientrequest = {
     	"email" : userEmail,
     	"patches": [
@@ -848,7 +870,7 @@ describe('User', function() {
     .send(clientrequest)
     .end(function(err, res) {
       res.statusCode.should.be.equal(200);
-      done();
+      setTimeout(done, 6*DELAY);
     });
   });
   
@@ -957,7 +979,7 @@ describe('User', function() {
   //  });
   // });  
   
-  it('should return a success response indicating that a user has NOT been deleted because of missing email address', function(done) {
+  it('should return a error response indicating that a user has NOT been deleted because of missing email address', function(done) {
     var clientrequest = {
       "password": "secure_password1337",
       "name": "John Smith"
@@ -1023,7 +1045,7 @@ describe('User', function() {
       done();
     });
   });
-  
+
   it('should return a success response to indicate that a users list was retrived', function(done) {
     request(url)
     .get('/admin/users')

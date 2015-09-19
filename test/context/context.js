@@ -75,7 +75,7 @@ before(function(done){
     done();
   });
 });
-  
+
 it('should return a success response to indicate context succesfully retrived', function(done) {
   var clientrequest = {
     "id": contextID
