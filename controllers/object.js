@@ -764,7 +764,7 @@ router.post('/count', function(req, res, next) {
 		return next(error);
 	}
 
-	Models.Model.getObjectCount(channel, function(err, result) {
+	Models.Model.getObjectCount(channel.model, appId, function(err, result) {
 		if (err) return next(err);
 
 		res.status(200).json({status: 200, content: result}).end();
