@@ -479,10 +479,11 @@ router.post('/login_password', function(req, res, next) {
 router.get('/logout', function(req, res, next) {
 	var deviceId = req._telepat.device_id;
 	var email = req.user.email;
+	var appID = req._telepat.application_id;
 
 	async.waterfall([
 		function(callback) {
-			Models.User(email, callback);
+			Models.User(email, appID, callback);
 		},
 		function(user, callback) {
 			if (user.devices) {
@@ -490,7 +491,13 @@ router.get('/logout', function(req, res, next) {
 				if (idx >= 0)
 					user.devices.splice(idx, 1);
 
-				Models.User.update(email, {devices: user.devices}, callback);
+				Models.User.update(email, appID, [
+		      {
+		        "op": "replace",
+		        "path": "user/"+email+"/devices",
+		        "value": user.devices
+		      }
+		    ], callback);
 			} else {
 				callback();
 			}
