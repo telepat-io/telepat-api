@@ -190,7 +190,7 @@ it('should return an error response to indicate device NOT succesfully registred
   .set('X-BLGREQ-APPID',appID)
   .send(clientrequest)
   .end(function(err, res) {
-    res.statusCode.should.be.equal(500);
+    res.statusCode.should.be.equal(404);
     done();
   });
 });

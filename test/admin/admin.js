@@ -869,6 +869,7 @@ describe('User', function() {
     .set('Authorization', authValue)
     .send(clientrequest)
     .end(function(err, res) {
+		//console.log(res);
       res.statusCode.should.be.equal(200);
       setTimeout(done, 6*DELAY);
     });
