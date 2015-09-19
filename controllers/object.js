@@ -420,7 +420,7 @@ router.post('/create', function(req, res, next) {
 
 	content.type = mdl;
 	content.context_id = context;
-	content.applicationId = appId;
+	content.application_id = appId;
 
 	if (Models.Application.loadedAppModels[appId][mdl].belongsTo && Models.Application.loadedAppModels[appId][mdl].belongsTo.length) {
 		var parentModel = Models.Application.loadedAppModels[appId][mdl].belongsTo[0].parentModel;
