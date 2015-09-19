@@ -71,7 +71,7 @@ router.post('/login', function(req, res, next) {
 	var userProfile = null;
 	var fbProfile = null;
 	var deviceId = req._telepat.device_id;
-	var appId = req._telepat.application_id;
+	var appId = req._telepat.applicationId;
 
 	async.waterfall([
 		//Retrieve facebook information
@@ -195,7 +195,7 @@ router.post('/register', function(req, res, next) {
 	var accessToken = req.body.access_token;
 	var fbFriends = [];
 	var deviceId = req._telepat.device_id;
-	var appId = req._telepat.application_id;
+	var appId = req._telepat.applicationId;
 
 	async.waterfall([
 		function(callback) {
@@ -280,7 +280,7 @@ router.post('/register', function(req, res, next) {
 				messages: [JSON.stringify({
 					op: 'add',
 					object: userProfile,
-					applicationId: req._telepat.application_id,
+					applicationId: req._telepat.applicationId,
 					isUser: true
 				})],
 				attributes: 0
@@ -339,7 +339,7 @@ router.post('/register', function(req, res, next) {
  *
  */
 router.get('/me', function(req, res, next) {
-	Models.User(req.user.email, req._telepat.application_id, function(err, result) {
+	Models.User(req.user.email, req._telepat.applicationId, function(err, result) {
 		if (err && err.status == 404) {
 			var error = new Error('User not found');
 			error.status = 404;
@@ -408,7 +408,7 @@ router.post('/login_password', function(req, res, next) {
 	var email = req.body.email;
 	var password = req.body.password.toString();
 	var deviceId = req._telepat.device_id;
-	var appId = req._telepat.application_id;
+	var appId = req._telepat.applicationId;
 
 	var hashedPassword = null;
 
@@ -479,7 +479,7 @@ router.post('/login_password', function(req, res, next) {
 router.get('/logout', function(req, res, next) {
 	var deviceId = req._telepat.device_id;
 	var email = req.user.email;
-	var appID = req._telepat.application_id;
+	var appID = req._telepat.applicationId;
 
 	async.waterfall([
 		function(callback) {
@@ -617,7 +617,7 @@ router.post('/update', function(req, res, next) {
 					op: 'update',
 					object: patch,
 					id: id,
-					applicationId: req._telepat.application_id,
+					applicationId: req._telepat.applicationId,
 					isUser: true,
 					ts: modifiedMicrotime
 				})],
@@ -687,7 +687,7 @@ router.post('/delete', function(req, res, next) {
 		messages: [JSON.stringify({
 			op: 'delete',
 			object: {path: 'user/'+id, email: email},
-			applicationId: req._telepat.application_id,
+			applicationId: req._telepat.applicationId,
 			isUser: true
 		})],
 		attributes: 0

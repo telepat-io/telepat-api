@@ -84,9 +84,9 @@ security.applicationIdValidation = function(req, res, next) {
 		}
 
 		if (req._telepat)
-			req._telepat.application_id = req.get('X-BLGREQ-APPID');
+			req._telepat.applicationId = req.get('X-BLGREQ-APPID');
 		else
-			req._telepat = {application_id: req.get('X-BLGREQ-APPID')};
+			req._telepat = {applicationId: req.get('X-BLGREQ-APPID')};
 
 		next();
 	}
@@ -108,7 +108,7 @@ security.tokenValidation = function(req, res, next) {
 };
 
 security.adminAppValidation = function (req, res, next) {
-	var appId = req._telepat.application_id;
+	var appId = req._telepat.applicationId;
 
 	if (!app.applications[appId]) {
 		res.status(404).json({status: 404, message: "Application with ID '"+appId+"' does not exist"}).end();
@@ -136,14 +136,14 @@ security.objectACL = function (accessControl) {
 			if (['user', 'context', 'application'].indexOf(mdl) !== -1)
 				return next();
 
-			if (!Models.Application.loadedAppModels[req._telepat.application_id][mdl]) {
+			if (!Models.Application.loadedAppModels[req._telepat.applicationId][mdl]) {
 				var error = new Error('Model name "'+mdl+'" does not exist.');
 				error.status = 404;
 
 				return next(error);
 			}
 
-			var acl = Models.Application.loadedAppModels[req._telepat.application_id][mdl][accessControl];
+			var acl = Models.Application.loadedAppModels[req._telepat.applicationId][mdl][accessControl];
 
 			if (!req.headers.authorization)
 				return res.status(401).json({status: 401, message: "Authorization header is not present"}).end();

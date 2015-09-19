@@ -10,13 +10,14 @@ router.use(security.deviceIdValidation);
 
 /**
  * @api {get} /context/all GetContexts
- * @apiDescription Get all contexsts
+ * @apiDescription Get all contexts
  * @apiName GetContexts
  * @apiGroup Context
  * @apiVersion 0.2.0
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
+ * @apiHeader {String} Authorization The authorization token obtained in the login endpoint.
+ * Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
  * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
@@ -46,7 +47,7 @@ router.use(security.deviceIdValidation);
  *
  */
 router.get('/all', function (req, res, next) {
-	var appId = req._telepat.application_id;
+	var appId = req._telepat.applicationId;
 
 	Models.Context.getAll(appId, function (err, res1) {
 		if (err)
@@ -102,11 +103,11 @@ router.get('/all', function (req, res, next) {
  */
 router.post('/', function (req, res, next) {
 	if (!req.body.id)
-		return res.status(400).json({status: 400, message: "Requested context ID is missing"}).end();
+		return res.status(400).json({status: 400, message: 'Requested context ID is missing'}).end();
 
 	Models.Context(req.body.id, function (err, res1) {
 		if (err && err.status === 404){
-			res.status(404).json({status: 404, message: "Context not found"}).end();
+			res.status(404).json({status: 404, message: 'Context not found'}).end();
 		} else if (err)
 			next(err);
 		else {
