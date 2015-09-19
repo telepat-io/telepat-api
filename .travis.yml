@@ -4,8 +4,8 @@ services:
   - redis
 env:
   global:
-  - ZOOKEEPER_PEERS=127.0.0.1:2181
-  - KAFKA_PEERS=127.0.0.1:9091
+  - ZOOKEEPER_PEERS=localhost:2181
+  - KAFKA_PEERS=localhost:9092
   - KAFKA_ADVERTISED_HOST_NAME: 127.0.0.1
 before_install:
   - wget http://www.us.apache.org/dist/kafka/0.8.2.1/kafka_2.10-0.8.2.1.tgz -O kafka.tgz
