@@ -25,4 +25,7 @@ before_script:
   - telepat configure elasticsearch
   - bash .travis/start.sh
 node_js:
+  - "0.10"
   - "0.12"
+  - "4.0"
+  - "4.1"
