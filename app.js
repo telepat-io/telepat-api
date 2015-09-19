@@ -26,7 +26,7 @@ app.disable('x-powered-by');
 
 app.use('/documentation', express.static(__dirname+'/documentation'));
 
-process.title = "octopus-api";
+process.title = 'octopus-api';
 
 var envVariables = {
 	TP_KFK_HOST: process.env.TP_KFK_HOST,
@@ -50,7 +50,8 @@ for(var varName in envVariables) {
 			mainConfiguration = require('./config.json');
 		} catch (e) {
 			if (e.code == 'MODULE_NOT_FOUND') {
-				console.log('Fatal error:'.red+' configuration file is missing or not accessible. Please add a configuration file from the example.');
+				console.log('Fatal error:'.red+' configuration file is missing or not accessible. ' +
+					'Please add a configuration file from the example.');
 				process.exit(-1);
 			} else
 				throw e;
@@ -97,6 +98,14 @@ app.use(function(req, res, next) {
 
 var OnServicesConnect = function() {
 	dbConnected = true;
+	loadApplications();
+	linkMiddlewaresAndRoutes();
+	linkErrorHandlingMiddlewares();
+	monitorUsrSignals();
+
+};
+
+var loadApplications = function() {
 	Models.Application.getAll(function(err, results) {
 		if (err) {
 			console.log("Fatal error: ".red, err);
@@ -108,7 +117,9 @@ var OnServicesConnect = function() {
 			c();
 		});
 	});
+};
 
+var linkMiddlewaresAndRoutes = function() {
 	app.use(security.corsValidation);
 	app.use(security.contentTypeValidation);
 	app.use(logger('dev'));
@@ -120,7 +131,9 @@ var OnServicesConnect = function() {
 	app.use('/user', userRoute);
 	app.use('/context', contextRoute);
 	app.use('/device', deviceRoute);
+};
 
+var linkErrorHandlingMiddlewares = function() {
 	// error handlers
 	// catch 404 and forward to error handler
 	app.use(function(req, res, next) {
@@ -151,12 +164,13 @@ var OnServicesConnect = function() {
 			message: err.message
 		}).end();
 	});
+};
 
+var monitorUsrSignals = function() {
 	//signal sent by nodemon when restarting the server
 	process.on('SIGUSR2', function() {
 		app.kafkaClient.close();
 	});
-
 };
 
 async.waterfall([
@@ -181,7 +195,8 @@ async.waterfall([
 	},
 	function Kafka(callback) {
 		console.log('Waiting for Zookeeper connection...');
-		app.kafkaClient = new kafka.Client(app.kafkaConfig.host+':'+app.kafkaConfig.port+'/', app.kafkaConfig.clientName);
+		app.kafkaClient = new kafka.Client(app.kafkaConfig.host+':'+app.kafkaConfig.port+'/',
+										app.kafkaConfig.clientName);
 		app.kafkaClient.on('ready', function() {
 			console.log('Client connected to Zookeeper.'.green);
 
