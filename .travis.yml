@@ -2,6 +2,7 @@ language: node_js
 services:
   - elasticsearch
   - redis
+sudo: true
 env:
   global:
   - ZOOKEEPER_PEERS=localhost:2181
@@ -20,6 +21,7 @@ before_install:
   - kafka/bin/kafka-topics.sh --create --partitions 1 --replication-factor 1 --topic ios_transport --zookeeper localhost:2181
   - kafka/bin/kafka-topics.sh --create --partitions 1 --replication-factor 1 --topic sockets_transport --zookeeper localhost:2181
 before_script:
-  - bash .travis/setup_es.sh
+  - sudo npm install -g telepat-cli
+  - telepat configure elasticsearch
 node_js:
   - "0.12"
