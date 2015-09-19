@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/telepat-io/telepat-api.svg)](https://travis-ci.org/telepat-io/telepat-api)
+
 # Telepat API
 
 This is the Telepat API where all api calls are made. CRUD operations are not processed here directly. Messages are
