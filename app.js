@@ -74,6 +74,7 @@ if (validEnvVariables) {
 	mainDatabase = envVariables.TP_MAIN_DB;
 	//is null just so the adapter constructor will try to check envVariables
 	mainConfiguration[mainDatabase] = null;
+	mainConfiguration.password_salt = envVariables.TP_PW_SALT;
 } else {
 	app.kafkaConfig = mainConfiguration.kafka;
 	redisConfig = mainConfiguration.redis;
