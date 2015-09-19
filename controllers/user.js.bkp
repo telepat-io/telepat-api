@@ -6,7 +6,6 @@ var Models = require('telepat-models');
 var security = require('./security');
 var jwt = require('jsonwebtoken');
 var crypto = require('crypto');
-var microtime = require('microtime-nodejs');
 
 var options = {
 	client_id:          '1086083914753251',
@@ -19,7 +18,8 @@ router.use(security.deviceIdValidation);
 router.use(security.applicationIdValidation);
 router.use(security.apiKeyValidation);
 
-router.use(['/logout', '/me', '/update', '/delete'], security.tokenValidation);
+router.use(['/logout'], security.tokenValidation);
+router.use('/me', security.tokenValidation);
 
 /**
  * @api {post} /user/login Login
@@ -71,7 +71,7 @@ router.post('/login', function(req, res, next) {
 	var userProfile = null;
 	var fbProfile = null;
 	var deviceId = req._telepat.device_id;
-	var appId = req._telepat.applicationId;
+	var appId = req._telepat.application_id;
 
 	async.waterfall([
 		//Retrieve facebook information
@@ -80,7 +80,7 @@ router.post('/login', function(req, res, next) {
 				if (err) return callback(err);
 				email = result.email;
 				fbProfile = result;
-
+				console.log("Got fbProfile: "+JSON.stringify(fbProfile));
 				if (!email) {
 					var error = new Error('User email is not publicly available (insufficient facebook permissions)');
 					error.status = 400;
@@ -93,6 +93,7 @@ router.post('/login', function(req, res, next) {
 		function(callback) {
 			//try and get user profile from DB
 			Models.User(email, appId, function(err, result) {
+				console.log("User callback - "+JSON.stringify(result)+" "+JSON.stringify(err));
 				if (err && err.status == 404) {
 					var error = new Error('User with email address not found');
 					error.status = 404;
@@ -115,15 +116,12 @@ router.post('/login', function(req, res, next) {
 			} else {
 				userProfile.devices = [deviceId];
 			}
-			var patches = [];
-			patches.push({op: 'replace', path: 'user/'+userProfile.id+'/devices', value: userProfile.devices});
 
-			if (userProfile.name != fbProfile.name)
-				patches.push({op: 'replace', path: 'user/'+userProfile.id+'/name', value: fbProfile.name});
-			if (userProfile.gender != fbProfile.gender)
-				patches.push({op: 'replace', path: 'user/'+userProfile.id+'/gender', value: fbProfile.gender});
+			userProfile.fid = fbProfile.id;
+			userProfile.name = fbProfile.name;
+			userProfile.gender = fbProfile.gender;
 
-			Models.User.update(userProfile.email, appId, patches, callback);
+			Models.User.update(userProfile.email, appId, userProfile, callback);
 
 			//user first logged in with password then with fb
 			/*if (!userProfile.fid) {
@@ -144,7 +142,7 @@ router.post('/login', function(req, res, next) {
 		if (err)
 			return next(err);
 		else {
-			var token = jwt.sign({email: userProfile.email, id: userProfile.id}, security.authSecret, { expiresInMinutes: 60 });
+			var token = jwt.sign({email: userProfile.email}, security.authSecret, { expiresInMinutes: 60 });
 			res.json({status: 200, content: {token: token, user: userProfile}}).end();
 		}
 	});
@@ -195,11 +193,12 @@ router.post('/register', function(req, res, next) {
 	var accessToken = req.body.access_token;
 	var fbFriends = [];
 	var deviceId = req._telepat.device_id;
-	var appId = req._telepat.applicationId;
+	var appId = req._telepat.application_id;
 
 	async.waterfall([
 		function(callback) {
 			if (accessToken) {
+				console.log("Getting user profile ");
 				FB.napi('/me', {access_token: accessToken}, function(err, result) {
 					if (err) return callback(err);
 
@@ -220,6 +219,7 @@ router.post('/register', function(req, res, next) {
 		function(callback) {
 			//get his/her friends
 			if (accessToken) {
+				console.log("Getting user friends ");
 				FB.napi('/me/friends', {access_token: accessToken}, function(err, result) {
 					if (err) return callback(err);
 
@@ -232,6 +232,7 @@ router.post('/register', function(req, res, next) {
 				callback();
 		},
 		function(callback) {
+			console.log("Adding user ");
 			if (!userProfile.email) {
 				var error = new Error('Email address is missing from the request body or facebook access token not provided');
 				error.status = 400;
@@ -240,13 +241,17 @@ router.post('/register', function(req, res, next) {
 
 			Models.User(userProfile.email, appId, function(err, result) {
 				if (!err) {
+					console.log("No error ");
 					var error = new Error('User with that email address already exists');
 					error.status = 409;
 					callback(error);
 				}
-				else if (err && err.status != 404)
+				else if (err && err.status != 404) {
+					console.log("Error without 404 ");
 					callback(err);
+				}
 				else {
+					console.log("Error with 404 ");
 					callback();
 				}
 			});
@@ -254,33 +259,29 @@ router.post('/register', function(req, res, next) {
 		//send message to kafka if user doesn't exist in order to create it
 		function(callback) {
 			/*var props = {
-			 email: userProfile.email,
-			 fid: userProfile.id,
-			 name: userProfile.name,
-			 gender: userProfile.gender,
-			 friends: fbFriends,
-			 devices: [deviceId]
-			 };*/
-
+				email: userProfile.email,
+				fid: userProfile.id,
+				name: userProfile.name,
+				gender: userProfile.gender,
+				friends: fbFriends,
+				devices: [deviceId]
+			};*/
 			userProfile.friends = fbFriends;
 			userProfile.type = 'user';
 			userProfile.devices = [deviceId];
 
-			if (userProfile.password)
-				security.encryptPassword(userProfile.password, callback);
-			else
-				callback(null, false);
-
-		}, function(hash, callback) {
-			if (hash !== false)
-				userProfile.password = hash;
-
+			if (userProfile.password) {
+				var passwordSalt = req.app.get('password_salt');
+				var md5password = crypto.createHash('md5').update(userProfile.password).digest('hex');
+				userProfile.password = crypto.createHash('sha256').update(passwordSalt[0]+md5password+passwordSalt[1]).digest('hex');
+			}
+			console.log("Creating user and calling kafka: "+JSON.stringify(userProfile));
 			app.kafkaProducer.send([{
 				topic: 'aggregation',
 				messages: [JSON.stringify({
 					op: 'add',
 					object: userProfile,
-					applicationId: req._telepat.applicationId,
+					applicationId: req._telepat.application_id,
 					isUser: true
 				})],
 				attributes: 0
@@ -298,6 +299,7 @@ router.post('/register', function(req, res, next) {
 				callback();
 		}
 	], function(err) {
+		if(err) console.log("Got error: "+JSON.stringify(err));
 		if (err) return next(err);
 
 		res.status(202).json({status: 202, content: 'User created'}).end();
@@ -339,7 +341,7 @@ router.post('/register', function(req, res, next) {
  *
  */
 router.get('/me', function(req, res, next) {
-	Models.User(req.user.email, req._telepat.applicationId, function(err, result) {
+	Models.User(req.user.email, req._telepat.application_id, function(err, result) {
 		if (err && err.status == 404) {
 			var error = new Error('User not found');
 			error.status = 404;
@@ -408,9 +410,11 @@ router.post('/login_password', function(req, res, next) {
 	var email = req.body.email;
 	var password = req.body.password.toString();
 	var deviceId = req._telepat.device_id;
-	var appId = req._telepat.applicationId;
+	var appId = req._telepat.application_id;
 
-	var hashedPassword = null;
+	var passwordSalt = req.app.get('password_salt');
+	var md5password = crypto.createHash('md5').update(password).digest('hex');
+	var hashedPassword = crypto.createHash('sha256').update(passwordSalt[0]+md5password+passwordSalt[1]).digest('hex');
 
 	async.series([
 		function(callback) {
@@ -428,16 +432,6 @@ router.post('/login_password', function(req, res, next) {
 					callback();
 				}
 			});
-		},
-		function(callback) {
-			security.encryptPassword(req.body.password, function(err, hash) {
-				if (err)
-					return callback(err);
-
-				hashedPassword = hash;
-
-				callback();
-			});
 		}
 	], function(err) {
 		if (err)
@@ -451,7 +445,7 @@ router.post('/login_password', function(req, res, next) {
 
 		delete userProfile.password;
 
-		var token = jwt.sign({email: email, id: userProfile.id}, security.authSecret, { expiresInMinutes: 60 });
+		var token = jwt.sign({email: email}, security.authSecret, { expiresInMinutes: 60 });
 		res.json({status: 200, content: {user: userProfile, token: token }}).end();
 	});
 });
@@ -479,11 +473,10 @@ router.post('/login_password', function(req, res, next) {
 router.get('/logout', function(req, res, next) {
 	var deviceId = req._telepat.device_id;
 	var email = req.user.email;
-	var appID = req._telepat.applicationId;
 
 	async.waterfall([
 		function(callback) {
-			Models.User(email, appID, callback);
+			Models.User(email, callback);
 		},
 		function(user, callback) {
 			if (user.devices) {
@@ -491,13 +484,7 @@ router.get('/logout', function(req, res, next) {
 				if (idx >= 0)
 					user.devices.splice(idx, 1);
 
-				Models.User.update(email, appID, [
-		      {
-		        "op": "replace",
-		        "path": "user/"+email+"/devices",
-		        "value": user.devices
-		      }
-		    ], callback);
+				Models.User.update(email, {devices: user.devices}, callback);
 			} else {
 				callback();
 			}
@@ -546,12 +533,6 @@ router.get('/logout', function(req, res, next) {
  * 	}
  */
 router.get('/refresh_token', function(req, res, next) {
-	if (!req.get('Authorization')) {
-		res.status(400).json({status: 400, message: 'Required Authorization header is missing'}).end();
-
-		return;
-	}
-
 	var authHeader = req.get('Authorization').split(' ');
 	if (authHeader[0] == 'Bearer' && authHeader[1]) {
 		try {
@@ -592,42 +573,30 @@ router.post('/update', function(req, res, next) {
 	var patches = req.body.patches;
 	var id = req.user.id;
 	var email = req.user.email;
-	var modifiedMicrotime = microtime.now();
 
-	var i = 0;
-	async.eachSeries(patches, function(p, c) {
-		patches[i].email = email;
-
-		if (patches[i].path.split('/')[2] == 'password') {
-
-			security.encryptPassword(patches[p].value, function(err, hash) {
-				patches[p].value = hash;
-				i++;
-				c();
-			});
-		} else {
-			i++;
-			c();
+	for(var p in patches) {
+		patches[p].email = email;
+		if (patches[p].path.split('/')[2] == 'password') {
+			var passwordSalt = req.app.get('password_salt');
+			var md5password = crypto.createHash('md5').update(patches[p].value).digest('hex');
+			patches[p].value = crypto.createHash('sha256').update(passwordSalt[0]+md5password+passwordSalt[1]).digest('hex');
 		}
-	}, function() {
-		async.eachSeries(patches, function(patch, c) {
-			app.kafkaProducer.send([{
-				topic: 'aggregation',
-				messages: [JSON.stringify({
-					op: 'update',
-					object: patch,
-					id: id,
-					applicationId: req._telepat.applicationId,
-					isUser: true,
-					ts: modifiedMicrotime
-				})],
-				attributes: 0
-			}], c);
-		}, function(err) {
-			if (err) return next(err);
+	}
 
-			res.status(202).json({status: 202, content: "User updated"}).end();
-		});
+	app.kafkaProducer.send([{
+		topic: 'aggregator',
+		message: [JSON.stringify({
+			op: 'edit',
+			object: patches,
+			id: id,
+			applicationId: req._telepat.application_id,
+			user: true
+		})],
+		attributes: 0
+	}], function(err, result) {
+		if (err) return next(err);
+
+		res.status(202).json({status: 202, content: "User updated"}).end();
 	});
 });
 
@@ -636,24 +605,15 @@ router.post('/update_immediate', function(req, res, next) {
 
 	if (user.password) {
 		var passwordSalt = req.app.get('password_salt');
-		var md5password = crypto.createHash('md5').update(user.password).digest('hex');
+		var md5password = crypto.createHash('md5').update(props.password).digest('hex');
 		user.password = crypto.createHash('sha256').update(passwordSalt[0]+md5password+passwordSalt[1]).digest('hex');
 	}
 
-	async.waterfall([
-		function(callback) {
-			security.encryptPassword(user.password, callback);
-		},
-		function(hash, callback) {
-			user.password = hash;
+	Models.User.update(user.email, user, function(err, result) {
+		if (err) return next(err);
 
-			Models.User.update(user.email, user, function(err, result) {
-				if (err) return next(err);
-
-				res.status(200).json({status: 200, content: "User updated"}).end();
-			});
-		}
-	]);
+		res.status(200).json({status: 200, content: "User updated"}).end();
+	});
 });
 
 /**
@@ -667,6 +627,7 @@ router.post('/update_immediate', function(req, res, next) {
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
+ * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
  *
  * @apiParam {number} id ID of the user
  * @apiParam {string} email Email of the user
@@ -679,16 +640,16 @@ router.post('/update_immediate', function(req, res, next) {
  *
  */
 router.post('/delete', function(req, res, next) {
-	var id = req.user.id;
-	var email = req.user.email;
+	var id = req.body.id;
+	var email = req.body.email;
 
 	app.kafkaProducer.send([{
 		topic: 'aggregation',
 		messages: [JSON.stringify({
 			op: 'delete',
-			object: {path: 'user/'+id, email: email},
-			applicationId: req._telepat.applicationId,
-			isUser: true
+			object: {id: id, email: email},
+			applicationId: req._telepat.application_id,
+			user: true
 		})],
 		attributes: 0
 	}], function(err) {

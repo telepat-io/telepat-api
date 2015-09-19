@@ -386,7 +386,7 @@ router.use('/app/remove', security.tokenValidation, security.applicationIdValida
  *
  */
 router.post('/app/remove', function (req, res) {
-	var appId = req._telepat.application_id;
+	var appId = req._telepat.applicationId;
 
 	Models.Application.delete(appId, function (err, res1) {
 		if (err)
@@ -440,7 +440,7 @@ router.use('/app/update', security.tokenValidation, security.applicationIdValida
  *
  */
 router.post('/app/update', function (req, res) {
-	var appId = req._telepat.application_id;
+	var appId = req._telepat.applicationId;
 
 	Models.Application.update(appId, req.body, function (err, result) {
 		if (err)
@@ -488,7 +488,7 @@ router.use('/contexts', security.tokenValidation, security.applicationIdValidati
  *
  */
 router.get('/contexts', function (req, res) {
-	var appId = req._telepat.application_id;
+	var appId = req._telepat.applicationId;
 
 	Models.Context.getAll(appId, function (err, res1) {
 		if (err)
@@ -601,7 +601,7 @@ router.post('/context/add', function (req, res) {
 		return res.status(400).json({status: 400, message: "Request body is empty"}).end();
 
 	var newContext = req.body;
-	newContext['application_id'] = req._telepat.application_id;
+	newContext['application_id'] = req._telepat.applicationId;
 	Models.Context.create(newContext, function (err, res1) {
 		if (err)
 			res.status(500).send({status: 500, message: 'Could not add context'});
@@ -767,7 +767,7 @@ router.use('/schemas', security.tokenValidation, security.applicationIdValidatio
  *
  */
 router.get('/schemas', function(req, res, next) {
-	var appId = req._telepat.application_id;
+	var appId = req._telepat.applicationId;
 
 	Models.Application.getAppSchema(appId, function(err, result) {
 		if (err){
@@ -805,7 +805,7 @@ router.post('/schema/update', function(req, res, next) {
 		return;
 	}
 
-	var appId = req._telepat.application_id;
+	var appId = req._telepat.applicationId;
 	var schema = req.body.schema;
 
 	Models.Application.updateSchema(appId, schema, function(err, result) {
@@ -846,7 +846,7 @@ router.post('/schema/remove_model', function(req, res, next) {
 		return;
 	}
 
-	var appId = req._telepat.application_id;
+	var appId = req._telepat.applicationId;
 	var modelName = req.body.model_name;
 
 	if (!app.applications[appId].schema[modelName]) {
@@ -888,7 +888,7 @@ router.use('/users', security.tokenValidation, security.applicationIdValidation,
  */
 
 router.get('/users', function(req, res, next) {
-	var appId = req._telepat.application_id;
+	var appId = req._telepat.applicationId;
 
 	Models.User.getAll(appId, function(err, results) {
 		if (err) return next(err);
@@ -966,7 +966,7 @@ router.post('/user/update', function(req, res, next) {
 			}, callback);
 		},
 		function(callback) {
-			Models.User.update(req.body.email, req._telepat.application_id, patches, function(err) {
+			Models.User.update(req.body.email, req._telepat.applicationId, patches, function(err) {
 				if (err && err.status == 404) {
 					var error = new Error('User not found');
 					error.status = 404;
@@ -1019,7 +1019,7 @@ router.post('/user/delete', function(req, res, next) {
 		return;
 	}
 
-	var appId = req._telepat.application_id;
+	var appId = req._telepat.applicationId;
 	var userEmail = req.body.email;
 
 	async.waterfall([

@@ -21,8 +21,8 @@ router.use(function(req, res, next) {
 		Models.Application.loadedAppModels = {};
 	}
 
-	if (!Models.Application.loadedAppModels[req._telepat.application_id]) {
-		Models.Application.loadAppModels(req._telepat.application_id, next);
+	if (!Models.Application.loadedAppModels[req._telepat.applicationId]) {
+		Models.Application.loadAppModels(req._telepat.applicationId, next);
 	} else
 		next();
 });
@@ -143,7 +143,7 @@ router.post('/subscribe', function(req, res, next) {
 		user = channel.user,
 		filters = req.body.filters,
 		deviceId = req._telepat.device_id,
-		appId = req._telepat.application_id;
+		appId = req._telepat.applicationId;
 
 	if (!context)
 		return res.status(400).json({status: 400, message: "Requested context is missing."}).end();
@@ -288,7 +288,7 @@ router.post('/unsubscribe', function(req, res, next) {
 	user = channel.user,
 	filters = req.body.filters,
 	deviceId = req._telepat.device_id,
-	appId = req._telepat.application_id;
+	appId = req._telepat.applicationId;
 
 	if (!context)
 		return res.status(400).json({status: 400, message: "Requested context is missing."}).end();
@@ -406,7 +406,7 @@ router.post('/create', function(req, res, next) {
 	var content = req.body.content;
 	var mdl = req.body.model;
 	var context = req.body.context;
-	var appId = req._telepat.application_id;
+	var appId = req._telepat.applicationId;
 	var isAdmin = req.user.isAdmin;
 
 	if (!context)
@@ -420,7 +420,7 @@ router.post('/create', function(req, res, next) {
 
 	content.type = mdl;
 	content.context_id = context;
-	content.application_id = appId;
+	content.applicationId = appId;
 
 	if (Models.Application.loadedAppModels[appId][mdl].belongsTo && Models.Application.loadedAppModels[appId][mdl].belongsTo.length) {
 		var parentModel = Models.Application.loadedAppModels[appId][mdl].belongsTo[0].parentModel;
@@ -554,7 +554,7 @@ router.post('/update', function(req, res, next) {
 	var patch = req.body.patch;
 	var id = req.body.id;
 	var mdl = req.body.model;
-	var appId = req._telepat.application_id;
+	var appId = req._telepat.applicationId;
 
 	if (!id)
 		return res.status(400).json({status: 400, message: "Requested item id is missing."}).end();
@@ -669,7 +669,7 @@ router.post('/delete', function(req, res, next) {
 	var id = req.body.id;
 	var context = req.body.context;
 	var mdl = req.body.model;
-	var appId = req._telepat.application_id;
+	var appId = req._telepat.applicationId;
 
 	if (!id)
 		return res.status(400).json({status: 400, message: "Requested item id is missing."}).end();
@@ -737,7 +737,7 @@ router.post('/count', function(req, res, next) {
 	if (Object.getOwnPropertyNames(req.body).length === 0)
 		return res.status(400).json({status: 400, message: "Request body is empty"}).end();
 
-	var appId = req._telepat.application_id,
+	var appId = req._telepat.applicationId,
 		channel = req.body.channel;
 
 	var channelObject = new Models.Channel(appId);
