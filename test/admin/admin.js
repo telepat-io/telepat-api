@@ -33,6 +33,7 @@ describe('Admin', function() {
 		.post('/admin/add')
 		.send(admin)
 		.end(function(err, res) {
+      console.log(res.body);
 			if (err) {
 				throw err;
 				done(err);
@@ -465,7 +466,6 @@ describe('Context', function() {
     .set('X-BLGREQ-APPID', appID )
     .send(clientrequest)
     .end(function(err, res) {
-      console.log(res.body);
       res.statusCode.should.be.equal(200);
       done();
     });
@@ -481,7 +481,6 @@ describe('Context', function() {
     .set('X-BLGREQ-APPID', appID)
     .send(clientrequest)
     .end(function(err, res) {
-      console.log(res.body);
       res.statusCode.should.be.equal(400);
       done();
     });
@@ -619,7 +618,6 @@ describe('Context', function() {
     .set('X-BLGREQ-APPID', appID)
     .send(clientrequest)
     .end(function(err, res) {
-      console.log(res.body);
       res.statusCode.should.be.equal(404);
       res.body.message.should.be.equal("Context does not exist");
       done();
@@ -637,7 +635,6 @@ describe('Context', function() {
     .set('X-BLGREQ-APPID', appID )
     .send(clientrequest)
     .end(function(err, res) {
-      console.log(res.body);
       res.statusCode.should.be.equal(404);
       res.body.message.should.be.equal("Context not found");
       done();
@@ -654,7 +651,6 @@ describe('Context', function() {
 		.set('X-BLGREQ-APPID', appID)
 		.send()
 		.end(function(err, res) {
-      console.log(res.body);
 		  res.statusCode.should.be.equal(200);
 		  res.body.content.should.have.length(1);
 		  done();
@@ -674,7 +670,6 @@ describe('Context', function() {
     .set('X-BLGREQ-APPID', appID)
     .send(clientrequest)
     .end(function(err, res) {
-      console.log(res.body);
       res.statusCode.should.be.equal(200);
       res.body.content.should.be.equal('Context removed');
       done();

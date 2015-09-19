@@ -69,7 +69,7 @@ router.post('/login', function (req, res, next) {
 		},
 		function(hashedPassword) {
 			Models.Admin(req.body.email, function(err, admin) {
-				if (err && err.status === 404) {
+				if (err && err.status == 404) {
 					res.status(401).json({status: 401, message: 'Wrong user or password'}).end();
 
 					return;
@@ -77,12 +77,20 @@ router.post('/login', function (req, res, next) {
 					return next(err);
 				}
 
-				if (hashedPassword === admin.password) {
-					res.status(200).json({status: 200, content: {user: admin, token: security.createToken({id: admin.id, email: req.body.email, isAdmin: true})}}).end();
+				if (hashedPassword == admin.password) {
+					res.status(200)
+						.json({status: 200, content: {
+								user: admin, 
+								token: security.createToken({
+									id: admin.id, 
+									email: req.body.email, 
+									isAdmin: true
+								})}
+						}).end();
 				} else {
 					res.status(401).json({status: 401, message: 'Wrong user or password'}).end();
 				}
-			});
+			})
 		}
 	]);
 });
@@ -164,7 +172,7 @@ router.use('/me', security.tokenValidation);
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization 
- *                     The authorization token obtained in the login endpoint. 
+                       The authorization token obtained in the login endpoint. 
                        Should have the format: <i>Bearer $TOKEN</i>
  *
  * @apiSuccessExample {json} Success Response
@@ -186,8 +194,7 @@ router.get('/me', function (req, res) {
 router.use('/update', security.tokenValidation);
 /**
  * @api {post} /admin/update Update
- * @apiDescription Updates the currently logged admin. 
-                   Every property in the request body is used to udpate the admin.
+ * @apiDescription Updates the currently logged admin. Every property in the request body is used to udpate the admin.
  * @apiName AdminUpdate
  * @apiGroup Admin
  * @apiVersion 0.2.2
@@ -213,7 +220,7 @@ router.use('/update', security.tokenValidation);
  *
  */
 router.post('/update', function (req, res, next) {
-	if (Object.getOwnPropertyNames(req.body).length === 0) {
+	if (Object.getOwnPropertyNames(req.body).length == 0) {
 		res.status(400)
 				.json({status: 400, message: 'Missing request body'})
 				.end();
@@ -223,7 +230,7 @@ router.post('/update', function (req, res, next) {
 				next(err);
 			else
 				res.status(200).json({status: 200, content: 'Admin updated'}).end();
-		});
+		})
 	}
 });
 
@@ -294,7 +301,7 @@ router.use('/apps', security.tokenValidation);
 router.get('/apps', function (req, res) {
 	var adminApps = [];
 	async.each(Object.keys(app.applications), function(applicationId, c){
-		if (app.applications[applicationId].admins.indexOf(req.user.id) !== -1)
+		if (app.applications[applicationId].admins.indexOf(req.user.id) != -1)
 			adminApps.push(app.applications[applicationId]);
 		c();
 	}, function(err) {
@@ -316,9 +323,7 @@ router.use('/app/add', security.tokenValidation);
  * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization 
-                       The authorization token obtained in the login endpoint. 
-                       Should have the format: <i>Bearer $TOKEN</i>
+ * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
  *
  * @apiExample {json} Client Request
  * 	{
@@ -484,9 +489,7 @@ router.use('/contexts', security.tokenValidation, security.applicationIdValidati
  * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization 
-                       The authorization token obtained in the login endpoint. 
-                       Should have the format: <i>Bearer $TOKEN</i>
+ * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  *
  * @apiSuccessExample {json} Success Response
@@ -572,7 +575,7 @@ router.post('/context', function (req, res) {
 	}
 
 	Models.Context(req.body.id, function (err, res1) {
-		if (err && err.status === 404)
+		if (err && err.status == 404)
 			res.status(404).json({status: 404, message: 'Context not found'}).end();
 		else if (err)
 			res.status(500).send({status: 500, message: 'Could not get context'});
@@ -624,7 +627,7 @@ router.use('/context/add', security.tokenValidation, security.applicationIdValid
  *
  */
 router.post('/context/add', function (req, res) {
-	if (Object.getOwnPropertyNames(req.body).length === 0)
+	if (Object.getOwnPropertyNames(req.body).length == 0)
 		return res.status(400).json({status: 400, message: 'Request body is empty'}).end();
 
 	var newContext = req.body;
@@ -670,12 +673,12 @@ router.use('/context/remove', security.tokenValidation, security.applicationIdVa
  */
 router.post('/context/remove', function (req, res) {
 	if (!req.body.id) {
-		res.status(400).json({status: 400, message: "Requested context ID is missing"}).end();
+		res.status(400).json({status: 400, message: 'Requested context ID is missing'}).end();
 		return;
 	}
 
 	Models.Context.delete(req.body.id, function (err, res1) {
-		if (err && err.status === 404)
+		if (err && err.status == 404)
 			res.status(404).json({status: 404, message: 'Context does not exist'}).end();
 		else if (err)
 			res.status(500).send({status: 500, message: err.message});
@@ -744,8 +747,9 @@ router.post('/context/update', function (req, res) {
 				callback();
 			} else {
 				Models.Context.update(req.body.id, req.body.patches, function (err, res1) {
-					if (err && err.status === 404)
-						res.status(404).send({status: 404, message: 'Context with id \''+req.body.id+'\' does not exist'}).end();
+					if (err && err.status == 404)
+						res.status(404)
+							.send({status: 404, message: 'Context with id \''+req.body.id+'\' does not exist'}).end();
 					else if (err)
 						res.status(500).send({status: 500, message: 'Could not update context'}).end();
 					else {
@@ -757,7 +761,8 @@ router.post('/context/update', function (req, res) {
 		}
 	], function (err, result) {
 			if (err) {
-				res.status(404).send({status: 404, message: 'Context with id \''+req.body.id+'\' does not exist'}).end();
+				res.status(404)
+						.send({status: 404, message: 'Context with id \''+req.body.id+'\' does not exist'}).end();
 			}
 	});
 });
@@ -820,7 +825,9 @@ router.use('/schema/update', security.tokenValidation, security.applicationIdVal
  * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
+ * @apiHeader {String} Authorization 
+                       The authorization token obtained in the login endpoint. 
+                       Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  *
  * @apiParam {Object} schema Updated schema object
@@ -978,9 +985,7 @@ router.post('/user/update', function(req, res, next) {
 	var patches = req.body.patches;
 
 	if (!patches) {
-		res.status(400)
-				.json({status: 400, message: 'Patches array missing from request body'})
-				.end();
+		res.status(400).json({status: 400, message: 'Patches array missing from request body'}).end();
 		return;
 	}
 
@@ -1058,8 +1063,7 @@ router.use('/user/delete', security.tokenValidation, security.applicationIdValid
  */
 router.post('/user/delete', function(req, res, next) {
 	if (!req.body.email) {
-		res.status(400)
-				.json({status: 400, message: 'Requested email address is missing'}).end();
+		res.status(400).json({status: 400, message: 'Requested email address is missing'}).end();
 		return;
 	}
 
@@ -1082,8 +1086,7 @@ router.post('/user/delete', function(req, res, next) {
 		}
 	], function(error, results) {
 		if (error && error.status == 404)
-			return res.status(404)
-								.json({status: 404, message: 'User not found'}).end();
+			return res.status(404).json({status: 404, message: 'User not found'}).end();
 		else if (error) return next(error);
 
 		if (results) {
