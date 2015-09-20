@@ -644,7 +644,7 @@ describe('Context', function() {
 	this.timeout(9*DELAY);
 	setTimeout(function () {
 		request(url)
-		.get('/admin/contexts')
+		.get('/admin/context/all')
 		.set('Content-type','application/json')
 		.set('Authorization', authValue)
 		.set('X-BLGREQ-APPID', appID)
