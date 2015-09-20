@@ -45,7 +45,7 @@ var unless = function(paths, middleware) {
  * 	{
  * 		"status": 200,
  * 		"content": {
- * 			token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImdhYmlAYXBwc2NlbmQuY29tIiwiaXNBZG1pbiI6dHJ1ZSwiaWF0IjoxNDMyOTA2ODQwLCJleHAiOjE0MzI5MTA0NDB9.knhPevsK4cWewnx0LpSLrMg3Tk_OpchKu6it7FK9C2Q"
+ * 			token: "TOKEN"
  * 		}
  * 	}
  *
@@ -77,7 +77,7 @@ router.post('/login', function (req, res, next) {
 					return next(err);
 				}
 
-				if (hashedPassword == admin.password) {
+				if (hashedPassword === admin.password) {
 					res.status(200)
 						.json({status: 200, content: {
 								user: admin, 
@@ -90,7 +90,7 @@ router.post('/login', function (req, res, next) {
 				} else {
 					res.status(401).json({status: 401, message: 'Wrong user or password'}).end();
 				}
-			})
+			});
 		}
 	]);
 });
@@ -194,7 +194,8 @@ router.get('/me', function (req, res) {
 router.use('/update', security.tokenValidation);
 /**
  * @api {post} /admin/update Update
- * @apiDescription Updates the currently logged admin. Every property in the request body is used to udpate the admin.
+ * @apiDescription Updates the currently logged admin. 
+                   Every property in the request body is used to udpate the admin.
  * @apiName AdminUpdate
  * @apiGroup Admin
  * @apiVersion 0.2.2
@@ -301,7 +302,7 @@ router.use('/apps', security.tokenValidation);
 router.get('/apps', function (req, res) {
 	var adminApps = [];
 	async.each(Object.keys(app.applications), function(applicationId, c){
-		if (app.applications[applicationId].admins.indexOf(req.user.id) != -1)
+		if (app.applications[applicationId].admins.indexOf(req.user.id) !== -1)
 			adminApps.push(app.applications[applicationId]);
 		c();
 	}, function(err) {
@@ -317,13 +318,16 @@ router.get('/apps', function (req, res) {
 router.use('/app/add', security.tokenValidation);
 /**
  * @api {post} /admin/app/add AppCreate
- * @apiDescription Creates a app for the admin. The request body should contain the app itself.
+ * @apiDescription Creates a app for the admin. 
+                   The request body should contain the app itself.
  * @apiName AdminAppAdd
  * @apiGroup Admin
  * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
+ * @apiHeader {String} Authorization 
+                       The authorization token obtained in the login endpoint. 
+                       Should have the format: <i>Bearer $TOKEN</i>
  *
  * @apiExample {json} Client Request
  * 	{
@@ -375,7 +379,10 @@ router.post('/app/add', function (req, res) {
 	});
 });
 
-router.use('/app/remove', security.tokenValidation, security.applicationIdValidation, security.adminAppValidation);
+router.use('/app/remove', 
+	security.tokenValidation, 
+	security.applicationIdValidation, 
+	security.adminAppValidation);
 /**
  * @api {post} /admin/app/remove RemoveApp
  * @apiDescription Removes an app from the admin.
@@ -424,7 +431,10 @@ router.post('/app/remove', function (req, res) {
 	});
 });
 
-router.use('/app/update', security.tokenValidation, security.applicationIdValidation, security.adminAppValidation);
+router.use('/app/update', 
+	security.tokenValidation, 
+	security.applicationIdValidation, 
+	security.adminAppValidation);
 /**
  * @api {post} /admin/app/update UpdateApp
  * @apiDescription Updates an app
@@ -480,7 +490,10 @@ router.post('/app/update', function (req, res) {
 	});
 });
 
-router.use('/contexts', security.tokenValidation, security.applicationIdValidation, security.adminAppValidation);
+router.use('/contexts', 
+	security.tokenValidation, 
+	security.applicationIdValidation, 
+	security.adminAppValidation);
 /**
  * @api {get} /admin/contexts GetContexts
  * @apiDescription Get all contexsts
@@ -489,7 +502,9 @@ router.use('/contexts', security.tokenValidation, security.applicationIdValidati
  * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
+ * @apiHeader {String} Authorization 
+                       The authorization token obtained in the login endpoint. 
+                       Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  *
  * @apiSuccessExample {json} Success Response
@@ -527,7 +542,10 @@ router.get('/contexts', function (req, res) {
 	});
 });
 
-router.use('/context', security.tokenValidation, security.applicationIdValidation, security.adminAppValidation);
+router.use('/context', 
+	security.tokenValidation, 
+	security.applicationIdValidation, 
+	security.adminAppValidation);
 /**
  * @api {post} /admin/context GetContext
  * @apiDescription Retrieves a context
@@ -585,7 +603,10 @@ router.post('/context', function (req, res) {
 	});
 });
 
-router.use('/context/add', security.tokenValidation, security.applicationIdValidation, security.adminAppValidation);
+router.use('/context/add', 
+	security.tokenValidation, 
+	security.applicationIdValidation, 
+	security.adminAppValidation);
 /**
  * @api {post} /admin/context/add CreateContext
  * @apiDescription Creates a new context
@@ -594,7 +615,9 @@ router.use('/context/add', security.tokenValidation, security.applicationIdValid
  * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
+ * @apiHeader {String} Authorization 
+                       The authorization token obtained in the login endpoint. 
+                       Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  *
  * @apiParam {Number} appId ID of the application
@@ -627,7 +650,7 @@ router.use('/context/add', security.tokenValidation, security.applicationIdValid
  *
  */
 router.post('/context/add', function (req, res) {
-	if (Object.getOwnPropertyNames(req.body).length == 0)
+	if (Object.getOwnPropertyNames(req.body).length === 0)
 		return res.status(400).json({status: 400, message: 'Request body is empty'}).end();
 
 	var newContext = req.body;
@@ -641,7 +664,10 @@ router.post('/context/add', function (req, res) {
 	});
 });
 
-router.use('/context/remove', security.tokenValidation, security.applicationIdValidation, security.adminAppValidation);
+router.use('/context/remove', 
+	security.tokenValidation, 
+	security.applicationIdValidation, 
+	security.adminAppValidation);
 /**
  * @api {post} /admin/context/remove RemoveContext
  * @apiDescription Removes a context and all associated objects
@@ -688,7 +714,10 @@ router.post('/context/remove', function (req, res) {
 	});
 });
 
-router.use('/context/update', security.tokenValidation, security.applicationIdValidation, security.adminAppValidation);
+router.use('/context/update', 
+	security.tokenValidation, 
+	security.applicationIdValidation, 
+	security.adminAppValidation);
 /**
  * @api {post} /admin/context/update UpdateContext
  * @apiDescription Updates the context object
@@ -728,12 +757,14 @@ router.use('/context/update', security.tokenValidation, security.applicationIdVa
  */
 router.post('/context/update', function (req, res) {
 	if (!req.body.id) {
-		res.status(400).json({status: 400, message: 'Requested context ID is missing'}).end();
+		res.status(400)
+				.json({status: 400, message: 'Requested context ID is missing'}).end();
 		return;
 	}
 
 	if (!req.body.patches) {
-		res.status(400).json({status: 400, message: 'Requested patches array is missing'}).end();
+		res.status(400)
+				.json({status: 400, message: 'Requested patches array is missing'}).end();
 		return;
 	}
 
@@ -742,7 +773,7 @@ router.post('/context/update', function (req, res) {
 			Models.Context(req.body.id, callback);
 		},
 		function(context, callback) {
-			if (app.applications[context.application_id].admins.indexOf(req.user.id) == -1) {
+			if (app.applications[context.application_id].admins.indexOf(req.user.id) === -1) {
 				res.status(403).send({status: 403, message: 'This context does not belong to you'}).end();
 				callback();
 			} else {
@@ -767,7 +798,10 @@ router.post('/context/update', function (req, res) {
 	});
 });
 
-router.use('/schemas', security.tokenValidation, security.applicationIdValidation, security.adminAppValidation);
+router.use('/schemas', 
+	security.tokenValidation, 
+	security.applicationIdValidation, 
+	security.adminAppValidation);
 /**
  * @api {post} /admin/schemas GetSchemas
  * @apiDescription Gets the model schema for an application
@@ -816,7 +850,10 @@ router.get('/schemas', function(req, res, next) {
 	});
 });
 
-router.use('/schema/update', security.tokenValidation, security.applicationIdValidation, security.adminAppValidation);
+router.use('/schema/update', 
+	security.tokenValidation, 
+	security.applicationIdValidation, 
+	security.adminAppValidation);
 /**
  * @api {post} /admin/schema/update UpdateSchema
  * @apiDescription Updates the model schema
@@ -841,7 +878,8 @@ router.use('/schema/update', security.tokenValidation, security.applicationIdVal
  */
 router.post('/schema/update', function(req, res, next) {
 	if (!req.body.schema) {
-		res.status(400).json({status: 400, message: 'Requested schema object is missing'}).end();
+		res.status(400)
+				.json({status: 400, message: 'Requested schema object is missing'}).end();
 		return;
 	}
 
@@ -858,7 +896,10 @@ router.post('/schema/update', function(req, res, next) {
 	});
 });
 
-router.use('/schema/remove_model', security.tokenValidation, security.applicationIdValidation, security.adminAppValidation);
+router.use('/schema/remove_model', 
+	security.tokenValidation, 
+	security.applicationIdValidation, 
+	security.adminAppValidation);
 /**
  * @api {post} /admin/schema/remove_model RemoveAppModel
  * @apiDescription Removes a model from the application (all items of this type will be deleted)
@@ -892,7 +933,11 @@ router.post('/schema/remove_model', function(req, res, next) {
 	var modelName = req.body.model_name;
 
 	if (!app.applications[appId].schema[modelName]) {
-		res.status(404).json({status: 404, message: 'Application with ID '+appId+' does not have a model named '+modelName}).end();
+		res.status(404)
+			.json({
+				status: 404, 
+				message: 'Application with ID '+appId+' does not have a model named '+modelName
+			}).end();
 		return;
 	}
 
@@ -906,7 +951,10 @@ router.post('/schema/remove_model', function(req, res, next) {
 	});
 });
 
-router.use('/users', security.tokenValidation, security.applicationIdValidation, security.adminAppValidation);
+router.use('/users', 
+	security.tokenValidation, 
+	security.applicationIdValidation, 
+	security.adminAppValidation);
 /**
  * @api {get} /admin/users GetAppusers
  * @apiDescription Gets all users of the app
@@ -945,7 +993,10 @@ router.get('/users', function(req, res, next) {
 	});
 });
 
-router.use('/user/update', security.tokenValidation, security.applicationIdValidation, security.adminAppValidation);
+router.use('/user/update', 
+	security.tokenValidation, 
+	security.applicationIdValidation, 
+	security.adminAppValidation);
 /**
  * @api {post} /admin/user/update EditUser
  * @apiDescription Updates an user from an app
@@ -985,7 +1036,8 @@ router.post('/user/update', function(req, res, next) {
 	var patches = req.body.patches;
 
 	if (!patches) {
-		res.status(400).json({status: 400, message: 'Patches array missing from request body'}).end();
+		res.status(400)
+				.json({status: 400, message: 'Patches array missing from request body'}).end();
 		return;
 	}
 
@@ -1031,7 +1083,10 @@ router.post('/user/update', function(req, res, next) {
 	});
 });
 
-router.use('/user/delete', security.tokenValidation, security.applicationIdValidation, security.adminAppValidation);
+router.use('/user/delete', 
+	security.tokenValidation, 
+	security.applicationIdValidation, 
+	security.adminAppValidation);
 /**
  * @api {post} /admin/user/delete Deleteuser
  * @apiDescription Deketes an user from an app
