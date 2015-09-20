@@ -98,7 +98,7 @@ app.use(function(req, res, next) {
 	if (dbConnected)
 		return next();
 	res.type('application/json');
-	res.status(503).json({status: 503, message: "API server not available."}).end();
+	res.status(503).json({status: 503, message: 'API server not available.'}).end();
 });
 
 var loadApplications = function() {
