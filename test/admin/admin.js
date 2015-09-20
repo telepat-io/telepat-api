@@ -640,22 +640,38 @@ describe('Context', function() {
     });
   });
   
-  it('should return all contexts', function(done) {
-	this.timeout(9*DELAY);
-	setTimeout(function () {
-		request(url)
-		.get('/admin/context/all')
-		.set('Content-type','application/json')
-		.set('Authorization', authValue)
-		.set('X-BLGREQ-APPID', appID)
-		.send()
-		.end(function(err, res) {
-		  res.statusCode.should.be.equal(200);
-		  res.body.content.should.have.length(1);
-		  done();
-		});
-	}, 6*DELAY);
+  it('should return all contexts using the old API', function(done) {
+  	this.timeout(9*DELAY);
+  	setTimeout(function () {
+  		request(url)
+  		.get('/admin/contexts')
+  		.set('Content-type','application/json')
+  		.set('Authorization', authValue)
+  		.set('X-BLGREQ-APPID', appID)
+  		.send()
+  		.end(function(err, res) {
+  		  res.statusCode.should.be.equal(200);
+  		  res.body.content.should.have.length(1);
+  		  done();
+  		});
+  	}, 6*DELAY);
+  });
 
+  it('should return all contexts using the new API', function(done) {
+    this.timeout(9*DELAY);
+    setTimeout(function () {
+      request(url)
+      .get('/admin/context/all')
+      .set('Content-type','application/json')
+      .set('Authorization', authValue)
+      .set('X-BLGREQ-APPID', appID)
+      .send()
+      .end(function(err, res) {
+        res.statusCode.should.be.equal(200);
+        res.body.content.should.have.length(1);
+        done();
+      });
+    }, 6*DELAY);
   });
 
   it('should return a success response to indicate context was removed', function(done) {
@@ -810,9 +826,22 @@ describe('Schema', function() {
     });
   });
   
-  it('should return a success response to indicate schema was retrived succesfully', function(done) {
+  it('should return a success response to indicate schema was retrived succesfully using the old API', function(done) {
     request(url)
     .get('/admin/schemas')
+    .set('Content-type','application/json')
+    .set('Authorization', authValue )
+    .set('X-BLGREQ-APPID', appID )
+    .send()
+    .end(function(err, res) {
+      res.statusCode.should.be.equal(200);
+      done();
+    });
+  });
+
+  it('should return a success response to indicate schema was retrived succesfully using the new API', function(done) {
+    request(url)
+    .get('/admin/schema/all')
     .set('Content-type','application/json')
     .set('Authorization', authValue )
     .set('X-BLGREQ-APPID', appID )
@@ -869,7 +898,33 @@ describe('User', function() {
     .set('Authorization', authValue)
     .send(clientrequest)
     .end(function(err, res) {
-		//console.log(res);
+      res.statusCode.should.be.equal(200);
+      setTimeout(done, 6*DELAY);
+    });
+  });
+
+  it('should return a success response to indicate that an user was updated', function(done) {
+    this.timeout(10*DELAY);
+   
+    var clientrequest = {
+      "email" : userEmail,
+      "patches": [
+        {
+          "op": "replace",
+          "path": "user/"+userEmail+"/password",
+          "value": "newpassword"
+        }
+      ]
+    };
+    request(url)
+    .post('/admin/user/update')
+    .set('Content-type','application/json')
+    .set('X-BLGREQ-SIGN', appIDsha256)
+    .set('X-BLGREQ-APPID', appID)
+    .set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28')
+    .set('Authorization', authValue)
+    .send(clientrequest)
+    .end(function(err, res) {
       res.statusCode.should.be.equal(200);
       setTimeout(done, 6*DELAY);
     });
@@ -1047,6 +1102,31 @@ describe('User', function() {
     });
   });
 
+  it('should return an error response to indicate that the user email is missing', function(done) {
+    var clientrequest = {
+      "patches": [
+        {
+          "op": "replace",
+          "path": "user/"+userEmail+"/name",
+          "value": "new value"
+        }
+      ]
+    };
+    request(url)
+    .post('/admin/user/update')
+    .set('Content-type','application/json')
+    .set('X-BLGREQ-SIGN', appIDsha256 )
+    .set('X-BLGREQ-APPID', appID )
+    .set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+    .set('Authorization', authValue )
+    .send(clientrequest)
+    .end(function(err, res) {
+      res.statusCode.should.be.equal(400);
+      res.body.message.should.be.equal("Email missing from request body");
+      done();
+    });
+  });
+
   it('should return a success response to indicate that a users list was retrived', function(done) {
     request(url)
     .get('/admin/users')
@@ -1067,6 +1147,39 @@ describe('User', function() {
   it('should return an error response to indicate that a users list was NOT retrived for a bad app id', function(done) {
     request(url)
     .get('/admin/users')
+    .set('Content-type','application/json')
+    .set('X-BLGREQ-SIGN', appIDsha256)
+    .set('X-BLGREQ-APPID', Math.round(Math.random()*1000000)+1000)
+    .set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28')
+    .set('Authorization', authValue )
+    .send()
+    .end(function(err, res) {
+      if(res)
+        res.statusCode.should.be.equal(404);
+      done();
+    });
+  });
+
+  it('should return a success response to indicate that a users list was retrived', function(done) {
+    request(url)
+    .get('/admin/user/all')
+    .set('Content-type','application/json')
+    .set('X-BLGREQ-SIGN', appIDsha256)
+    .set('X-BLGREQ-APPID', appID)
+    .set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28')
+    .set('Authorization', authValue )
+    .send()
+    .end(function(err, res) {
+      if(res) {
+        res.statusCode.should.be.equal(200);
+      }
+      done();
+    });
+  });
+  
+  it('should return an error response to indicate that a users list was NOT retrived for a bad app id', function(done) {
+    request(url)
+    .get('/admin/user/all')
     .set('Content-type','application/json')
     .set('X-BLGREQ-SIGN', appIDsha256)
     .set('X-BLGREQ-APPID', Math.round(Math.random()*1000000)+1000)

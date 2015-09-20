@@ -147,6 +147,49 @@ it('should return a success response to indicate that the user has logged in via
   });
 });
 
+it('should return a success response to indicate that the user has logged in via Facebook', function(done) {
+  this.timeout(15*DELAY);
+  request('https://graph.facebook.com')
+  .get('/oauth/access_token?client_id=1086083914753251&client_secret=40f626ca66e4472e0d11c22f048e9ea8&grant_type=client_credentials')
+  .send()
+  .end(function(err, res) {
+    request('https://graph.facebook.com')
+    .get('/v1.0/1086083914753251/accounts/test-users?access_token='+res.text.replace('access_token=', ''))
+    .send()
+    .end(function(err, res) {
+      var data = JSON.parse(res.text);
+      var clientrequest = {
+        "access_token": data.data[0].access_token
+      };
+      request(url)
+      .post('/user/register')
+      .set('Content-type','application/json')
+      .set('X-BLGREQ-SIGN', appIDsha256 )
+      .set('X-BLGREQ-APPID', appID )
+      .set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+      .send(clientrequest)
+      .end(function(err, res) {
+        setTimeout(function() {
+          request(url)
+          .post('/user/login')
+          .set('Content-type','application/json')
+          .set('X-BLGREQ-SIGN', appIDsha256 )
+          .set('X-BLGREQ-APPID', appID )
+          .set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+          .send(clientrequest)
+          .end(function(err, res) {
+            //token = res.body.content.token;
+            //userID = res.body.content.user.id;
+            //authValue = 'Bearer ' + token;
+            res.statusCode.should.be.equal(200);
+            done();
+          });
+        }, 4*DELAY);
+      });
+    });
+  });
+});
+
 it('should return a success response to indicate that the user info was retrived', function(done) {
   request(url)
   .get('/user/me')
@@ -199,25 +242,6 @@ it('should return an error response to indicate that the user has NOT logged in 
     done();
   });
 });
-
-// it('should return an succes response to indicate that the user has logged in via FACEBOOK', function(done) {
-  // //TODO
-  // var clientrequest = {
-    // "user" : "testuser1",
-    // "password" : "1234test"        
-  // };   
-  
-  // request(url)
-  // .post('/user/login')
-  // .set('X-BLGREQ-SIGN', appIDsha256)
-  // .set('X-BLGREQ-UDID', deviceIdentification)
-  // .set('X-BLGREQ-APPID',1)
-  // .send(clientrequest)
-  // .end(function(err, res) {
-    // res.statusCode.should.be.equal(200);
-    // done();
-  // });
-// });
 
 it('should return a success response to indicate that the user was updated', function(done) {
   var clientrequest = {
