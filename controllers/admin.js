@@ -77,9 +77,7 @@ router.use('/contexts',
  *
  */
 router.get('/contexts', function (req, res) {
-	var appId = req._telepat.applicationId;
-
-	Models.Context.getAll(appId, function (err, res1) {
+	Models.Context.getAll(req._telepat.applicationId, function (err, res1) {
 		if (err)
 			res.status(500).send({status: 500, message: 'Could not get contexts'});
 		else {
@@ -130,9 +128,7 @@ router.use('/schemas',
  *
  */
 router.get('/schemas', function(req, res, next) {
-	var appId = req._telepat.applicationId;
-
-	Models.Application.getAppSchema(appId, function(err, result) {
+	Models.Application.getAppSchema(req._telepat.applicationId, function(err, result) {
 		if (err){
 			next(err);
 		} else {
@@ -172,11 +168,8 @@ router.use('/users',
  */
 
 router.get('/users', function(req, res, next) {
-	var appId = req._telepat.applicationId;
-
-	Models.User.getAll(appId, function(err, results) {
+	Models.User.getAll(req._telepat.applicationId, function(err, results) {
 		if (err) return next(err);
-
 		results.forEach(function(item, index, originalArray) {
 			delete originalArray[index].password;
 		});
