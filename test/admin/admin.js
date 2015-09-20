@@ -33,13 +33,12 @@ describe('Admin', function() {
 		.post('/admin/add')
 		.send(admin)
 		.end(function(err, res) {
-      console.log(res.body);
 			if (err) {
 				throw err;
 				done(err);
 			}
 			res.statusCode.should.be.equal(200);
-			setTimeout(done, 3*DELAY);
+			setTimeout(done, 4*DELAY);
 		});
   });
 

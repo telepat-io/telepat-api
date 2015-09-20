@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/telepat-io/telepat-api.svg)](https://travis-ci.org/telepat-io/telepat-api)
+[![Build Status](https://travis-ci.org/telepat-io/telepat-api.svg)](https://travis-ci.org/telepat-io/telepat-api) [![Test Coverage](https://codeclimate.com/github/telepat-io/telepat-api/badges/coverage.svg)](https://codeclimate.com/github/telepat-io/telepat-api/coverage) [![Code Climate](https://codeclimate.com/github/telepat-io/telepat-api/badges/gpa.svg)](https://codeclimate.com/github/telepat-io/telepat-api)
 
 # Telepat API
 
