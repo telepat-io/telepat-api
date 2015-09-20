@@ -49,7 +49,7 @@ for(var varName in envVariables) {
 		try {
 			mainConfiguration = require('./config.json');
 		} catch (e) {
-			if (e.code == 'MODULE_NOT_FOUND') {
+			if (e.code === 'MODULE_NOT_FOUND') {
 				console.log('Fatal error:'.red+' configuration file is missing or not accessible. ' +
 					'Please add a configuration file from the example.');
 				process.exit(-1);
@@ -75,17 +75,22 @@ if (validEnvVariables) {
 	mainDatabase = envVariables.TP_MAIN_DB;
 	//is null just so the adapter constructor will try to check envVariables
 	mainConfiguration[mainDatabase] = null;
-	mainConfiguration.password_salt = envVariables.TP_PW_SALT;
+	mainConfiguration.passwordSalt = envVariables.TP_PW_SALT;
 } else {
 	app.kafkaConfig = mainConfiguration.kafka;
+	//backwards compatiblity for config.json files.
+	if(mainConfiguration['password_salt'] !== undefined)
+		mainConfiguration.passwordSalt = mainConfiguration['password_salt'];
 	redisConfig = mainConfiguration.redis;
-	mainDatabase = mainConfiguration.main_database;
+	if(mainConfiguration['main_database'] !== undefined)
+		mainConfiguration.mainDatabase = mainConfiguration['main_database'];
+	mainDatabase = mainConfiguration.mainDatabase;
 }
 
 Models.Application.datasource = new Models.Datasource();
 Models.Application.datasource.setMainDatabase(new Models[mainDatabase](mainConfiguration[mainDatabase]));
 
-app.set('password_salt', mainConfiguration.password_salt);
+app.set('password_salt', mainConfiguration.passwordSalt);
 
 app.applications = {};
 
@@ -96,19 +101,10 @@ app.use(function(req, res, next) {
 	res.status(503).json({status: 503, message: "API server not available."}).end();
 });
 
-var OnServicesConnect = function() {
-	dbConnected = true;
-	loadApplications();
-	linkMiddlewaresAndRoutes();
-	linkErrorHandlingMiddlewares();
-	monitorUsrSignals();
-
-};
-
 var loadApplications = function() {
 	Models.Application.getAll(function(err, results) {
 		if (err) {
-			console.log("Fatal error: ".red, err);
+			console.log('Fatal error: '.red, err);
 			return;
 		}
 
@@ -171,6 +167,15 @@ var monitorUsrSignals = function() {
 	process.on('SIGUSR2', function() {
 		app.kafkaClient.close();
 	});
+};
+
+var OnServicesConnect = function() {
+	dbConnected = true;
+	loadApplications();
+	linkMiddlewaresAndRoutes();
+	linkErrorHandlingMiddlewares();
+	monitorUsrSignals();
+
 };
 
 async.waterfall([
