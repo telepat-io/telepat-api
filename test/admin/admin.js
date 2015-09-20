@@ -39,7 +39,7 @@ describe('Admin', function() {
 				done(err);
 			}
 			res.statusCode.should.be.equal(200);
-			setTimeout(done, 3*DELAY);
+			setTimeout(done, 4*DELAY);
 		});
   });
 
