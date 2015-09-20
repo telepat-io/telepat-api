@@ -5,6 +5,8 @@ services:
 addons:
     code_climate:
         repo_token: 7c04f55c7ed08e2c694492e9b39cd73e5cc9bedce02d0a372f3101dc598dcfaa
+notifications:
+  slack: appscend:L6jJEK0C6jJQkWr5XPMsDjdv
 env:
   global:
   - ZOOKEEPER_PEERS=localhost:2181
