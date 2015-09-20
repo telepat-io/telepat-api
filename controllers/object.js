@@ -37,7 +37,7 @@ var validateContext = function(appId, context, callback) {
 			var error = new Error('Application with id "'+appId+'" does not exist.');
 			error.status = 404;
 			callback(error);
-		} else if (err) return callback(err)
+		} else if (err) return callback(err);
 		else if (result === false) {
 			var error = new Error('Context with id "'+context+'" does not belong to app with id "'+appId+'"');
 			error.status = 403;
@@ -56,7 +56,9 @@ var validateContext = function(appId, context, callback) {
  * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
+ * @apiHeader {String} Authorization 
+                       The authorization token obtained in the login endpoint. 
+                       Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
  * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
@@ -128,12 +130,12 @@ var validateContext = function(appId, context, callback) {
  */
 router.post('/subscribe', function(req, res, next) {
 	if (Object.getOwnPropertyNames(req.body).length === 0)
-		return res.status(400).json({status: 400, message: "Request body is empty"}).end();
+		return res.status(400).json({status: 400, message: 'Request body is empty'}).end();
 
 	var channel = req.body.channel;
 
 	if (!channel) {
-		return res.status(400).json({status: 400, message: "Requested channel field is missing."}).end();
+		return res.status(400).json({status: 400, message: 'Requested channel field is missing.'}).end();
 	}
 
 	var id = channel.id,
@@ -146,10 +148,10 @@ router.post('/subscribe', function(req, res, next) {
 		appId = req._telepat.applicationId;
 
 	if (!context)
-		return res.status(400).json({status: 400, message: "Requested context is missing."}).end();
+		return res.status(400).json({status: 400, message: 'Requested context is missing.'}).end();
 
 	if (!mdl)
-		return res.status(400).json({status: 400, message: "Requested object model is missing."}).end();
+		return res.status(400).json({status: 400, message: 'Requested object model is missing.'}).end();
 
 	if (!Models.Application.loadedAppModels[appId][mdl])
 		return res.status(404).json({status: 404, message: 'Application model "'+mdl+'" does not exist.'}).end();
@@ -206,10 +208,10 @@ router.post('/subscribe', function(req, res, next) {
 		},
 		function(callback) {
 			if (id) {
-				new Models.Model(mdl, appId, context, id, function(err, results) {
+				Models.Model(mdl, appId, context, id, function(err, results) {
 					if (err) return callback(err);
 
-					callback(null, results)
+					callback(null, results);
 				});
 			} else {
 				Models.Model.search(channelObject, callback);
@@ -246,7 +248,9 @@ router.post('/subscribe', function(req, res, next) {
  * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
+ * @apiHeader {String} Authorization 
+                       The authorization token obtained in the login endpoint. 
+                       Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
  * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
@@ -266,19 +270,20 @@ router.post('/subscribe', function(req, res, next) {
  * 	}
  *
  * @apiError 401 <code>NotAuthenticated</code>  Only authenticated users may access this endpoint.
- * @apiError 404 <code>NotFound</code> If device hasn't subscribed to this channel or if application model is not valid (doesn't exist)
+ * @apiError 404 <code>NotFound</code> 
+      If device hasn't subscribed to this channel or if application model is not valid (doesn't exist)
  * @apiError 400 <code>RequestedContextMissing</code> If context id is missing from the request body
  * @apiError 400 <code>RequestedChannelMissing</code> If the channel object is missing from the request body
  * @apiError 400 <code>RequestedModelMissing</code> If the item model is not present from the request body
  */
 router.post('/unsubscribe', function(req, res, next) {
 	if (Object.getOwnPropertyNames(req.body).length === 0)
-		return res.status(400).json({status: 400, message: "Request body is empty"}).end();
+		return res.status(400).json({status: 400, message: 'Request body is empty'}).end();
 
 	var channel = req.body.channel;
 
 	if (!channel) {
-		return res.status(400).json({status: 400, message: "Requested channel field is missing."}).end();
+		return res.status(400).json({status: 400, message: 'Requested channel field is missing.'}).end();
 	}
 
 	var id = channel.id,
@@ -291,10 +296,10 @@ router.post('/unsubscribe', function(req, res, next) {
 	appId = req._telepat.applicationId;
 
 	if (!context)
-		return res.status(400).json({status: 400, message: "Requested context is missing."}).end();
+		return res.status(400).json({status: 400, message: 'Requested context is missing.'}).end();
 
 	if (!mdl)
-		return res.status(400).json({status: 400, message: "Requested object model is missing."}).end();
+		return res.status(400).json({status: 400, message: 'Requested object model is missing.'}).end();
 
 	if (!Models.Application.loadedAppModels[appId][mdl])
 		return res.status(404).json({status: 404, message: 'Application model "'+mdl+'" does not exist.'}).end();
@@ -336,7 +341,7 @@ router.post('/unsubscribe', function(req, res, next) {
 				if (err)
 					callback(err, null);
 				else
-					callback(null, {status: 200, content: "Subscription removed"});
+					callback(null, {status: 200, content: 'Subscription removed'});
 			});
 		}/*,
 		function(result, callback) {
@@ -370,7 +375,9 @@ router.post('/unsubscribe', function(req, res, next) {
  * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
+ * @apiHeader {String} Authorization 
+                       The authorization token obtained in the login endpoint. 
+                       Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
  * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
@@ -401,7 +408,7 @@ router.post('/unsubscribe', function(req, res, next) {
  */
 router.post('/create', function(req, res, next) {
 	if (Object.getOwnPropertyNames(req.body).length === 0)
-		return res.status(400).json({status: 400, message: "Request body is empty"}).end();
+		return res.status(400).json({status: 400, message: 'Request body is empty'}).end();
 
 	var content = req.body.content;
 	var mdl = req.body.model;
@@ -410,10 +417,10 @@ router.post('/create', function(req, res, next) {
 	var isAdmin = req.user.isAdmin;
 
 	if (!context)
-		return res.status(400).json({status: 400, message: "Requested context is missing."}).end();
+		return res.status(400).json({status: 400, message: 'Requested context is missing.'}).end();
 
 	if (!mdl)
-		return res.status(400).json({status: 400, message: "Requested object model is missing."}).end();
+		return res.status(400).json({status: 400, message: 'Requested object model is missing.'}).end();
 
 	if (!Models.Application.loadedAppModels[appId][mdl])
 		return res.status(404).json({status: 404, message: 'Application model "'+mdl+'" does not exist.'}).end();
@@ -422,15 +429,18 @@ router.post('/create', function(req, res, next) {
 	content.context_id = context;
 	content.application_id = appId;
 
-	if (Models.Application.loadedAppModels[appId][mdl].belongsTo && Models.Application.loadedAppModels[appId][mdl].belongsTo.length) {
+	if (Models.Application.loadedAppModels[appId][mdl].belongsTo && 
+				Models.Application.loadedAppModels[appId][mdl].belongsTo.length) {
 		var parentModel = Models.Application.loadedAppModels[appId][mdl].belongsTo[0].parentModel;
 		if (!content[parentModel+'_id']) {
-			var error = new Error("'"+parentModel+"_id' is required");
+			var error = new Error('"'+parentModel+'_id" is required');
 			error.status = 400;
 
 			return next(error);
 		} else if (Models.Application.loadedAppModels[appId][mdl].belongsTo[0].relationType == 'hasSome' && content[Models.Application.loadedAppModels[appId][parentModel].hasSome_property+'_index'] === undefined) {
-			var error = new Error("'"+Models.Application.loadedAppModels[appId][parentModel].hasSome_property+"_index is required");
+			var error = new Error(
+						Models.Application.loadedAppModels[appId][parentModel].hasSome_property+
+						"_index is required");
 			error.status = 400;
 
 			return next(error);
@@ -467,7 +477,7 @@ router.post('/create', function(req, res, next) {
 				attributes: 0
 			}], function(err) {
 				if (err)
-					err.message = "Failed to send message to aggregation worker.";
+					err.message = 'Failed to send message to aggregation worker.';
 				agg_callback(err);
 			});
 		}/*,
@@ -505,7 +515,9 @@ router.post('/create', function(req, res, next) {
  * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
+ * @apiHeader {String} Authorization 
+                       The authorization token obtained in the login endpoint. 
+                       Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
  * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
@@ -537,7 +549,8 @@ router.post('/create', function(req, res, next) {
  * 	}
  *
  * @apiError 401 <code>NotAuthenticated</code>  Only authenticated users may access this endpoint
- * @apiError 404 <code>NotFound</code> If <code>id</code> was supplied but object not found or application model doesn't exist
+ * @apiError 404 <code>NotFound</code> 
+        If <code>id</code> was supplied but object not found or application model doesn't exist
  * @apiError 403 <code>PermissionDenied</code> If the model requires other permissions other than the ones provided
  * @apiError 400 <code>RequestedContextMissing</code> If context id is missing from the request body
  * @apiError 400 <code>RequestedChannelMissing</code> If the channel object is missing from the request body
@@ -547,7 +560,7 @@ router.post('/create', function(req, res, next) {
  */
 router.post('/update', function(req, res, next) {
 	if (Object.getOwnPropertyNames(req.body).length === 0)
-		return res.status(400).json({status: 400, message: "Request body is empty"}).end();
+		return res.status(400).json({status: 400, message: 'Request body is empty'}).end();
 
 	var modifiedMicrotime = microtime.now();
 	var context = req.body.context;
@@ -557,13 +570,13 @@ router.post('/update', function(req, res, next) {
 	var appId = req._telepat.applicationId;
 
 	if (!id)
-		return res.status(400).json({status: 400, message: "Requested item id is missing."}).end();
+		return res.status(400).json({status: 400, message: 'Requested item id is missing.'}).end();
 
 	if (!context)
-		return res.status(400).json({status: 400, message: "Requested context is missing."}).end();
+		return res.status(400).json({status: 400, message: 'Requested context is missing.'}).end();
 
 	if (!mdl)
-		return res.status(400).json({status: 400, message: "Requested object model is missing."}).end();
+		return res.status(400).json({status: 400, message: 'Requested object model is missing.'}).end();
 
 	if (!Models.Application.loadedAppModels[appId][mdl])
 		return res.status(400).json({status: 400, message: 'Application model "'+mdl+'" does not exist.'}).end();
@@ -633,7 +646,9 @@ router.post('/update', function(req, res, next) {
  * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
+ * @apiHeader {String} Authorization 
+                       The authorization token obtained in the login endpoint. 
+                       Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
  * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
@@ -656,7 +671,8 @@ router.post('/update', function(req, res, next) {
  * 	}
  *
  * @apiError 401 <code>NotAuthenticated</code>  Only authenticated users may access this endpoint.
- * @apiError 403 <code>PermissionDenied</code> If the model requires other permissions other than the ones provided.
+ * @apiError 403 <code>PermissionDenied</code> 
+        If the model requires other permissions other than the ones provided.
  * @apiError 400 <code>RequestedContextMissing</code> If context id is missing from the request body
  * @apiError 400 <code>RequestedChannelMissing</code> If the channel object is missing from the request body
  * @apiError 400 <code>RequestedModelMissing</code> If the item model is not present from the request body
@@ -664,7 +680,7 @@ router.post('/update', function(req, res, next) {
  */
 router.post('/delete', function(req, res, next) {
 	if (Object.getOwnPropertyNames(req.body).length === 0)
-		return res.status(400).json({status: 400, message: "Request body is empty"}).end();
+		return res.status(400).json({status: 400, message: 'Request body is empty'}).end();
 
 	var id = req.body.id;
 	var context = req.body.context;
@@ -672,13 +688,13 @@ router.post('/delete', function(req, res, next) {
 	var appId = req._telepat.applicationId;
 
 	if (!id)
-		return res.status(400).json({status: 400, message: "Requested item id is missing."}).end();
+		return res.status(400).json({status: 400, message: 'Requested item id is missing.'}).end();
 
 	if (!context)
-		return res.status(400).json({status: 400, message: "Requested context is missing."}).end();
+		return res.status(400).json({status: 400, message: 'Requested context is missing.'}).end();
 
 	if (!mdl)
-		return res.status(400).json({status: 400, message: "Requested object model is missing."}).end();
+		return res.status(400).json({status: 400, message: 'Requested object model is missing.'}).end();
 
 	if (!Models.Application.loadedAppModels[appId][mdl])
 		return res.status(400).json({status: 400, message: 'Application model "'+mdl+'" does not exist.'}).end();
@@ -722,7 +738,9 @@ router.post('/delete', function(req, res, next) {
  * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
+ * @apiHeader {String} Authorization 
+                       The authorization token obtained in the login endpoint. 
+                       Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
  * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
@@ -735,7 +753,7 @@ router.post('/delete', function(req, res, next) {
  */
 router.post('/count', function(req, res, next) {
 	if (Object.getOwnPropertyNames(req.body).length === 0)
-		return res.status(400).json({status: 400, message: "Request body is empty"}).end();
+		return res.status(400).json({status: 400, message: 'Request body is empty'}).end();
 
 	var appId = req._telepat.applicationId,
 		channel = req.body.channel;

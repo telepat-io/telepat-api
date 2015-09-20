@@ -221,7 +221,7 @@ router.use('/update', security.tokenValidation);
  *
  */
 router.post('/update', function (req, res, next) {
-	if (Object.getOwnPropertyNames(req.body).length == 0) {
+	if (Object.getOwnPropertyNames(req.body).length === 0) {
 		res.status(400)
 				.json({status: 400, message: 'Missing request body'})
 				.end();
@@ -231,7 +231,7 @@ router.post('/update', function (req, res, next) {
 				next(err);
 			else
 				res.status(200).json({status: 200, content: 'Admin updated'}).end();
-		})
+		});
 	}
 });
 
@@ -1056,7 +1056,7 @@ router.post('/user/update', function(req, res, next) {
 						patches[i].value = hash;
 						i++;
 						c();
-					})
+					});
 				} else {
 					i++;
 					c();
@@ -1164,7 +1164,7 @@ router.post('/user/delete', function(req, res, next) {
 		}
 
 		res.status(202).json({status: 202, content: 'User deleted'}).end();
-	})
+	});
 });
 
 module.exports = router;
