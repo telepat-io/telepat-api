@@ -9,15 +9,15 @@ var Models = require('telepat-models');
 router.use('/add', security.tokenValidation);
 /**
  * @api {post} /admin/app/add AppCreate
- * @apiDescription Creates a app for the admin. 
+ * @apiDescription Creates a app for the admin.
                    The request body should contain the app itself.
  * @apiName AdminAppAdd
  * @apiGroup Admin
  * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization 
-                       The authorization token obtained in the login endpoint. 
+ * @apiHeader {String} Authorization
+                       The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  *
  * @apiExample {json} Client Request
@@ -70,9 +70,9 @@ router.post('/add', function (req, res) {
 	});
 });
 
-router.use('/remove', 
-	security.tokenValidation, 
-	security.applicationIdValidation, 
+router.use('/remove',
+	security.tokenValidation,
+	security.applicationIdValidation,
 	security.adminAppValidation);
 /**
  * @api {post} /admin/app/remove RemoveApp
@@ -82,8 +82,8 @@ router.use('/remove',
  * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization 
-                       The authorization token obtained in the login endpoint. 
+ * @apiHeader {String} Authorization
+                       The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  *
@@ -122,9 +122,9 @@ router.post('/remove', function (req, res) {
 	});
 });
 
-router.use('/update', 
-	security.tokenValidation, 
-	security.applicationIdValidation, 
+router.use('/update',
+	security.tokenValidation,
+	security.applicationIdValidation,
 	security.adminAppValidation);
 /**
  * @api {post} /admin/app/update UpdateApp
@@ -134,8 +134,8 @@ router.use('/update',
  * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization 
-                       The authorization token obtained in the login endpoint. 
+ * @apiHeader {String} Authorization
+                       The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  *
@@ -143,7 +143,13 @@ router.use('/update',
  *
  * @apiExample {json} Client Request
  * 	{
- * 		"name": "New name"
+ * 		"patches": [
+ * 			{
+ * 				"op": "replace",
+ * 				"path": "application/application_id/field_name",
+ * 				"value": "new value"
+ * 			}
+ *		 ]
  * 	}
  *
  * @apiSuccessExample {json} Success Response
@@ -164,21 +170,35 @@ router.use('/update',
  * 	@apiErrorExample {json} Error Response
  * 	{
  * 		"status": 500,
- * 		"message": "Could not update app"
+ * 		"message": "internal server error description"
  * 	}
  *
  */
-router.post('/update', function (req, res) {
+router.post('/update', function (req, res, next) {
 	var appId = req._telepat.applicationId;
 
-	Models.Application.update(appId, req.body, function (err, result) {
-		if (err)
-			res.status(500).send({status: 500, message: 'Could not update app'});
-		else {
-			app.applications[appId] = result;
-			res.status(200).json({status: 200, content: 'Updated'}).end();
-		}
-	});
+	if (Object.getOwnPropertyNames(req.body).length === 0) {
+		res.status(400)
+			.json({status: 400, message: 'Missing request body'})
+			.end();
+	} else if (!Array.isArray(req.body.patches)) {
+		res.status(400)
+			.json({status: 400, message: 'patches is not an array or is missing'})
+			.end();
+	} else if (req.body.patches.length == 0) {
+		res.status(400)
+			.json({status: 400, message: 'patches array is empty'})
+			.end();
+	} else {
+		Models.Application.update(appId, req.body.patches, function (err, result) {
+			if (err)
+				return next(err);
+			else {
+				app.applications[appId] = result;
+				res.status(200).json({status: 200, content: 'Updated'}).end();
+			}
+		});
+	}
 });
 
 module.exports = router;

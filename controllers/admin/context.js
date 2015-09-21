@@ -6,9 +6,9 @@ var router = express.Router();
 var security = require('../security');
 var Models = require('telepat-models');
 
-router.use('/', 
-	security.tokenValidation, 
-	security.applicationIdValidation, 
+router.use('/',
+	security.tokenValidation,
+	security.applicationIdValidation,
 	security.adminAppValidation);
 /**
  * @api {get} /admin/context/all GetContexts
@@ -18,8 +18,8 @@ router.use('/',
  * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization 
-                       The authorization token obtained in the login endpoint. 
+ * @apiHeader {String} Authorization
+                       The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  *
@@ -66,8 +66,8 @@ router.get('/all', function (req, res) {
  * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization 
-                       The authorization token obtained in the login endpoint. 
+ * @apiHeader {String} Authorization
+                       The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  *
@@ -115,9 +115,9 @@ router.post('/', function (req, res) {
 	});
 });
 
-router.use('/add', 
-	security.tokenValidation, 
-	security.applicationIdValidation, 
+router.use('/add',
+	security.tokenValidation,
+	security.applicationIdValidation,
 	security.adminAppValidation);
 /**
  * @api {post} /admin/context/add CreateContext
@@ -127,8 +127,8 @@ router.use('/add',
  * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization 
-                       The authorization token obtained in the login endpoint. 
+ * @apiHeader {String} Authorization
+                       The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  *
@@ -176,9 +176,9 @@ router.post('/add', function (req, res) {
 	});
 });
 
-router.use('/remove', 
-	security.tokenValidation, 
-	security.applicationIdValidation, 
+router.use('/remove',
+	security.tokenValidation,
+	security.applicationIdValidation,
 	security.adminAppValidation);
 /**
  * @api {post} /admin/context/remove RemoveContext
@@ -188,8 +188,8 @@ router.use('/remove',
  * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization 
-                       The authorization token obtained in the login endpoint. 
+ * @apiHeader {String} Authorization
+                       The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  *
@@ -209,7 +209,7 @@ router.use('/remove',
  * 	}
  *
  */
-router.post('/remove', function (req, res) {
+router.post('/remove', function (req, res, next) {
 	if (!req.body.id) {
 		res.status(400).json({status: 400, message: 'Requested context ID is missing'}).end();
 		return;
@@ -219,16 +219,16 @@ router.post('/remove', function (req, res) {
 		if (err && err.status == 404)
 			res.status(404).json({status: 404, message: 'Context does not exist'}).end();
 		else if (err)
-			res.status(500).send({status: 500, message: err.message});
+			next(err);
 		else {
 			res.status(200).json({status: 200, content: 'Context removed'});
 		}
 	});
 });
 
-router.use('/update', 
-	security.tokenValidation, 
-	security.applicationIdValidation, 
+router.use('/update',
+	security.tokenValidation,
+	security.applicationIdValidation,
 	security.adminAppValidation);
 /**
  * @api {post} /admin/context/update UpdateContext
@@ -238,8 +238,8 @@ router.use('/update',
  * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization 
-                       The authorization token obtained in the login endpoint. 
+ * @apiHeader {String} Authorization
+                       The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  *

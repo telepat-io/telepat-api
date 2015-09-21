@@ -51,7 +51,7 @@ router.post('/login', function (req, res, next) {
 			security.encryptPassword(req.body.password, callback);
 		},
 		function(hashedPassword) {
-			Models.Admin(req.body.email, function(err, admin) {
+			Models.Admin({email: req.body.email}, function(err, admin) {
 				if (err && err.status == 404) {
 					res.status(401).json({status: 401, message: 'Wrong user or password'}).end();
 
@@ -63,10 +63,10 @@ router.post('/login', function (req, res, next) {
 				if (hashedPassword === admin.password) {
 					res.status(200)
 						.json({status: 200, content: {
-								user: admin, 
+								user: admin,
 								token: security.createToken({
-									id: admin.id, 
-									email: req.body.email, 
+									id: admin.id,
+									email: req.body.email,
 									isAdmin: true
 								})}
 						}).end();
@@ -154,8 +154,8 @@ router.use('/me', security.tokenValidation);
  * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization 
-                       The authorization token obtained in the login endpoint. 
+ * @apiHeader {String} Authorization
+                       The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  *
  * @apiSuccessExample {json} Success Response
@@ -177,21 +177,26 @@ router.get('/me', function (req, res) {
 router.use('/update', security.tokenValidation);
 /**
  * @api {post} /admin/update Update
- * @apiDescription Updates the currently logged admin. 
+ * @apiDescription Updates the currently logged admin.
                    Every property in the request body is used to udpate the admin.
  * @apiName AdminUpdate
  * @apiGroup Admin
  * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization 
-                       The authorization token obtained in the login endpoint. 
+ * @apiHeader {String} Authorization
+                       The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  *
  * @apiExample {json} Client Request
  * 	{
- * 		"email": "email@example.com",
- * 		"password": "d1e6b0b6b76039c9c42541f2da5891fa"
+ * 		"patches": [
+ * 			{
+ * 				"op": "replace",
+ * 				"path": "admin/admin_id/field_name",
+ * 				"value": "new value"
+ * 			}
+ * 		]
  * 	}
  *
  * 	@apiError (500) Error Internal server error.
@@ -208,8 +213,16 @@ router.post('/update', function (req, res, next) {
 		res.status(400)
 				.json({status: 400, message: 'Missing request body'})
 				.end();
+	} else if (!Array.isArray(req.body.patches)) {
+		res.status(400)
+			.json({status: 400, message: 'patches is not an array or is missing'})
+			.end();
+	} else if (req.body.patches.length == 0) {
+		res.status(400)
+			.json({status: 400, message: 'patches array is empty'})
+			.end();
 	} else {
-		Models.Admin.update(req.user.email, req.body, function (err, res1) {
+		Models.Admin.update(req.body.patches, function (err, res1) {
 			if (err)
 				next(err);
 			else
@@ -228,8 +241,8 @@ router.use('/delete', security.tokenValidation);
  * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization 
-                       The authorization token obtained in the login endpoint. 
+ * @apiHeader {String} Authorization
+                       The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  *
  * 	@apiError (500) Error Internal server error.
@@ -242,9 +255,7 @@ router.use('/delete', security.tokenValidation);
  *
  */
 router.post('/delete', function(req, res, next) {
-	var emailAddress = req.user.email;
-
-	Models.Admin.delete(emailAddress, function(err) {
+	Models.Admin.delete({id: req.user.id}, function(err) {
 		if (err) return next(err);
 
 		res.status(200).json({status: 200, content: 'Admin deleted'}).end();
@@ -260,8 +271,8 @@ router.use('/apps', security.tokenValidation);
  * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization 
-                       The authorization token obtained in the login endpoint. 
+ * @apiHeader {String} Authorization
+                       The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  *
  * @apiSuccessExample {json} Success Response
@@ -282,16 +293,14 @@ router.use('/apps', security.tokenValidation);
  * 	}
  *
  */
-router.get('/apps', function (req, res) {
+router.get('/apps', function (req, res, next) {
 	var adminApps = [];
 	async.each(Object.keys(app.applications), function(applicationId, c){
 		if (app.applications[applicationId].admins.indexOf(req.user.id) !== -1)
 			adminApps.push(app.applications[applicationId]);
 		c();
 	}, function(err) {
-		if (err) {
-			res.status(500).send({status: 500, message: 'Server issue'});
-		}
+		if (err) return next(err);
 		else {
 			res.status(200).json({status: 200, content: adminApps}).end();
 		}

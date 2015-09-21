@@ -1,12 +1,10 @@
 var express = require('express');
 var logger = require('morgan');
 var bodyParser = require('body-parser');
-var colors = require('colors');
+colors = require('colors');
 
 async = require('async');
 kafka = require('kafka-node');
-cb = require('couchbase');
-elastic = require('elasticsearch');
 Models = require('telepat-models');
 redis = require('redis');
 
