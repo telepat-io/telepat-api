@@ -128,7 +128,7 @@ security.adminAppValidation = function (req, res, next) {
 
 security.objectACL = function (accessControl) {
 	return function(req, res, next) {
-		if (!!Object.getOwnPropertyNames(req.body).length) {
+		if (!Object.getOwnPropertyNames(req.body).length) {
 			next();
 		} else if (req.body.model || (req.body.channel && req.body.channel.model)) {
 			var mdl = req.body.model || req.body.channel.model;
