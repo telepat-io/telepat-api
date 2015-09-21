@@ -6,9 +6,9 @@ var router = express.Router();
 var security = require('../security');
 var Models = require('telepat-models');
 
-router.use('/all', 
-	security.tokenValidation, 
-	security.applicationIdValidation, 
+router.use('/all',
+	security.tokenValidation,
+	security.applicationIdValidation,
 	security.adminAppValidation);
 /**
  * @api {post} /admin/schema/all GetSchemas
@@ -18,8 +18,8 @@ router.use('/all',
  * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization 
-                       The authorization token obtained in the login endpoint. 
+ * @apiHeader {String} Authorization
+                       The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  *
@@ -28,19 +28,17 @@ router.use('/all',
  * 		"status": 200,
  * 		"content" :{
  * 			"answer": {
- *   		"namespace": "answers",
- *   		"type": "answer",
- *   		"properties": {},
- *   		"belongsTo": [
- *     			{
- *       			"parentModel": "event",
- *       			"relationType": "hasSome"
- *     			}
- *   		],
- *   		"read_acl": 6,
- *   		"write_acl": 6,
- *   		"meta_read_acl": 6
- * 		},
+ *   			"properties": {},
+ *   			"belongsTo": [
+ *     				{
+ *       				"parentModel": "event",
+ *       				"relationType": "hasSome"
+ *     				}
+ *   			],
+ *   			"read_acl": 6,
+ *   			"write_acl": 6,
+ *   			"meta_read_acl": 6
+ * 			},
  * 		...
  * 		}
  * 	}
@@ -58,9 +56,9 @@ router.get('/all', function(req, res, next) {
 	});
 });
 
-router.use('/update', 
-	security.tokenValidation, 
-	security.applicationIdValidation, 
+router.use('/update',
+	security.tokenValidation,
+	security.applicationIdValidation,
 	security.adminAppValidation);
 /**
  * @api {post} /admin/schema/update UpdateSchema
@@ -70,8 +68,8 @@ router.use('/update',
  * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization 
-                       The authorization token obtained in the login endpoint. 
+ * @apiHeader {String} Authorization
+                       The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  *
@@ -104,9 +102,9 @@ router.post('/update', function(req, res, next) {
 	});
 });
 
-router.use('/remove_model', 
-	security.tokenValidation, 
-	security.applicationIdValidation, 
+router.use('/remove_model',
+	security.tokenValidation,
+	security.applicationIdValidation,
 	security.adminAppValidation);
 /**
  * @api {post} /admin/schema/remove_model RemoveAppModel
@@ -116,8 +114,8 @@ router.use('/remove_model',
  * @apiVersion 0.2.2
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization 
-                       The authorization token obtained in the login endpoint. 
+ * @apiHeader {String} Authorization
+                       The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  *
@@ -143,7 +141,7 @@ router.post('/remove_model', function(req, res, next) {
 	if (!app.applications[appId].schema[modelName]) {
 		res.status(404)
 			.json({
-				status: 404, 
+				status: 404,
 				message: 'Application with ID '+appId+' does not have a model named '+modelName
 			}).end();
 		return;

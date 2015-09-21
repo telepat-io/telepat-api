@@ -35,9 +35,9 @@ router.use('/context', contextRoute);
 router.use('/schema', schemaRoute);
 router.use('/user', userRoute);
 
-router.use('/contexts', 
-	security.tokenValidation, 
-	security.applicationIdValidation, 
+router.use('/contexts',
+	security.tokenValidation,
+	security.applicationIdValidation,
 	security.adminAppValidation);
 /**
  * @api {get} /admin/contexts GetContexts
@@ -48,8 +48,8 @@ router.use('/contexts',
  * @deprecated
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization 
-                       The authorization token obtained in the login endpoint. 
+ * @apiHeader {String} Authorization
+                       The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  *
@@ -86,9 +86,9 @@ router.get('/contexts', function (req, res) {
 	});
 });
 
-router.use('/schemas', 
-	security.tokenValidation, 
-	security.applicationIdValidation, 
+router.use('/schemas',
+	security.tokenValidation,
+	security.applicationIdValidation,
 	security.adminAppValidation);
 /**
  * @api {post} /admin/schemas GetSchemas
@@ -99,8 +99,8 @@ router.use('/schemas',
  * @deprecated
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization 
-                       The authorization token obtained in the login endpoint. 
+ * @apiHeader {String} Authorization
+                       The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  *
@@ -109,19 +109,17 @@ router.use('/schemas',
  * 		"status": 200,
  * 		"content" :{
  * 			"answer": {
- *   		"namespace": "answers",
- *   		"type": "answer",
- *   		"properties": {},
- *   		"belongsTo": [
- *     			{
- *       			"parentModel": "event",
- *       			"relationType": "hasSome"
- *     			}
- *   		],
- *   		"read_acl": 6,
- *   		"write_acl": 6,
- *   		"meta_read_acl": 6
- * 		},
+ *   			"properties": {},
+ *   			"belongsTo": [
+ *     				{
+ *       				"parentModel": "event",
+ *       				"relationType": "hasSome"
+ *     				}
+ *   			],
+ *   			"read_acl": 6,
+ *   			"write_acl": 6,
+ *   			"meta_read_acl": 6
+ * 			},
  * 		...
  * 		}
  * 	}
@@ -138,9 +136,9 @@ router.get('/schemas', function(req, res, next) {
 });
 
 
-router.use('/users', 
-	security.tokenValidation, 
-	security.applicationIdValidation, 
+router.use('/users',
+	security.tokenValidation,
+	security.applicationIdValidation,
 	security.adminAppValidation);
 /**
  * @api {get} /admin/users GetAppusers
@@ -151,8 +149,8 @@ router.use('/users',
  * @deprecated
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization 
-                       The authorization token obtained in the login endpoint. 
+ * @apiHeader {String} Authorization
+                       The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  *
