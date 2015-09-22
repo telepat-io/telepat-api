@@ -53,11 +53,11 @@ var validateContext = function(appId, context, callback) {
  * Subsequent subscription on the same channel and filter will have no effect but will return the objects.
  * @apiName ObjectSubscribe
  * @apiGroup Object
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization 
-                       The authorization token obtained in the login endpoint. 
+ * @apiHeader {String} Authorization
+                       The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
@@ -245,11 +245,11 @@ router.post('/subscribe', function(req, res, next) {
  * @apiDescription Unsubscribe to an object or a collection of objects (by a filter)
  * @apiName ObjectUnsubscribe
  * @apiGroup Object
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization 
-                       The authorization token obtained in the login endpoint. 
+ * @apiHeader {String} Authorization
+                       The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
@@ -270,7 +270,7 @@ router.post('/subscribe', function(req, res, next) {
  * 	}
  *
  * @apiError 401 <code>NotAuthenticated</code>  Only authenticated users may access this endpoint.
- * @apiError 404 <code>NotFound</code> 
+ * @apiError 404 <code>NotFound</code>
       If device hasn't subscribed to this channel or if application model is not valid (doesn't exist)
  * @apiError 400 <code>RequestedContextMissing</code> If context id is missing from the request body
  * @apiError 400 <code>RequestedChannelMissing</code> If the channel object is missing from the request body
@@ -372,11 +372,11 @@ router.post('/unsubscribe', function(req, res, next) {
  * @apiDescription Creates a new object
  * @apiName ObjectCreate
  * @apiGroup Object
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization 
-                       The authorization token obtained in the login endpoint. 
+ * @apiHeader {String} Authorization
+                       The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
@@ -429,7 +429,7 @@ router.post('/create', function(req, res, next) {
 	content.context_id = context;
 	content.application_id = appId;
 
-	if (Models.Application.loadedAppModels[appId][mdl].belongsTo && 
+	if (Models.Application.loadedAppModels[appId][mdl].belongsTo &&
 				Models.Application.loadedAppModels[appId][mdl].belongsTo.length) {
 		var parentModel = Models.Application.loadedAppModels[appId][mdl].belongsTo[0].parentModel;
 		if (!content[parentModel+'_id']) {
@@ -512,11 +512,11 @@ router.post('/create', function(req, res, next) {
  * @apiDescription Updates an existing object
  * @apiName ObjectUpdate
  * @apiGroup Object
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization 
-                       The authorization token obtained in the login endpoint. 
+ * @apiHeader {String} Authorization
+                       The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
@@ -549,7 +549,7 @@ router.post('/create', function(req, res, next) {
  * 	}
  *
  * @apiError 401 <code>NotAuthenticated</code>  Only authenticated users may access this endpoint
- * @apiError 404 <code>NotFound</code> 
+ * @apiError 404 <code>NotFound</code>
         If <code>id</code> was supplied but object not found or application model doesn't exist
  * @apiError 403 <code>PermissionDenied</code> If the model requires other permissions other than the ones provided
  * @apiError 400 <code>RequestedContextMissing</code> If context id is missing from the request body
@@ -643,11 +643,11 @@ router.post('/update', function(req, res, next) {
  * @apiDescription Deletes an object
  * @apiName ObjectDelete
  * @apiGroup Object
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization 
-                       The authorization token obtained in the login endpoint. 
+ * @apiHeader {String} Authorization
+                       The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
@@ -671,7 +671,7 @@ router.post('/update', function(req, res, next) {
  * 	}
  *
  * @apiError 401 <code>NotAuthenticated</code>  Only authenticated users may access this endpoint.
- * @apiError 403 <code>PermissionDenied</code> 
+ * @apiError 403 <code>PermissionDenied</code>
         If the model requires other permissions other than the ones provided.
  * @apiError 400 <code>RequestedContextMissing</code> If context id is missing from the request body
  * @apiError 400 <code>RequestedChannelMissing</code> If the channel object is missing from the request body
@@ -735,11 +735,11 @@ router.post('/delete', function(req, res, next) {
  * @apiDescription Gets the object count of a certain filter/subscription
  * @apiName ObjectCount
  * @apiGroup Object
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization 
-                       The authorization token obtained in the login endpoint. 
+ * @apiHeader {String} Authorization
+                       The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application

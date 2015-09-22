@@ -12,7 +12,7 @@ router.use(security.deviceIdValidation);
  * to search for a device with this udid and return the device id.
  * @apiName DeviceRegister
  * @apiGroup Device
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID if you want to update device info, or
@@ -107,7 +107,7 @@ router.post('/register', function(req, res, next) {
 			return res.status(400).json({status: 400, message: "Request body is empty"}).end();
 
 		Models.Subscription.updateDevice(req._telepat.device_id, req.body, function(err, result) {
-			if (err && err.status == 404) {	
+			if (err && err.status == 404) {
 				var error = new Error('Device with ID "'+req._telepat.device_id+'" does not exist.');
 				error.status = 404;
 

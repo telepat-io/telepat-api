@@ -11,7 +11,7 @@ var Models = require('telepat-models');
  * @apiDescription Authenticates an admin and returns the authorization token
  * @apiName AdminAuthenticate
  * @apiGroup Admin
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  *
  * @apiHeader {String} Content-type application/json
  *
@@ -83,7 +83,7 @@ router.post('/login', function (req, res, next) {
  * @apiDescription Creates a new admin
  * @apiName AdminAdd
  * @apiGroup Admin
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  *
  * @apiHeader {String} Content-type application/json
  *
@@ -151,7 +151,7 @@ router.use('/me', security.tokenValidation);
  * @apiDescription Gets information about the logged admin
  * @apiName AdminMe
  * @apiGroup Admin
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization
@@ -181,7 +181,7 @@ router.use('/update', security.tokenValidation);
                    Every property in the request body is used to udpate the admin.
  * @apiName AdminUpdate
  * @apiGroup Admin
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization
@@ -238,7 +238,7 @@ router.use('/delete', security.tokenValidation);
  * @apiDescription Deletes the currently logged admin.
  * @apiName AdminDelete
  * @apiGroup Admin
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization
@@ -268,7 +268,7 @@ router.use('/apps', security.tokenValidation);
  * @apiDescription Lists the application for the current admin
  * @apiName AdminApps
  * @apiGroup Admin
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization

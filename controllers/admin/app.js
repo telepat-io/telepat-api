@@ -13,7 +13,7 @@ router.use('/add', security.tokenValidation);
                    The request body should contain the app itself.
  * @apiName AdminAppAdd
  * @apiGroup Admin
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization
@@ -79,7 +79,7 @@ router.use('/remove',
  * @apiDescription Removes an app from the admin.
  * @apiName AdminAppRemove
  * @apiGroup Admin
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization
@@ -131,7 +131,7 @@ router.use('/update',
  * @apiDescription Updates an app
  * @apiName AdminAppUpdate
  * @apiGroup Admin
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization

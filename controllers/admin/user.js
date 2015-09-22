@@ -6,20 +6,20 @@ var router = express.Router();
 var security = require('../security');
 var Models = require('telepat-models');
 
-router.use('/all', 
-	security.tokenValidation, 
-	security.applicationIdValidation, 
+router.use('/all',
+	security.tokenValidation,
+	security.applicationIdValidation,
 	security.adminAppValidation);
 /**
  * @api {get} /admin/user/all GetAppusers
  * @apiDescription Gets all users of the app
  * @apiName AdminGetUsers
  * @apiGroup Admin
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization 
-                       The authorization token obtained in the login endpoint. 
+ * @apiHeader {String} Authorization
+                       The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  *
@@ -48,20 +48,20 @@ router.get('/all', function(req, res, next) {
 	});
 });
 
-router.use('/update', 
-	security.tokenValidation, 
-	security.applicationIdValidation, 
+router.use('/update',
+	security.tokenValidation,
+	security.applicationIdValidation,
 	security.adminAppValidation);
 /**
  * @api {post} /admin/user/update EditUser
  * @apiDescription Updates an user from an app
  * @apiName AdminUpdateUser
  * @apiGroup Admin
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization 
-                       The authorization token obtained in the login endpoint. 
+ * @apiHeader {String} Authorization
+                       The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  *
@@ -138,20 +138,20 @@ router.post('/update', function(req, res, next) {
 	});
 });
 
-router.use('/delete', 
-	security.tokenValidation, 
-	security.applicationIdValidation, 
+router.use('/delete',
+	security.tokenValidation,
+	security.applicationIdValidation,
 	security.adminAppValidation);
 /**
  * @api {post} /admin/user/delete Deleteuser
  * @apiDescription Deketes an user from an app
  * @apiName AdminDeleteUser
  * @apiGroup Admin
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization 
-                       The authorization token obtained in the login endpoint. 
+ * @apiHeader {String} Authorization
+                       The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  *

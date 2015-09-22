@@ -16,16 +16,27 @@ The API server will try and connect to each of the services until they are avail
 
 ## Configuring
 
-There are two ways to configure: either by modifying the config files `./config/datasources.json` and `./config/kafka.json`
+There are two ways to configure: either by using the `config.example.json` config file (rename it into config.json)
 or by setting up environment variables (this method is the most convenient):
 
 * `TP_KFK_HOST`: Kafka (zooekeeper) server
 * `TP_KFK_PORT`: Kafka (zooekeeper) server port
 * `TP_KFK_CLIENT`: Name for the kafka client
-* `TP_CB_HOST`: Couchbase server
-* `TP_CB_BUCKET`: Main data bucket of the couchbase server
-* `TP_CB_STATE_BUCKET`: State bucket of the couchbase server
-* `TP_ES_HOST`: Elasticsearch server
-* `TP_ES_PORT`: Elasticsearch server port
+* `TP_REDIS_HOST`: Redis server
+* `TP_REDIS_PORT`: Redis server port
+* `TP_MAIN_DB`: Name of the main database which to use. Should be the same as the exported variable in telepat-models
+* `TP_ES_HOST`: Elasticsearch server (if you are using the ES database adapter)
+* `TP_ES_PORT`: Elasticsearch server port (if you are using the ES database adapter)
+* `TP_PW_SALT`: Password salt used for hashing passwords
+
+## Testing
+
+To run just the tests using mocha (make sure you have installed globally `npm install mocha`):
+
+* `mocha api.js` in the test folder
+* `npm test` in the root folder will also run istanbul (make sure you install it globally) code coverage tool
+
+**Notice**: the testing suite automatically starts the API server but **NOT** the telepat workers. You should start them
+before running the tests.
 
 API documentation can be found here: [http://docs.telepat.io/api.html](http://docs.telepat.io/api.html)

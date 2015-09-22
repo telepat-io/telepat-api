@@ -1,3 +1,14 @@
+# 0.2.3
+
+* Replaced couchbase with elasticsearch through adapters
+* Implemented mocha tests, added istanbul code coverage and integrated with travis CI
+* Lots of bug fixes
+* All update endpoints require patches
+* Admin routes are sepparated in more than 1 file
+* Passwords are stored using bcrypt
+* There's only one configuration file in the root folder. The example provided should be used. The original config file
+was added to .gitignore
+
 # 0.2.2
 
 * Fixed lots of bugs and server crashes
