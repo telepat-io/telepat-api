@@ -201,4 +201,199 @@ router.post('/update', function (req, res, next) {
 	}
 });
 
+router.use('/authorize',
+	security.tokenValidation,
+	security.applicationIdValidation,
+	security.adminAppValidation);
+
+/**
+ * @api {post} /admin/app/authorize AuthorizeAdmin
+ * @apiDescription Authorizes an admin to an application
+ * @apiName AdminAuthorize
+ * @apiGroup Admin
+ * @apiVersion 0.2.3
+ *
+ * @apiHeader {String} Content-type application/json
+ * @apiHeader {String} Authorization
+ The authorization token obtained in the login endpoint.
+ Should have the format: <i>Bearer $TOKEN</i>
+ * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
+ *
+ * @apiParam {string} email Email address of the admin to authorize for the application
+ *
+ * @apiExample {json} Client Request
+ * 	{
+ * 		"email": "admin@telepat.io"
+ * 	}
+ *
+ * @apiSuccessExample {json} Success Response
+ * 	{
+ * 		"status": 200,
+ * 		"content": "Admin added to application"
+ * 	}
+ *
+ * 	@apiError (400) EmptyBodyError
+ * 	@apiError (400) MissingRequestedField "email" field is missing
+ * 	@apiError (404) Error Application with that ID doesn't exist
+ * 	@apiError (404) Error Admin with that email address does not exist
+ * 	@apiError (409) AdminAlreadyAuthorized Admin with email address already authorized for application
+ * 	@apiError (500) Error Internal server error.
+ *
+ * 	@apiErrorExample {json} Error Response
+ * 	{
+ * 		"status": 404,
+ * 		"message": "Application with ID $APPID doest not exist."
+ * 	}
+ *
+ * 	@apiErrorExample {json} Error Response
+ * 	{
+ * 		"status": 500,
+ * 		"message": "internal server error description"
+ * 	}
+ *
+ */
+router.post('/authorize', function(req, res, next) {
+	if (Object.getOwnPropertyNames(req.body).length === 0) {
+		res.status(400)
+			.json({status: 400, message: 'Missing request body'})
+			.end();
+	} else if (!req.body.email) {
+		res.status(400)
+			.json({status: 400, message: 'Request admin email address is missing'})
+			.end();
+	}
+
+	var appId = req._telepat.applicationId;
+	var adminEmail = req.body.email;
+
+	if (app.applications[appId].admins.indexOf(adminEmail) !== -1) {
+		var error = new Error('Admin with that email address is already authorized in this application');
+		error.status = 409;
+
+		return next(error);
+	}
+
+	async.waterfall([
+		function(callback) {
+			Models.Admin({email: adminEmail}, callback);
+		},
+		function(admin, callback) {
+			var patches = [{
+				op: 'append',
+				path: 'application/'+appId+'/admins',
+				value: admin.id
+			}];
+			Models.Application.update(appId, patches, callback);
+		}
+	], function(err, application) {
+		if (err) return next(err);
+
+		app.applications[appId] = application;
+
+		res.status(200).json({status: 200, content: 'Admin added to application'}).end();
+	});
+});
+
+router.use('/deauthorize',
+	security.tokenValidation,
+	security.applicationIdValidation,
+	security.adminAppValidation);
+
+/**
+ * @api {post} /admin/app/deauthorize DeauthorizeAdmin
+ * @apiDescription Deauthorizes an admin from an application
+ * @apiName AdminDeauthorize
+ * @apiGroup Admin
+ * @apiVersion 0.2.3
+ *
+ * @apiHeader {String} Content-type application/json
+ * @apiHeader {String} Authorization
+ The authorization token obtained in the login endpoint.
+ Should have the format: <i>Bearer $TOKEN</i>
+ * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
+ *
+ * @apiParam {string} email Email address of the admin to deauthorize from the application
+ *
+ * @apiExample {json} Client Request
+ * 	{
+ * 		"email": "admin@telepat.io"
+ * 	}
+ *
+ * @apiSuccessExample {json} Success Response
+ * 	{
+ * 		"status": 200,
+ * 		"content": "Admin removed from application"
+ * 	}
+ *
+ * 	@apiError (400) EmptyBodyError
+ * 	@apiError (400) MissingRequestedField "email" field is missing
+ * 	@apiError (404) Error Application with that ID doesn't exist
+ * 	@apiError (404) Error Admin with that email address does not exist or does not belong to the application
+ * 	@apiError (409) CannotDeauthorizeLastAdmin Admin with email address cannot be deauthorized because he's the only one
+ * 	left. We can't have "orphan" applications.
+ * 	@apiError (500) Error Internal server error.
+ *
+ * 	@apiErrorExample {json} Error Response
+ * 	{
+ * 		"status": 404,
+ * 		"message": "Application with ID $APPID doest not exist."
+ * 	}
+ *
+ * 	@apiErrorExample {json} Error Response
+ * 	{
+ * 		"status": 500,
+ * 		"message": "internal server error description"
+ * 	}
+ *
+ */
+router.post('/deauthorize', function(req, res, next) {
+	if (Object.getOwnPropertyNames(req.body).length === 0) {
+		res.status(400)
+			.json({status: 400, message: 'Missing request body'})
+			.end();
+	} else if (!req.body.email) {
+		res.status(400)
+			.json({status: 400, message: 'Request admin email address is missing'})
+			.end();
+	}
+
+	var appId = req._telepat.applicationId;
+	var adminEmail = req.body.email;
+
+	if (adminEmail == req.user.email && app.applications[appId].admins.indexOf(req.user.id) == 0
+		&& app.applications[appId].admins.length == 1) {
+		var error = new Error('Cannot remove yourself from the application because you\'re the only authorized admin');
+		error.status = 409;
+
+		return next(error);
+	}
+
+	async.waterfall([
+		function(callback) {
+			Models.Admin({email: adminEmail}, callback);
+		},
+		function(admin, callback) {
+			if (app.applications[appId].admins.indexOf(admin.id) === -1) {
+				var error = new Error('Admin with email address "'+adminEmail+'" not found in application');
+				error.status = 404;
+
+				return next(error);
+			} else {
+				var patches = [{
+					op: 'remove',
+					path: 'application/'+appId+'/admins',
+					value: admin.id
+				}];
+				Models.Application.update(appId, patches, callback);
+			}
+		}
+	], function(err, application) {
+		if (err) return next(err);
+
+		app.applications[appId] = application;
+
+		res.status(200).json({status: 200, content: 'Admin removed from application'}).end();
+	});
+});
+
 module.exports = router;
