@@ -11,7 +11,7 @@ var Models = require('telepat-models');
  * @apiDescription Authenticates an admin and returns the authorization token
  * @apiName AdminAuthenticate
  * @apiGroup Admin
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  *
  * @apiHeader {String} Content-type application/json
  *
@@ -41,21 +41,19 @@ var Models = require('telepat-models');
  */
 router.post('/login', function (req, res, next) {
 	if (!req.body.email)
-		return res.status(400).json({status: 400, message: 'Missing email address'}).end();
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['email']));
 
 	if (!req.body.password)
-		return res.status(400).json({status: 400, message: 'Missing password'}).end();
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['password']));
 
 	async.waterfall([
 		function(callback) {
 			security.encryptPassword(req.body.password, callback);
 		},
 		function(hashedPassword) {
-			Models.Admin(req.body.email, function(err, admin) {
+			Models.Admin({email: req.body.email}, function(err, admin) {
 				if (err && err.status == 404) {
-					res.status(401).json({status: 401, message: 'Wrong user or password'}).end();
-
-					return;
+					return next(new Models.TelepatError(Models.TelepatError.errors.AdminBadLogin));
 				} else if (err) {
 					return next(err);
 				}
@@ -63,15 +61,15 @@ router.post('/login', function (req, res, next) {
 				if (hashedPassword === admin.password) {
 					res.status(200)
 						.json({status: 200, content: {
-								user: admin, 
+								user: admin,
 								token: security.createToken({
-									id: admin.id, 
-									email: req.body.email, 
+									id: admin.id,
+									email: req.body.email,
 									isAdmin: true
 								})}
 						}).end();
 				} else {
-					res.status(401).json({status: 401, message: 'Wrong user or password'}).end();
+					return next(new Models.TelepatError(Models.TelepatError.errors.AdminBadLogin));
 				}
 			});
 		}
@@ -83,7 +81,7 @@ router.post('/login', function (req, res, next) {
  * @apiDescription Creates a new admin
  * @apiName AdminAdd
  * @apiGroup Admin
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  *
  * @apiHeader {String} Content-type application/json
  *
@@ -113,18 +111,11 @@ router.post('/login', function (req, res, next) {
  * 	}
  */
 router.post('/add', function (req, res, next) {
-	if (!req.body.email) {
-		res.status(400)
-				.json({status: 400, message: 'Missing requested email address'})
-				.end();
-		return;
-	}
-	if (!req.body.password) {
-		res.status(400)
-				.json({status: 400, message: 'Missing requested password'})
-				.end();
-		return;
-	}
+	if (!req.body.email)
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['email']));
+
+	if (!req.body.password)
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['password']));
 
 	async.waterfall([
 		function(callback) {
@@ -151,11 +142,11 @@ router.use('/me', security.tokenValidation);
  * @apiDescription Gets information about the logged admin
  * @apiName AdminMe
  * @apiGroup Admin
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization 
-                       The authorization token obtained in the login endpoint. 
+ * @apiHeader {String} Authorization
+                       The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  *
  * @apiSuccessExample {json} Success Response
@@ -177,21 +168,26 @@ router.get('/me', function (req, res) {
 router.use('/update', security.tokenValidation);
 /**
  * @api {post} /admin/update Update
- * @apiDescription Updates the currently logged admin. 
+ * @apiDescription Updates the currently logged admin.
                    Every property in the request body is used to udpate the admin.
  * @apiName AdminUpdate
  * @apiGroup Admin
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization 
-                       The authorization token obtained in the login endpoint. 
+ * @apiHeader {String} Authorization
+                       The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  *
  * @apiExample {json} Client Request
  * 	{
- * 		"email": "email@example.com",
- * 		"password": "d1e6b0b6b76039c9c42541f2da5891fa"
+ * 		"patches": [
+ * 			{
+ * 				"op": "replace",
+ * 				"path": "admin/admin_id/field_name",
+ * 				"value": "new value"
+ * 			}
+ * 		]
  * 	}
  *
  * 	@apiError (500) Error Internal server error.
@@ -205,15 +201,30 @@ router.use('/update', security.tokenValidation);
  */
 router.post('/update', function (req, res, next) {
 	if (Object.getOwnPropertyNames(req.body).length === 0) {
-		res.status(400)
-				.json({status: 400, message: 'Missing request body'})
-				.end();
+		return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
+	} else if (!Array.isArray(req.body.patches)) {
+		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidFieldValue,
+			['"patches" is not an array']));
+	} else if (req.body.patches.length == 0) {
+		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidFieldValue,
+			['"patches" array is empty']));
 	} else {
-		Models.Admin.update(req.user.email, req.body, function (err, res1) {
-			if (err)
-				next(err);
+		async.each(req.body.patches, function(patch, c) {
+			if (patch.path.split('/')[1] != req.user.id)
+				c(new Models.TelepatError(Models.TelepatError.errors.InvalidAdmin));
 			else
-				res.status(200).json({status: 200, content: 'Admin updated'}).end();
+				c();
+		}, function(err) {
+			if (err) {
+				next(err);
+			} else {
+				Models.Admin.update(req.body.patches, function (err) {
+					if (err)
+						next(err);
+					else
+						res.status(200).json({status: 200, content: 'Admin updated'}).end();
+				});
+			}
 		});
 	}
 });
@@ -225,11 +236,11 @@ router.use('/delete', security.tokenValidation);
  * @apiDescription Deletes the currently logged admin.
  * @apiName AdminDelete
  * @apiGroup Admin
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization 
-                       The authorization token obtained in the login endpoint. 
+ * @apiHeader {String} Authorization
+                       The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  *
  * 	@apiError (500) Error Internal server error.
@@ -242,9 +253,7 @@ router.use('/delete', security.tokenValidation);
  *
  */
 router.post('/delete', function(req, res, next) {
-	var emailAddress = req.user.email;
-
-	Models.Admin.delete(emailAddress, function(err) {
+	Models.Admin.delete({id: req.user.id}, function(err) {
 		if (err) return next(err);
 
 		res.status(200).json({status: 200, content: 'Admin deleted'}).end();
@@ -257,11 +266,11 @@ router.use('/apps', security.tokenValidation);
  * @apiDescription Lists the application for the current admin
  * @apiName AdminApps
  * @apiGroup Admin
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization 
-                       The authorization token obtained in the login endpoint. 
+ * @apiHeader {String} Authorization
+                       The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  *
  * @apiSuccessExample {json} Success Response
@@ -282,16 +291,14 @@ router.use('/apps', security.tokenValidation);
  * 	}
  *
  */
-router.get('/apps', function (req, res) {
+router.get('/apps', function (req, res, next) {
 	var adminApps = [];
 	async.each(Object.keys(app.applications), function(applicationId, c){
 		if (app.applications[applicationId].admins.indexOf(req.user.id) !== -1)
 			adminApps.push(app.applications[applicationId]);
 		c();
 	}, function(err) {
-		if (err) {
-			res.status(500).send({status: 500, message: 'Server issue'});
-		}
+		if (err) return next(err);
 		else {
 			res.status(200).json({status: 200, content: adminApps}).end();
 		}

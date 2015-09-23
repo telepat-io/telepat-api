@@ -34,14 +34,11 @@ router.use(['/count'], security.objectACL('meta_read_acl'));
 var validateContext = function(appId, context, callback) {
 	Models.Application.hasContext(appId, context, function(err, result) {
 		if (err && err.status == 404) {
-			var error = new Error('Application with id "'+appId+'" does not exist.');
-			error.status = 404;
-			callback(error);
-		} else if (err) return callback(err);
+			callback(new Models.TelepatError(Models.TelepatError.errors.ApplicationNotFound));
+		} else if (err)
+			return callback(err);
 		else if (result === false) {
-			var error = new Error('Context with id "'+context+'" does not belong to app with id "'+appId+'"');
-			error.status = 403;
-			callback(error);
+			callback(new Models.TelepatError(Models.TelepatError.errors.InvalidContext, [context, appId]));
 		} else
 			callback();
 	});
@@ -53,11 +50,11 @@ var validateContext = function(appId, context, callback) {
  * Subsequent subscription on the same channel and filter will have no effect but will return the objects.
  * @apiName ObjectSubscribe
  * @apiGroup Object
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization 
-                       The authorization token obtained in the login endpoint. 
+ * @apiHeader {String} Authorization
+                       The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
@@ -129,13 +126,14 @@ var validateContext = function(appId, context, callback) {
  * @apiError 400 <code>RequestedModelMissing</code> If the item model is not present from the request body
  */
 router.post('/subscribe', function(req, res, next) {
-	if (Object.getOwnPropertyNames(req.body).length === 0)
-		return res.status(400).json({status: 400, message: 'Request body is empty'}).end();
+	if (Object.getOwnPropertyNames(req.body).length === 0) {
+		return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
+	}
 
 	var channel = req.body.channel;
 
 	if (!channel) {
-		return res.status(400).json({status: 400, message: 'Requested channel field is missing.'}).end();
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['channel']));
 	}
 
 	var id = channel.id,
@@ -148,13 +146,13 @@ router.post('/subscribe', function(req, res, next) {
 		appId = req._telepat.applicationId;
 
 	if (!context)
-		return res.status(400).json({status: 400, message: 'Requested context is missing.'}).end();
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['channel.context']));
 
 	if (!mdl)
-		return res.status(400).json({status: 400, message: 'Requested object model is missing.'}).end();
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['channel.model']));
 
 	if (!Models.Application.loadedAppModels[appId][mdl])
-		return res.status(404).json({status: 404, message: 'Application model "'+mdl+'" does not exist.'}).end();
+		return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationSchemaModelNotFound, [appId, mdl]));
 
 	var channelObject = new Models.Channel(appId);
 
@@ -177,10 +175,7 @@ router.post('/subscribe', function(req, res, next) {
 	}
 
 	if (!channelObject.isValid()) {
-		var error = new Error('Could not subscribe to invalid channel');
-		error.status = 400;
-
-		return next(error);
+		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidChannel));
 	}
 
 	async.waterfall([
@@ -245,11 +240,11 @@ router.post('/subscribe', function(req, res, next) {
  * @apiDescription Unsubscribe to an object or a collection of objects (by a filter)
  * @apiName ObjectUnsubscribe
  * @apiGroup Object
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization 
-                       The authorization token obtained in the login endpoint. 
+ * @apiHeader {String} Authorization
+                       The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
@@ -270,20 +265,21 @@ router.post('/subscribe', function(req, res, next) {
  * 	}
  *
  * @apiError 401 <code>NotAuthenticated</code>  Only authenticated users may access this endpoint.
- * @apiError 404 <code>NotFound</code> 
+ * @apiError 404 <code>NotFound</code>
       If device hasn't subscribed to this channel or if application model is not valid (doesn't exist)
  * @apiError 400 <code>RequestedContextMissing</code> If context id is missing from the request body
  * @apiError 400 <code>RequestedChannelMissing</code> If the channel object is missing from the request body
  * @apiError 400 <code>RequestedModelMissing</code> If the item model is not present from the request body
  */
 router.post('/unsubscribe', function(req, res, next) {
-	if (Object.getOwnPropertyNames(req.body).length === 0)
-		return res.status(400).json({status: 400, message: 'Request body is empty'}).end();
+	if (Object.getOwnPropertyNames(req.body).length === 0) {
+		return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
+	}
 
 	var channel = req.body.channel;
 
 	if (!channel) {
-		return res.status(400).json({status: 400, message: 'Requested channel field is missing.'}).end();
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['channel']));
 	}
 
 	var id = channel.id,
@@ -296,13 +292,13 @@ router.post('/unsubscribe', function(req, res, next) {
 	appId = req._telepat.applicationId;
 
 	if (!context)
-		return res.status(400).json({status: 400, message: 'Requested context is missing.'}).end();
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['channel.context']));
 
 	if (!mdl)
-		return res.status(400).json({status: 400, message: 'Requested object model is missing.'}).end();
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['channel.model']));
 
 	if (!Models.Application.loadedAppModels[appId][mdl])
-		return res.status(404).json({status: 404, message: 'Application model "'+mdl+'" does not exist.'}).end();
+		return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationSchemaModelNotFound, [appId, mdl]));
 
 	var channelObject = new Models.Channel(appId);
 
@@ -325,10 +321,7 @@ router.post('/unsubscribe', function(req, res, next) {
 	}
 
 	if (!channelObject.isValid()) {
-		var error = new Error('Could not subscribe to invalid channel');
-		error.status = 400;
-
-		return next(error);
+		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidChannel));
 	}
 
 	async.waterfall([
@@ -372,11 +365,11 @@ router.post('/unsubscribe', function(req, res, next) {
  * @apiDescription Creates a new object
  * @apiName ObjectCreate
  * @apiGroup Object
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization 
-                       The authorization token obtained in the login endpoint. 
+ * @apiHeader {String} Authorization
+                       The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
@@ -407,8 +400,9 @@ router.post('/unsubscribe', function(req, res, next) {
  * @apiError 400 <code>RequestedModelMissing</code> If the item model is not present from the request body
  */
 router.post('/create', function(req, res, next) {
-	if (Object.getOwnPropertyNames(req.body).length === 0)
-		return res.status(400).json({status: 400, message: 'Request body is empty'}).end();
+	if (Object.getOwnPropertyNames(req.body).length === 0) {
+		return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
+	}
 
 	var content = req.body.content;
 	var mdl = req.body.model;
@@ -417,33 +411,27 @@ router.post('/create', function(req, res, next) {
 	var isAdmin = req.user.isAdmin;
 
 	if (!context)
-		return res.status(400).json({status: 400, message: 'Requested context is missing.'}).end();
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['channel.context']));
 
 	if (!mdl)
-		return res.status(400).json({status: 400, message: 'Requested object model is missing.'}).end();
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['channel.model']));
 
 	if (!Models.Application.loadedAppModels[appId][mdl])
-		return res.status(404).json({status: 404, message: 'Application model "'+mdl+'" does not exist.'}).end();
+		return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationSchemaModelNotFound, [appId, mdl]));
 
 	content.type = mdl;
 	content.context_id = context;
 	content.application_id = appId;
 
-	if (Models.Application.loadedAppModels[appId][mdl].belongsTo && 
+	if (Models.Application.loadedAppModels[appId][mdl].belongsTo &&
 				Models.Application.loadedAppModels[appId][mdl].belongsTo.length) {
 		var parentModel = Models.Application.loadedAppModels[appId][mdl].belongsTo[0].parentModel;
 		if (!content[parentModel+'_id']) {
-			var error = new Error('"'+parentModel+'_id" is required');
-			error.status = 400;
-
-			return next(error);
-		} else if (Models.Application.loadedAppModels[appId][mdl].belongsTo[0].relationType == 'hasSome' && content[Models.Application.loadedAppModels[appId][parentModel].hasSome_property+'_index'] === undefined) {
-			var error = new Error(
-						Models.Application.loadedAppModels[appId][parentModel].hasSome_property+
-						"_index is required");
-			error.status = 400;
-
-			return next(error);
+			return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, [parentModel+'_id']));
+		} else if (Models.Application.loadedAppModels[appId][mdl].belongsTo[0].relationType == 'hasSome' &&
+			content[Models.Application.loadedAppModels[appId][parentModel].hasSome_property+'_index'] === undefined) {
+			return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField,
+				[Models.Application.loadedAppModels[appId][parentModel].hasSome_property+'_index']));
 		}
 	}
 
@@ -464,7 +452,7 @@ router.post('/create', function(req, res, next) {
 				});
 			}
 		},
-		function(agg_callback) {
+		function(aggCallback) {
 			app.kafkaProducer.send([{
 				topic: 'aggregation',
 				messages: [JSON.stringify({
@@ -476,9 +464,10 @@ router.post('/create', function(req, res, next) {
 				})],
 				attributes: 0
 			}], function(err) {
-				if (err)
-					err.message = 'Failed to send message to aggregation worker.';
-				agg_callback(err);
+				if (err){
+					err = new Models.TelepatError(Models.TelepatError.errors.ServerFailure, [err.message]);
+				}
+				aggCallback(err);
 			});
 		}/*,
 		function(track_callback) {
@@ -512,11 +501,11 @@ router.post('/create', function(req, res, next) {
  * @apiDescription Updates an existing object
  * @apiName ObjectUpdate
  * @apiGroup Object
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization 
-                       The authorization token obtained in the login endpoint. 
+ * @apiHeader {String} Authorization
+                       The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
@@ -549,7 +538,7 @@ router.post('/create', function(req, res, next) {
  * 	}
  *
  * @apiError 401 <code>NotAuthenticated</code>  Only authenticated users may access this endpoint
- * @apiError 404 <code>NotFound</code> 
+ * @apiError 404 <code>NotFound</code>
         If <code>id</code> was supplied but object not found or application model doesn't exist
  * @apiError 403 <code>PermissionDenied</code> If the model requires other permissions other than the ones provided
  * @apiError 400 <code>RequestedContextMissing</code> If context id is missing from the request body
@@ -559,37 +548,39 @@ router.post('/create', function(req, res, next) {
  * @apiError 400 <code>NoIdSupplied</code> If the requested item id has not been provided
  */
 router.post('/update', function(req, res, next) {
-	if (Object.getOwnPropertyNames(req.body).length === 0)
-		return res.status(400).json({status: 400, message: 'Request body is empty'}).end();
+	if (Object.getOwnPropertyNames(req.body).length === 0) {
+		return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
+	}
 
 	var modifiedMicrotime = microtime.now();
 	var context = req.body.context;
-	var patch = req.body.patch;
+	var patch = req.body.patches;
 	var id = req.body.id;
 	var mdl = req.body.model;
 	var appId = req._telepat.applicationId;
 
 	if (!id)
-		return res.status(400).json({status: 400, message: 'Requested item id is missing.'}).end();
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['id']));
 
 	if (!context)
-		return res.status(400).json({status: 400, message: 'Requested context is missing.'}).end();
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['context']));
 
 	if (!mdl)
-		return res.status(400).json({status: 400, message: 'Requested object model is missing.'}).end();
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['model']));
 
 	if (!Models.Application.loadedAppModels[appId][mdl])
-		return res.status(400).json({status: 400, message: 'Application model "'+mdl+'" does not exist.'}).end();
+		return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationSchemaModelNotFound, [appId, mdl]));
 
-	if (!(Array.isArray(patch))) {
-		var error = new Error('Patch must be an array');
-		error.status = 400;
-
-		return next(error);
+	if (!Array.isArray(req.body.patches)) {
+		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidFieldValue,
+			['"patches" is not an array']));
+	} else if (req.body.patches.length == 0) {
+		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidFieldValue,
+			['"patches" array is empty']));
 	}
 
 	async.series([
-		function(agg_callback) {
+		function(aggCallback) {
 			async.each(patch, function(p ,c) {
 				app.kafkaProducer.send([{
 					topic: 'aggregation',
@@ -604,11 +595,12 @@ router.post('/update', function(req, res, next) {
 					})],
 					attributes: 0
 				}], function(err) {
-					if (err)
-						err.message = 'Failed to send message to aggregation worker.';
+					if (err){
+						err = new Models.TelepatError(Models.TelepatError.errors.ServerFailure, [err.message]);
+					}
 					c(err);
 				});
-			}, agg_callback);
+			}, aggCallback);
 		}/*,
 		function(track_callback) {
 			app.kafkaProducer.send([{
@@ -643,11 +635,11 @@ router.post('/update', function(req, res, next) {
  * @apiDescription Deletes an object
  * @apiName ObjectDelete
  * @apiGroup Object
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization 
-                       The authorization token obtained in the login endpoint. 
+ * @apiHeader {String} Authorization
+                       The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
@@ -671,7 +663,7 @@ router.post('/update', function(req, res, next) {
  * 	}
  *
  * @apiError 401 <code>NotAuthenticated</code>  Only authenticated users may access this endpoint.
- * @apiError 403 <code>PermissionDenied</code> 
+ * @apiError 403 <code>PermissionDenied</code>
         If the model requires other permissions other than the ones provided.
  * @apiError 400 <code>RequestedContextMissing</code> If context id is missing from the request body
  * @apiError 400 <code>RequestedChannelMissing</code> If the channel object is missing from the request body
@@ -679,8 +671,9 @@ router.post('/update', function(req, res, next) {
  * @apiError 400 <code>NoIdSupplied</code> If the requested item id has not been provided
  */
 router.post('/delete', function(req, res, next) {
-	if (Object.getOwnPropertyNames(req.body).length === 0)
-		return res.status(400).json({status: 400, message: 'Request body is empty'}).end();
+	if (Object.getOwnPropertyNames(req.body).length === 0) {
+		return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
+	}
 
 	var id = req.body.id;
 	var context = req.body.context;
@@ -688,19 +681,19 @@ router.post('/delete', function(req, res, next) {
 	var appId = req._telepat.applicationId;
 
 	if (!id)
-		return res.status(400).json({status: 400, message: 'Requested item id is missing.'}).end();
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['id']));
 
 	if (!context)
-		return res.status(400).json({status: 400, message: 'Requested context is missing.'}).end();
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['context']));
 
 	if (!mdl)
-		return res.status(400).json({status: 400, message: 'Requested object model is missing.'}).end();
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['model']));
 
 	if (!Models.Application.loadedAppModels[appId][mdl])
-		return res.status(400).json({status: 400, message: 'Application model "'+mdl+'" does not exist.'}).end();
+		return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationSchemaModelNotFound, [appId, mdl]));
 
 	async.series([
-		function(agg_callback) {
+		function(aggCallback) {
 			app.kafkaProducer.send([{
 				topic: 'aggregation',
 				messages: [JSON.stringify({
@@ -710,7 +703,7 @@ router.post('/delete', function(req, res, next) {
 					applicationId: appId
 				})],
 				attributes: 0
-			}], agg_callback);
+			}], aggCallback);
 		}/*,
 		function(track_callback) {
 			app.kafkaProducer.send([{
@@ -735,11 +728,11 @@ router.post('/delete', function(req, res, next) {
  * @apiDescription Gets the object count of a certain filter/subscription
  * @apiName ObjectCount
  * @apiGroup Object
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization 
-                       The authorization token obtained in the login endpoint. 
+ * @apiHeader {String} Authorization
+                       The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
@@ -752,8 +745,9 @@ router.post('/delete', function(req, res, next) {
  * @apiError 403 <code>PermissionDenied</code> If the model requires other permissions other than the ones provided.
  */
 router.post('/count', function(req, res, next) {
-	if (Object.getOwnPropertyNames(req.body).length === 0)
-		return res.status(400).json({status: 400, message: 'Request body is empty'}).end();
+	if (Object.getOwnPropertyNames(req.body).length === 0) {
+		return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
+	}
 
 	var appId = req._telepat.applicationId,
 		channel = req.body.channel;
@@ -776,10 +770,7 @@ router.post('/count', function(req, res, next) {
 		channelObject.setFilter(req.body.filters);
 
 	if (!channelObject.isValid()) {
-		var error = new Error('Could not count objects in an invalid channel');
-		error.status = 400;
-
-		return next(error);
+		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidChannel));
 	}
 
 	Models.Model.count(channel.model, appId, function(err, result) {

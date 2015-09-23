@@ -1,12 +1,10 @@
 var express = require('express');
 var logger = require('morgan');
 var bodyParser = require('body-parser');
-var colors = require('colors');
+colors = require('colors');
 
 async = require('async');
 kafka = require('kafka-node');
-cb = require('couchbase');
-elastic = require('elasticsearch');
 Models = require('telepat-models');
 redis = require('redis');
 
@@ -90,6 +88,10 @@ if (validEnvVariables) {
 Models.Application.datasource = new Models.Datasource();
 Models.Application.datasource.setMainDatabase(new Models[mainDatabase](mainConfiguration[mainDatabase]));
 
+if(mainConfiguration.passwordSalt === undefined || mainConfiguration.passwordSalt === "" || mainConfiguration.passwordSalt === null) {
+	console.log('Please add salt configuration via TP_PW_SALT or config.json');
+	process.exit(-1);
+}
 app.set('password_salt', mainConfiguration.passwordSalt);
 
 app.applications = {};
@@ -98,14 +100,14 @@ app.use(function(req, res, next) {
 	if (dbConnected)
 		return next();
 	res.type('application/json');
-	res.status(503).json({status: 503, message: 'API server not available.'}).end();
+	next(new Models.TelepatError(Models.TelepatError.errors.ServerNotAvailable));
 });
 
 var loadApplications = function() {
 	Models.Application.getAll(function(err, results) {
 		if (err) {
-			console.log('Fatal error: '.red, err);
-			return;
+			console.log('Fatal error: '.red+' in retrieving all aplications', err);
+			process.exit(-1);
 		}
 
 		async.each(results, function(item, c){
@@ -133,32 +135,25 @@ var linkErrorHandlingMiddlewares = function() {
 	// error handlers
 	// catch 404 and forward to error handler
 	app.use(function(req, res, next) {
-		var err = new Error('Not Found');
-		err.status = 404;
-		next(err);
+		next(new Models.TelepatError(Models.TelepatError.errors.NoRouteAvailable));
 	});
 
-	// development error handler
-	// will print stacktrace
-	if (app.get('env') === 'development') {
-		app.use(function(err, req, res, next) {
-			res.status(err.status || 500);
-			res.json({
-				status: err.status || 500,
-				stack: err.stack,
-				message: err.message
-			}).end();
-		});
-	}
-
-	// production error handler
-	// no stacktraces leaked to user
 	app.use(function(err, req, res, next) {
-		res.status(err.status || 500);
-		res.json({
-			status: err.status || 500,
-			message: err.message
-		}).end();
+		var responseBody = {};
+
+		if (!(err instanceof Models.TelepatError)) {
+			err = new Models.TelepatError(Models.TelepatError.errors.ServerFailure, [err.message]);
+		}
+
+		res.status(err.status);
+		responseBody.code = err.code;
+		responseBody.message = err.message;
+		responseBody.status = err.status;
+
+		if (err.stack && app.get('env') === 'development')
+			responseBody.stack = err.stack;
+
+		res.json(responseBody).end();
 	});
 };
 

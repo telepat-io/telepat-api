@@ -9,15 +9,15 @@ var Models = require('telepat-models');
 router.use('/add', security.tokenValidation);
 /**
  * @api {post} /admin/app/add AppCreate
- * @apiDescription Creates a app for the admin. 
+ * @apiDescription Creates a app for the admin.
                    The request body should contain the app itself.
  * @apiName AdminAppAdd
  * @apiGroup Admin
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization 
-                       The authorization token obtained in the login endpoint. 
+ * @apiHeader {String} Authorization
+                       The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  *
  * @apiExample {json} Client Request
@@ -52,17 +52,16 @@ router.use('/add', security.tokenValidation);
  * 	}
  *
  */
-router.post('/add', function (req, res) {
+router.post('/add', function (req, res, next) {
 	var newApp = req.body;
 
 	if (!newApp.name)
-		return res.status(400).json({status: 400, message: '\'name\' field is missing'}).end();
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['name']));
 
 	newApp['admins'] = [req.user.id];
 	Models.Application.create(newApp, function (err, res1) {
-		if (err) {
-			res.status(500).send({status: 500, message: 'Could not add app'});
-		}
+		if (err)
+			next(err);
 		else {
 			app.applications[res1.id] = res1;
 			res.status(200).json({status: 200, content: res1});
@@ -70,20 +69,20 @@ router.post('/add', function (req, res) {
 	});
 });
 
-router.use('/remove', 
-	security.tokenValidation, 
-	security.applicationIdValidation, 
+router.use('/remove',
+	security.tokenValidation,
+	security.applicationIdValidation,
 	security.adminAppValidation);
 /**
  * @api {post} /admin/app/remove RemoveApp
  * @apiDescription Removes an app from the admin.
  * @apiName AdminAppRemove
  * @apiGroup Admin
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization 
-                       The authorization token obtained in the login endpoint. 
+ * @apiHeader {String} Authorization
+                       The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  *
@@ -109,12 +108,12 @@ router.use('/remove',
  * 	}
  *
  */
-router.post('/remove', function (req, res) {
+router.post('/remove', function (req, res, next) {
 	var appId = req._telepat.applicationId;
 
 	Models.Application.delete(appId, function (err, res1) {
 		if (err)
-			res.status(500).send({status: 500, message: 'Could not remove app'});
+			next(err);
 		else {
 			delete app.applications[appId];
 			res.status(200).json({status: 200, content: 'App removed'}).end();
@@ -122,20 +121,20 @@ router.post('/remove', function (req, res) {
 	});
 });
 
-router.use('/update', 
-	security.tokenValidation, 
-	security.applicationIdValidation, 
+router.use('/update',
+	security.tokenValidation,
+	security.applicationIdValidation,
 	security.adminAppValidation);
 /**
  * @api {post} /admin/app/update UpdateApp
  * @apiDescription Updates an app
  * @apiName AdminAppUpdate
  * @apiGroup Admin
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization 
-                       The authorization token obtained in the login endpoint. 
+ * @apiHeader {String} Authorization
+                       The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  *
@@ -143,7 +142,13 @@ router.use('/update',
  *
  * @apiExample {json} Client Request
  * 	{
- * 		"name": "New name"
+ * 		"patches": [
+ * 			{
+ * 				"op": "replace",
+ * 				"path": "application/application_id/field_name",
+ * 				"value": "new value"
+ * 			}
+ *		 ]
  * 	}
  *
  * @apiSuccessExample {json} Success Response
@@ -164,20 +169,208 @@ router.use('/update',
  * 	@apiErrorExample {json} Error Response
  * 	{
  * 		"status": 500,
- * 		"message": "Could not update app"
+ * 		"message": "internal server error description"
  * 	}
  *
  */
-router.post('/update', function (req, res) {
+router.post('/update', function (req, res, next) {
 	var appId = req._telepat.applicationId;
 
-	Models.Application.update(appId, req.body, function (err, result) {
-		if (err)
-			res.status(500).send({status: 500, message: 'Could not update app'});
-		else {
-			app.applications[appId] = result;
-			res.status(200).json({status: 200, content: 'Updated'}).end();
+	if (Object.getOwnPropertyNames(req.body).length === 0) {
+		return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
+	} else if (!Array.isArray(req.body.patches)) {
+		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidFieldValue,
+			['"patches" is not an array']));
+	} else if (req.body.patches.length == 0) {
+		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidFieldValue,
+			['"patches" array is empty']));
+	} else {
+		Models.Application.update(appId, req.body.patches, function (err, result) {
+			if (err)
+				return next(err);
+			else {
+				app.applications[appId] = result;
+				res.status(200).json({status: 200, content: 'Updated'}).end();
+			}
+		});
+	}
+});
+
+router.use('/authorize',
+	security.tokenValidation,
+	security.applicationIdValidation,
+	security.adminAppValidation);
+
+/**
+ * @api {post} /admin/app/authorize AuthorizeAdmin
+ * @apiDescription Authorizes an admin to an application
+ * @apiName AdminAuthorize
+ * @apiGroup Admin
+ * @apiVersion 0.2.3
+ *
+ * @apiHeader {String} Content-type application/json
+ * @apiHeader {String} Authorization
+ The authorization token obtained in the login endpoint.
+ Should have the format: <i>Bearer $TOKEN</i>
+ * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
+ *
+ * @apiParam {string} email Email address of the admin to authorize for the application
+ *
+ * @apiExample {json} Client Request
+ * 	{
+ * 		"email": "admin@telepat.io"
+ * 	}
+ *
+ * @apiSuccessExample {json} Success Response
+ * 	{
+ * 		"status": 200,
+ * 		"content": "Admin added to application"
+ * 	}
+ *
+ * 	@apiError (400) EmptyBodyError
+ * 	@apiError (400) MissingRequestedField "email" field is missing
+ * 	@apiError (404) Error Application with that ID doesn't exist
+ * 	@apiError (404) Error Admin with that email address does not exist
+ * 	@apiError (409) AdminAlreadyAuthorized Admin with email address already authorized for application
+ * 	@apiError (500) Error Internal server error.
+ *
+ * 	@apiErrorExample {json} Error Response
+ * 	{
+ * 		"status": 404,
+ * 		"message": "Application with ID $APPID doest not exist."
+ * 	}
+ *
+ * 	@apiErrorExample {json} Error Response
+ * 	{
+ * 		"status": 500,
+ * 		"message": "internal server error description"
+ * 	}
+ *
+ */
+router.post('/authorize', function(req, res, next) {
+	if (Object.getOwnPropertyNames(req.body).length === 0) {
+		return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
+	} else if (!req.body.email) {
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['email']));
+	}
+
+	var appId = req._telepat.applicationId;
+	var adminEmail = req.body.email;
+
+	if (app.applications[appId].admins.indexOf(adminEmail) !== -1) {
+		return next(new Models.TelepatError(Models.TelepatError.errors.AdminAlreadyAuthorized));
+	}
+
+	async.waterfall([
+		function(callback) {
+			Models.Admin({email: adminEmail}, callback);
+		},
+		function(admin, callback) {
+			var patches = [{
+				op: 'append',
+				path: 'application/'+appId+'/admins',
+				value: admin.id
+			}];
+			Models.Application.update(appId, patches, callback);
 		}
+	], function(err, application) {
+		if (err) return next(err);
+
+		app.applications[appId] = application;
+
+		res.status(200).json({status: 200, content: 'Admin added to application'}).end();
+	});
+});
+
+router.use('/deauthorize',
+	security.tokenValidation,
+	security.applicationIdValidation,
+	security.adminAppValidation);
+
+/**
+ * @api {post} /admin/app/deauthorize DeauthorizeAdmin
+ * @apiDescription Deauthorizes an admin from an application
+ * @apiName AdminDeauthorize
+ * @apiGroup Admin
+ * @apiVersion 0.2.3
+ *
+ * @apiHeader {String} Content-type application/json
+ * @apiHeader {String} Authorization
+ The authorization token obtained in the login endpoint.
+ Should have the format: <i>Bearer $TOKEN</i>
+ * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
+ *
+ * @apiParam {string} email Email address of the admin to deauthorize from the application
+ *
+ * @apiExample {json} Client Request
+ * 	{
+ * 		"email": "admin@telepat.io"
+ * 	}
+ *
+ * @apiSuccessExample {json} Success Response
+ * 	{
+ * 		"status": 200,
+ * 		"content": "Admin removed from application"
+ * 	}
+ *
+ * 	@apiError (400) EmptyBodyError
+ * 	@apiError (400) MissingRequestedField "email" field is missing
+ * 	@apiError (404) Error Application with that ID doesn't exist
+ * 	@apiError (404) Error Admin with that email address does not exist or does not belong to the application
+ * 	@apiError (409) CannotDeauthorizeLastAdmin Admin with email address cannot be deauthorized because he's the only one
+ * 	left. We can't have "orphan" applications.
+ * 	@apiError (500) Error Internal server error.
+ *
+ * 	@apiErrorExample {json} Error Response
+ * 	{
+ * 		"status": 404,
+ * 		"message": "Application with ID $APPID doest not exist."
+ * 	}
+ *
+ * 	@apiErrorExample {json} Error Response
+ * 	{
+ * 		"status": 500,
+ * 		"message": "internal server error description"
+ * 	}
+ *
+ */
+router.post('/deauthorize', function(req, res, next) {
+	if (Object.getOwnPropertyNames(req.body).length === 0) {
+		return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
+	} else if (!req.body.email) {
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['email']));
+	}
+
+	var appId = req._telepat.applicationId;
+	var adminEmail = req.body.email;
+
+	if (adminEmail == req.user.email && app.applications[appId].admins.indexOf(req.user.id) == 0
+		&& app.applications[appId].admins.length == 1) {
+		return next(new Models.TelepatError(Models.TelepatError.errors.AdminDeauthorizeLastAdmin));
+	}
+
+	async.waterfall([
+		function(callback) {
+			Models.Admin({email: adminEmail}, callback);
+		},
+		function(admin, callback) {
+			if (app.applications[appId].admins.indexOf(admin.id) === -1) {
+				return next(Models.TelepatError(Models.TelepatError.errors.AdminNotFoundInApplication, [adminEmail]));
+			} else {
+				var patches = [{
+					op: 'remove',
+					path: 'application/'+appId+'/admins',
+					value: admin.id
+				}];
+				Models.Application.update(appId, patches, callback);
+			}
+		}
+	], function(err, application) {
+		if (err) return next(err);
+
+		app.applications[appId] = application;
+
+		res.status(200).json({status: 200, content: 'Admin removed from application'}).end();
 	});
 });
 

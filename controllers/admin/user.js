@@ -6,20 +6,20 @@ var router = express.Router();
 var security = require('../security');
 var Models = require('telepat-models');
 
-router.use('/all', 
-	security.tokenValidation, 
-	security.applicationIdValidation, 
+router.use('/all',
+	security.tokenValidation,
+	security.applicationIdValidation,
 	security.adminAppValidation);
 /**
  * @api {get} /admin/user/all GetAppusers
  * @apiDescription Gets all users of the app
  * @apiName AdminGetUsers
  * @apiGroup Admin
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization 
-                       The authorization token obtained in the login endpoint. 
+ * @apiHeader {String} Authorization
+                       The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  *
@@ -48,20 +48,20 @@ router.get('/all', function(req, res, next) {
 	});
 });
 
-router.use('/update', 
-	security.tokenValidation, 
-	security.applicationIdValidation, 
+router.use('/update',
+	security.tokenValidation,
+	security.applicationIdValidation,
 	security.adminAppValidation);
 /**
  * @api {post} /admin/user/update EditUser
  * @apiDescription Updates an user from an app
  * @apiName AdminUpdateUser
  * @apiGroup Admin
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization 
-                       The authorization token obtained in the login endpoint. 
+ * @apiHeader {String} Authorization
+                       The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  *
@@ -90,15 +90,16 @@ router.use('/update',
 router.post('/update', function(req, res, next) {
 	var patches = req.body.patches;
 
-	if (!patches) {
-		res.status(400)
-				.json({status: 400, message: 'Patches array missing from request body'}).end();
-		return;
-	}
-
-	if (!req.body.email) {
-		res.status(400).json({status: 400, message: 'Email missing from request body'}).end();
-		return;
+	if (Object.getOwnPropertyNames(req.body).length === 0) {
+		return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
+	} else if (!Array.isArray(req.body.patches)) {
+		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidFieldValue,
+			['"patches" is not an array']));
+	} else if (req.body.patches.length == 0) {
+		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidFieldValue,
+			['"patches" array is empty']));
+	} else if (!req.body.email) {
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['email']));
 	}
 
 	async.series([
@@ -121,9 +122,7 @@ router.post('/update', function(req, res, next) {
 		function(callback) {
 			Models.User.update(req.body.email, req._telepat.applicationId, patches, function(err) {
 				if (err && err.status == 404) {
-					var error = new Error('User not found');
-					error.status = 404;
-					callback(error);
+					callback(new Models.TelepatError(Models.TelepatError.errors.UserNotFound));
 				} else if (err)
 					return callback(err);
 				else
@@ -138,20 +137,20 @@ router.post('/update', function(req, res, next) {
 	});
 });
 
-router.use('/delete', 
-	security.tokenValidation, 
-	security.applicationIdValidation, 
+router.use('/delete',
+	security.tokenValidation,
+	security.applicationIdValidation,
 	security.adminAppValidation);
 /**
  * @api {post} /admin/user/delete Deleteuser
- * @apiDescription Deketes an user from an app
+ * @apiDescription Deletes an user from an app
  * @apiName AdminDeleteUser
  * @apiGroup Admin
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization 
-                       The authorization token obtained in the login endpoint. 
+ * @apiHeader {String} Authorization
+                       The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  *
@@ -173,8 +172,7 @@ router.use('/delete',
  */
 router.post('/delete', function(req, res, next) {
 	if (!req.body.email) {
-		res.status(400).json({status: 400, message: 'Requested email address is missing'}).end();
-		return;
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['email']));
 	}
 
 	var appId = req._telepat.applicationId;
@@ -186,17 +184,14 @@ router.post('/delete', function(req, res, next) {
 		},
 		function(user, callback) {
 			if (user.application_id != appId) {
-				var error = new Error('User does not belong to this application');
-				error.code = 404;
-
-				return callback(error);
+				return callback(new Models.TelepatError(Models.TelepatError.errors.UserNotFound));
 			} else {
 				Models.User.delete(userEmail, appId, callback);
 			}
 		}
 	], function(error, results) {
 		if (error && error.status == 404)
-			return res.status(404).json({status: 404, message: 'User not found'}).end();
+			return next(new Models.TelepatError(Models.TelepatError.errors.UserNotFound));
 		else if (error) return next(error);
 
 		if (results) {
@@ -218,7 +213,7 @@ router.post('/delete', function(req, res, next) {
 			});
 		}
 
-		res.status(202).json({status: 202, content: 'User deleted'}).end();
+		res.status(200).json({status: 200, content: 'User deleted'}).end();
 	});
 });
 

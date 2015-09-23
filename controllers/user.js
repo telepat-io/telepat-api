@@ -26,7 +26,7 @@ router.use(['/logout', '/me', '/update', '/delete'], security.tokenValidation);
  * @apiDescription Log in the user through facebook
  * @apiName UserLogin
  * @apiGroup User
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
@@ -44,7 +44,8 @@ router.use(['/logout', '/me', '/update', '/delete'], security.tokenValidation);
  * 	{
  * 		"status": 200,
  * 		"content": {
- * 			"token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImdhYmlAYXBwc2NlbmQuY29tIiwiaXNBZG1pbiI6dHJ1ZSwiaWF0IjoxNDMyOTA2ODQwLCJleHAiOjE0MzI5MTA0NDB9.knhPevsK4cWewnx0LpSLrMg3Tk_OpchKu6it7FK9C2Q"
+ * 			"token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImdhYmlAYXBwc2NlbmQuY29tIiwiaXNBZG1pbiI6dHJ1ZSwi
+ * 			aWF0IjoxNDMyOTA2ODQwLCJleHAiOjE0MzI5MTA0NDB9.knhPevsK4cWewnx0LpSLrMg3Tk_OpchKu6it7FK9C2Q"
  * 			"user": {
  * 				 "id": 31,
  *				"type": "user",
@@ -59,12 +60,13 @@ router.use(['/logout', '/me', '/update', '/delete'], security.tokenValidation);
  * 		}
  * 	}
  *
- * 	@apiError 400 <code>InsufficientFacebookPermissions</code> User email is not publicly available (insufficient facebook permissions)
+ * 	@apiError 400 <code>InsufficientFacebookPermissions</code> User email is not publicly available
+ * 	(insufficient facebook permissions)
  *
  */
 router.post('/login', function(req, res, next) {
 	if (!req.body.access_token)
-		res.status(400).json({status: 400, message: "Facebook access token is missing"}).end();
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['access_token']));
 
 	var accessToken = req.body.access_token;
 	var email = null;
@@ -82,9 +84,7 @@ router.post('/login', function(req, res, next) {
 				fbProfile = result;
 
 				if (!email) {
-					var error = new Error('User email is not publicly available (insufficient facebook permissions)');
-					error.status = 400;
-					callback(error);
+					callback(new Models.TelepatError(Models.TelepatError.errors.InsufficientFacebookPermissions));
 				}
 
 				callback();
@@ -94,9 +94,7 @@ router.post('/login', function(req, res, next) {
 			//try and get user profile from DB
 			Models.User(email, appId, function(err, result) {
 				if (err && err.status == 404) {
-					var error = new Error('User with email address not found');
-					error.status = 404;
-					callback(error);
+					callback(new Models.TelepatError(Models.TelepatError.errors.UserNotFound));
 				}
 				else if (err)
 					callback(err);
@@ -144,7 +142,8 @@ router.post('/login', function(req, res, next) {
 		if (err)
 			return next(err);
 		else {
-			var token = jwt.sign({email: userProfile.email, id: userProfile.id}, security.authSecret, { expiresInMinutes: 60 });
+			var token = jwt.sign({email: userProfile.email, id: userProfile.id}, security.authSecret,
+				{ expiresInMinutes: 60 });
 			res.json({status: 200, content: {token: token, user: userProfile}}).end();
 		}
 	});
@@ -155,7 +154,7 @@ router.post('/login', function(req, res, next) {
  * @apiDescription Registers a new user using a fb token or directly with an email and password
  * @apiName UserRegister
  * @apiGroup User
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
@@ -183,13 +182,15 @@ router.post('/login', function(req, res, next) {
  * 		"content": "User created"
  * 	}
  *
- * 	@apiError 400 <code>InsufficientFacebookPermissions</code> User email is not publicly available (insufficient facebook permissions)
+ * 	@apiError 400 <code>InsufficientFacebookPermissions</code> User email is not publicly available
+ * 	(insufficient facebook permissions)
  * 	@apiError 409 <code>UserAlreadyExists</code> User with that email address already exists
  *
  */
 router.post('/register', function(req, res, next) {
-	if (!req.body)
-		res.status(400).json({status: 400, message: "Request body is empty"}).end();
+	if (Object.getOwnPropertyNames(req.body).length === 0) {
+		return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
+	}
 
 	var userProfile = req.body;
 	var accessToken = req.body.access_token;
@@ -206,9 +207,7 @@ router.post('/register', function(req, res, next) {
 					userProfile = result;
 
 					if (!userProfile.email) {
-						var error = new Error('User email is not publicly available (insufficient facebook permissions)');
-						error.status = 400;
-						callback(error);
+						callback(new Models.TelepatError(Models.TelepatError.errors.InsufficientFacebookPermissions));
 					}
 
 					callback();
@@ -233,16 +232,13 @@ router.post('/register', function(req, res, next) {
 		},
 		function(callback) {
 			if (!userProfile.email) {
-				var error = new Error('Email address is missing from the request body or facebook access token not provided');
-				error.status = 400;
-				return callback(error);
+				return callback(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField,
+					['email or access_token']));
 			}
 
 			Models.User(userProfile.email, appId, function(err, result) {
 				if (!err) {
-					var error = new Error('User with that email address already exists');
-					error.status = 409;
-					callback(error);
+					callback(new Models.TelepatError(Models.TelepatError.errors.UserAlreadyExists));
 				}
 				else if (err && err.status != 404)
 					callback(err);
@@ -274,6 +270,12 @@ router.post('/register', function(req, res, next) {
 		}, function(hash, callback) {
 			if (hash !== false)
 				userProfile.password = hash;
+
+			//request came from facebook
+			if (accessToken) {
+				userProfile.fid = userProfile.id;
+				delete userProfile.id;
+			}
 
 			app.kafkaProducer.send([{
 				topic: 'aggregation',
@@ -309,10 +311,11 @@ router.post('/register', function(req, res, next) {
  * @apiDescription Logs in the user with a password; creates the user if it doesn't exist
  * @apiName UserLoginPassword
  * @apiGroup User
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
+ * @apiHeader {String} Authorization The authorization token obtained in the login endpoint.
+ * Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
  * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
@@ -341,10 +344,7 @@ router.post('/register', function(req, res, next) {
 router.get('/me', function(req, res, next) {
 	Models.User(req.user.email, req._telepat.applicationId, function(err, result) {
 		if (err && err.status == 404) {
-			var error = new Error('User not found');
-			error.status = 404;
-
-			return next(error);
+			return next(new Models.TelepatError(Models.TelepatError.errors.UserNotFound));
 		}
 		else if (err)
 			next(err);
@@ -359,7 +359,7 @@ router.get('/me', function(req, res, next) {
  * @apiDescription Logs in the user with a password; creates the user if it doesn't exist
  * @apiName UserLoginPassword
  * @apiGroup User
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
@@ -378,7 +378,8 @@ router.get('/me', function(req, res, next) {
  * 	@apiSuccessExample {json} Success Response
  * 	{
  * 		"content": {
- * 			"token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImdhYmlAYXBwc2NlbmQuY29tIiwiaXNBZG1pbiI6dHJ1ZSwiaWF0IjoxNDMyOTA2ODQwLCJleHAiOjE0MzI5MTA0NDB9.knhPevsK4cWewnx0LpSLrMg3Tk_OpchKu6it7FK9C2Q"
+ * 			"token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImdhYmlAYXBwc2NlbmQuY29tIiwiaXNBZG1pbiI6dHJ1ZSwi
+ * 			aWF0IjoxNDMyOTA2ODQwLCJleHAiOjE0MzI5MTA0NDB9.knhPevsK4cWewnx0LpSLrMg3Tk_OpchKu6it7FK9C2Q"
  * 			"user": {
  * 				"id": 31,
  *				"type": "user",
@@ -399,10 +400,10 @@ router.get('/me', function(req, res, next) {
  */
 router.post('/login_password', function(req, res, next) {
 	if (!req.body.email)
-		return res.status(400).json({status: 400, message: "Missing email address"}).end();
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['email']));
 
 	if (!req.body.password)
-		return res.status(400).json({status: 400, message: "Missing password"}).end();
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['password']));
 
 	var userProfile = null;
 	var email = req.body.email;
@@ -417,9 +418,7 @@ router.post('/login_password', function(req, res, next) {
 			//try and get user profile from DB
 			Models.User(email, appId, function(err, result) {
 				if (err && err.status == 404) {
-					var error = new Error('User with email address not found');
-					error.status = 404;
-					callback(error);
+					callback(new Models.TelepatError(Models.TelepatError.errors.UserNotFound));
 				}
 				else if (err)
 					callback(err);
@@ -444,9 +443,7 @@ router.post('/login_password', function(req, res, next) {
 			return next(err);
 
 		if (hashedPassword != userProfile.password) {
-			res.status(401).json({status: 401, message: 'wrong password'}).end();
-
-			return;
+			return next(new Models.TelepatError(Models.TelepatError.errors.UserBadLogin));
 		}
 
 		delete userProfile.password;
@@ -461,7 +458,7 @@ router.post('/login_password', function(req, res, next) {
  * @apiDescription Logs out the user removing the device from his array of devices.
  * @apiName UserLogout
  * @apiGroup User
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
@@ -516,10 +513,11 @@ router.get('/logout', function(req, res, next) {
  * may not be aleady expired).
  * @apiName RefreshToken
  * @apiGroup User
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
+ * @apiHeader {String} Authorization The authorization token obtained in the login endpoint.
+ * Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
  * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
@@ -528,7 +526,8 @@ router.get('/logout', function(req, res, next) {
  * 	{
  * 		"status": 200,
  * 		"content": {
- * 			token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImdhYmlAYXBwc2NlbmQuY29tIiwiaXNBZG1pbiI6dHJ1ZSwiaWF0IjoxNDMyOTA2ODQwLCJleHAiOjE0MzI5MTA0NDB9.knhPevsK4cWewnx0LpSLrMg3Tk_OpchKu6it7FK9C2Q"
+ * 			token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImdhYmlAYXBwc2NlbmQuY29tIiwiaXNBZG1pbiI6dHJ1ZSwiaW
+ * 			F0IjoxNDMyOTA2ODQwLCJleHAiOjE0MzI5MTA0NDB9.knhPevsK4cWewnx0LpSLrMg3Tk_OpchKu6it7FK9C2Q"
  * 		}
  * 	}
  *
@@ -547,9 +546,7 @@ router.get('/logout', function(req, res, next) {
  */
 router.get('/refresh_token', function(req, res, next) {
 	if (!req.get('Authorization')) {
-		res.status(400).json({status: 400, message: 'Required Authorization header is missing'}).end();
-
-		return;
+		return next(new Models.TelepatError(Models.TelepatError.errors.AuthorizationMissing));
 	}
 
 	var authHeader = req.get('Authorization').split(' ');
@@ -557,18 +554,18 @@ router.get('/refresh_token', function(req, res, next) {
 		try {
 			var decoded = jwt.decode(authHeader[1]);
 		} catch (e) {
-			return res.status(400).json({status: 400, message: e.message}).end();
+			return next(new Models.TelepatError(Models.TelepatError.errors.ClientBadRequest, [e.message]));
 		}
 
 		if (!decoded) {
-			return res.status(400).json({status: 400, message: 'Malformed authorization token'}).end();
+			return next(new Models.TelepatError(Models.TelepatError.errors.MalformedAuthorizationToken));
 		}
 
 		var newToken = jwt.sign(decoded, security.authSecret, {expiresInMinutes: 60});
 
 		return res.status(200).json({status: 200, content: {token: newToken}}).end();
 	} else {
-		return res.status(400).json({status: 400, message: 'Token not present or authorization header is invalid'}).end();
+		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidAuthorization));
 	}
 });
 
@@ -577,7 +574,7 @@ router.get('/refresh_token', function(req, res, next) {
  * @apiDescription Updates the user information
  * @apiName UserUpdate
  * @apiGroup User
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  *
  * @apiParam {Object[]} patches Array of patches that describe the modifications
  *
@@ -661,7 +658,7 @@ router.post('/update_immediate', function(req, res, next) {
  * @apiDescription Deletes a user
  * @apiName UserDelete
  * @apiGroup User
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>

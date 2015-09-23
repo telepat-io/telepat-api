@@ -12,7 +12,7 @@ router.use(security.deviceIdValidation);
  * to search for a device with this udid and return the device id.
  * @apiName DeviceRegister
  * @apiGroup Device
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID if you want to update device info, or
@@ -67,8 +67,9 @@ router.use(security.deviceIdValidation);
  */
 router.post('/register', function(req, res, next) {
 	if (req._telepat.device_id == 'TP_EMPTY_UDID' || req._telepat.device_id == '') {
-		if (!req.body.info)
-			return res.status(400).json({status: 400, message: "Field 'info' is missing from the request body"}).end();
+		if (!req.body.info) {
+			return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['info']));
+		}
 
 		var udid = req.body.info.udid;
 
@@ -104,14 +105,11 @@ router.post('/register', function(req, res, next) {
 		req.body.id = req._telepat.device_id;
 
 		if (Object.getOwnPropertyNames(req.body).length === 0)
-			return res.status(400).json({status: 400, message: "Request body is empty"}).end();
+			return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
 
 		Models.Subscription.updateDevice(req._telepat.device_id, req.body, function(err, result) {
-			if (err && err.status == 404) {	
-				var error = new Error('Device with ID "'+req._telepat.device_id+'" does not exist.');
-				error.status = 404;
-
-				return next(error);
+			if (err && err.status == 404) {
+				return next(new Models.TelepatError(Models.TelepatError.errors.DeviceNotFound));
 			} else if (err)
 				return next(err);
 

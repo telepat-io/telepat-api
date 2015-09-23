@@ -12,16 +12,16 @@ exports.DELAY = 400;
 exports.logLevel = logLevel;
 
 function highjackEnd(request) {
-  var end = request.end;
-  request.end = function (callback) {
-    end.call(this, function (err, res) {
-      if (logLevel === 2 || (err && logLevel === 1)) {
-        console.log(res.body);
-      }
-      callback(err, res);
-    })
-  }
-  return request;
+	var end = request.end;
+	request.end = function (callback) {
+		end.call(this, function (err, res) {
+			if (logLevel === 2 || (err && logLevel === 1)) {
+				console.log(res.body);
+			}
+			callback(err, res);
+		})
+	}
+	return request;
 }
 
 exports.should = should;
@@ -29,14 +29,14 @@ exports.assert = assert;
 exports.crypto = crypto;
 
 exports.request = function (url) {
-  var rq = request(url);
-  var get = rq.get;
-  rq.get = function(path) {
-    return highjackEnd(get.call(this, path))
-  }
-  var post = rq.post;
-  rq.post = function(path) {
-    return highjackEnd(post.call(this, path))
-  }
-  return rq;
+	var rq = request(url);
+	var get = rq.get;
+	rq.get = function(path) {
+		return highjackEnd(get.call(this, path))
+	}
+	var post = rq.post;
+	rq.post = function(path) {
+		return highjackEnd(post.call(this, path))
+	}
+	return rq;
 }

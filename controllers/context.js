@@ -13,7 +13,7 @@ router.use(security.deviceIdValidation);
  * @apiDescription Get all contexts
  * @apiName GetContexts
  * @apiGroup Context
- * @apiVersion 0.2.0
+ * @apiVersion 0.2.3
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint.
@@ -63,7 +63,7 @@ router.get('/all', function (req, res, next) {
  * @apiDescription Retrieves a context
  * @apiName GetContext
  * @apiGroup Context
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
@@ -102,8 +102,9 @@ router.get('/all', function (req, res, next) {
  *
  */
 router.post('/', function (req, res, next) {
-	if (!req.body.id)
-		return res.status(400).json({status: 400, message: 'Requested context ID is missing'}).end();
+	if (!req.body.id) {
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['id']));
+	}
 
 	Models.Context(req.body.id, function (err, res1) {
 		if (err && err.status === 404){

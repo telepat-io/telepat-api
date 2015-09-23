@@ -11,7 +11,6 @@ var userRoute = require('./admin/user');
 
 var security = require('./security');
 var Models = require('telepat-models');
-var crypto = require('crypto');
 
 var unless = function(paths, middleware) {
 	return function(req, res, next) {
@@ -35,21 +34,21 @@ router.use('/context', contextRoute);
 router.use('/schema', schemaRoute);
 router.use('/user', userRoute);
 
-router.use('/contexts', 
-	security.tokenValidation, 
-	security.applicationIdValidation, 
+router.use('/contexts',
+	security.tokenValidation,
+	security.applicationIdValidation,
 	security.adminAppValidation);
 /**
  * @api {get} /admin/contexts GetContexts
  * @apiDescription Get all contexsts
  * @apiName AdminGetContexts
  * @apiGroup Admin
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  * @deprecated
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization 
-                       The authorization token obtained in the login endpoint. 
+ * @apiHeader {String} Authorization
+                       The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  *
@@ -76,31 +75,31 @@ router.use('/contexts',
  * 	}
  *
  */
-router.get('/contexts', function (req, res) {
+router.get('/contexts', function (req, res, next) {
 	Models.Context.getAll(req._telepat.applicationId, function (err, res1) {
 		if (err)
-			res.status(500).send({status: 500, message: 'Could not get contexts'});
+			next(err);
 		else {
 			res.status(200).json({status: 200, content: res1});
 		}
 	});
 });
 
-router.use('/schemas', 
-	security.tokenValidation, 
-	security.applicationIdValidation, 
+router.use('/schemas',
+	security.tokenValidation,
+	security.applicationIdValidation,
 	security.adminAppValidation);
 /**
  * @api {post} /admin/schemas GetSchemas
  * @apiDescription Gets the model schema for an application
  * @apiName AdminGetSchemas
  * @apiGroup Admin
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  * @deprecated
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization 
-                       The authorization token obtained in the login endpoint. 
+ * @apiHeader {String} Authorization
+                       The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  *
@@ -109,19 +108,17 @@ router.use('/schemas',
  * 		"status": 200,
  * 		"content" :{
  * 			"answer": {
- *   		"namespace": "answers",
- *   		"type": "answer",
- *   		"properties": {},
- *   		"belongsTo": [
- *     			{
- *       			"parentModel": "event",
- *       			"relationType": "hasSome"
- *     			}
- *   		],
- *   		"read_acl": 6,
- *   		"write_acl": 6,
- *   		"meta_read_acl": 6
- * 		},
+ *   			"properties": {},
+ *   			"belongsTo": [
+ *     				{
+ *       				"parentModel": "event",
+ *       				"relationType": "hasSome"
+ *     				}
+ *   			],
+ *   			"read_acl": 6,
+ *   			"write_acl": 6,
+ *   			"meta_read_acl": 6
+ * 			},
  * 		...
  * 		}
  * 	}
@@ -138,21 +135,21 @@ router.get('/schemas', function(req, res, next) {
 });
 
 
-router.use('/users', 
-	security.tokenValidation, 
-	security.applicationIdValidation, 
+router.use('/users',
+	security.tokenValidation,
+	security.applicationIdValidation,
 	security.adminAppValidation);
 /**
  * @api {get} /admin/users GetAppusers
  * @apiDescription Gets all users of the app
  * @apiName AdminGetUsers
  * @apiGroup Admin
- * @apiVersion 0.2.2
+ * @apiVersion 0.2.3
  * @deprecated
  *
  * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization 
-                       The authorization token obtained in the login endpoint. 
+ * @apiHeader {String} Authorization
+                       The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  *
@@ -170,6 +167,7 @@ router.use('/users',
 router.get('/users', function(req, res, next) {
 	Models.User.getAll(req._telepat.applicationId, function(err, results) {
 		if (err) return next(err);
+
 		results.forEach(function(item, index, originalArray) {
 			delete originalArray[index].password;
 		});

@@ -1,9 +1,9 @@
 {
   "name": "telepat-api",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "scripts": {
     "start": "./bin/www",
-	  "test": "istanbul cover _mocha -- test/api.js -R spec"
+    "test": "istanbul cover _mocha -- test/api.js -R spec"
   },
   "dependencies": {
     "async": "1.2.0",
@@ -11,9 +11,7 @@
     "body-parser": "1.12.0",
     "colors": "1.1.0",
     "cookie-parser": "1.3.4",
-    "couchbase": "2.0.7",
     "debug": "2.1.1",
-    "elasticsearch": "4.1.0",
     "express": "4.12.4",
     "express-jwt": "3.0.1",
     "facebook-node": "0.0.3",
@@ -54,7 +52,7 @@
   },
   "apidoc": {
     "name": "Telepat API",
-    "version": "0.1.4",
+    "version": "0.2.3",
     "description": "Telepat API used in Telepat distributed data sync platform",
     "title": "Telepat API Documentation",
     "url": "http://localhost:3000"
@@ -65,8 +63,8 @@
     "crypto-js": "^3.1.5",
     "should": "^7.1.0",
     "supertest": "^1.1.0",
-	"common" : "*",
-	"mocha" : "*",
-	"istanbul" : "*"
+    "common": "*",
+    "istanbul": "*",
+    "mocha": "*"
   }
 }
