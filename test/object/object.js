@@ -217,7 +217,7 @@ it('should return an error (401) response to indicate that only authenticated us
 		"context": contextID,
 		"content": {
 		}
-	}
+	};
 	request(url)
 		.post('/object/create')
 		.set('X-BLGREQ-SIGN', appIDsha256)
@@ -235,7 +235,7 @@ it('should return a success response to indicate that object has been created', 
 		"model": "comments",
 		"context": contextID,
 		"content": {
-			"events_id" :1,
+			"events_id" :1
 		}
 	};
 	request(url)
@@ -338,14 +338,14 @@ it('should return a success response to indicate that a object has been updated'
 		"model": "comments",
 		"id": 1,
 		"context": contextID,
-		"patch": [
+		"patches": [
 			{
 				"op": "replace",
 				"path": "comments/1/text",
 				"value": "some edited text"
-			},
-		],
-	}
+			}
+		]
+	};
 	request(url)
 		.post('/object/update')
 		.set('X-BLGREQ-SIGN', appIDsha256)
@@ -370,7 +370,7 @@ it('should return a success response to indicate that a object has NOT been upda
 				"path": "comments/1/text",
 				"value": "some edited text"
 			},
-		],
+		]
 	}
 	request(url)
 		.post('/object/update')
@@ -632,7 +632,7 @@ it('should return an error response to indicate that the object was not deleted 
 		"id" : 1,
 		"content": {
 		}
-	}
+	};
 	request(url)
 		.post('/object/delete')
 		.set('X-BLGREQ-SIGN', appIDsha256)

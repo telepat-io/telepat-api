@@ -52,17 +52,16 @@ router.use('/add', security.tokenValidation);
  * 	}
  *
  */
-router.post('/add', function (req, res) {
+router.post('/add', function (req, res, next) {
 	var newApp = req.body;
 
 	if (!newApp.name)
-		return res.status(400).json({status: 400, message: '\'name\' field is missing'}).end();
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['name']));
 
 	newApp['admins'] = [req.user.id];
 	Models.Application.create(newApp, function (err, res1) {
-		if (err) {
-			res.status(500).send({status: 500, message: 'Could not add app'});
-		}
+		if (err)
+			next(err);
 		else {
 			app.applications[res1.id] = res1;
 			res.status(200).json({status: 200, content: res1});
@@ -109,12 +108,12 @@ router.use('/remove',
  * 	}
  *
  */
-router.post('/remove', function (req, res) {
+router.post('/remove', function (req, res, next) {
 	var appId = req._telepat.applicationId;
 
 	Models.Application.delete(appId, function (err, res1) {
 		if (err)
-			res.status(500).send({status: 500, message: 'Could not remove app'});
+			next(err);
 		else {
 			delete app.applications[appId];
 			res.status(200).json({status: 200, content: 'App removed'}).end();
@@ -178,17 +177,13 @@ router.post('/update', function (req, res, next) {
 	var appId = req._telepat.applicationId;
 
 	if (Object.getOwnPropertyNames(req.body).length === 0) {
-		res.status(400)
-			.json({status: 400, message: 'Missing request body'})
-			.end();
+		return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
 	} else if (!Array.isArray(req.body.patches)) {
-		res.status(400)
-			.json({status: 400, message: 'patches is not an array or is missing'})
-			.end();
+		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidFieldValue,
+			['"patches" is not an array']));
 	} else if (req.body.patches.length == 0) {
-		res.status(400)
-			.json({status: 400, message: 'patches array is empty'})
-			.end();
+		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidFieldValue,
+			['"patches" array is empty']));
 	} else {
 		Models.Application.update(appId, req.body.patches, function (err, result) {
 			if (err)
@@ -254,23 +249,16 @@ router.use('/authorize',
  */
 router.post('/authorize', function(req, res, next) {
 	if (Object.getOwnPropertyNames(req.body).length === 0) {
-		res.status(400)
-			.json({status: 400, message: 'Missing request body'})
-			.end();
+		return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
 	} else if (!req.body.email) {
-		res.status(400)
-			.json({status: 400, message: 'Request admin email address is missing'})
-			.end();
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['email']));
 	}
 
 	var appId = req._telepat.applicationId;
 	var adminEmail = req.body.email;
 
 	if (app.applications[appId].admins.indexOf(adminEmail) !== -1) {
-		var error = new Error('Admin with that email address is already authorized in this application');
-		error.status = 409;
-
-		return next(error);
+		return next(new Models.TelepatError(Models.TelepatError.errors.AdminAlreadyAuthorized));
 	}
 
 	async.waterfall([
@@ -348,13 +336,9 @@ router.use('/deauthorize',
  */
 router.post('/deauthorize', function(req, res, next) {
 	if (Object.getOwnPropertyNames(req.body).length === 0) {
-		res.status(400)
-			.json({status: 400, message: 'Missing request body'})
-			.end();
+		return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
 	} else if (!req.body.email) {
-		res.status(400)
-			.json({status: 400, message: 'Request admin email address is missing'})
-			.end();
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['email']));
 	}
 
 	var appId = req._telepat.applicationId;
@@ -362,10 +346,7 @@ router.post('/deauthorize', function(req, res, next) {
 
 	if (adminEmail == req.user.email && app.applications[appId].admins.indexOf(req.user.id) == 0
 		&& app.applications[appId].admins.length == 1) {
-		var error = new Error('Cannot remove yourself from the application because you\'re the only authorized admin');
-		error.status = 409;
-
-		return next(error);
+		return next(new Models.TelepatError(Models.TelepatError.errors.AdminDeauthorizeLastAdmin));
 	}
 
 	async.waterfall([
@@ -374,10 +355,7 @@ router.post('/deauthorize', function(req, res, next) {
 		},
 		function(admin, callback) {
 			if (app.applications[appId].admins.indexOf(admin.id) === -1) {
-				var error = new Error('Admin with email address "'+adminEmail+'" not found in application');
-				error.status = 404;
-
-				return next(error);
+				return next(Models.TelepatError(Models.TelepatError.errors.AdminNotFoundInApplication, [adminEmail]));
 			} else {
 				var patches = [{
 					op: 'remove',

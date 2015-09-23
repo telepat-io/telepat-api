@@ -297,8 +297,7 @@ it('should return an error response to indicate that the token was NOT updated b
 		.set('Authorization', authValue )
 		.send()
 		.end(function(err, res) {
-			res.statusCode.should.be.equal(400);
-			res.body.message.should.be.equal("Token not present or authorization header is invalid");
+			res.statusCode.should.be.equal(401);
 			done();
 		});
 });

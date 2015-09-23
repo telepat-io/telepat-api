@@ -41,10 +41,10 @@ var Models = require('telepat-models');
  */
 router.post('/login', function (req, res, next) {
 	if (!req.body.email)
-		return res.status(400).json({status: 400, message: 'Missing email address'}).end();
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['email']));
 
 	if (!req.body.password)
-		return res.status(400).json({status: 400, message: 'Missing password'}).end();
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['password']));
 
 	async.waterfall([
 		function(callback) {
@@ -53,9 +53,7 @@ router.post('/login', function (req, res, next) {
 		function(hashedPassword) {
 			Models.Admin({email: req.body.email}, function(err, admin) {
 				if (err && err.status == 404) {
-					res.status(401).json({status: 401, message: 'Wrong user or password'}).end();
-
-					return;
+					return next(new Models.TelepatError(Models.TelepatError.errors.AdminBadLogin));
 				} else if (err) {
 					return next(err);
 				}
@@ -71,7 +69,7 @@ router.post('/login', function (req, res, next) {
 								})}
 						}).end();
 				} else {
-					res.status(401).json({status: 401, message: 'Wrong user or password'}).end();
+					return next(new Models.TelepatError(Models.TelepatError.errors.AdminBadLogin));
 				}
 			});
 		}
@@ -113,18 +111,11 @@ router.post('/login', function (req, res, next) {
  * 	}
  */
 router.post('/add', function (req, res, next) {
-	if (!req.body.email) {
-		res.status(400)
-				.json({status: 400, message: 'Missing requested email address'})
-				.end();
-		return;
-	}
-	if (!req.body.password) {
-		res.status(400)
-				.json({status: 400, message: 'Missing requested password'})
-				.end();
-		return;
-	}
+	if (!req.body.email)
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['email']));
+
+	if (!req.body.password)
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['password']));
 
 	async.waterfall([
 		function(callback) {
@@ -210,23 +201,30 @@ router.use('/update', security.tokenValidation);
  */
 router.post('/update', function (req, res, next) {
 	if (Object.getOwnPropertyNames(req.body).length === 0) {
-		res.status(400)
-				.json({status: 400, message: 'Missing request body'})
-				.end();
+		return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
 	} else if (!Array.isArray(req.body.patches)) {
-		res.status(400)
-			.json({status: 400, message: 'patches is not an array or is missing'})
-			.end();
+		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidFieldValue,
+			['"patches" is not an array']));
 	} else if (req.body.patches.length == 0) {
-		res.status(400)
-			.json({status: 400, message: 'patches array is empty'})
-			.end();
+		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidFieldValue,
+			['"patches" array is empty']));
 	} else {
-		Models.Admin.update(req.body.patches, function (err, res1) {
-			if (err)
-				next(err);
+		async.each(req.body.patches, function(patch, c) {
+			if (patch.path.split('/')[1] != req.user.id)
+				c(new Models.TelepatError(Models.TelepatError.errors.InvalidAdmin));
 			else
-				res.status(200).json({status: 200, content: 'Admin updated'}).end();
+				c();
+		}, function(err) {
+			if (err) {
+				next(err);
+			} else {
+				Models.Admin.update(req.body.patches, function (err) {
+					if (err)
+						next(err);
+					else
+						res.status(200).json({status: 200, content: 'Admin updated'}).end();
+				});
+			}
 		});
 	}
 });

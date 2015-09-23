@@ -11,7 +11,6 @@ var userRoute = require('./admin/user');
 
 var security = require('./security');
 var Models = require('telepat-models');
-var crypto = require('crypto');
 
 var unless = function(paths, middleware) {
 	return function(req, res, next) {
@@ -76,10 +75,10 @@ router.use('/contexts',
  * 	}
  *
  */
-router.get('/contexts', function (req, res) {
+router.get('/contexts', function (req, res, next) {
 	Models.Context.getAll(req._telepat.applicationId, function (err, res1) {
 		if (err)
-			res.status(500).send({status: 500, message: 'Could not get contexts'});
+			next(err);
 		else {
 			res.status(200).json({status: 200, content: res1});
 		}
@@ -168,6 +167,7 @@ router.use('/users',
 router.get('/users', function(req, res, next) {
 	Models.User.getAll(req._telepat.applicationId, function(err, results) {
 		if (err) return next(err);
+
 		results.forEach(function(item, index, originalArray) {
 			delete originalArray[index].password;
 		});

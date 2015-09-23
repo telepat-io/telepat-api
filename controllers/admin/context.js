@@ -46,12 +46,12 @@ router.use('/',
  * 	}
  *
  */
-router.get('/all', function (req, res) {
+router.get('/all', function (req, res, next) {
 	var appId = req._telepat.applicationId;
 
 	Models.Context.getAll(appId, function (err, res1) {
 		if (err)
-			res.status(500).send({status: 500, message: 'Could not get contexts'});
+			next(err);
 		else {
 			res.status(200).json({status: 200, content: res1});
 		}
@@ -99,14 +99,14 @@ router.get('/all', function (req, res) {
  * 	}
  *
  */
-router.post('/', function (req, res) {
+router.post('/', function (req, res, next) {
 	if (!req.body.id) {
 		return res.status(400).json({status: 400, message: 'Requested context ID is missing'}).end();
 	}
 
 	Models.Context(req.body.id, function (err, res1) {
 		if (err && err.status == 404)
-			res.status(404).json({status: 404, message: 'Context not found'}).end();
+			next(new Models.TelepatError(Models.TelepatError.errors.ContextNotFound));
 		else if (err)
 			res.status(500).send({status: 500, message: 'Could not get context'});
 		else {
@@ -161,15 +161,15 @@ router.use('/add',
  * 	}
  *
  */
-router.post('/add', function (req, res) {
+router.post('/add', function (req, res, next) {
 	if (Object.getOwnPropertyNames(req.body).length === 0)
-		return res.status(400).json({status: 400, message: 'Request body is empty'}).end();
+		return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
 
 	var newContext = req.body;
 	newContext['application_id'] = req._telepat.applicationId;
 	Models.Context.create(newContext, function (err, res1) {
 		if (err)
-			res.status(500).send({status: 500, message: 'Could not add context'});
+			next(err);
 		else {
 			res.status(200).json({status: 200, content: res1}).end();
 		}
@@ -211,13 +211,12 @@ router.use('/remove',
  */
 router.post('/remove', function (req, res, next) {
 	if (!req.body.id) {
-		res.status(400).json({status: 400, message: 'Requested context ID is missing'}).end();
-		return;
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['id']));
 	}
 
 	Models.Context.delete(req.body.id, function (err, res1) {
 		if (err && err.status == 404)
-			res.status(404).json({status: 404, message: 'Context does not exist'}).end();
+			next(new Models.TelepatError(Models.TelepatError.errors.ContextNotFound));
 		else if (err)
 			next(err);
 		else {
@@ -267,47 +266,37 @@ router.use('/update',
  * 	}
  *
  */
-router.post('/update', function (req, res) {
-	if (!req.body.id) {
-		res.status(400)
-				.json({status: 400, message: 'Requested context ID is missing'}).end();
-		return;
-	}
-
-	if (!req.body.patches) {
-		res.status(400)
-				.json({status: 400, message: 'Requested patches array is missing'}).end();
-		return;
-	}
-
-	async.waterfall([
-		function(callback) {
-			Models.Context(req.body.id, callback);
-		},
-		function(context, callback) {
-			if (app.applications[context.application_id].admins.indexOf(req.user.id) === -1) {
-				res.status(403).send({status: 403, message: 'This context does not belong to you'}).end();
-				callback();
-			} else {
-				Models.Context.update(req.body.id, req.body.patches, function (err, res1) {
-					if (err && err.status == 404)
-						res.status(404)
-							.send({status: 404, message: 'Context with id \''+req.body.id+'\' does not exist'}).end();
-					else if (err)
-						res.status(500).send({status: 500, message: 'Could not update context'}).end();
-					else {
-						res.status(200).json({status: 200, content: 'Context updated'}).end();
-					}
-					callback();
-				});
+router.post('/update', function (req, res, next) {
+	if (Object.getOwnPropertyNames(req.body).length === 0) {
+		return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
+	} else if (!Array.isArray(req.body.patches)) {
+		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidFieldValue,
+			['"patches" is not an array']));
+	} else if (req.body.patches.length == 0) {
+		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidFieldValue,
+			['"patches" array is empty']));
+	} else if (!req.body.id) {
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['id']));
+	} else {
+		async.waterfall([
+			function(callback) {
+				Models.Context(req.body.id, callback);
+			},
+			function(context, callback) {
+				if (app.applications[context.application_id].admins.indexOf(req.user.id) === -1) {
+					callback(new Models.TelepatError(Models.TelepatError.errors.ContextNotAllowed));
+				} else {
+					Models.Context.update(req.body.id, req.body.patches, callback);
+				}
 			}
-		}
-	], function (err, result) {
-			if (err) {
-				res.status(404)
-						.send({status: 404, message: 'Context with id \''+req.body.id+'\' does not exist'}).end();
+		], function (err, result) {
+			if (err && err.status == 404)
+				next(new Models.TelepatError(Models.TelepatError.errors.ContextNotFound));
+			else {
+				res.status(200).json({status: 200, content: 'Context updated'}).end();
 			}
-	});
+		});
+	}
 });
 
 module.exports = router;

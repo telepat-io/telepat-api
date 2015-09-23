@@ -119,7 +119,6 @@ describe('Admin', function() {
 			.send(admin)
 			.end(function(err, res) {
 				res.statusCode.should.be.equal(401);
-				res.body.message.should.be.equal('Wrong user or password');
 				done();
 			});
 	});
@@ -171,11 +170,15 @@ describe('Admin', function() {
 			});
 	});
 
-	it('should return an error response indicating the admin account has NOT been updated because of missing credentials', function(done) {
-		var randEmail = 'adminx@example.com';
+	it('should return an error response indicating the admin account has NOT been updated because of invalid admin id', function(done) {
 		var admin = {
-			email: randEmail,
-			password: adminPassword
+			patches: [
+				{
+					op: 'replace',
+					path: 'admin/garbage/name',
+					value: 'Admin Name v2'
+				}
+			]
 		};
 		request(url)
 			.post('/admin/update')
@@ -200,11 +203,6 @@ describe('Admin', function() {
 	});
 
 	it('should return an error response indicating the admin account has NOT been deleted because of missing credentials', function(done) {
-		var randEmail = 'adminx@example.com';
-		var admin = {
-			email: randEmail,
-			password: adminPassword
-		};
 		request(url)
 			.post('/admin/delete')
 			.set('Content-type','application/json')
@@ -503,8 +501,8 @@ describe('Context', function() {
 	it('should return an error response to indicate context NOT succesfully created because of bad client headers', function(done) {
 		var clientrequest = {
 			"name": "context",
-			"meta": {"info": "some meta info"},
-		}
+			"meta": {"info": "some meta info"}
+		};
 		request(url)
 			.post('/admin/context/add')
 			.set('Content-type','application/json')
@@ -512,7 +510,6 @@ describe('Context', function() {
 			.send(clientrequest)
 			.end(function(err, res) {
 				res.statusCode.should.be.equal(400);
-				res.body.message.should.be.equal("Requested App ID not found.");
 				done();
 			});
 	});
@@ -574,8 +571,12 @@ describe('Context', function() {
 	it('should return an error response to indicate context was NOT updated because context does not exist', function(done) {
 		var clientrequest = {
 			"id": Math.round(Math.random()*1000000)+100,
-			"patches": []
-		}
+			"patches": [{
+				op: "replace",
+				path: "context/0/name",
+				value: "new value"
+			}]
+		};
 		request(url)
 			.post('/admin/context/update')
 			.set('Content-type','application/json')
@@ -633,7 +634,6 @@ describe('Context', function() {
 			.send(clientrequest)
 			.end(function(err, res) {
 				res.statusCode.should.be.equal(404);
-				res.body.message.should.be.equal("Context does not exist");
 				done();
 			});
 	});
@@ -1003,7 +1003,7 @@ describe('User', function() {
 						.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 						.send(clientrequest)
 						.end(function(err, res) {
-							res.statusCode.should.be.equal(202);
+							res.statusCode.should.be.equal(200);
 							done();
 						});
 				}, 2*DELAY);
@@ -1112,7 +1112,6 @@ describe('User', function() {
 			.send(clientrequest)
 			.end(function(err, res) {
 				res.statusCode.should.be.equal(404);
-				res.body.message.should.be.equal("User not found");
 				done();
 			});
 	});
@@ -1137,7 +1136,6 @@ describe('User', function() {
 			.send(clientrequest)
 			.end(function(err, res) {
 				res.statusCode.should.be.equal(400);
-				res.body.message.should.be.equal("Email missing from request body");
 				done();
 			});
 	});

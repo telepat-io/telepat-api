@@ -112,10 +112,10 @@ it('should return an error response to indicate context wa NOT succesfully retri
 
 it('should return an error response to indicate context NOT succesfully retrived', function(done) {
 	var clientrequest = {
-		"id": Math.round(Math.random()*1000000)+1000
-	}
+		id: Math.round(Math.random()*1000000)+1000
+	};
 	request(url)
-		.post('/context')
+		.get('/context')
 		.set('X-BLGREQ-SIGN', appIDsha256 )
 		.set('X-BLGREQ-APPID', appID )
 		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )

@@ -24,10 +24,7 @@ security.deviceIDExists = function(req, res, next) {
 	var deviceId = req._telepat.device_id;
 
 	if (!deviceId) {
-		var error = new Error('Missing device id in headers');
-		error.status = 400;
-
-		return next(error);
+		return next(new Models.TelepatError(Models.TelepatError.errors.DeviceIdMissing));
 	}
 
 	next();
@@ -35,13 +32,13 @@ security.deviceIDExists = function(req, res, next) {
 
 security.contentTypeValidation = function(req, res, next) {
 	if (req.get('Content-Type') && req.get('Content-Type').substring(0, 16) !== 'application/json')
-		res.status(415).json({status: 415, message: "Request content type must pe application/json."}).end();
+		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidContentType));
 	else next();
 };
 
 security.apiKeyValidation = function(req, res, next) {
 	if (req.get('X-BLGREQ-SIGN') === undefined)
-		res.status(400).json({status: 400, message: "API key signature is missing."}).end();
+		return next(new Models.TelepatError(Models.TelepatError.errors.ApiKeySignatureMissing));
 	else {
 		var clientHash = req.get('X-BLGREQ-SIGN').toLowerCase();
 		var serverHash = null;
@@ -55,14 +52,14 @@ security.apiKeyValidation = function(req, res, next) {
 				next();
 			}
 			else
-				res.status(401).json({status: 401, message: "Unauthorized. API key is not valid."}).end();
+				return next(new Models.TelepatError(Models.TelepatError.errors.InvalidApikey));
 		});
 	}
 };
 
 security.deviceIdValidation = function(req, res, next) {
 	if (req.get('X-BLGREQ-UDID') === undefined)
-		res.status(401).json({status: 401, message: "Unauthorized. Device identifier header not present."}).end();
+		return next(new Models.TelepatError(Models.TelepatError.errors.DeviceIdMissing));
 	else {
 		if (req._telepat)
 			req._telepat.device_id = req.get('X-BLGREQ-UDID');
@@ -74,13 +71,11 @@ security.deviceIdValidation = function(req, res, next) {
 
 security.applicationIdValidation = function(req, res, next) {
 	if (!req.get('X-BLGREQ-APPID'))
-		res.status(400).json({status: 400, message: "Requested App ID not found."}).end();
+		return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationIdMissing));
 	else {
 		if (!app.applications[req.get('X-BLGREQ-APPID')]) {
-			var error = new Error('Application with ID "'+req.get('X-BLGREQ-APPID')+'" doest not exist.');
-			error.status = 404;
-
-			return next(error);
+			return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationNotFound,
+				[req.get('X-BLGREQ-APPID')]));
 		}
 
 		if (req._telepat)
@@ -94,7 +89,8 @@ security.applicationIdValidation = function(req, res, next) {
 
 security.corsValidation = function(req, res, next) {
 	res.header("Access-Control-Allow-Origin", "*");
-	res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, X-BLGREQ-SIGN, X-BLGREQ-APPID, X-BLGREQ-UDID");
+	res.header("Access-Control-Allow-Headers",
+		"Origin, X-Requested-With, Content-Type, Accept, Authorization, X-BLGREQ-SIGN, X-BLGREQ-APPID, X-BLGREQ-UDID");
 	if ('OPTIONS' == req.method) {
 		res.send(200).end();
 	}
@@ -104,6 +100,9 @@ security.corsValidation = function(req, res, next) {
 };
 
 security.tokenValidation = function(req, res, next) {
+	if (!req.headers.authorization)
+		return next(new Models.TelepatError(Models.TelepatError.errors.AuthorizationMissing));
+
 	return (expressJwt({secret: security.authSecret}))(req, res, next);
 };
 
@@ -111,16 +110,14 @@ security.adminAppValidation = function (req, res, next) {
 	var appId = req._telepat.applicationId;
 
 	if (!app.applications[appId]) {
-		res.status(404).json({status: 404, message: "Application with ID '"+appId+"' does not exist"}).end();
-		return;
+		return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationNotFound, [appId]));
 	}
 
 	if (!req.user)
 		return next();
 
 	if (app.applications[appId].admins.indexOf(req.user.id) === -1) {
-		res.status(401).json({status: 401, message: "This application does not belong to you"}).end();
-		return ;
+		return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationForbidden));
 	}
 
 	next();
@@ -137,16 +134,14 @@ security.objectACL = function (accessControl) {
 				return next();
 
 			if (!Models.Application.loadedAppModels[req._telepat.applicationId][mdl]) {
-				var error = new Error('Model name "'+mdl+'" does not exist.');
-				error.status = 404;
-
-				return next(error);
+				return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationSchemaModelNotFound,
+					[req._telepat.applicationId, mdl]));
 			}
 
 			var acl = Models.Application.loadedAppModels[req._telepat.applicationId][mdl][accessControl];
 
 			if (!req.headers.authorization)
-				return res.status(401).json({status: 401, message: "Authorization header is not present"}).end();
+				return next(new Models.TelepatError(Models.TelepatError.errors.AuthorizationMissing));
 
 			if (acl & ACL_AUTHENTICATED || acl & ACL_ADMIN) {
 				var authHeaderParts = req.headers.authorization.split(' ');
@@ -155,23 +150,24 @@ security.objectACL = function (accessControl) {
 				if (authToken) {
 					jwt.verify(authToken, security.authSecret, function (err, decoded) {
 						if (err)
-							return res.status(401).json({status: 401, message: "Invalid authorization: " + err.message}).end();
+							return next(new Models.TelepatError(Models.TelepatError.errors.InvalidAuthorization, [err.message]));
 
 						if ((!(acl & ACL_UNAUTHENTICATED)) && (!(acl & ACL_AUTHENTICATED)) &&  (acl & ACL_ADMIN) && (!decoded.isAdmin) )
-							return res.status(403).json({status: 403, message: "You don't have the necessary privilegies for this operation"}).end();
+							return next(new Models.TelepatError(Models.TelepatError.errors.OperationNotAllowed));
 
 						req.user = decoded;
 
 						next();
 					});
 				} else {
-					res.status(400).json({status: 400, message: 'Authorization header field is not formed well'}).end();
+					return next(new Models.TelepatError(Models.TelepatError.errors.InvalidAuthorization,
+						['authorization header field is not formed well']));
 				}
 			}
 			else if (acl & ACL_UNAUTHENTICATED) {
 				next();
 			} else {
-				res.status(403).json({status: 403, message: "You don't have the necessary privilegies for this operation"}).end();
+				return next(new Models.TelepatError(Models.TelepatError.errors.OperationNotAllowed));
 			}
 		} else {
 			next();
