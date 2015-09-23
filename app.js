@@ -88,6 +88,10 @@ if (validEnvVariables) {
 Models.Application.datasource = new Models.Datasource();
 Models.Application.datasource.setMainDatabase(new Models[mainDatabase](mainConfiguration[mainDatabase]));
 
+if(mainConfiguration.passwordSalt === undefined || mainConfiguration.passwordSalt === "" || mainConfiguration.passwordSalt === null) {
+	console.log('Please add salt configuration via TP_PW_SALT or config.json');
+	process.exit(-1);
+}
 app.set('password_salt', mainConfiguration.passwordSalt);
 
 app.applications = {};
