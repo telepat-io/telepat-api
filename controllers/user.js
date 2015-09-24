@@ -114,12 +114,12 @@ router.post('/login', function(req, res, next) {
 				userProfile.devices = [deviceId];
 			}
 			var patches = [];
-			patches.push({op: 'replace', path: 'user/'+userProfile.id+'/devices', value: userProfile.devices});
+			patches.push(Models.Delta.formPatch(userProfile, 'replace', {devices: userProfile.devices}));
 
 			if (userProfile.name != fbProfile.name)
-				patches.push({op: 'replace', path: 'user/'+userProfile.id+'/name', value: fbProfile.name});
+				patches.push(Models.Delta.formPatch(userProfile, 'replace', {name: fbProfile.name}));
 			if (userProfile.gender != fbProfile.gender)
-				patches.push({op: 'replace', path: 'user/'+userProfile.id+'/gender', value: fbProfile.gender});
+				patches.push(Models.Delta.formPatch(userProfile, 'replace', {gender: fbProfile.gender}));
 
 			Models.User.update(userProfile.email, appId, patches, callback);
 

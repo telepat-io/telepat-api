@@ -123,7 +123,6 @@ var linkMiddlewaresAndRoutes = function() {
 	app.use(logger('dev'));
 	/*Automatically parses request body from json string to object*/
 	app.use(bodyParser.json());
-	app.use(bodyParser.urlencoded({ extended: false }));
 	app.use('/admin', adminRoute);
 	app.use('/object', objectRoute);
 	app.use('/user', userRoute);
@@ -170,7 +169,6 @@ var OnServicesConnect = function() {
 	linkMiddlewaresAndRoutes();
 	linkErrorHandlingMiddlewares();
 	monitorUsrSignals();
-
 };
 
 async.waterfall([

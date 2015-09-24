@@ -257,20 +257,16 @@ router.post('/authorize', function(req, res, next) {
 	var appId = req._telepat.applicationId;
 	var adminEmail = req.body.email;
 
-	if (app.applications[appId].admins.indexOf(adminEmail) !== -1) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.AdminAlreadyAuthorized));
-	}
-
 	async.waterfall([
 		function(callback) {
 			Models.Admin({email: adminEmail}, callback);
 		},
 		function(admin, callback) {
-			var patches = [{
-				op: 'append',
-				path: 'application/'+appId+'/admins',
-				value: admin.id
-			}];
+			if (app.applications[appId].admins.indexOf(admin.id) !== -1) {
+				return callback(new Models.TelepatError(Models.TelepatError.errors.AdminAlreadyAuthorized));
+			}
+
+			var patches = [Models.Delta.formPatch(app.applications[appId], 'append', {admins: admin.id})];
 			Models.Application.update(appId, patches, callback);
 		}
 	], function(err, application) {
@@ -357,11 +353,7 @@ router.post('/deauthorize', function(req, res, next) {
 			if (app.applications[appId].admins.indexOf(admin.id) === -1) {
 				return next(Models.TelepatError(Models.TelepatError.errors.AdminNotFoundInApplication, [adminEmail]));
 			} else {
-				var patches = [{
-					op: 'remove',
-					path: 'application/'+appId+'/admins',
-					value: admin.id
-				}];
+				var patches = [Models.Delta.formPatch(app.applications[appId], 'remove', {admins: admin.id})];
 				Models.Application.update(appId, patches, callback);
 			}
 		}
