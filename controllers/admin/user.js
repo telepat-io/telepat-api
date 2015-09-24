@@ -200,16 +200,12 @@ router.post('/delete', function(req, res, next) {
 				var mdl = item.value.type;
 				var id = item.value.id;
 
-				app.kafkaProducer.send([{
-					topic: 'aggregation',
-					messages: [JSON.stringify({
-						op: 'delete',
-						object: {path: mdl+'/'+id},
-						context: context,
-						applicationId: appId
-					})],
-					attributes: 0
-				}], c);
+				app.messagingClient.send([JSON.stringify({
+					op: 'delete',
+					object: {path: mdl+'/'+id},
+					context: context,
+					applicationId: appId
+				})], 'aggregation', c);
 			});
 		}
 

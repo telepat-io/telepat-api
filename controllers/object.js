@@ -453,17 +453,13 @@ router.post('/create', function(req, res, next) {
 			}
 		},
 		function(aggCallback) {
-			app.kafkaProducer.send([{
-				topic: 'aggregation',
-				messages: [JSON.stringify({
-					op: 'add',
-					object: content,
-					applicationId: appId,
-					isAdmin: isAdmin,
-					context: context
-				})],
-				attributes: 0
-			}], function(err) {
+			app.messagingClient.send([JSON.stringify({
+				op: 'add',
+				object: content,
+				applicationId: appId,
+				isAdmin: isAdmin,
+				context: context
+			})], 'aggregation', function(err) {
 				if (err){
 					err = new Models.TelepatError(Models.TelepatError.errors.ServerFailure, [err.message]);
 				}
@@ -582,19 +578,15 @@ router.post('/update', function(req, res, next) {
 	async.series([
 		function(aggCallback) {
 			async.each(patch, function(p ,c) {
-				app.kafkaProducer.send([{
-					topic: 'aggregation',
-					messages: [JSON.stringify({
-						op: 'update',
-						id: id,
-						context: context,
-						object: p,
-						type: mdl,
-						applicationId: appId,
-						ts: modifiedMicrotime
-					})],
-					attributes: 0
-				}], function(err) {
+				app.messagingClient.send([JSON.stringify({
+					op: 'update',
+					id: id,
+					context: context,
+					object: p,
+					type: mdl,
+					applicationId: appId,
+					ts: modifiedMicrotime
+				})], 'aggregation', function(err) {
 					if (err){
 						err = new Models.TelepatError(Models.TelepatError.errors.ServerFailure, [err.message]);
 					}
@@ -694,16 +686,12 @@ router.post('/delete', function(req, res, next) {
 
 	async.series([
 		function(aggCallback) {
-			app.kafkaProducer.send([{
-				topic: 'aggregation',
-				messages: [JSON.stringify({
-					op: 'delete',
-					object: {path: mdl+'/'+id},
-					context: context,
-					applicationId: appId
-				})],
-				attributes: 0
-			}], aggCallback);
+			app.messagingClient.send([JSON.stringify({
+				op: 'delete',
+				object: {path: mdl+'/'+id},
+				context: context,
+				applicationId: appId
+			})], 'aggregation', aggCallback);
 		}/*,
 		function(track_callback) {
 			app.kafkaProducer.send([{
@@ -716,7 +704,7 @@ router.post('/delete', function(req, res, next) {
 				attributes: 0
 			}], track_callback);
 		}*/
-	], function(err, results) {
+	], function(err) {
 		if (err) return next(err);
 
 		res.status(202).json({status: 202, content: 'Deleted'}).end();

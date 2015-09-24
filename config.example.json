@@ -1,5 +1,6 @@
 {
   "main_database": "ElasticSearch",
+  "message_queue": "Kafka",
   "ElasticSearch": {
 	"host": "hostname",
 	"port": 9200,
@@ -9,10 +10,9 @@
 	"host": "10.0.0.1",
 	"port": 6379
   },
-  "kafka": {
+  "Kafka": {
 	"host": "10.0.0.2",
-	"port": 2181,
-	"clientName": "telepat-producer"
+	"port": 2181
   },
   "password_salt": "$2a$10$N9qo8uLOickgx2ZMRZoMye"
 }

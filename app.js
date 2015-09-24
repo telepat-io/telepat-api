@@ -27,9 +27,7 @@ app.use('/documentation', express.static(__dirname+'/documentation'));
 process.title = 'octopus-api';
 
 var envVariables = {
-	TP_KFK_HOST: process.env.TP_KFK_HOST,
-	TP_KFK_PORT: process.env.TP_KFK_PORT,
-	TP_KFK_CLIENT: process.env.TP_KFK_CLIENT,
+	TP_MSG_QUE: process.env.TP_MSG_QUE,
 	TP_REDIS_HOST: process.env.TP_REDIS_HOST,
 	TP_REDIS_PORT: process.env.TP_REDIS_PORT,
 	TP_MAIN_DB: process.env.TP_MAIN_DB,
@@ -40,6 +38,7 @@ var validEnvVariables = true;
 var mainConfiguration = {};
 var redisConfig = {};
 var mainDatabase = null;
+var messagingClient = null;
 
 for(var varName in envVariables) {
 	if (envVariables[varName] === undefined) {
@@ -61,11 +60,7 @@ for(var varName in envVariables) {
 }
 
 if (validEnvVariables) {
-	app.kafkaConfig = {
-		host: envVariables.TP_KFK_HOST,
-		port: envVariables.TP_KFK_PORT,
-		clientName: envVariables.TP_KFK_CLIENT
-	};
+	messagingClient = envVariables.TP_MSG_QUE;
 	redisConfig = {
 		host: envVariables.TP_REDIS_HOST,
 		port: envVariables.TP_REDIS_PORT
@@ -83,6 +78,7 @@ if (validEnvVariables) {
 	if(mainConfiguration['main_database'] !== undefined)
 		mainConfiguration.mainDatabase = mainConfiguration['main_database'];
 	mainDatabase = mainConfiguration.mainDatabase;
+	messagingClient = mainConfiguration.message_queue;
 }
 
 Models.Application.datasource = new Models.Datasource();
@@ -192,8 +188,20 @@ async.waterfall([
 		});
 	},
 	function Kafka(callback) {
-		console.log('Waiting for Zookeeper connection...');
-		app.kafkaClient = new kafka.Client(app.kafkaConfig.host+':'+app.kafkaConfig.port+'/',
+		console.log('Waiting for Messaging Client connection...');
+
+		var kafkaConfiguration = mainConfiguration[messagingClient];
+
+		app.messagingClient = new Models[messagingClient](kafkaConfiguration, 'telepat-api');
+		app.messagingClient.on('ready', function() {
+			console.log(('Connected to Messaging Client '+messagingClient).green);
+			callback();
+		});
+		app.messagingClient.on('error', function(err) {
+			console.log('Messaging client not available.'.red+' Trying to reconnect.'+err);
+		});
+
+		/*app.kafkaClient = new kafka.Client(app.kafkaConfig.host+':'+app.kafkaConfig.port+'/',
 										app.kafkaConfig.clientName);
 		app.kafkaClient.on('ready', function() {
 			console.log('Client connected to Zookeeper.'.green);
@@ -205,7 +213,7 @@ async.waterfall([
 		});
 		app.kafkaClient.on('error', function() {
 			console.log('Kafka broker not available.'.red+' Trying to reconnect.');
-		});
+		});*/
 	}
 ], OnServicesConnect);
 

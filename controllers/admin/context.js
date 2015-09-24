@@ -108,7 +108,7 @@ router.post('/', function (req, res, next) {
 		if (err && err.status == 404)
 			next(new Models.TelepatError(Models.TelepatError.errors.ContextNotFound));
 		else if (err)
-			res.status(500).send({status: 500, message: 'Could not get context'});
+			next(err);
 		else {
 			res.status(200).json({status: 200, content: res1}).end();
 		}

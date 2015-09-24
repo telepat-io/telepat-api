@@ -277,25 +277,18 @@ router.post('/register', function(req, res, next) {
 				delete userProfile.id;
 			}
 
-			app.kafkaProducer.send([{
-				topic: 'aggregation',
-				messages: [JSON.stringify({
-					op: 'add',
-					object: userProfile,
-					applicationId: req._telepat.applicationId,
-					isUser: true
-				})],
-				attributes: 0
-			}], callback);
+			app.messagingClient.send([JSON.stringify({
+				op: 'add',
+				object: userProfile,
+				applicationId: req._telepat.applicationId,
+				isUser: true
+			})], 'aggregation', callback);
 		},
 		//add this user to his/her friends array
 		function(result, callback) {
 			if (fbFriends.length) {
-				app.kafkaProducer.send([{
-					topic: 'update_friends',
-					messages: [JSON.stringify({fid: userProfile.id, friends: fbFriends})],
-					attributes: 0
-				}], callback);
+				app.messagingClient.send([JSON.stringify({fid: userProfile.id, friends: fbFriends})],
+					'aggregation', callback);
 			} else
 				callback();
 		}
@@ -608,18 +601,14 @@ router.post('/update', function(req, res, next) {
 		}
 	}, function() {
 		async.eachSeries(patches, function(patch, c) {
-			app.kafkaProducer.send([{
-				topic: 'aggregation',
-				messages: [JSON.stringify({
-					op: 'update',
-					object: patch,
-					id: id,
-					applicationId: req._telepat.applicationId,
-					isUser: true,
-					ts: modifiedMicrotime
-				})],
-				attributes: 0
-			}], c);
+			app.messagingClient.send([JSON.stringify({
+				op: 'update',
+				object: patch,
+				id: id,
+				applicationId: req._telepat.applicationId,
+				isUser: true,
+				ts: modifiedMicrotime
+			})], 'aggregation', c);
 		}, function(err) {
 			if (err) return next(err);
 
@@ -679,16 +668,12 @@ router.post('/delete', function(req, res, next) {
 	var id = req.user.id;
 	var email = req.user.email;
 
-	app.kafkaProducer.send([{
-		topic: 'aggregation',
-		messages: [JSON.stringify({
-			op: 'delete',
-			object: {path: 'user/'+id, email: email},
-			applicationId: req._telepat.applicationId,
-			isUser: true
-		})],
-		attributes: 0
-	}], function(err) {
+	app.messagingClient.send([JSON.stringify({
+		op: 'delete',
+		object: {path: 'user/'+id, email: email},
+		applicationId: req._telepat.applicationId,
+		isUser: true
+	})], 'aggregation', function(err) {
 		if (err) return next(err);
 
 		res.status(202).json({status: 202, content: "User deleted"}).end();

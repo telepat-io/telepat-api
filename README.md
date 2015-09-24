@@ -19,9 +19,10 @@ The API server will try and connect to each of the services until they are avail
 There are two ways to configure: either by using the `config.example.json` config file (rename it into config.json)
 or by setting up environment variables (this method is the most convenient):
 
-* `TP_KFK_HOST`: Kafka (zooekeeper) server
-* `TP_KFK_PORT`: Kafka (zooekeeper) server port
-* `TP_KFK_CLIENT`: Name for the kafka client
+* `TP_MSG_QUE`: Name of the messaging client you want to use. Should be the same as the exported variable in
+telepat-models
+* `TP_KFK_HOST`: Kafka (zooekeeper) server (if you are using the Kafka Messaging Client)
+* `TP_KFK_PORT`: Kafka (zooekeeper) server port (if you are using the Kafka Messaging Client)
 * `TP_REDIS_HOST`: Redis server
 * `TP_REDIS_PORT`: Redis server port
 * `TP_MAIN_DB`: Name of the main database which to use. Should be the same as the exported variable in telepat-models
