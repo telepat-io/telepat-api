@@ -351,7 +351,7 @@ router.post('/deauthorize', function(req, res, next) {
 		},
 		function(admin, callback) {
 			if (app.applications[appId].admins.indexOf(admin.id) === -1) {
-				return next(Models.TelepatError(Models.TelepatError.errors.AdminNotFoundInApplication, [adminEmail]));
+				return callback(Models.TelepatError(Models.TelepatError.errors.AdminNotFoundInApplication, [adminEmail]));
 			} else {
 				var patches = [Models.Delta.formPatch(app.applications[appId], 'remove', {admins: admin.id})];
 				Models.Application.update(appId, patches, callback);
