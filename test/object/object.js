@@ -567,7 +567,81 @@ it('should return a success response to indicate that a object has been unsubscr
 			res.statusCode.should.be.equal(200);
 			done();
 		});
-})
+});
+
+it('should return a success response to indicate that a object has NOT been unsubscribed because of empty body', function(done) {
+	var subclientrequest = {};
+	
+	request(url)
+		.post('/object/unsubscribe')
+		.set('X-BLGREQ-SIGN', appIDsha256)
+		.set('X-BLGREQ-UDID', deviceIdentification)
+		.set('X-BLGREQ-APPID',appID)
+		.set('Authorization', authValue)
+		.send(subclientrequest)
+		.end(function(err, res) {
+			res.statusCode.should.be.equal(400);
+			done();
+		});
+});
+
+it('should return a success response to indicate that a object has NOT been unsubscribed because of missing channel', function(done) {
+	var subclientrequest = {
+		"something": {}
+	};
+	
+	request(url)
+		.post('/object/unsubscribe')
+		.set('X-BLGREQ-SIGN', appIDsha256)
+		.set('X-BLGREQ-UDID', deviceIdentification)
+		.set('X-BLGREQ-APPID',appID)
+		.set('Authorization', authValue)
+		.send(subclientrequest)
+		.end(function(err, res) {
+			res.statusCode.should.be.equal(400);
+			done();
+		});
+});
+
+it('should return a success response to indicate that a object has NOT been unsubscribed because of missing context', function(done) {
+	var subclientrequest = {
+		"channel": {
+			"model": "comments"
+		}
+	};
+	
+	request(url)
+		.post('/object/unsubscribe')
+		.set('X-BLGREQ-SIGN', appIDsha256)
+		.set('X-BLGREQ-UDID', deviceIdentification)
+		.set('X-BLGREQ-APPID',appID)
+		.set('Authorization', authValue)
+		.send(subclientrequest)
+		.end(function(err, res) {
+			res.statusCode.should.be.equal(400);
+			done();
+		});
+});
+
+it('should return a success response to indicate that a object has NOT been unsubscribed because of missing model', function(done) {
+	var subclientrequest = {
+		"channel": {
+			"context": contextID
+		}
+	};
+	
+	request(url)
+		.post('/object/unsubscribe')
+		.set('X-BLGREQ-SIGN', appIDsha256)
+		.set('X-BLGREQ-UDID', deviceIdentification)
+		.set('X-BLGREQ-APPID',appID)
+		.set('Authorization', authValue)
+		.send(subclientrequest)
+		.end(function(err, res) {
+			res.statusCode.should.be.equal(400);
+			done();
+		});
+});
 
 it('should return a success response to indicate that a object has been deleted', function(done) {
 	var clientrequest = {
