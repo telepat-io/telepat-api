@@ -97,24 +97,26 @@ before(function(done){
 		});
 });
 
-// it('should return an error response to indicate that the user has NOT logged via FACEBOOK because of missing access token', function(done) {
+it('should return an error response to indicate that the user has NOT logged via FACEBOOK because of missing access token', function(done) {
 
-// var clientrequest = {};
+	var clientrequest = {};
 
-// request(url)
-// .post('/user/login')
-// .set('Content-type','application/json')
-// .set('X-BLGREQ-SIGN', appIDsha256 )
-// .set('X-BLGREQ-APPID', 1 )
-// .set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
-// .send(clientrequest)
-// .end(function(err, res) {
-// res.statusCode.should.be.equal(400);
-// done();
-// });
-// });
+	request(url)
+	.post('/user/login')
+	.set('Content-type','application/json')
+	.set('X-BLGREQ-SIGN', appIDsha256 )
+	.set('X-BLGREQ-APPID', appID )
+	.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+	.send(clientrequest)
+	.end(function(err, res) {
+		console.log(res.body);
+		res.statusCode.should.be.equal(400);
+		done();
+	});
+});
 
 it('should return a success response to indicate that the user has logged in via user & password', function(done) {
+	this.timeout(10*DELAY);
 	var clientrequest = {
 		"email": userEmail,
 		"password": "secure_password1337",
@@ -143,7 +145,7 @@ it('should return a success response to indicate that the user has logged in via
 						res.statusCode.should.be.equal(200);
 						done();
 					});
-			}, 4*DELAY);
+			}, 7*DELAY);
 		});
 });
 

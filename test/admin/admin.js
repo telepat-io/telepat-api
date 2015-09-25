@@ -214,7 +214,7 @@ describe('Admin', function() {
 	});
 
 	it('should return a succes response indicating the admin account has been deleted', function(done) {
-		this.timeout(10*DELAY);
+		this.timeout(20*DELAY);
 		request(url)
 			.post('/admin/delete')
 			.set('Content-type','application/json')
@@ -238,9 +238,9 @@ describe('Admin', function() {
 										res.statusCode.should.be.equal(200);
 										done();
 									});
-							}, 4*DELAY);
+							}, 8*DELAY);
 						});
-				}, 4*DELAY);
+				}, 8*DELAY);
 			});
 	});
 
