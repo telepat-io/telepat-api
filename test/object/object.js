@@ -12,6 +12,7 @@ var appIDsha256 = common.appIDsha256;
 var token;
 var appID;
 var authValue;
+var userAuthValue;
 var contextID;
 
 var subclientrequest = {
@@ -187,7 +188,7 @@ before(function(done){
 							.send(clientrequest)
 							.end(function(err, res) {
 								token = res.body.content.token;
-								authValue = 'Bearer ' + token;
+								userAuthValue = 'Bearer ' + token;
 								done();
 							});
 					}, 7*DELAY);
@@ -203,7 +204,7 @@ it('should return an error (400) response to indicate that the client made a bad
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', deviceIdentification )
 		.set('X-BLGREQ-APPID',appID)
-		.set('Authorization', authValue )
+		.set('Authorization', userAuthValue )
 		.send(clientrequest)
 		.end(function(err, res) {
 			res.statusCode.should.be.equal(400);
@@ -244,7 +245,7 @@ it('should return a success response to indicate that object has been created', 
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', deviceIdentification)
 		.set('X-BLGREQ-APPID',appID)
-		.set('Authorization', authValue )
+		.set('Authorization', userAuthValue )
 		.send(clientrequest)
 		.end(function(err, res) {
 			res.statusCode.should.be.equal(202);
@@ -252,6 +253,31 @@ it('should return a success response to indicate that object has been created', 
 			done();
 		});
 });
+
+// it('should return a success response to indicate that object has been created by an admin', function(done) {
+	// var clientrequest = {
+		// "model": "comments",
+		// "context": contextID,
+		// "content": {
+			// "events_id" :1
+		// }
+	// };
+	// request(url)
+		// .post('/object/create')
+		// .set('X-BLGREQ-SIGN', appIDsha256)
+		// .set('X-BLGREQ-UDID', deviceIdentification)
+		// .set('X-BLGREQ-APPID',appID)
+		// .set('Authorization', authValue )
+		// .send(clientrequest)
+		// .end(function(err, res) {
+			// console.log(res.body);
+				// console.log(authValue);
+			// authValue
+			// res.statusCode.should.be.equal(202);
+			// res.body.content.should.be.equal("Created");
+			// done();
+		// });
+// });
 
 it('should return an error response to indicate that object has NOT been created because of missing authentication', function(done) {
 	var clientrequest = {
@@ -285,7 +311,7 @@ it('should return an error response to indicate that object has NOT been created
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', deviceIdentification)
 		.set('X-BLGREQ-APPID',appID)
-		.set('Authorization', authValue )
+		.set('Authorization', userAuthValue )
 		.send(clientrequest)
 		.end(function(err, res) {
 			res.statusCode.should.be.equal(400);
@@ -305,7 +331,7 @@ it('should return an error response to indicate that object has NOT been created
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', deviceIdentification)
 		.set('X-BLGREQ-APPID',appID)
-		.set('Authorization', authValue )
+		.set('Authorization', userAuthValue )
 		.send(clientrequest)
 		.end(function(err, res) {
 			res.statusCode.should.be.equal(400);
@@ -325,7 +351,7 @@ it('should return a success response to indicate the count of a certain filter/s
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', deviceIdentification)
 		.set('X-BLGREQ-APPID',appID)
-		.set('Authorization', authValue )
+		.set('Authorization', userAuthValue )
 		.send(clientrequest)
 		.end(function(err, res) {
 			res.statusCode.should.be.equal(200);
@@ -352,7 +378,7 @@ it('should return a success response to indicate that a object has been updated'
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', deviceIdentification)
 		.set('X-BLGREQ-APPID',appID)
-		.set('Authorization', authValue )
+		.set('Authorization', userAuthValue )
 		.send(clientrequest)
 		.end(function(err, res) {
 			res.statusCode.should.be.equal(202);
@@ -429,7 +455,7 @@ it('should return a success response to indicate that a object has NOT been upda
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', deviceIdentification)
 		.set('X-BLGREQ-APPID',appID)
-		.set('Authorization', authValue )
+		.set('Authorization', userAuthValue )
 		.send(clientrequest)
 		.end(function(err, res) {
 			res.statusCode.should.be.equal(400);
@@ -454,7 +480,7 @@ it('should return a success response to indicate that a object has NOT been upda
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', deviceIdentification)
 		.set('X-BLGREQ-APPID',appID)
-		.set('Authorization', authValue )
+		.set('Authorization', userAuthValue )
 		.send(clientrequest)
 		.end(function(err, res) {
 			res.statusCode.should.be.equal(400);
@@ -475,7 +501,7 @@ it('should return a success response to indicate that a object has been subscrib
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', deviceIdentification)
 		.set('X-BLGREQ-APPID',appID)
-		.set('Authorization', authValue )
+		.set('Authorization', userAuthValue )
 		.send(subclientrequest)
 		.end(function(err, res) {
 			res.statusCode.should.be.equal(200);
@@ -491,7 +517,7 @@ it('should return an error response to indicate that a object has NOT been subsc
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', deviceIdentification)
 		.set('X-BLGREQ-APPID',appID)
-		.set('Authorization', authValue )
+		.set('Authorization', userAuthValue )
 		.send()
 		.end(function(err, res) {
 			res.statusCode.should.be.equal(400);
@@ -541,7 +567,7 @@ it('should return an error response to indicate that a object has NOT been subsc
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', deviceIdentification)
 		.set('X-BLGREQ-APPID',appID)
-		.set('Authorization', authValue )
+		.set('Authorization', userAuthValue )
 		.send()
 		.end(function(err, res) {
 			res.statusCode.should.be.equal(400);
@@ -561,7 +587,7 @@ it('should return a success response to indicate that a object has been unsubscr
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', deviceIdentification)
 		.set('X-BLGREQ-APPID',appID)
-		.set('Authorization', authValue)
+		.set('Authorization', userAuthValue)
 		.send(subclientrequest)
 		.end(function(err, res) {
 			res.statusCode.should.be.equal(200);
@@ -577,7 +603,7 @@ it('should return a success response to indicate that a object has NOT been unsu
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', deviceIdentification)
 		.set('X-BLGREQ-APPID',appID)
-		.set('Authorization', authValue)
+		.set('Authorization', userAuthValue)
 		.send(subclientrequest)
 		.end(function(err, res) {
 			res.statusCode.should.be.equal(400);
@@ -595,7 +621,7 @@ it('should return a success response to indicate that a object has NOT been unsu
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', deviceIdentification)
 		.set('X-BLGREQ-APPID',appID)
-		.set('Authorization', authValue)
+		.set('Authorization', userAuthValue)
 		.send(subclientrequest)
 		.end(function(err, res) {
 			res.statusCode.should.be.equal(400);
@@ -615,7 +641,7 @@ it('should return a success response to indicate that a object has NOT been unsu
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', deviceIdentification)
 		.set('X-BLGREQ-APPID',appID)
-		.set('Authorization', authValue)
+		.set('Authorization', userAuthValue)
 		.send(subclientrequest)
 		.end(function(err, res) {
 			res.statusCode.should.be.equal(400);
@@ -635,7 +661,7 @@ it('should return a success response to indicate that a object has NOT been unsu
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', deviceIdentification)
 		.set('X-BLGREQ-APPID',appID)
-		.set('Authorization', authValue)
+		.set('Authorization', userAuthValue)
 		.send(subclientrequest)
 		.end(function(err, res) {
 			res.statusCode.should.be.equal(400);
@@ -654,7 +680,7 @@ it('should return a success response to indicate that a object has been deleted'
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', deviceIdentification)
 		.set('X-BLGREQ-APPID',appID)
-		.set('Authorization', authValue )
+		.set('Authorization', userAuthValue )
 		.send(clientrequest)
 		.end(function(err, res) {
 			res.statusCode.should.be.equal(202);
@@ -699,7 +725,7 @@ it('should return an error response to indicate that the object id was missing',
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', deviceIdentification)
 		.set('X-BLGREQ-APPID',appID)
-		.set('Authorization', authValue )
+		.set('Authorization', userAuthValue )
 		.send(clientrequest)
 		.end(function(err, res) {
 			res.statusCode.should.be.equal(400);
@@ -719,7 +745,7 @@ it('should return an error response to indicate that the object model was missin
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', deviceIdentification)
 		.set('X-BLGREQ-APPID',appID)
-		.set('Authorization', authValue )
+		.set('Authorization', userAuthValue )
 		.send(clientrequest)
 		.end(function(err, res) {
 			res.statusCode.should.be.equal(400);
@@ -759,7 +785,7 @@ it('should return an error response to indicate that the object was not deleted 
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', deviceIdentification)
 		.set('X-BLGREQ-APPID',appID)
-		.set('Authorization', authValue )
+		.set('Authorization', userAuthValue )
 		.send(clientrequest)
 		.end(function(err, res) {
 			res.statusCode.should.be.equal(400);
