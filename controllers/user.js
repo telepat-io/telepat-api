@@ -571,14 +571,38 @@ router.get('/refresh_token', function(req, res, next) {
  *
  * @apiParam {Object[]} patches Array of patches that describe the modifications
  *
+ * @apiExample {json} Client Request
+ * 	{
+ * 		"patches": [
+ * 			{
+ * 				"op": "replace",
+ * 				"path": "user/user_id/field_name",
+ * 				"value": "new value
+ * 			}
+ * 		]
+ * 	}
+ *
+ *
  * @apiSuccessExample {json} Success Response
  * 	{
  * 		"status": 202,
  * 		"content": "User updated"
  * 	}
  *
+ * 	@apiError 400 InvalidPatch Invalid patch supplied
+ *
  */
 router.post('/update', function(req, res, next) {
+	if (Object.getOwnPropertyNames(req.body).length === 0) {
+		return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
+	} else if (!Array.isArray(req.body.patches)) {
+		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidFieldValue,
+			['"patches" is not an array']));
+	} else if (req.body.patches.length == 0) {
+		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidFieldValue,
+			['"patches" array is empty']));
+	}
+
 	var patches = req.body.patches;
 	var id = req.user.id;
 	var email = req.user.email;
@@ -601,6 +625,13 @@ router.post('/update', function(req, res, next) {
 		}
 	}, function() {
 		async.eachSeries(patches, function(patch, c) {
+			var patchUserId = patch.path.split('/')[1];
+
+			if (patchUserId != id) {
+				return c(new Models.TelepatError(Models.Telepat.errors.InvalidPatch,
+					['Invalid ID in one of the patches']));
+			}
+
 			app.messagingClient.send([JSON.stringify({
 				op: 'update',
 				object: patch,

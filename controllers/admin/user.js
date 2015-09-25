@@ -81,15 +81,11 @@ router.use('/update',
  * 	@apiSuccessExample {json} Success Response
  * 	{
  * 		"status": 200,
- * 		"content" : [
- * 			{//user props}, ...
- * 		]
+ * 		"content" : "User has been updated"
  * 	}
  *
  */
 router.post('/update', function(req, res, next) {
-	var patches = req.body.patches;
-
 	if (Object.getOwnPropertyNames(req.body).length === 0) {
 		return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
 	} else if (!Array.isArray(req.body.patches)) {
@@ -101,6 +97,8 @@ router.post('/update', function(req, res, next) {
 	} else if (!req.body.email) {
 		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['email']));
 	}
+
+	var patches = req.body.patches;
 
 	async.series([
 		function(callback) {
