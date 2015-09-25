@@ -66,14 +66,6 @@ router.use('/contexts',
  * 		]
  * 	}
  *
- * 	@apiError (500) Error Internal server error.
- *
- * 	@apiErrorExample {json} Error Response
- * 	{
- * 		"status": 500,
- * 		"message": "Could not get contexts"
- * 	}
- *
  */
 router.get('/contexts', function (req, res, next) {
 	Models.Context.getAll(req._telepat.applicationId, function (err, res1) {
@@ -161,7 +153,6 @@ router.use('/users',
  * 		]
  * 	}
  *
- * @apiError 404 NotFound If the App ID doesn't exist
  */
 
 router.get('/users', function(req, res, next) {

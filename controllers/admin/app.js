@@ -43,14 +43,6 @@ router.use('/add', security.tokenValidation);
  * 		}
  * 	}
  *
- * 	@apiError (500) Error Internal server error.
- *
- * 	@apiErrorExample {json} Error Response
- * 	{
- * 		"status": 500,
- * 		"message": "Could not add app"
- * 	}
- *
  */
 router.post('/add', function (req, res, next) {
 	var newApp = req.body;
@@ -92,17 +84,11 @@ router.use('/remove',
  * 		"content": "App removed"
  * 	}
  *
- * 	@apiError (404) Error Application with that ID doesn't exist.
- * 	@apiError (500) Error Internal server error.
+ * 	@apiError (404) [011]ApplicationNotFound Application with that ID doesn't exist.
  *
  * 	@apiErrorExample {json} Error Response
  * 	{
- * 		"status": 500,
- * 		"message": "Could not remove app"
- * 	}
- *
- * 	@apiErrorExample {json} Error Response
- * 	{
+ * 		"code": "011",
  * 		"status": 404,
  * 		"message": "Application with ID $APPID doest not exist."
  * 	}
@@ -157,19 +143,13 @@ router.use('/update',
  * 		"content": "Updated"
  * 	}
  *
- * 	@apiError (404) Error Application with that ID doesn't exist
- * 	@apiError (500) Error Internal server error.
+ * 	@apiError (404) [011]ApplicationNotFound Application with that ID doesn't exist.
  *
  * 	@apiErrorExample {json} Error Response
  * 	{
+ * 		"code": "011",
  * 		"status": 404,
  * 		"message": "Application with ID $APPID doest not exist."
- * 	}
- *
- * 	@apiErrorExample {json} Error Response
- * 	{
- * 		"status": 500,
- * 		"message": "internal server error description"
  * 	}
  *
  */
@@ -227,25 +207,16 @@ router.use('/authorize',
  * 		"content": "Admin added to application"
  * 	}
  *
- * 	@apiError (400) EmptyBodyError
- * 	@apiError (400) MissingRequestedField "email" field is missing
- * 	@apiError (404) Error Application with that ID doesn't exist
- * 	@apiError (404) Error Admin with that email address does not exist
- * 	@apiError (409) AdminAlreadyAuthorized Admin with email address already authorized for application
- * 	@apiError (500) Error Internal server error.
+ * 	@apiError (404) [011]ApplicationNotFound Application with that ID doesn't exist.
+ * 	@apiError (404) [033]AdminNotFound Admin with that email address does not exist
+ * 	@apiError (409) [017]AdminAlreadyAuthorized Admin with email address already authorized for application
  *
  * 	@apiErrorExample {json} Error Response
  * 	{
+ * 		"code": "011",
  * 		"status": 404,
  * 		"message": "Application with ID $APPID doest not exist."
  * 	}
- *
- * 	@apiErrorExample {json} Error Response
- * 	{
- * 		"status": 500,
- * 		"message": "internal server error description"
- * 	}
- *
  */
 router.post('/authorize', function(req, res, next) {
 	if (Object.getOwnPropertyNames(req.body).length === 0) {
@@ -309,24 +280,17 @@ router.use('/deauthorize',
  * 		"content": "Admin removed from application"
  * 	}
  *
- * 	@apiError (400) EmptyBodyError
- * 	@apiError (400) MissingRequestedField "email" field is missing
- * 	@apiError (404) Error Application with that ID doesn't exist
- * 	@apiError (404) Error Admin with that email address does not exist or does not belong to the application
- * 	@apiError (409) CannotDeauthorizeLastAdmin Admin with email address cannot be deauthorized because he's the only one
- * 	left. We can't have "orphan" applications.
- * 	@apiError (500) Error Internal server error.
+ * 	@apiError (404) [011]ApplicationNotFound Application with that ID doesn't exist.
+ * 	@apiError (404) [033]AdminNotFound Admin with that email address does not exist.
+ * 	@apiError (404) [019]AdminNotFoundInApplication Admin does not belong to this application.
+ * 	@apiError (409) [018]AdminDeauthorizeLastAdmin Admin with email address cannot be deauthorized because he's the
+ * 	only one left. We can't have "orphan" applications.
  *
  * 	@apiErrorExample {json} Error Response
  * 	{
+ * 		"code": "011",
  * 		"status": 404,
  * 		"message": "Application with ID $APPID doest not exist."
- * 	}
- *
- * 	@apiErrorExample {json} Error Response
- * 	{
- * 		"status": 500,
- * 		"message": "internal server error description"
  * 	}
  *
  */

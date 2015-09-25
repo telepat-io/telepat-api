@@ -37,14 +37,6 @@ router.use('/',
  * 		]
  * 	}
  *
- * 	@apiError (500) Error Internal server error.
- *
- * 	@apiErrorExample {json} Error Response
- * 	{
- * 		"status": 500,
- * 		"message": "Could not get contexts"
- * 	}
- *
  */
 router.get('/all', function (req, res, next) {
 	var appId = req._telepat.applicationId;
@@ -90,18 +82,19 @@ router.get('/all', function (req, res, next) {
  * 		}
  * 	}
  *
- * 	@apiError (500) Error Internal server error.
+ * 	@apiError 404 [020]ContextNotFound ContextNotFound
  *
  * 	@apiErrorExample {json} Error Response
  * 	{
- * 		"status": 500,
- * 		"message": "Could not get context"
+ *		"code": "020",
+ *		"status": 404,
+ *		"message": "Context not found"
  * 	}
  *
  */
 router.post('/', function (req, res, next) {
 	if (!req.body.id) {
-		return res.status(400).json({status: 400, message: 'Requested context ID is missing'}).end();
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['id']));
 	}
 
 	Models.Context(req.body.id, function (err, res1) {
@@ -152,14 +145,6 @@ router.use('/add',
  * 		}
  * 	}
  *
- * 	@apiError (500) Error Internal server error.
- *
- * 	@apiErrorExample {json} Error Response
- * 	{
- * 		"status" 500,
- * 		"message": "Could not add context"
- * 	}
- *
  */
 router.post('/add', function (req, res, next) {
 	if (Object.getOwnPropertyNames(req.body).length === 0)
@@ -200,12 +185,13 @@ router.use('/remove',
  * 		"id": 1
  * 	}
  *
- * 	@apiError (500) Error Context not found or internal server error.
+ * 	@apiError 404 [020]ContextNotFound ContextNotFound
  *
  * 	@apiErrorExample {json} Error Response
  * 	{
- * 		"status" 500,
- * 		"message": "Could not remove context"
+ *		"code": "020",
+ *		"status": 404,
+ *		"message": "Context not found"
  * 	}
  *
  */
@@ -257,12 +243,14 @@ router.use('/update',
  * 		]
  * 	}
  *
- * 	@apiError (500) Error Context not found or internal server error.
+ * 	@apiError 404 [020]ContextNotFound ContextNotFound
+ * 	@apiError 403 [021]ContextNotAllowed This context doesn't belong to you
  *
  * 	@apiErrorExample {json} Error Response
  * 	{
- * 		"status": 500,
- * 		"message": "Could not update context"
+ *		"code": "020",
+ *		"status": 404,
+ *		"message": "Context not found"
  * 	}
  *
  */

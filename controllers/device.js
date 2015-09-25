@@ -64,6 +64,9 @@ router.use(security.deviceIdValidation);
  * 		"content": "Device has been updated"
  * 	}
  *
+ * @apiError 400 [004]MissingRequiredField When registering a new device and info field is missing
+ * @apiError 404 [025]DeviceNotFound When updating existing device that doesn't exist
+ *
  */
 router.post('/register', function(req, res, next) {
 	if (req._telepat.device_id == 'TP_EMPTY_UDID' || req._telepat.device_id == '') {

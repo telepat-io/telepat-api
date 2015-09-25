@@ -31,7 +31,7 @@ router.use('/all',
  * 		]
  * 	}
  *
- * @apiError 404 NotFound If the App ID doesn't exist
+ * @apiError 404 [011]ApplicationNotFound If the Application doesn't exist
  */
 
 router.get('/all', function(req, res, next) {
@@ -65,7 +65,7 @@ router.use('/update',
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  *
- * @apiParam {Object} user The object that contains the user (must contain the email to identify him)
+ * @apiParam {Object[]} patches Array of patches containing describing the updates
  *
  * @apiExample {json} Client Request
  * 	{
@@ -83,6 +83,8 @@ router.use('/update',
  * 		"status": 200,
  * 		"content" : "User has been updated"
  * 	}
+ *
+ * @apiError 404 [023]UserNotFound If the User doesn't exist.
  *
  */
 router.post('/update', function(req, res, next) {
@@ -165,8 +167,7 @@ router.use('/delete',
  * 		"content" : "User deleted"
  * 	}
  *
- * @apiError 404 NotFound If the App ID doesn't exist
- * @apiError 404 NotFound If the User does not belong to this application
+ * @apiError 404 [023]UserNotFound If the User doesn't exist.
  */
 router.post('/delete', function(req, res, next) {
 	if (!req.body.email) {

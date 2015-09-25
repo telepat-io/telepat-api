@@ -32,11 +32,12 @@ var Models = require('telepat-models');
  * 		}
  * 	}
  *
- * @apiError Unauthorized If the provided email and password are not correct
+ * @apiError [016]AdminBadLogin If the provided email and password are not correct
  * @apiErrorExample {json} Error Response
  * 	{
+ * 		"code": "016"
  * 		"status": 401,
- * 		"message": "Wrong user or password"
+ * 		"message": "Wrong user email address or password"
  * 	}
  */
 router.post('/login', function (req, res, next) {
@@ -85,8 +86,8 @@ router.post('/login', function (req, res, next) {
  *
  * @apiHeader {String} Content-type application/json
  *
- * @apiParam {String} email Admin e-mail
- * @apiParam {String} password The password
+ * @apiParam {String} email (REQUIRED) Admin e-mail
+ * @apiParam {String} password (REQUIRED) The password
  * @apiParam {String} name Real name of the admin
  *
  * @apiExample {json} Client Request
@@ -96,18 +97,12 @@ router.post('/login', function (req, res, next) {
  * 		"name": "General Specific"
  * 	}
  *
- * @apiError (409) AdminAlreadyExists Admin account with that email address already exists.
+ * @apiError (409) [030]AdminAlreadyExists Admin account with that email address already exists.
  * @apiErrorExample {json} Error Response
  * 	{
+ * 		"code": "030",
  * 		"status": 409,
- * 		"message": "Error adding account"
- * 	}
- *
- * @apiError (500) Error Internal server error.
- * @apiErrorExample {json} Error Response
- * 	{
- * 		"status": 500,
- * 		"message": "message describing the server error"
+ * 		"message": "Admin already exists"
  * 	}
  */
 router.post('/add', function (req, res, next) {
@@ -190,12 +185,13 @@ router.use('/update', security.tokenValidation);
  * 		]
  * 	}
  *
- * 	@apiError (500) Error Internal server error.
+ * 	@apiError (400) [041]InvalidAdmin Invalid admin ID in the patch object
  *
  * 	@apiErrorExample {json} Error Response
  * 	{
- * 		"status": 500,
- * 		"message": "Error description"
+ * 		"code": "041",
+ * 		"status": 400,
+ * 		"message": "Invalid Admin"
  * 	}
  *
  */
@@ -242,14 +238,6 @@ router.use('/delete', security.tokenValidation);
  * @apiHeader {String} Authorization
                        The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
- *
- * 	@apiError (500) Error Internal server error.
- *
- * 	@apiErrorExample {json} Error Internal Server Error
- * 	{
- * 		"status": 500,
- * 		"message": "Error description"
- * 	}
  *
  */
 router.post('/delete', function(req, res, next) {

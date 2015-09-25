@@ -23,7 +23,7 @@ router.use(['/logout', '/me', '/update', '/delete'], security.tokenValidation);
 
 /**
  * @api {post} /user/login Login
- * @apiDescription Log in the user through facebook
+ * @apiDescription Log in the user through facebook User is not created immediately.
  * @apiName UserLogin
  * @apiGroup User
  * @apiVersion 0.2.3
@@ -60,8 +60,9 @@ router.use(['/logout', '/me', '/update', '/delete'], security.tokenValidation);
  * 		}
  * 	}
  *
- * 	@apiError 400 <code>InsufficientFacebookPermissions</code> User email is not publicly available
+ * 	@apiError 400 [028]InsufficientFacebookPermissions User email is not publicly available
  * 	(insufficient facebook permissions)
+ * 	@apiError 404 [023]UserNotFound User not found
  *
  */
 router.post('/login', function(req, res, next) {
@@ -151,7 +152,8 @@ router.post('/login', function(req, res, next) {
 
 /**
  * @api {post} /user/register Register
- * @apiDescription Registers a new user using a fb token or directly with an email and password
+ * @apiDescription Registers a new user using a fb token or directly with an email and password. User is not created
+ * immediately.
  * @apiName UserRegister
  * @apiGroup User
  * @apiVersion 0.2.3
@@ -182,9 +184,9 @@ router.post('/login', function(req, res, next) {
  * 		"content": "User created"
  * 	}
  *
- * 	@apiError 400 <code>InsufficientFacebookPermissions</code> User email is not publicly available
+ * 	@apiError 400 [028]InsufficientFacebookPermissions User email is not publicly available
  * 	(insufficient facebook permissions)
- * 	@apiError 409 <code>UserAlreadyExists</code> User with that email address already exists
+ * 	@apiError 409 [029]UserAlreadyExists User with that email address already exists
  *
  */
 router.post('/register', function(req, res, next) {
@@ -300,9 +302,9 @@ router.post('/register', function(req, res, next) {
 });
 
 /**
- * @api {get} /user/me Info about logged user
- * @apiDescription Logs in the user with a password; creates the user if it doesn't exist
- * @apiName UserLoginPassword
+ * @api {get} /user/me Me
+ * @apiDescription Info about logged user
+ * @apiName UserMe
  * @apiGroup User
  * @apiVersion 0.2.3
  *
@@ -326,12 +328,9 @@ router.post('/register', function(req, res, next) {
  * 			"devices": [
  *				"466fa519-acb4-424b-8736-fc6f35d6b6cc"
  *			],
- *			"friends": [],
- *			"password": "acb8a9cbb479b6079f59eabbb50780087859aba2e8c0c397097007444bba07c0"
+ *			"friends": []
  * 		}
  * 	}
- *
- * 	@apiError 401 <code>InvalidCredentials</code> User email and password did not match
  *
  */
 router.get('/me', function(req, res, next) {
@@ -349,7 +348,7 @@ router.get('/me', function(req, res, next) {
 
 /**
  * @api {post} /user/login_password Password login
- * @apiDescription Logs in the user with a password; creates the user if it doesn't exist
+ * @apiDescription Logs in the user with a password
  * @apiName UserLoginPassword
  * @apiGroup User
  * @apiVersion 0.2.3
@@ -387,8 +386,7 @@ router.get('/me', function(req, res, next) {
  * 		}
  * 	}
  *
- * 	@apiError 401 <code>InvalidCredentials</code> User email and password did not match
- *  @apiError 404 <code>UserNotFound</code> User with that email address doesn't exist
+ * 	@apiError 401 [031]UserBadLogin User email and password did not match
  *
  */
 router.post('/login_password', function(req, res, next) {
@@ -463,8 +461,6 @@ router.post('/login_password', function(req, res, next) {
  * 		"status": 200,
  * 		"content": "Logged out of device"
  * 	}
- *
- * @apiError NotAuthenticated  Only authenticated users may access this endpoint.
  */
 router.get('/logout', function(req, res, next) {
 	var deviceId = req._telepat.device_id;
@@ -524,18 +520,10 @@ router.get('/logout', function(req, res, next) {
  * 		}
  * 	}
  *
- * @apiError NotAuthenticated  If authorization header is missing or invalid.
- *
- * @apiErrorExample {json} Error Response
- * 	{
- * 		status: 400,
- * 		message: "Token not present or authorization header is invalid"
- * 	}
- * 	@apiErrorExample {json} Error Response
- * 	{
- * 		status: 400,
- * 		message: "Malformed authorization token"
- * 	}
+ * @apiError 400 [013]AuthorizationMissing  If authorization header is missing
+ * @apiError 400 [039]ClientBadRequest Error decoding auth token
+ * @apiError 400 [040]MalformedAuthorizationToken Auth token is malformed
+ * @apiError 400 [014]InvalidAuthorization Authorization header is invalid
  */
 router.get('/refresh_token', function(req, res, next) {
 	if (!req.get('Authorization')) {
@@ -558,13 +546,13 @@ router.get('/refresh_token', function(req, res, next) {
 
 		return res.status(200).json({status: 200, content: {token: newToken}}).end();
 	} else {
-		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidAuthorization));
+		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidAuthorization, ['header invalid']));
 	}
 });
 
 /**
  * @api {post} /user/update Update
- * @apiDescription Updates the user information
+ * @apiDescription Updates the user information. This operation is not immediate.
  * @apiName UserUpdate
  * @apiGroup User
  * @apiVersion 0.2.3
@@ -589,7 +577,7 @@ router.get('/refresh_token', function(req, res, next) {
  * 		"content": "User updated"
  * 	}
  *
- * 	@apiError 400 InvalidPatch Invalid patch supplied
+ * 	@apiError [042]400 InvalidPatch Invalid patch supplied
  *
  */
 router.post('/update', function(req, res, next) {

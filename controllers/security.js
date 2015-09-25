@@ -45,7 +45,8 @@ security.apiKeyValidation = function(req, res, next) {
 		var apiKeys = app.applications[req.get('X-BLGREQ-APPID')].keys;
 
 		async.detect(apiKeys, function(item ,cb) {
-			serverHash = crypto.createHash('sha256').update(item).digest('hex').toLowerCase();
+			if (item)
+				serverHash = crypto.createHash('sha256').update(item).digest('hex').toLowerCase();
 			cb(serverHash === clientHash);
 		}, function(result) {
 			if (result) {

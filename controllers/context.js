@@ -37,14 +37,6 @@ router.use(security.deviceIdValidation);
  * 		]
  * 	}
  *
- * 	@apiError (500) Error Internal server error.
- *
- * 	@apiErrorExample {json} Error Response
- * 	{
- * 		"message": "Could not get contexts",
- * 		"status": 500
- * 	}
- *
  */
 router.get('/all', function (req, res, next) {
 	var appId = req._telepat.applicationId;
@@ -92,12 +84,13 @@ router.get('/all', function (req, res, next) {
  * 		]
  * 	}
  *
- * 	@apiError (500) Error Internal server error.
+ * 	@apiError (404) [020]ContextNotFound Context not found
  *
  * 	@apiErrorExample {json} Error Response
  * 	{
- * 		"message": "Could not get context"
- * 		"status": 500
+ * 		"code": "020",
+ * 		"message": "Context not found",
+ * 		"status": 404
  * 	}
  *
  */
@@ -108,7 +101,7 @@ router.post('/', function (req, res, next) {
 
 	Models.Context(req.body.id, function (err, res1) {
 		if (err && err.status === 404){
-			res.status(404).json({status: 404, message: 'Context not found'}).end();
+			return next(new Models.TelepatError(Models.TelepatError.errors.ContextNotFound));
 		} else if (err)
 			next(err);
 		else {
