@@ -4,7 +4,6 @@ var bodyParser = require('body-parser');
 colors = require('colors');
 
 async = require('async');
-kafka = require('kafka-node');
 Models = require('telepat-models');
 redis = require('redis');
 

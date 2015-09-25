@@ -288,7 +288,7 @@ router.post('/register', function(req, res, next) {
 		function(result, callback) {
 			if (fbFriends.length) {
 				app.messagingClient.send([JSON.stringify({fid: userProfile.id, friends: fbFriends})],
-					'aggregation', callback);
+					'update_friends', callback);
 			} else
 				callback();
 		}
