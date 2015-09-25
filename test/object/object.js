@@ -360,6 +360,33 @@ it('should return a success response to indicate that a object has been updated'
 		});
 });
 
+// it('should return a success response to indicate that a object has NOT been updated bacause user not authenticated', function(done) {
+	// var clientrequest = {
+		// "model": "comments",
+		// "id": 1,
+		// "context": contextID,
+		// "patches": [
+			// {
+				// "op": "replace",
+				// "path": "comments/1/text",
+				// "value": "some edited text"
+			// }
+		// ]
+	// };
+	// request(url)
+		// .post('/object/update')
+		// .set('X-BLGREQ-SIGN', appIDsha256)
+		// .set('X-BLGREQ-UDID', deviceIdentification)
+		// .set('X-BLGREQ-APPID',appID)
+		// .set('Authorization', authValue + '66' )
+		// .send(clientrequest)
+		// .end(function(err, res) {
+			// res.statusCode.should.be.equal(401);
+			// done();
+		// });
+// });
+
+
 it('should return a success response to indicate that a object has NOT been updated because of missing authorization ', function(done) {
 	var clientrequest = {
 		"model": "comments",

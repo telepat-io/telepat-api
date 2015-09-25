@@ -399,6 +399,31 @@ describe('App', function() {
 				}, 2*DELAY);
 			});
 	});
+	
+	it('should return an error response for NOT updating an app because of missing appID', function(done) {
+
+
+		var clientrequest2 = {
+			patches: [
+				{
+					op: 'replace',
+					path: 'application/'+appID + '66' +'/name',
+					value: 'New app name'
+				}
+			]
+		};
+
+		request(url)
+		.post('/admin/app/update')
+		.set('Content-type','application/json')
+		.set('Authorization', authValue )
+		.set('X-BLGREQ-APPID', appID + '66' )
+		.send(clientrequest2)
+		.end(function(err, res) {
+			res.statusCode.should.be.equal(404);
+			done();
+		});
+	});
 
 
 	it('should return a success response for removing an app', function(done) {
@@ -1137,7 +1162,7 @@ describe('User', function() {
 		.send(clientrequest)
 		.end(function(err, res) {
 			//console.log(res.body);
-			setTimeout(done, 3*DELAY);
+			setTimeout(done, 7*DELAY);
 		});
 	});
 
