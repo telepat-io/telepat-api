@@ -15,8 +15,8 @@ var Models = require('telepat-models');
  *
  * @apiHeader {String} Content-type application/json
  *
- * @apiParam {String} email Email of admin
- * @apiParam {String} password Password of admin
+ * @apiParam {String} email (REQUIRED) Email of admin
+ * @apiParam {String} password (REQUIRED) Password of admin
  *
  * @apiExample {json} Client Request
  * 	{

@@ -11,7 +11,7 @@ router.use('/all',
 	security.applicationIdValidation,
 	security.adminAppValidation);
 /**
- * @api {get} /admin/user/all GetAppusers
+ * @api {get} /admin/user/all GetAppUsers
  * @apiDescription Gets all users of the app
  * @apiName AdminGetUsers
  * @apiGroup Admin
@@ -53,7 +53,7 @@ router.use('/update',
 	security.applicationIdValidation,
 	security.adminAppValidation);
 /**
- * @api {post} /admin/user/update EditUser
+ * @api {post} /admin/user/update UserUpdate
  * @apiDescription Updates an user from an app
  * @apiName AdminUpdateUser
  * @apiGroup Admin
@@ -140,7 +140,7 @@ router.use('/delete',
 	security.applicationIdValidation,
 	security.adminAppValidation);
 /**
- * @api {post} /admin/user/delete Deleteuser
+ * @api {post} /admin/user/delete UserDelete
  * @apiDescription Deletes an user from an app
  * @apiName AdminDeleteUser
  * @apiGroup Admin

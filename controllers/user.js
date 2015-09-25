@@ -628,7 +628,7 @@ router.post('/update', function(req, res, next) {
 			var patchUserId = patch.path.split('/')[1];
 
 			if (patchUserId != id) {
-				return c(new Models.TelepatError(Models.Telepat.errors.InvalidPatch,
+				return c(new Models.TelepatError(Models.TelepatError.errors.InvalidPatch,
 					['Invalid ID in one of the patches']));
 			}
 
