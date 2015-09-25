@@ -922,6 +922,27 @@ describe('Schema', function() {
 					"read_acl": 7,
 					"write_acl": 7,
 					"meta_read_acl": 4
+				},
+				"things": {
+					"namespace": "events",
+					"type": "events",
+					"properties": {
+						"text": {
+							"type": "string"
+						},
+						"image": {
+							"type": "string"
+						},
+						"options": {
+							"type": "object"
+						}
+					},
+					"hasMany": [
+						"comments"
+					],
+					"read_acl": 7,
+					"write_acl": 7,
+					"meta_read_acl": 4
 				}
 			}
 		};
@@ -1038,6 +1059,63 @@ describe('Schema', function() {
 				done();
 			});
 	});
+	
+	// it('should return a success response to indicate a model was removed from the application', function(done) {
+		
+		// var clientrequest = {
+			// "model_name": "things"
+		// };
+		
+		// request(url)
+			// .post('/admin/schema/remove_model')
+			// .set('Content-type','application/json')
+			// .set('Authorization', authValue )
+			// .set('X-BLGREQ-APPID', appID )
+			// .send(clientrequest)
+			// .end(function(err, res) {
+				// console.log(res.body);
+				// res.statusCode.should.be.equal(200);
+				// done();
+			// });
+	// });
+	
+	it('should return a error response to indicate a model was NOT removed from the application because of wrong appID', function(done) {
+		
+		var clientrequest = {
+			"model_name": "things"
+		};
+		
+		request(url)
+			.post('/admin/schema/remove_model')
+			.set('Content-type','application/json')
+			.set('Authorization', authValue )
+			.set('X-BLGREQ-APPID', appID + '66' )
+			.send(clientrequest)
+			.end(function(err, res) {
+				res.statusCode.should.be.equal(404);
+				done();
+			});
+	});
+	
+	it('should return a error response to indicate a model was NOT removed from the application because model name does NOT exist', function(done) {
+		
+		var clientrequest = {
+			"model_name": "others"
+		};
+		
+		request(url)
+			.post('/admin/schema/remove_model')
+			.set('Content-type','application/json')
+			.set('Authorization', authValue )
+			.set('X-BLGREQ-APPID', appID + '66' )
+			.send(clientrequest)
+			.end(function(err, res) {
+				res.statusCode.should.be.equal(404);
+				done();
+			});
+	});
+
+
 });
 
 describe('User', function() {
