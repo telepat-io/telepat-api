@@ -1,3 +1,11 @@
+# 0.2.4
+
+* Implemented /admin/authorize and /admin/deauthorize to add/remove admins to an application
+* Replaced "manual" patch forming with Delta.formPatch
+* Updated code to use Messaging Client instead of directly kafka
+* Updated code to use the TelepatError class for API errors
+* Improved input validation and documentation
+
 # 0.2.3
 
 * Replaced couchbase with elasticsearch through adapters
