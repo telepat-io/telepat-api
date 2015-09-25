@@ -42,7 +42,7 @@ before(function(done){
 			"token": "android pn token"
 		}
 	}
-
+ 
 	this.timeout(10000);
 	var clientrequest = {
 		"name": "test-app",
@@ -97,7 +97,7 @@ before(function(done){
 		});
 });
 
-it('should return an error response to indicate that the user has NOT logged via FACEBOOK because of missing access token', function(done) {
+it('should return an error response to indicate that the user has NOT logged via Facebook because of missing access token', function(done) {
 
 	var clientrequest = {};
 
@@ -109,7 +109,7 @@ it('should return an error response to indicate that the user has NOT logged via
 	.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 	.send(clientrequest)
 	.end(function(err, res) {
-		console.log(res.body);
+		//console.log(res.body);
 		res.statusCode.should.be.equal(400);
 		done();
 	});
@@ -247,12 +247,10 @@ it('should return an error response to indicate that the user has NOT logged in 
 
 it('should return a success response to indicate that the user was updated', function(done) {
 	var clientrequest = {
-		"email": userEmail,
-		"password": "secure_password1337",
 		"patches" : [
 			{
 				"op": "replace",
-				"path": "user/"+userEmail+"/name",
+				"path": "user/"+userID+"/name",
 				"value": "new value"
 			}
 		]
