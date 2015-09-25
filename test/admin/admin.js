@@ -1064,7 +1064,7 @@ describe('User', function() {
 	});
 
 	it('should return a success response to indicate that an user was updated', function(done) {
-		this.timeout(10*DELAY);
+		this.timeout(12*DELAY);
 
 		var clientrequest = {
 			"email" : userEmail,
@@ -1088,7 +1088,7 @@ describe('User', function() {
 		.end(function(err, res) {
 			//console.log(res.body);
 			res.statusCode.should.be.equal(200);
-			setTimeout(done, 6*DELAY);
+			setTimeout(done, 8*DELAY);
 		});
 	});
 

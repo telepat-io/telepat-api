@@ -141,6 +141,7 @@ before(function(done){
 
 before(function(done){
 	this.timeout(13*DELAY);
+	
 	var clientrequest = {
 		"info": {
 			"os": "Android",
@@ -189,7 +190,7 @@ before(function(done){
 								authValue = 'Bearer ' + token;
 								done();
 							});
-					}, 4*DELAY);
+					}, 7*DELAY);
 				});
 		});
 });
