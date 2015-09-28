@@ -34,7 +34,7 @@ var userEmail = 'user'+Math.round(Math.random()*1000000)+'@example.com';
 describe('Admin', function() {
 
 	it('should return a 200 code to indicate success when creating a new admin', function(done) {
-		this.timeout(10000);
+		this.timeout(12*DELAY);
 
 		request(url)
 			.post('/admin/add')
@@ -45,7 +45,7 @@ describe('Admin', function() {
 					done(err);
 				}
 				res.statusCode.should.be.equal(200);
-				setTimeout(done, 4*DELAY);
+				setTimeout(done, 8*DELAY);
 			});
 	});
 
