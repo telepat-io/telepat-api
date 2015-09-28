@@ -423,23 +423,8 @@ router.post('/create', function(req, res, next) {
 	}
 
 	async.series([
-		function(callback) {
-			if (isAdmin) {
-				Models.Admin(req.user.email, function(err, result) {
-					if (err) return callback(err);
-					content.user_id = result.id;
-					isAdmin = true;
-					callback();
-				});
-			} else {
-				Models.User(req.user.email, appId, function(err, result) {
-					if (err) return callback(err);
-					content.user_id = result.id;
-					callback();
-				});
-			}
-		},
 		function(aggCallback) {
+			content.user_id = req.user.id;
 			app.messagingClient.send([JSON.stringify({
 				op: 'add',
 				object: content,
