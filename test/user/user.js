@@ -147,11 +147,14 @@ it('should return a success response to indicate that the user has logged in via
 });
 
 it('should return a success response to indicate that the user has logged in via Facebook', function(done) {
+
 	this.timeout(100*DELAY);
+
 	request('https://graph.facebook.com')
 		.get('/oauth/access_token?client_id=1086083914753251&client_secret=40f626ca66e4472e0d11c22f048e9ea8&grant_type=client_credentials')
 		.send()
 		.end(function(err, res) {
+
 			request('https://graph.facebook.com')
 				.get('/v1.0/1086083914753251/accounts/test-users?access_token='+res.text.replace('access_token=', ''))
 				.send()
@@ -170,7 +173,9 @@ it('should return a success response to indicate that the user has logged in via
 						.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 						.send(clientrequest)
 						.end(function(err, res) {
+
 							setTimeout(function() {
+
 								request(url)
 									.post('/user/login')
 									.set('Content-type','application/json')
@@ -179,13 +184,11 @@ it('should return a success response to indicate that the user has logged in via
 									.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 									.send(clientrequest)
 									.end(function(err, res) {
-										//token = res.body.content.token;
-										//userID = res.body.content.user.id;
-										//authValue = 'Bearer ' + token;
+
 										res.statusCode.should.be.equal(200);
 										done();
 									});
-							}, 1);
+							}, 4*DELAY);
 						});
 				});
 		});
@@ -325,7 +328,7 @@ it('should return an error response to indicate that the userID is not valid', f
 		.set('Authorization', authValue )
 		.send(clientrequest)
 		.end(function(err, res) {
-console.log(res.body);
+
 			res.statusCode.should.be.equal(400);
 			done();
 		});
@@ -387,7 +390,7 @@ it('should return a success response to indicate that the user password was NOT 
 		});
 });
 
-it('should return a success response to indicate that the user was updated immediate', function(done) {
+it('should return a success response to indicate that the user was updated immidiate', function(done) {
 
 	this.timeout(20*DELAY);
 
@@ -489,6 +492,8 @@ it('should return a success response to indicate that the user logged out', func
 
 it('should return a success response to indicate that the user has registered', function(done) {
 
+	this.timeout(20*DELAY);
+
 	var clientrequest = {
 		"email": userEmail2,
 		"password": "secure_password1337",
@@ -505,7 +510,7 @@ it('should return a success response to indicate that the user has registered', 
 		.end(function(err, res) {
 
 			res.statusCode.should.be.equal(202);
-			done();
+			setTimeout(done, 14*DELAY);
 		});
 });
 
@@ -534,8 +539,8 @@ it('should return a success response to indicate that the user has NOT registere
 it('should return a success response to indicate that the user was deleted', function(done) {
 
 	var clientrequest = {
-		"email": userEmail,
-		"password": "new pass",
+		"email": userEmail2,
+		"password": "secure_password1337",
 		"name": "John Smith"
 	};
 
