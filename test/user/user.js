@@ -387,7 +387,7 @@ it('should return a success response to indicate that the user password was NOT 
 		});
 });
 
-it('should return a success response to indicate that the user was updated immidiate', function(done) {
+it('should return a success response to indicate that the user was updated immediate', function(done) {
 
 	this.timeout(20*DELAY);
 
@@ -535,7 +535,7 @@ it('should return a success response to indicate that the user was deleted', fun
 
 	var clientrequest = {
 		"email": userEmail,
-		"password": "secure_password1337",
+		"password": "new pass",
 		"name": "John Smith"
 	};
 

@@ -19,7 +19,7 @@ router.use(security.deviceIdValidation);
 router.use(security.applicationIdValidation);
 router.use(security.apiKeyValidation);
 
-router.use(['/logout', '/me', '/update', '/delete'], security.tokenValidation);
+router.use(['/logout', '/me', '/update', '/update_immediate', '/delete'], security.tokenValidation);
 
 /**
  * @api {post} /user/login Login
@@ -602,8 +602,8 @@ router.post('/update', function(req, res, next) {
 
 		if (patches[i].path.split('/')[2] == 'password') {
 
-			security.encryptPassword(patches[p].value, function(err, hash) {
-				patches[p].value = hash;
+			security.encryptPassword(patches[i].value, function(err, hash) {
+				patches[i].value = hash;
 				i++;
 				c();
 			});
@@ -638,27 +638,37 @@ router.post('/update', function(req, res, next) {
 
 router.post('/update_immediate', function(req, res, next) {
 	var user = req.body;
+	var appId = req._telepat.applicationId;
 
-	if (user.password) {
-		var passwordSalt = req.app.get('password_salt');
-		var md5password = crypto.createHash('md5').update(user.password).digest('hex');
-		user.password = crypto.createHash('sha256').update(passwordSalt[0]+md5password+passwordSalt[1]).digest('hex');
-	}
+	req.user.type = 'user';
 
 	async.waterfall([
 		function(callback) {
-			security.encryptPassword(user.password, callback);
+			if (user.password)
+				security.encryptPassword(user.password, callback);
+			else
+				callback(null, false);
 		},
 		function(hash, callback) {
-			user.password = hash;
+			if (hash)
+				user.password = hash;
 
-			Models.User.update(user.email, user, function(err, result) {
-				if (err) return next(err);
+			var patches = [];
 
-				res.status(200).json({status: 200, content: "User updated"}).end();
+			async.each(Object.keys(user), function(prop, c) {
+				var property = {};
+				property[prop] = user[prop];
+				patches.push(Models.Delta.formPatch(req.user, 'replace', property));
+				c();
+			}, function() {
+				Models.User.update(req.user.email, appId, patches, callback);
 			});
 		}
-	]);
+	], function(err) {
+		if (err) return next(err);
+
+		res.status(200).json({status: 200, content: "User updated"}).end();
+	});
 });
 
 /**
