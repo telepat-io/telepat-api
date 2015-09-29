@@ -422,6 +422,49 @@ it('should return a success response to indicate the count of a certain filter/s
 		});
 });
 
+it('should return an error response because of invalid channel request', function(done) {
+
+	var clientrequest = {
+		"channel": {
+			"context": contextID,
+			"model": "comments",
+			"parent": "parent",
+			"user": "user"
+		},
+		filters: {}
+	};
+
+	request(url)
+		.post('/object/count')
+		.set('X-BLGREQ-SIGN', appIDsha256)
+		.set('X-BLGREQ-UDID', deviceIdentification)
+		.set('X-BLGREQ-APPID',appID)
+		.set('Authorization', userAuthValue )
+		.send(clientrequest)
+		.end(function(err, res) {
+
+			res.statusCode.should.be.equal(400);
+			done();
+		});
+});
+
+it('should return an error response to indicate the count was not returned because of empty request', function(done) {
+
+	request(url)
+		.post('/object/count')
+		.set('X-BLGREQ-SIGN', appIDsha256)
+		.set('X-BLGREQ-UDID', deviceIdentification)
+		.set('X-BLGREQ-APPID',appID)
+		.set('Authorization', userAuthValue )
+		.send()
+		.end(function(err, res) {
+
+			res.statusCode.should.be.equal(400);
+			done();
+		});
+});
+
+
 
 it('should return a success response to indicate that a object has been updated', function(done) {
 
@@ -476,7 +519,7 @@ it('should return a success response to indicate that a object has NOT been upda
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.statusCode.should.be.equal(401);
+			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
@@ -487,7 +530,7 @@ it('should return a success response to indicate that a object has NOT been upda
 		"model": "comments",
 		"id": 1,
 		"context": contextID,
-		"patch": [
+		"patches": [
 			{
 				"op": "replace",
 				"path": "comments/1/text",
@@ -514,7 +557,7 @@ it('should return a success response to indicate that a object has NOT been upda
 	var clientrequest = {
 		"model": "comments",
 		"context": contextID,
-		"patch": [
+		"patches": [
 			{
 				"op": "replace",
 				"path": "comments/1/text",
@@ -542,7 +585,7 @@ it('should return a success response to indicate that a object has NOT been upda
 	var clientrequest = {
 		"model": "comments",
 		"id": 1,
-		"patch": [
+		"patches": [
 			{
 				"op": "replace",
 				"path": "comments/1/text",
@@ -564,6 +607,125 @@ it('should return a success response to indicate that a object has NOT been upda
 			done();
 		});
 });
+
+it('should return a success response to indicate that a object has NOT been updated because of model not found ', function(done) {
+
+	var clientrequest = {
+		"model": "thingy",
+		"id": 1,
+		"patches": [
+			{
+				"op": "replace",
+				"path": "thingy/1/text",
+				"value": "some edited text"
+			},
+		],
+	};
+
+	request(url)
+		.post('/object/update')
+		.set('X-BLGREQ-SIGN', appIDsha256)
+		.set('X-BLGREQ-UDID', deviceIdentification)
+		.set('X-BLGREQ-APPID',appID)
+		.set('Authorization', userAuthValue )
+		.send(clientrequest)
+		.end(function(err, res) {
+
+			res.statusCode.should.be.equal(400);
+			done();
+		});
+});
+
+it('should return a success response to indicate that a object has NOT been updated because of missing model ', function(done) {
+
+	var clientrequest = {
+		"context": contextID,
+		"id": 1,
+		"patches": [
+			{
+				"op": "replace",
+				"path": "comments/1/text",
+				"value": "some edited text"
+			},
+		],
+	};
+
+	request(url)
+		.post('/object/update')
+		.set('X-BLGREQ-SIGN', appIDsha256)
+		.set('X-BLGREQ-UDID', deviceIdentification)
+		.set('X-BLGREQ-APPID',appID)
+		.set('Authorization', userAuthValue )
+		.send(clientrequest)
+		.end(function(err, res) {
+
+			res.statusCode.should.be.equal(400);
+			done();
+		});
+});
+
+it('should return a success response to indicate that a object has NOT been updated because patches is not an array ', function(done) {
+
+	var clientrequest = {
+		"context": contextID,
+		"model": "comments",
+		"id": 1,
+		"patches": {},
+	};
+
+	request(url)
+		.post('/object/update')
+		.set('X-BLGREQ-SIGN', appIDsha256)
+		.set('X-BLGREQ-UDID', deviceIdentification)
+		.set('X-BLGREQ-APPID',appID)
+		.set('Authorization', userAuthValue )
+		.send(clientrequest)
+		.end(function(err, res) {
+
+			res.statusCode.should.be.equal(400);
+			done();
+		});
+});
+
+it('should return a success response to indicate that a object has NOT been updated because patches is an empty array', function(done) {
+
+	var clientrequest = {
+		"context": contextID,
+		"model": "comments",
+		"id": 1,
+		"patches": [],
+	};
+
+	request(url)
+		.post('/object/update')
+		.set('X-BLGREQ-SIGN', appIDsha256)
+		.set('X-BLGREQ-UDID', deviceIdentification)
+		.set('X-BLGREQ-APPID',appID)
+		.set('Authorization', userAuthValue )
+		.send(clientrequest)
+		.end(function(err, res) {
+
+			res.statusCode.should.be.equal(400);
+			done();
+		});
+});
+
+it('should return a success response to indicate that a object has NOT been updated because of empty request ', function(done) {
+
+	request(url)
+		.post('/object/update')
+		.set('X-BLGREQ-SIGN', appIDsha256)
+		.set('X-BLGREQ-UDID', deviceIdentification)
+		.set('X-BLGREQ-APPID',appID)
+		.set('Authorization', userAuthValue )
+		.send()
+		.end(function(err, res) {
+
+			res.statusCode.should.be.equal(400);
+			done();
+		});
+});
+
 
 it('should return a success response to indicate that a object has been subscribed', function(done) {
 
@@ -615,7 +777,7 @@ it('should return a success response to indicate that a object has NOT been subs
 		});
 });
 
-it('should return a success response to indicate that a object has NOT been subscribed because id was not found', function(done) {
+it('should return a success response to indicate that a object has NOT been subscribed because object was not found', function(done) {
 
 	var subclientrequest = {
 		"channel": {
@@ -784,7 +946,8 @@ it('should return a success response to indicate that a object has been unsubscr
 	var subclientrequest = {
 		"channel": {
 			"context": contextID,
-			"model": "comments"
+			"model": "comments",
+			"id" : "66"
 		}
 	};
 
@@ -804,14 +967,38 @@ it('should return a success response to indicate that a object has been unsubscr
 
 it('should return a success response to indicate that a object has NOT been unsubscribed because of empty body', function(done) {
 
-	var subclientrequest = {};
-
 	request(url)
 		.post('/object/unsubscribe')
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', deviceIdentification)
 		.set('X-BLGREQ-APPID',appID)
 		.set('Authorization', userAuthValue)
+		.send()
+		.end(function(err, res) {
+
+			res.statusCode.should.be.equal(400);
+			done();
+		});
+});
+
+it('should return a success response to indicate that a object has NOT been unsubscribed', function(done) {
+
+	var subclientrequest = {
+		"channel": {
+			"context": contextID,
+			"model": "comments",
+			"parent": "parent",
+			"user": "user"
+		}
+	};
+
+	request(url)
+		.post('/object/unsubscribe')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256)
+		.set('X-BLGREQ-UDID', deviceIdentification)
+		.set('X-BLGREQ-APPID',appID)
+		.set('Authorization', userAuthValue )
 		.send(subclientrequest)
 		.end(function(err, res) {
 
@@ -819,6 +1006,7 @@ it('should return a success response to indicate that a object has NOT been unsu
 			done();
 		});
 });
+
 
 it('should return a success response to indicate that a object has NOT been unsubscribed because of missing channel', function(done) {
 
@@ -1018,6 +1206,22 @@ it('should return an error response to indicate that the object was not deleted 
 		.set('X-BLGREQ-APPID',appID)
 		.set('Authorization', userAuthValue )
 		.send(clientrequest)
+		.end(function(err, res) {
+
+			res.statusCode.should.be.equal(400);
+			done();
+		});
+});
+
+it('should return an error response to indicate that the object was not deleted because of empty request', function(done) {
+
+	request(url)
+		.post('/object/delete')
+		.set('X-BLGREQ-SIGN', appIDsha256)
+		.set('X-BLGREQ-UDID', deviceIdentification)
+		.set('X-BLGREQ-APPID',appID)
+		.set('Authorization', userAuthValue )
+		.send()
 		.end(function(err, res) {
 
 			res.statusCode.should.be.equal(400);
