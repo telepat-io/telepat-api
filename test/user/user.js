@@ -298,7 +298,35 @@ it('should return a success response to indicate that the user password was upda
 		.set('Authorization', authValue )
 		.send(clientrequest)
 		.end(function(err, res) {
+
 			res.statusCode.should.be.equal(202);
+			done();
+		});
+});
+
+it('should return an error response to indicate that the userID is not valid', function(done) {
+
+	var clientrequest = {
+		"patches" : [
+			{
+				"op": "replace",
+				"path": "user/" + userID + "66" +"/password",
+				"value": "new value"
+			}
+		]
+	};
+
+	request(url)
+		.post('/user/update')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256 )
+		.set('X-BLGREQ-APPID', appID )
+		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+		.set('Authorization', authValue )
+		.send(clientrequest)
+		.end(function(err, res) {
+console.log(res.body);
+			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
