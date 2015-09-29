@@ -34,12 +34,14 @@ var userEmail = 'user'+Math.round(Math.random()*1000000)+'@example.com';
 describe('Admin', function() {
 
 	it('should return a 200 code to indicate success when creating a new admin', function(done) {
+		
 		this.timeout(12*DELAY);
 
 		request(url)
 			.post('/admin/add')
 			.send(admin)
 			.end(function(err, res) {
+				
 				if (err) {
 					throw err;
 					done(err);
@@ -55,6 +57,7 @@ describe('Admin', function() {
 			.post('/admin/add')
 			.send(admin)
 			.end(function(err, res) {
+				
 				res.statusCode.should.be.equal(409);
 				done();
 			});
@@ -62,60 +65,73 @@ describe('Admin', function() {
 	});
 
 	it('should return a 4xx code to indicate failure when admin email is missing', function(done) {
+		
 		var admin = {
 			password: adminPassword
 		};
+		
 		request(url)
 			.post('/admin/add')
 			.send(admin)
 			.end(function(err, res) {
+				
 				res.statusCode.should.be.within(400,499);
 				done();
 			});
 	});
 
 	it('should return a 4xx code to indicate failure when admin email is empty', function(done) {
+		
 		var admin = {
 			email: "",
 			password: adminPassword
 		};
+		
 		request(url)
 			.post('/admin/add')
 			.send(admin)
 			.end(function(err, res) {
+				
 				res.statusCode.should.be.within(400,499);
 				done();
 			});
 	});
 
 	it('should return a 4xx code to indicate failure when admin password is empty', function(done) {
+		
 		var admin = {
 			email: adminEmail,
 			password: ""
 		};
+		
 		request(url)
 			.post('/admin/add')
 			.send(admin)
 			.end(function(err, res) {
+				
 				res.statusCode.should.be.within(400,499);
 				done();
 			});
 	});
 
 	it('should return a 4xx code to indicate failure when admin password is missing', function(done) {
+		
 		var admin = {
 			email: adminEmail
 		};
+		
 		request(url)
 			.post('/admin/add')
 			.send(admin)
 			.end(function(err, res) {
+				
 				res.statusCode.should.be.within(400,499);
 				done();
 			});
 	});
 
 	it('should return an error for logging in with wrong user or password', function(done) {
+		
 		var randEmail = 'adminx@example.com';
 		var admin = {
 			email: randEmail,
@@ -125,16 +141,50 @@ describe('Admin', function() {
 			.post('/admin/login')
 			.send(admin)
 			.end(function(err, res) {
+				
 				res.statusCode.should.be.equal(401);
+				done();
+			});
+	});
+	
+	it('should return an error for logging in missing password', function(done) {
+		
+		var randEmail = 'adminx@example.com';
+		var admin = {
+			email: randEmail
+		};
+		
+		request(url)
+			.post('/admin/login')
+			.send(admin)
+			.end(function(err, res) {
+
+				res.statusCode.should.be.equal(400);
+				done();
+			});
+	});
+	
+	it('should return an error for logging in missing email & password', function(done) {
+
+		var admin = {};
+		
+		request(url)
+			.post('/admin/login')
+			.send(admin)
+			.end(function(err, res) {
+
+				res.statusCode.should.be.equal(400);
 				done();
 			});
 	});
 
 	it('should return a valid authorization token', function(done) {
+		
 		request(url)
 			.post('/admin/login')
 			.send(admin)
 			.end(function(err, res) {
+				
 				authValue = 'Bearer ' + res.body.content.token;
 				adminAuth = authValue;
 				admin = res.body.content.user;
@@ -144,12 +194,14 @@ describe('Admin', function() {
 	});
 
 	it('should return information about the logged admin', function(done) {
+		
 		request(url)
 			.get('/admin/me')
 			.set('Content-type','application/json')
 			.set('Authorization', authValue )
 			.send()
 			.end(function(err, res) {
+				
 				res.statusCode.should.be.equal(200);
 				res.body.content.email.should.be.equal(admin.email);
 				res.body.content.isAdmin.should.be.equal(true);
@@ -158,26 +210,31 @@ describe('Admin', function() {
 	});
 
 	it('should return a succes response indicating the admin account has been updated', function(done) {
+		
+		var requestBody = {
+			patches: [
+				{
+					op: 'replace',
+					path: 'admin/'+admin.id+'/name',
+					value: 'Admin Name v2'
+				}
+			]
+		};
+				
 		request(url)
 			.post('/admin/update')
 			.set('Content-type','application/json')
 			.set('Authorization', authValue )
-			.send({
-				patches: [
-					{
-						op: 'replace',
-						path: 'admin/'+admin.id+'/name',
-						value: 'Admin Name v2'
-					}
-				]
-			})
+			.send(requestBody)
 			.end(function(err, res) {
+				
 				res.statusCode.should.be.equal(200);
 				done();
 			});
 	});
 
 	it('should return an error response indicating the admin account has NOT been updated because of invalid admin id', function(done) {
+		
 		var admin = {
 			patches: [
 				{
@@ -187,59 +244,135 @@ describe('Admin', function() {
 				}
 			]
 		};
+		
+		request(url)
+			.post('/admin/update')
+			.set('Content-type','application/json')
+			.set('Authorization', authValue )
+			.send(admin)
+			.end(function(err, res) {
+
+				res.statusCode.should.be.equal(401);
+				done();
+			});
+	});
+	
+	it('should return an error response indicating the admin account has NOT been updated because of missing authorization header', function(done) {
+		
+		var admin = {
+			patches: [
+				{
+					op: 'replace',
+					path: 'admin/garbage/name',
+					value: 'Admin Name v2'
+				}
+			]
+		};
+		
 		request(url)
 			.post('/admin/update')
 			.set('Content-type','application/json')
 			.send(admin)
 			.end(function(err, res) {
+
 				res.statusCode.should.be.equal(401);
 				done();
 			});
 	});
 
 	it('should return an error response indicating the admin account has NOT been updated because of missing request body', function(done) {
+		
 		request(url)
 			.post('/admin/update')
 			.set('Content-type','application/json')
 			.set('Authorization', authValue )
 			.send()
 			.end(function(err, res) {
+				
+				res.statusCode.should.be.equal(400);
+				done();
+			});
+	});
+	
+	
+	it('should return an error response indicating the admin account has NOT been updated because patches is not an array', function(done) {
+		
+		var admin = {
+			patches: {}
+		};
+		
+		request(url)
+			.post('/admin/update')
+			.set('Content-type','application/json')
+			.set('Authorization', authValue )
+			.send(admin)
+			.end(function(err, res) {
+				
+				res.statusCode.should.be.equal(400);
+				done();
+			});
+	});
+	
+	it('should return an error response indicating the admin account has NOT been updated because patches is empty', function(done) {
+		
+		var admin = {
+			patches: []
+		};
+		
+		request(url)
+			.post('/admin/update')
+			.set('Content-type','application/json')
+			.set('Authorization', authValue )
+			.send(admin)
+			.end(function(err, res) {
+				
 				res.statusCode.should.be.equal(400);
 				done();
 			});
 	});
 
 	it('should return an error response indicating the admin account has NOT been deleted because of missing credentials', function(done) {
+		
 		request(url)
 			.post('/admin/delete')
 			.set('Content-type','application/json')
 			.send()
 			.end(function(err, res) {
+				
 				res.statusCode.should.be.equal(401);
 				done();
 			});
 	});
 
 	it('should return a succes response indicating the admin account has been deleted', function(done) {
+		
 		this.timeout(20*DELAY);
+		
 		request(url)
 			.post('/admin/delete')
 			.set('Content-type','application/json')
 			.set('Authorization', authValue)
 			.send()
 			.end(function(err, res) {
+				
 				res.statusCode.should.be.equal(200);
+				
 				setTimeout(function() {
+					
 					request(url)
 						.post('/admin/add')
 						.send(admin)
 						.end(function(err, res) {
+							
 							res.statusCode.should.be.equal(200);
+							
 							setTimeout(function () {
+								
 								request(url)
 									.post('/admin/login')
 									.send(admin)
 									.end(function(err, res) {
+										
 										authValue = 'Bearer ' + res.body.content.token;
 										adminAuth = authValue;
 										res.statusCode.should.be.equal(200);
@@ -250,42 +383,48 @@ describe('Admin', function() {
 				}, 8*DELAY);
 			});
 	});
-
 });
 
 describe('App', function() {
 
 	before(function(done){
+		
 		this.timeout(20*DELAY);
 		
 		var clientrequest = {
 			"name": "test-app",
 			"keys": [ appKey ]
 		};
+		
 		request(url)
-		.post('/admin/app/add')
-		.set('Content-type','application/json')
-		.set('Authorization', authValue)
-		.send(clientrequest)
-		.end(function(err, res) {
-			appID =  res.body.content.id;
-			request(url)
-				.post('/admin/add')
-				.send(admin2)
-				.end(function(err, res) {
-					setTimeout(function () {
-						request(url)
-							.post('/admin/login')
-							.set('Content-type','application/json')
-							.send(admin2)
-							.end(function(err, res) {
-								token2 = res.body.content.token;
-								authValue2 = 'Bearer ' + token2;
-								done();
-							});
-					}, 3*DELAY);
-				});
-		});
+			.post('/admin/app/add')
+			.set('Content-type','application/json')
+			.set('Authorization', authValue)
+			.send(clientrequest)
+			.end(function(err, res) {
+				
+				appID =  res.body.content.id;
+				
+				request(url)
+					.post('/admin/add')
+					.send(admin2)
+					.end(function(err, res) {
+						
+						setTimeout(function () {
+							
+							request(url)
+								.post('/admin/login')
+								.set('Content-type','application/json')
+								.send(admin2)
+								.end(function(err, res) {
+									
+									token2 = res.body.content.token;
+									authValue2 = 'Bearer ' + token2;
+									done();
+								});
+						}, 3*DELAY);
+					});
+			});
 	});
 
 	it('should return a success response to indicate app succesfully created', function(done) {
@@ -307,6 +446,7 @@ describe('App', function() {
 			.set('Authorization', authValue )
 			.send(clientrequest)
 			.end(function(err, res) {
+				
 				var objectKey = Object.keys(res.body.content)[0];
 				appID = res.body.content.id;
 				(res.body.content[objectKey] == successResponse[1]).should.be.ok;
@@ -315,44 +455,53 @@ describe('App', function() {
 	});
 
 	it('should return an error response to indicate app was not created because of missing app name', function(done) {
+		
 		var clientrequest = {
 			"keys": ["3406870085495689e34d878f09faf52c"]
 		};
+		
 		request(url)
 			.post('/admin/app/add')
 			.set('Content-type','application/json')
 			.set('Authorization', authValue )
 			.send(clientrequest)
 			.end(function(err, res) {
+				
 				res.statusCode.should.be.equal(400);
 				done();
 			});
 	});
 
 	it('should return a list of applications for the current admin', function(done) {
+		
 		var clientrequest = {
 			"name": "test-app",
 			"keys": [ appKey ]
 		};
+		
 		request(url)
 			.post('/admin/app/add')
 			.set('Content-type','application/json')
 			.set('Authorization', authValue )
 			.send(clientrequest)
 			.end(function(err, res) {
+				
 				request(url)
 					.post('/admin/app/add')
 					.set('Content-type','application/json')
 					.set('Authorization', authValue )
 					.send(clientrequest)
 					.end(function(err, res) {
+						
 						setTimeout(function () {
+							
 							request(url)
 								.get('/admin/apps')
 								.set('Content-type','application/json')
 								.set('Authorization', authValue )
 								.send()
 								.end(function(err, res) {
+									
 									res.statusCode.should.be.equal(200);
 									res.body.status.should.be.equal(200);
 									(Object.keys(res.body.content).length >= 3).should.be.ok;
@@ -364,16 +513,19 @@ describe('App', function() {
 	});
 
 	it('should return a success response for updating an app', function(done) {
+		
 		var clientrequest = {
 			"name": "test-app",
 			"keys": [ appKey ]
 		};
+		
 		request(url)
 			.post('/admin/app/add')
 			.set('Content-type','application/json')
 			.set('Authorization', authValue )
 			.send(clientrequest)
 			.end(function(err, res) {
+				
 				var objectKey = Object.keys(res.body.content)[0];
 				var appID = res.body.content.id;
 				var clientrequest2 = {
@@ -385,7 +537,9 @@ describe('App', function() {
 						}
 					]
 				};
+				
 				setTimeout(function () {
+					
 					request(url)
 						.post('/admin/app/update')
 						.set('Content-type','application/json')
@@ -402,7 +556,6 @@ describe('App', function() {
 	
 	it('should return an error response for NOT updating an app because of missing appID', function(done) {
 
-
 		var clientrequest2 = {
 			patches: [
 				{
@@ -414,32 +567,38 @@ describe('App', function() {
 		};
 
 		request(url)
-		.post('/admin/app/update')
-		.set('Content-type','application/json')
-		.set('Authorization', authValue )
-		.set('X-BLGREQ-APPID', appID + '66' )
-		.send(clientrequest2)
-		.end(function(err, res) {
-			res.statusCode.should.be.equal(404);
-			done();
-		});
+			.post('/admin/app/update')
+			.set('Content-type','application/json')
+			.set('Authorization', authValue )
+			.set('X-BLGREQ-APPID', appID + '66' )
+			.send(clientrequest2)
+			.end(function(err, res) {
+				
+				res.statusCode.should.be.equal(404);
+				done();
+			});
 	});
 
 
 	it('should return a success response for removing an app', function(done) {
+		
 		var clientrequest = {
 			"name": "test-app",
 			"keys": [ appKey ]
 		};
+		
 		request(url)
 			.post('/admin/app/add')
 			.set('Content-type','application/json')
 			.set('Authorization', authValue )
 			.send(clientrequest)
 			.end(function(err, res) {
+				
 				var objectKey = Object.keys(res.body.content)[0];
 				var appID = res.body.content.id;
+				
 				setTimeout(function() {
+					
 					request(url)
 						.post('/admin/app/remove')
 						.set('Content-type','application/json')
@@ -447,6 +606,7 @@ describe('App', function() {
 						.set('X-BLGREQ-APPID', appID )
 						.send()
 						.end(function(err, res) {
+							
 							res.statusCode.should.be.equal(200);
 							res.body.content.should.be.equal('App removed');
 							done();
@@ -456,6 +616,7 @@ describe('App', function() {
 	});
 
 	it('should return an error response for trying to remove an app that does NOT exist', function(done) {
+		
 		request(url)
 			.post('/admin/app/remove')
 			.set('Content-type','application/json')
@@ -463,6 +624,7 @@ describe('App', function() {
 			.set('X-BLGREQ-APPID', Math.round(Math.random()*1000000)+1000 )
 			.send()
 			.end(function(err, res) {
+				
 				res.statusCode.should.be.equal(404);
 				done();
 			});
@@ -475,18 +637,18 @@ describe('App', function() {
 		};
 		
 		request(url)
-		.post('/admin/app/authorize')
-		.set('Content-type','application/json')
-		.set('X-BLGREQ-APPID', appID)
-		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28')
-		.set('Authorization', authValue )
-		.send(clientrequest)
-		.end(function(err, res) {
-			//console.log(res.body);
-			if(res)
-				res.statusCode.should.be.equal(200);
-			done();
-		});
+			.post('/admin/app/authorize')
+			.set('Content-type','application/json')
+			.set('X-BLGREQ-APPID', appID)
+			.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28')
+			.set('Authorization', authValue )
+			.send(clientrequest)
+			.end(function(err, res) {
+
+				if(res)
+					res.statusCode.should.be.equal(200);
+				done();
+			});
 	});
 
 	it('should return an error response to indicate admin has NOT been authorized because of the email field is missing', function(done) {
@@ -494,28 +656,29 @@ describe('App', function() {
 		var clientrequest = {};
 		
 		request(url)
-		.post('/admin/app/authorize')
-		.set('Content-type','application/json')
-		.set('X-BLGREQ-APPID', appID)
-		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28')
-		.set('Authorization', authValue )
-		.send(clientrequest)
-		.end(function(err, res) {
-			//console.log(res.body);
-			if(res)
-				res.statusCode.should.be.equal(400);
-			done();
-		});
+			.post('/admin/app/authorize')
+			.set('Content-type','application/json')
+			.set('X-BLGREQ-APPID', appID)
+			.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28')
+			.set('Authorization', authValue )
+			.send(clientrequest)
+			.end(function(err, res) {
+
+				if(res)
+					res.statusCode.should.be.equal(400);
+				done();
+			});
 	});
 	
 	it('should return an error response to indicate admin with email address already authorized for application', function(done) {
+		
 		this.timeout(10*DELAY);
 		
+		var clientrequest = {
+			"email": adminEmail2
+		};
+		
 		setTimeout(function () {
-			var clientrequest = {
-				"email": adminEmail2
-			};
-			
 			request(url)
 			.post('/admin/app/authorize')
 			.set('Content-type','application/json')
@@ -524,8 +687,7 @@ describe('App', function() {
 			.set('Authorization', authValue )
 			.send(clientrequest)
 			.end(function(err, res) {
-				//console.log(appID);
-				//console.log(res.body);
+				
 				if(res)
 					res.statusCode.should.be.equal(409);
 				done();
@@ -540,17 +702,18 @@ describe('App', function() {
 		};
 		
 		request(url)
-		.post('/admin/app/authorize')
-		.set('Content-type','application/json')
-		.set('X-BLGREQ-APPID', appID + '66')
-		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28')
-		.set('Authorization', authValue )
-		.send(clientrequest)
-		.end(function(err, res) {
-			if(res)
-				res.statusCode.should.be.equal(404);
-			done();
-		});
+			.post('/admin/app/authorize')
+			.set('Content-type','application/json')
+			.set('X-BLGREQ-APPID', appID + '66')
+			.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28')
+			.set('Authorization', authValue )
+			.send(clientrequest)
+			.end(function(err, res) {
+				
+				if(res)
+					res.statusCode.should.be.equal(404);
+				done();
+			});
 	});
 	
 	it('should return an succes to indicate an admin has been deauthorized to an application', function(done) {
@@ -560,17 +723,18 @@ describe('App', function() {
 		};
 		
 		request(url)
-		.post('/admin/app/deauthorize')
-		.set('Content-type','application/json')
-		.set('X-BLGREQ-APPID', appID)
-		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28')
-		.set('Authorization', authValue )
-		.send(clientrequest)
-		.end(function(err, res) {
-			if(res)
-				res.statusCode.should.be.equal(200);
-			done();
-		});
+			.post('/admin/app/deauthorize')
+			.set('Content-type','application/json')
+			.set('X-BLGREQ-APPID', appID)
+			.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28')
+			.set('Authorization', authValue )
+			.send(clientrequest)
+			.end(function(err, res) {
+				
+				if(res)
+					res.statusCode.should.be.equal(200);
+				done();
+			});
 	});
 	
 	it('should return an error response to indicate admin has NOT been deauthorized because of the email field is missing', function(done) {
@@ -578,18 +742,18 @@ describe('App', function() {
 		var clientrequest = {};
 		
 		request(url)
-		.post('/admin/app/deauthorize')
-		.set('Content-type','application/json')
-		.set('X-BLGREQ-APPID', appID)
-		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28')
-		.set('Authorization', authValue )
-		.send(clientrequest)
-		.end(function(err, res) {
-			//console.log(res.body);
-			if(res)
-				res.statusCode.should.be.equal(400);
-			done();
-		});
+			.post('/admin/app/deauthorize')
+			.set('Content-type','application/json')
+			.set('X-BLGREQ-APPID', appID)
+			.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28')
+			.set('Authorization', authValue )
+			.send(clientrequest)
+			.end(function(err, res) {
+				
+				if(res)
+					res.statusCode.should.be.equal(400);
+				done();
+			});
 	});
 	
 	it('should return an error response to indicate admin with email address is the last admin of the application', function(done) {
@@ -599,19 +763,18 @@ describe('App', function() {
 		};
 		
 		request(url)
-		.post('/admin/app/deauthorize')
-		.set('Content-type','application/json')
-		.set('X-BLGREQ-APPID', appID)
-		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28')
-		.set('Authorization', authValue )
-		.send(clientrequest)
-		.end(function(err, res) {
-			//console.log(appID);
-			//console.log(res.body);
-			if(res)
-				res.statusCode.should.be.equal(409);
-			done();
-		});
+			.post('/admin/app/deauthorize')
+			.set('Content-type','application/json')
+			.set('X-BLGREQ-APPID', appID)
+			.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28')
+			.set('Authorization', authValue )
+			.send(clientrequest)
+			.end(function(err, res) {
+				
+				if(res)
+					res.statusCode.should.be.equal(409);
+				done();
+			});
 	});
 	
 	it('should return an error response to indicate admin has NOT been deauthenticated because application with that ID doesn\'t exist', function(done) {
@@ -621,27 +784,30 @@ describe('App', function() {
 		};
 		
 		request(url)
-		.post('/admin/app/deauthorize')
-		.set('Content-type','application/json')
-		.set('X-BLGREQ-APPID', appID + '66')
-		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28')
-		.set('Authorization', authValue )
-		.send(clientrequest)
-		.end(function(err, res) {
-			if(res)
-				res.statusCode.should.be.equal(404);
-			done();
-		});
+			.post('/admin/app/deauthorize')
+			.set('Content-type','application/json')
+			.set('X-BLGREQ-APPID', appID + '66')
+			.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28')
+			.set('Authorization', authValue )
+			.send(clientrequest)
+			.end(function(err, res) {
+				
+				if(res)
+					res.statusCode.should.be.equal(404);
+				done();
+			});
 	});
 });
 
 describe('Context', function() {
 
 	it('should return a success response to indicate context succesfully created', function(done) {
+		
 		var clientrequest = {
 			"name": "context",
 			"meta": {"info": "some meta info"},
 		}
+		
 		request(url)
 			.post('/admin/context/add')
 			.set('Content-type','application/json')
@@ -649,6 +815,7 @@ describe('Context', function() {
 			.set('X-BLGREQ-APPID', appID )
 			.send(clientrequest)
 			.end(function(err, res) {
+				
 				var objectKey = Object.keys(res.body.content)[0];
 				contextID = res.body.content.id;
 				(res.body.content[objectKey].name == clientrequest.name).should.be.ok;
@@ -658,9 +825,11 @@ describe('Context', function() {
 	});
 
 	it('should return the requested context', function(done) {
+		
 		var clientrequest = {
 			"id": contextID
 		}
+		
 		request(url)
 			.post('/admin/context')
 			.set('Content-type','application/json')
@@ -668,14 +837,16 @@ describe('Context', function() {
 			.set('X-BLGREQ-APPID', appID )
 			.send(clientrequest)
 			.end(function(err, res) {
+				
 				res.statusCode.should.be.equal(200);
 				done();
 			});
 	});
 
 	it('should NOT return the requested context, requested context ID is missing', function(done) {
-		var clientrequest = {
-		}
+		
+		var clientrequest = {};
+		
 		request(url)
 			.post('/admin/context')
 			.set('Content-type','application/json')
@@ -683,28 +854,33 @@ describe('Context', function() {
 			.set('X-BLGREQ-APPID', appID)
 			.send(clientrequest)
 			.end(function(err, res) {
+				
 				res.statusCode.should.be.equal(400);
 				done();
 			});
 	});
 
 	it('should return an error response to indicate context NOT succesfully created because of bad client headers', function(done) {
+		
 		var clientrequest = {
 			"name": "context",
 			"meta": {"info": "some meta info"}
 		};
+		
 		request(url)
 			.post('/admin/context/add')
 			.set('Content-type','application/json')
 			.set('Authorization', authValue )
 			.send(clientrequest)
 			.end(function(err, res) {
+				
 				res.statusCode.should.be.equal(400);
 				done();
 			});
 	});
 
 	it('should return an error response to indicate context NOT succesfully created because request body is empty', function(done) {
+		
 		var clientrequest = {};
 		
 		request(url)
@@ -713,12 +889,14 @@ describe('Context', function() {
 			.set('Authorization', authValue )
 			.send(clientrequest)
 			.end(function(err, res) {
+				
 				res.statusCode.should.be.equal(400);
 				done();
 			});
 	});
 
 	it('should return a success response to indicate context was updated', function(done) {
+		
 		var clientrequest = {
 			"id": contextID,
 			"patches": [
@@ -728,7 +906,8 @@ describe('Context', function() {
 					"value": "New name"
 				}
 			]
-		}
+		};
+		
 		request(url)
 			.post('/admin/context/update')
 			.set('Content-type','application/json')
@@ -736,16 +915,19 @@ describe('Context', function() {
 			.set('Authorization', authValue )
 			.send(clientrequest)
 			.end(function(err, res) {
+				
 				res.statusCode.should.be.equal(200);
 				done();
 			});
 	});
 
 	it('should return an error response to indicate context was NOT updated because patches are missing', function(done) {
+		
 		var clientrequest = {
 			"id": Math.round(Math.random()*1000000)+100,
 			"name": "new name"
-		}
+		};
+		
 		request(url)
 			.post('/admin/context/update')
 			.set('Content-type','application/json')
@@ -753,12 +935,14 @@ describe('Context', function() {
 			.set('X-BLGREQ-APPID', appID )
 			.send(clientrequest)
 			.end(function(err, res) {
+				
 				res.statusCode.should.be.equal(400);
 				done();
 			});
 	});
 
 	it('should return an error response to indicate context was NOT updated because context does not exist', function(done) {
+		
 		var clientrequest = {
 			"id": Math.round(Math.random()*1000000)+100,
 			"patches": [{
@@ -767,6 +951,7 @@ describe('Context', function() {
 				value: "new value"
 			}]
 		};
+		
 		request(url)
 			.post('/admin/context/update')
 			.set('Content-type','application/json')
@@ -774,15 +959,18 @@ describe('Context', function() {
 			.set('X-BLGREQ-APPID', appID )
 			.send(clientrequest)
 			.end(function(err, res) {
+				
 				res.statusCode.should.be.equal(404);
 				done();
 			});
 	});
 
 	it('should return an error response to indicate context was NOT updated because of missing context id', function(done) {
+		
 		var clientrequest = {
 			"name": "new name"
-		}
+		};
+		
 		request(url)
 			.post('/admin/context/update')
 			.set('Content-type','application/json')
@@ -790,12 +978,14 @@ describe('Context', function() {
 			.set('X-BLGREQ-APPID', appID )
 			.send(clientrequest)
 			.end(function(err, res) {
+				
 				res.statusCode.should.be.equal(400);
 				done();
 			});
 	});
 
 	it('should return an error response to indicate context was NOT updated by another admin', function(done) {
+		
 		var clientrequest = {
 			"id": contextID,
 			"patches": [
@@ -805,7 +995,7 @@ describe('Context', function() {
 					"value": "New name"
 				}
 			]
-		}
+		};
 
 		request(url)
 			.post('/admin/context/update')
@@ -814,15 +1004,18 @@ describe('Context', function() {
 			.set('X-BLGREQ-APPID', appID)
 			.send(clientrequest)
 			.end(function(err, res) {
+				
 				res.statusCode.should.be.equal(401);
 				done();
 			});
 	});
 
 	it('should return an error response to indicate context was NOT removed because of invalid context id', function(done) {
+		
 		var clientrequest = {
 			"id": 1
 		}
+		
 		request(url)
 			.post('/admin/context/remove')
 			.set('Content-type','application/json')
@@ -830,15 +1023,18 @@ describe('Context', function() {
 			.set('X-BLGREQ-APPID', appID)
 			.send(clientrequest)
 			.end(function(err, res) {
+				
 				res.statusCode.should.be.equal(404);
 				done();
 			});
 	});
 
 	it('should return an error indicating the requested context does NOT exist', function(done) {
+		
 		var clientrequest = {
 			"id": Math.round(Math.random()*1000000)+100
-		}
+		};
+		
 		request(url)
 			.post('/admin/context')
 			.set('Content-type','application/json')
@@ -846,6 +1042,7 @@ describe('Context', function() {
 			.set('X-BLGREQ-APPID', appID )
 			.send(clientrequest)
 			.end(function(err, res) {
+				
 				res.statusCode.should.be.equal(404);
 				res.body.message.should.be.equal("Context not found");
 				done();
@@ -853,8 +1050,11 @@ describe('Context', function() {
 	});
 
 	it('should return all contexts using the old API', function(done) {
+		
 		this.timeout(9*DELAY);
+		
 		setTimeout(function () {
+			
 			request(url)
 				.get('/admin/contexts')
 				.set('Content-type','application/json')
@@ -862,6 +1062,7 @@ describe('Context', function() {
 				.set('X-BLGREQ-APPID', appID)
 				.send()
 				.end(function(err, res) {
+					
 					res.statusCode.should.be.equal(200);
 					res.body.content.should.have.length(1);
 					done();
@@ -870,8 +1071,11 @@ describe('Context', function() {
 	});
 
 	it('should return all contexts using the new API', function(done) {
+		
 		this.timeout(9*DELAY);
+		
 		setTimeout(function () {
+			
 			request(url)
 				.get('/admin/context/all')
 				.set('Content-type','application/json')
@@ -879,6 +1083,7 @@ describe('Context', function() {
 				.set('X-BLGREQ-APPID', appID)
 				.send()
 				.end(function(err, res) {
+					
 					res.statusCode.should.be.equal(200);
 					res.body.content.should.have.length(1);
 					done();
@@ -887,9 +1092,11 @@ describe('Context', function() {
 	});
 
 	it('should return a success response to indicate context was removed', function(done) {
+		
 		var clientrequest = {
 			"id": contextID
-		}
+		};
+		
 		request(url)
 			.post('/admin/context/remove')
 			.set('Content-type','application/json')
@@ -897,6 +1104,7 @@ describe('Context', function() {
 			.set('X-BLGREQ-APPID', appID)
 			.send(clientrequest)
 			.end(function(err, res) {
+				
 				res.statusCode.should.be.equal(200);
 				res.body.content.should.be.equal('Context removed');
 				done();
@@ -905,7 +1113,9 @@ describe('Context', function() {
 });
 
 describe('Schema', function() {
+	
 	it('should return a success response to indicate schema succesfully updated', function(done) {
+		
 		var clientrequest = {
 			"appId": appID,
 			"schema": {
@@ -979,12 +1189,14 @@ describe('Schema', function() {
 			.set('X-BLGREQ-APPID', appID )
 			.send(clientrequest)
 			.end(function(err, res) {
+				
 				res.statusCode.should.be.equal(200);
 				done();
 			});
 	});
 
 	it('should return an error response to indicate schema was NOT succesfully updated because of appID', function(done) {
+		
 		var clientrequest = {
 			"appId": "1",
 			"schema": {
@@ -1038,15 +1250,18 @@ describe('Schema', function() {
 			.set('X-BLGREQ-APPID', Math.round(Math.random()*1000000)+1000 )
 			.send(clientrequest)
 			.end(function(err, res) {
+				
 				res.statusCode.should.be.equal(404);
 				done();
 			});
 	});
 
 	it('should return an error response to indicate schema was NOT succesfully updated because of missing schema object', function(done) {
+		
 		var clientrequest = {
 			"appId": "1"
 		};
+		
 		request(url)
 			.post('/admin/schema/update')
 			.set('Content-type','application/json')
@@ -1054,12 +1269,14 @@ describe('Schema', function() {
 			.set('X-BLGREQ-APPID', appID )
 			.send(clientrequest)
 			.end(function(err, res) {
+				
 				res.statusCode.should.be.equal(400);
 				done();
 			});
 	});
 
 	it('should return a success response to indicate schema was retrived succesfully using the old API', function(done) {
+		
 		request(url)
 			.get('/admin/schemas')
 			.set('Content-type','application/json')
@@ -1067,12 +1284,14 @@ describe('Schema', function() {
 			.set('X-BLGREQ-APPID', appID )
 			.send()
 			.end(function(err, res) {
+				
 				res.statusCode.should.be.equal(200);
 				done();
 			});
 	});
 
 	it('should return a success response to indicate schema was retrived succesfully using the new API', function(done) {
+		
 		request(url)
 			.get('/admin/schema/all')
 			.set('Content-type','application/json')
@@ -1080,29 +1299,31 @@ describe('Schema', function() {
 			.set('X-BLGREQ-APPID', appID )
 			.send()
 			.end(function(err, res) {
+				
 				res.statusCode.should.be.equal(200);
 				done();
 			});
 	});
 	
-	// it('should return a success response to indicate a model was removed from the application', function(done) {
+	it('should return a success response to indicate a model was removed from the application', function(done) {
 		
-		// var clientrequest = {
-			// "model_name": "things"
-		// };
+		var clientrequest = {
+			"model_name": "things"
+		};
 		
-		// request(url)
-			// .post('/admin/schema/remove_model')
-			// .set('Content-type','application/json')
-			// .set('Authorization', authValue )
-			// .set('X-BLGREQ-APPID', appID )
-			// .send(clientrequest)
-			// .end(function(err, res) {
-				// console.log(res.body);
-				// res.statusCode.should.be.equal(200);
-				// done();
-			// });
-	// });
+		request(url)
+			.post('/admin/schema/remove_model')
+			.set('Content-type','application/json')
+			.set('Authorization', authValue )
+			.set('X-BLGREQ-APPID', appID )
+			.send(clientrequest)
+			.end(function(err, res) {
+				
+				//console.log(res.body);
+				res.statusCode.should.be.equal(200);
+				done();
+			});
+	});
 	
 	it('should return a error response to indicate a model was NOT removed from the application because of wrong appID', function(done) {
 		
@@ -1117,6 +1338,7 @@ describe('Schema', function() {
 			.set('X-BLGREQ-APPID', appID + '66' )
 			.send(clientrequest)
 			.end(function(err, res) {
+				
 				res.statusCode.should.be.equal(404);
 				done();
 			});
@@ -1135,6 +1357,7 @@ describe('Schema', function() {
 			.set('X-BLGREQ-APPID', appID + '66' )
 			.send(clientrequest)
 			.end(function(err, res) {
+				
 				res.statusCode.should.be.equal(404);
 				done();
 			});
@@ -1152,18 +1375,21 @@ describe('User', function() {
 	};
 
 	before(function(done){
+		
 		this.timeout(11*DELAY);
+		
 		request(url)
-		.post('/user/register')
-		.set('Content-type','application/json')
-		.set('X-BLGREQ-SIGN', appIDsha256 )
-		.set('X-BLGREQ-APPID', appID )
-		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
-		.send(clientrequest)
-		.end(function(err, res) {
-			//console.log(res.body);
-			setTimeout(done, 7*DELAY);
-		});
+			.post('/user/register')
+			.set('Content-type','application/json')
+			.set('X-BLGREQ-SIGN', appIDsha256 )
+			.set('X-BLGREQ-APPID', appID )
+			.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+			.send(clientrequest)
+			.end(function(err, res) {
+				
+				//console.log(res.body);
+				setTimeout(done, 7*DELAY);
+			});
 	});
 
 	it('should return a success response to indicate that an user was updated', function(done) {
@@ -1181,23 +1407,25 @@ describe('User', function() {
 		};
 		
 		request(url)
-		.post('/admin/user/update')
-		.set('Content-type','application/json')
-		.set('X-BLGREQ-SIGN', appIDsha256)
-		.set('X-BLGREQ-APPID', appID)
-		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28')
-		.set('Authorization', authValue)
-		.send(clientrequest)
-		.end(function(err, res) {
-			//console.log(res.body);
-			res.statusCode.should.be.equal(200);
-			setTimeout(done, 8*DELAY);
-		});
+			.post('/admin/user/update')
+			.set('Content-type','application/json')
+			.set('X-BLGREQ-SIGN', appIDsha256)
+			.set('X-BLGREQ-APPID', appID)
+			.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28')
+			.set('Authorization', authValue)
+			.send(clientrequest)
+			.end(function(err, res) {
+				
+				//console.log(res.body);
+				res.statusCode.should.be.equal(200);
+				setTimeout(done, 8*DELAY);
+			});
 	});
 
 	it('should return a success response to indicate that an user was NOT updated, user was missing from the request', function(done) {
-		var clientrequest = {
-		};
+		
+		var clientrequest = {};
+		
 		request(url)
 			.post('/admin/user/update')
 			.set('Content-type','application/json')
@@ -1207,17 +1435,20 @@ describe('User', function() {
 			.set('Authorization', authValue )
 			.send(clientrequest)
 			.end(function(err, res) {
+				
 				res.statusCode.should.be.equal(400);
 				done();
 			});
 	});
 
 	it('should return a success response to indicate that an user was NOT updated, user email address was missing from the request', function(done) {
+		
 		var clientrequest = {
 			"user": {
 				"name": "New Name"
 			}
 		};
+		
 		request(url)
 			.post('/admin/user/update')
 			.set('Content-type','application/json')
@@ -1227,13 +1458,15 @@ describe('User', function() {
 			.set('Authorization', authValue )
 			.send(clientrequest)
 			.end(function(err, res) {
+				
 				res.statusCode.should.be.equal(400);
 				done();
 			});
 	});
 
 	it('should return a success response indicating that a user has been deleted', function(done) {
-		this.timeout(25000);
+		
+		this.timeout(40*DELAY);
 
 		request(url)
 			.post('/user/register')
@@ -1243,7 +1476,9 @@ describe('User', function() {
 			.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 			.send(clientrequest)
 			.end(function(err, res) {
+				
 				setTimeout(function() {
+					
 					request(url)
 						.post('/admin/user/delete')
 						.set('Content-type','application/json')
@@ -1253,58 +1488,67 @@ describe('User', function() {
 						.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 						.send(clientrequest)
 						.end(function(err, res) {
+							
 							res.statusCode.should.be.equal(200);
 							done();
 						});
 				}, 2*DELAY);
 			});
-
 	});
 
-	// it('should return a success response indicating that a user has NOT been deleted, user does not belong to application', function(done) {
-	//  this.timeout(25000);
-	//  var userEmail = "user3@example.com";
-	//  var clientrequest = {
-	//    "email": userEmail,
-	//    "password": "secure_password1337",
-	//    "name": "John Smith"
-	//  };
-	//  request(url)
-	//  .post('/user/register')
-	//  .set('Content-type','application/json')
-	//  .set('X-BLGREQ-SIGN', appIDsha256 )
-	//  .set('X-BLGREQ-APPID', appID )
-	//  .set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
-	//  .send(clientrequest)
-	//  .end(function(err, res) {
-	//    var userEmail = "user2@example.com";
-	//    var clientrequest = {
-	//      "email": userEmail,
-	//      "password": "secure_password1337",
-	//      "name": "John Smith"
-	//    };
-	//    setTimeout(function() {
-	//      request(url)
-	//      .post('/admin/user/delete')
-	//      .set('Content-type','application/json')
-	//      .set('X-BLGREQ-SIGN', appIDsha256 )
-	//      .set('X-BLGREQ-APPID', appID )
-	//      .set('Authorization', authValue )
-	//      .set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
-	//      .send(clientrequest)
-	//      .end(function(err, res) {
-	//        res.statusCode.should.be.equal(500);
-	//        done();
-	//      });
-	//    }, DELAY);
-	//  });
-	// });
+	it('should return a success response indicating that a user has NOT been deleted, user does not belong to application', function(done) {
+		
+		this.timeout(24*DELAY);
+		
+		var userEmail = "user3@example.com";
+		var clientrequest = {
+		   "email": userEmail,
+		   "password": "secure_password1337",
+		   "name": "John Smith"
+		};
+		 
+		request(url)
+			.post('/user/register')
+			.set('Content-type','application/json')
+			.set('X-BLGREQ-SIGN', appIDsha256 )
+			.set('X-BLGREQ-APPID', appID )
+			.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+			.send(clientrequest)
+			.end(function(err, res) {
+				
+				var userEmail = "user2@example.com";
+				var clientrequest = {
+					"email": userEmail,
+					"password": "secure_password1337",
+					"name": "John Smith"
+				};
+
+				setTimeout(function() {
+					
+					request(url)
+						.post('/admin/user/delete')
+						.set('Content-type','application/json')
+						.set('X-BLGREQ-SIGN', appIDsha256 )
+						.set('X-BLGREQ-APPID', appID )
+						.set('Authorization', authValue )
+						.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+						.send(clientrequest)
+						.end(function(err, res) {
+							
+							res.statusCode.should.be.equal(404);
+							done();
+						});
+			   }, 16*DELAY);
+			});
+	});
 
 	it('should return a error response indicating that a user has NOT been deleted because of missing email address', function(done) {
+		
 		var clientrequest = {
 			"password": "secure_password1337",
 			"name": "John Smith"
 		};
+		
 		request(url)
 			.post('/admin/user/delete')
 			.set('Content-type','application/json')
@@ -1314,34 +1558,40 @@ describe('User', function() {
 			.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 			.send(clientrequest)
 			.end(function(err, res) {
+				
 				res.statusCode.should.be.equal(400);
 				done();
 			});
 	});
 
 	it('should return an error response indicating that a user has NOT been deleted because of appID not found', function(done) {
-		this.timeout(25000);
+		
+		this.timeout(40*DELAY);
+		
 		var userEmail = "user3@example.com";
 		var clientrequest = {
 			"email": userEmail,
 			"password": "secure_password1337",
 			"name": "John Smith"
 		};
+		
 		request(url)
 			.post('/admin/user/delete')
 			.set('Content-type','application/json')
 			.set('X-BLGREQ-SIGN', appIDsha256 )
-			.set('X-BLGREQ-APPID',   Math.round(Math.random()*1000000)+1000 )
+			.set('X-BLGREQ-APPID', Math.round(Math.random()*1000000)+1000 )
 			.set('Authorization', authValue )
 			.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 			.send(clientrequest)
 			.end(function(err, res) {
+				
 				res.statusCode.should.be.equal(404);
 				done();
 			});
 	});
 
 	it('should return an error response to indicate that an user was NOT found when trying to update', function(done) {
+		
 		var clientrequest = {
 			"email" : "wrong@example.com",
 			"patches": [
@@ -1352,6 +1602,7 @@ describe('User', function() {
 				}
 			]
 		};
+		
 		request(url)
 			.post('/admin/user/update')
 			.set('Content-type','application/json')
@@ -1361,12 +1612,14 @@ describe('User', function() {
 			.set('Authorization', authValue )
 			.send(clientrequest)
 			.end(function(err, res) {
+				
 				res.statusCode.should.be.equal(404);
 				done();
 			});
 	});
 
 	it('should return an error response to indicate that the user email is missing', function(done) {
+		
 		var clientrequest = {
 			"patches": [
 				{
@@ -1376,6 +1629,7 @@ describe('User', function() {
 				}
 			]
 		};
+		
 		request(url)
 			.post('/admin/user/update')
 			.set('Content-type','application/json')
@@ -1385,12 +1639,14 @@ describe('User', function() {
 			.set('Authorization', authValue )
 			.send(clientrequest)
 			.end(function(err, res) {
+				
 				res.statusCode.should.be.equal(400);
 				done();
 			});
 	});
 
 	it('should return a success response to indicate that an admin list was retrived', function(done) {
+		
 		request(url)
 			.get('/admin/users')
 			.set('Content-type','application/json')
@@ -1400,14 +1656,14 @@ describe('User', function() {
 			.set('Authorization', authValue )
 			.send()
 			.end(function(err, res) {
-				if(res) {
-					res.statusCode.should.be.equal(200);
-				}
+				
+				res.statusCode.should.be.equal(200);
 				done();
 			});
 	});
 
 	it('should return an error response to indicate that an admin list was NOT retrived for a bad app id', function(done) {
+		
 		request(url)
 			.get('/admin/users')
 			.set('Content-type','application/json')
@@ -1417,6 +1673,7 @@ describe('User', function() {
 			.set('Authorization', authValue )
 			.send()
 			.end(function(err, res) {
+				
 				if(res)
 					res.statusCode.should.be.equal(404);
 				done();
@@ -1424,6 +1681,7 @@ describe('User', function() {
 	});
 
 	it('should return a success response to indicate that an users list was retrived', function(done) {
+		
 		request(url)
 			.get('/admin/user/all')
 			.set('Content-type','application/json')
@@ -1433,6 +1691,7 @@ describe('User', function() {
 			.set('Authorization', authValue )
 			.send()
 			.end(function(err, res) {
+				
 				if(res) {
 					//console.log(res.body);
 					res.body.content.should.not.be.empty;
@@ -1443,6 +1702,7 @@ describe('User', function() {
 	});
 
 	it('should return an error response to indicate that an users list was NOT retrived for a bad app id', function(done) {
+		
 		request(url)
 			.get('/admin/user/all')
 			.set('Content-type','application/json')
@@ -1452,6 +1712,7 @@ describe('User', function() {
 			.set('Authorization', authValue )
 			.send()
 			.end(function(err, res) {
+				
 				if(res)
 					res.statusCode.should.be.equal(404);
 				done();

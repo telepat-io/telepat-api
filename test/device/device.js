@@ -10,7 +10,7 @@ var appID;
 var authValue;
 var appIDsha256 = common.appIDsha256;
 
-var adminEmail = 'admin'+Math.round(Math.random()*1000000)+'@example.com';
+var adminEmail = 'admin' + Math.round(Math.random() * 1000000) + '@example.com';
 var adminPassword = '5f4dcc3b5aa765d61d8327deb882cf99';
 
 var admin = {
@@ -21,29 +21,37 @@ var admin = {
 var invalidUDID = 'invalid';
 
 before(function(done){
-	this.timeout(10000);
+	
+	this.timeout(25*DELAY);
+	
 	var clientrequest = {
 		"name": "test-app",
 		"keys": [ common.appKey ]
 	};
+	
 	request(url)
 		.post('/admin/add')
 		.send(admin)
 		.end(function(err, res) {
+			
 			setTimeout(function () {
+				
 				request(url)
 					.post('/admin/login')
 					.set('Content-type','application/json')
 					.send(admin)
 					.end(function(err, res) {
+						
 						var token = res.body.content.token;
 						authValue = 'Bearer ' + token;
+						
 						request(url)
 							.post('/admin/app/add')
 							.set('Content-type','application/json')
 							.set('Authorization', authValue)
 							.send(clientrequest)
 							.end(function(err, res) {
+								
 								appID =  res.body.content.id;
 								done();
 							});
@@ -53,6 +61,7 @@ before(function(done){
 });
 
 it('should return a success response to indicate device succesfully registered', function(done) {
+	
 	var clientrequest = {
 		"info": {
 			"os": "Android",
@@ -66,7 +75,8 @@ it('should return a success response to indicate device succesfully registered',
 			"type": "android",
 			"token": "android pn token"
 		}
-	}
+	};
+	
 	request(url)
 		.post('/device/register')
 		.set('X-BLGREQ-SIGN', appIDsha256)
@@ -74,6 +84,7 @@ it('should return a success response to indicate device succesfully registered',
 		.set('X-BLGREQ-APPID', appID)
 		.send(clientrequest)
 		.end(function(err, res) {
+			
 			res.statusCode.should.be.equal(200);
 			res.body.content.identifier;
 			done();
@@ -81,6 +92,7 @@ it('should return a success response to indicate device succesfully registered',
 });
 
 it('should return a success response to indicate device succesfully registered with random udid', function(done) {
+	
 	var clientrequest = {
 		"info": {
 			"os": "Android",
@@ -94,7 +106,8 @@ it('should return a success response to indicate device succesfully registered w
 			"type": "android",
 			"token": "android pn token"
 		}
-	}
+	};
+	
 	request(url)
 		.post('/device/register')
 		.set('X-BLGREQ-SIGN', appIDsha256)
@@ -102,6 +115,7 @@ it('should return a success response to indicate device succesfully registered w
 		.set('X-BLGREQ-APPID',1)
 		.send(clientrequest)
 		.end(function(err, res) {
+			
 			res.statusCode.should.be.equal(200);
 			res.body.content.identifier;
 			done();
@@ -109,6 +123,7 @@ it('should return a success response to indicate device succesfully registered w
 });
 
 it('should return an error response to indicate device succesfully registered, uuid missing from request', function(done) {
+	
 	var clientrequest = {
 		"info": {
 			"os": "Android",
@@ -122,7 +137,8 @@ it('should return an error response to indicate device succesfully registered, u
 			"type": "android",
 			"token": "android pn token"
 		}
-	}
+	};
+	
 	request(url)
 		.post('/device/register')
 		.set('X-BLGREQ-SIGN', appIDsha256)
@@ -130,18 +146,21 @@ it('should return an error response to indicate device succesfully registered, u
 		.set('X-BLGREQ-APPID',1)
 		.send(clientrequest)
 		.end(function(err, res) {
+			
 			res.statusCode.should.be.equal(200);
 			done();
 		});
 });
 
 it('should return an error response to indicate device NOT succesfully registered because of missing info', function(done) {
+	
 	var clientrequest = {
 		"persistent": {
 			"type": "android",
 			"token": "android pn token"
 		}
-	}
+	};
+	
 	request(url)
 		.post('/device/register')
 		.set('X-BLGREQ-SIGN', appIDsha256)
@@ -149,13 +168,16 @@ it('should return an error response to indicate device NOT succesfully registere
 		.set('X-BLGREQ-APPID',1)
 		.send(clientrequest)
 		.end(function(err, res) {
+			
 			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
 
 it('should return an error response to indicate device NOT succesfully registered because of missing body', function(done) {
-	var clientrequest = {}
+	
+	var clientrequest = {};
+	
 	request(url)
 		.post('/device/register')
 		.set('X-BLGREQ-SIGN', appIDsha256)
@@ -163,12 +185,14 @@ it('should return an error response to indicate device NOT succesfully registere
 		.set('X-BLGREQ-APPID',1)
 		.send(clientrequest)
 		.end(function(err, res) {
+			
 			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
 
 it('should return an error response to indicate device NOT succesfully registered because of invalid UDID', function(done) {
+	
 	var clientrequest = {
 		"info": {
 			"os": "Android",
@@ -182,7 +206,8 @@ it('should return an error response to indicate device NOT succesfully registere
 			"type": "android",
 			"token": "android pn token"
 		}
-	}
+	};
+	
 	request(url)
 		.post('/device/register')
 		.set('X-BLGREQ-SIGN', appIDsha256)
@@ -190,6 +215,7 @@ it('should return an error response to indicate device NOT succesfully registere
 		.set('X-BLGREQ-APPID',appID)
 		.send(clientrequest)
 		.end(function(err, res) {
+			
 			res.statusCode.should.be.equal(404);
 			done();
 		});
