@@ -552,7 +552,7 @@ it('should return a success response to indicate that a object has NOT been upda
 		});
 });
 
-it('should return a success response to indicate that a object has NOT been updated because of missing id', function(done) {
+it('should return an error response to indicate that a object has NOT been updated because of missing id', function(done) {
 
 	var clientrequest = {
 		"model": "comments",
@@ -608,7 +608,7 @@ it('should return a success response to indicate that a object has NOT been upda
 		});
 });
 
-it('should return a success response to indicate that a object has NOT been updated because of model not found ', function(done) {
+it('should return an error response to indicate that a object has NOT been updated because of model not found ', function(done) {
 
 	var clientrequest = {
 		"model": "thingy",
@@ -631,7 +631,7 @@ it('should return a success response to indicate that a object has NOT been upda
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.statusCode.should.be.equal(400);
+			res.statusCode.should.be.equal(404);
 			done();
 		});
 });
@@ -777,7 +777,7 @@ it('should return a success response to indicate that a object has NOT been subs
 		});
 });
 
-it('should return a success response to indicate that a object has NOT been subscribed because object was not found', function(done) {
+it('should return an error response to indicate that a object has NOT been subscribed because object was not found', function(done) {
 
 	var subclientrequest = {
 		"channel": {

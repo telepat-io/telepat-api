@@ -277,6 +277,112 @@ it('should return a success response to indicate that the user was updated', fun
 		});
 });
 
+it('should return a success response to indicate that the user password was updated', function(done) {
+
+	var clientrequest = {
+		"patches" : [
+			{
+				"op": "replace",
+				"path": "user/"+userID+"/password",
+				"value": "new value"
+			}
+		]
+	};
+
+	request(url)
+		.post('/user/update')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256 )
+		.set('X-BLGREQ-APPID', appID )
+		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+		.set('Authorization', authValue )
+		.send(clientrequest)
+		.end(function(err, res) {
+			res.statusCode.should.be.equal(202);
+			done();
+		});
+});
+
+it('should return a success response to indicate that the user password was NOT updated because of empty request body', function(done) {
+
+	request(url)
+		.post('/user/update')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256 )
+		.set('X-BLGREQ-APPID', appID )
+		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+		.set('Authorization', authValue )
+		.send()
+		.end(function(err, res) {
+			res.statusCode.should.be.equal(400);
+			done();
+		});
+});
+
+it('should return a success response to indicate that the user password was NOT updated because patches is not an array', function(done) {
+
+	var clientrequest = {
+		"patches" : {}
+	};
+
+	request(url)
+		.post('/user/update')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256 )
+		.set('X-BLGREQ-APPID', appID )
+		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+		.set('Authorization', authValue )
+		.send(clientrequest)
+		.end(function(err, res) {
+			res.statusCode.should.be.equal(400);
+			done();
+		});
+});
+
+it('should return a success response to indicate that the user password was NOT updated because patches is an empty array', function(done) {
+
+	var clientrequest = {
+		"patches" : []
+	};
+
+	request(url)
+		.post('/user/update')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256 )
+		.set('X-BLGREQ-APPID', appID )
+		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+		.set('Authorization', authValue )
+		.send(clientrequest)
+		.end(function(err, res) {
+			res.statusCode.should.be.equal(400);
+			done();
+		});
+});
+
+it('should return a success response to indicate that the user was updated immidiate', function(done) {
+
+	this.timeout(20*DELAY);
+
+	var clientrequest = {
+		name: "new name",
+		password: "new pass"
+	};
+
+	request(url)
+		.post('/user/update_immediate')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256 )
+		.set('X-BLGREQ-APPID', appID )
+		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+		.set('Authorization', authValue )
+		.send(clientrequest)
+		.end(function(err, res) {
+
+			res.statusCode.should.be.equal(200);
+			setTimeout(done, 14*DELAY);
+		});
+});
+
 it('should return a success response to indicate that the token was updated', function(done) {
 
 	request(url)
