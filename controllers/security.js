@@ -104,7 +104,12 @@ security.tokenValidation = function(req, res, next) {
 	if (!req.headers.authorization)
 		return next(new Models.TelepatError(Models.TelepatError.errors.AuthorizationMissing));
 
-	return (expressJwt({secret: security.authSecret}))(req, res, next);
+	return (expressJwt({secret: security.authSecret}))(req, res, function(err) {
+		if (err && err.message == 'invalid signature') {
+			return next(new Models.TelepatError(Models.TelepatError.errors.MalformedAuthorizationToken))
+		} else
+			return next(err);
+	});
 };
 
 security.adminAppValidation = function (req, res, next) {

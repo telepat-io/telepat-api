@@ -476,7 +476,7 @@ it('should return a success response to indicate that a object has NOT been upda
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.statusCode.should.be.equal(401);
+			res.statusCode.should.be.equal(400);
 			done();
 		});
 });

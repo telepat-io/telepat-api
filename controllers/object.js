@@ -33,9 +33,7 @@ router.use(['/count'], security.objectACL('meta_read_acl'));
 
 var validateContext = function(appId, context, callback) {
 	Models.Application.hasContext(appId, context, function(err, result) {
-		if (err && err.status == 404) {
-			callback(new Models.TelepatError(Models.TelepatError.errors.ApplicationNotFound));
-		} else if (err)
+		if (err)
 			return callback(err);
 		else if (result === false) {
 			callback(new Models.TelepatError(Models.TelepatError.errors.InvalidContext, [context, appId]));
@@ -175,7 +173,9 @@ router.post('/subscribe', function(req, res, next) {
 		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidChannel));
 	}
 
-	async.waterfall([
+	var objects = [];
+
+	async.series([
 		//verify if context belongs to app
 		function(callback) {
 			validateContext(appId, context, callback);
@@ -191,24 +191,34 @@ router.post('/subscribe', function(req, res, next) {
 			});
 		},
 		function(callback) {
+			if (id) {
+				Models.Model(mdl, appId, context, id, function(err, results) {
+					if (err) return callback(err);
+
+					objects.push(results);
+
+					callback();
+				});
+			} else {
+				Models.Model.search(channelObject, function(err, results) {
+					if (err) return callback(err);
+
+					if (Array.isArray(results))
+						objects.concat(results);
+
+					callback();
+				});
+			}
+		},
+		function(callback) {
 			Models.Subscription.add(deviceId, channelObject,  function(err) {
 				if (err && err.status === 409)
 					return callback();
 
 				callback(err);
 			});
-		},
-		function(callback) {
-			if (id) {
-				Models.Model(mdl, appId, context, id, function(err, results) {
-					if (err) return callback(err);
-
-					callback(null, results);
-				});
-			} else {
-				Models.Model.search(channelObject, callback);
-			}
-		}/*,
+		}
+		/*,
 		function(results, callback) {
 			app.kafkaProducer.send([{
 				topic: 'track',
@@ -489,7 +499,7 @@ router.post('/create', function(req, res, next) {
  * 		"model": "comment",
  * 		"id": 1,
  * 		"context": 1,
- * 		"patch": [
+ * 		"patches": [
  * 			{
  * 				"op": "replace",
  * 				"path": "comment/1/text",
