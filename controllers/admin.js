@@ -12,21 +12,21 @@ var userRoute = require('./admin/user');
 var security = require('./security');
 var Models = require('telepat-models');
 
-var unless = function(paths, middleware) {
-	return function(req, res, next) {
-		var excluded = false;
-		for (var i=0; i<paths.length; i++) {
-			if (paths[i] === req.path) {
-				excluded = true;
-			}
-		}
-		if (excluded) {
-			return next();
-		} else {
-			return middleware(req, res, next);
-		}
-	};
-};
+// var unless = function(paths, middleware) {
+	// return function(req, res, next) {
+		// var excluded = false;
+		// for (var i=0; i<paths.length; i++) {
+			// if (paths[i] === req.path) {
+				// excluded = true;
+			// }
+		// }
+		// if (excluded) {
+			// return next();
+		// } else {
+			// return middleware(req, res, next);
+		// }
+	// };
+// };
 
 router.use('/', adminRoute);
 router.use('/app', appRoute);

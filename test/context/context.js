@@ -127,7 +127,7 @@ it('should return an error response to indicate context wa NOT succesfully retri
 		});
 });
 
-it('should return an error response to indicate context NOT succesfully retrived', function(done) {
+it('should return an error response to indicate context NOT succesfully retrived because of bad context ID', function(done) {
 	
 	var clientrequest = {
 		id: Math.round(Math.random()*1000000)+1000
