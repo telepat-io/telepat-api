@@ -732,7 +732,7 @@ it('should return a success response to indicate that a object has been subscrib
 	var subclientrequest = {
 		"channel": {
 			"context": contextID,
-			"model": "comments",
+			"model": "comments"
 		},
 	};
 
@@ -941,13 +941,12 @@ it('should return an error response to indicate that a object has NOT been subsc
 		});
 });
 
-it('should return a success response to indicate that a object has been unsubscribed', function(done) {
+it('should return an success response to indicate that a object has been unsubscribed', function(done) {
 
 	var subclientrequest = {
 		"channel": {
 			"context": contextID,
-			"model": "comments",
-			"id" : "66"
+			"model": "comments"
 		}
 	};
 
@@ -965,7 +964,7 @@ it('should return a success response to indicate that a object has been unsubscr
 		});
 });
 
-it('should return a success response to indicate that a object has NOT been unsubscribed because of empty body', function(done) {
+it('should return an error response to indicate that a object has NOT been unsubscribed because of empty body', function(done) {
 
 	request(url)
 		.post('/object/unsubscribe')
@@ -981,7 +980,7 @@ it('should return a success response to indicate that a object has NOT been unsu
 		});
 });
 
-it('should return a success response to indicate that a object has NOT been unsubscribed', function(done) {
+it('should return a error response to indicate that a object has NOT been unsubscribed', function(done) {
 
 	var subclientrequest = {
 		"channel": {
@@ -1031,7 +1030,8 @@ it('should return a success response to indicate that a object has NOT been unsu
 
 	var subclientrequest = {
 		"channel": {
-			"model": "comments"
+			"model": "comments",
+			"id" : "66"
 		}
 	};
 
