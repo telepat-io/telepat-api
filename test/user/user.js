@@ -515,7 +515,7 @@ it('should return a success response to indicate that the user has registered', 
 });
 
 it('should return a success response to indicate that the user has NOT registered', function(done) {
-
+	this.timeout(10*DELAY);
 	var clientrequest = {
 		"email": userEmail,
 		"password": "secure_password1337",
@@ -532,7 +532,7 @@ it('should return a success response to indicate that the user has NOT registere
 		.end(function(err, res) {
 
 			res.statusCode.should.be.equal(409);
-			done();
+			setTimeout(done, 5*DELAY);
 		});
 });
 

@@ -584,7 +584,7 @@ router.post('/update', function(req, res, next) {
 				track_callback(err);
 			});
 		}*/
-	], function(err, results) {
+	], function(err) {
 		if (err) {
 			console.log(req.originalUrl+': '+err.message.red);
 			return next(err);

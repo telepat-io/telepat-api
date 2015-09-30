@@ -287,7 +287,7 @@ router.post('/register', function(req, res, next) {
 			})], 'aggregation', callback);
 		},
 		//add this user to his/her friends array
-		function(result, callback) {
+		function(callback) {
 			if (fbFriends.length) {
 				app.messagingClient.send([JSON.stringify({fid: userProfile.id, friends: fbFriends})],
 					'update_friends', callback);

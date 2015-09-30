@@ -1481,7 +1481,7 @@ describe('Schema', function() {
 	});
 
 	it('should return a error response to indicate a model was NOT removed from the application because model was missing from the request', function(done) {
-
+		this.timeout(4*DELAY);
 		request(url)
 			.post('/admin/schema/remove_model')
 			.set('Content-type','application/json')

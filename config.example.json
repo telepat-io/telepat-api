@@ -1,6 +1,6 @@
 {
   "main_database": "ElasticSearch",
-  "message_queue": "Kafka",
+  "message_queue": "kafka",
   "ElasticSearch": {
 	"host": "hostname",
 	"port": 9200,
@@ -10,7 +10,7 @@
 	"host": "10.0.0.1",
 	"port": 6379
   },
-  "Kafka": {
+  "kafka": {
 	"host": "10.0.0.2",
 	"port": 2181
   },

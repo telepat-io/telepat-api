@@ -167,12 +167,12 @@ var OnServicesConnect = function() {
 };
 
 async.waterfall([
-	function DataBucket(callback) {
+	function(callback) {
 		Models.Application.datasource.dataStorage.onReady(function() {
 			callback();
 		});
 	},
-	function RedisClient(callback) {
+	function(callback) {
 		if (Models.Application.redisClient)
 			Models.Application.redisClient = null;
 
@@ -186,33 +186,19 @@ async.waterfall([
 			callback();
 		});
 	},
-	function Kafka(callback) {
+	function(callback) {
 		console.log('Waiting for Messaging Client connection...');
 
-		var kafkaConfiguration = mainConfiguration[messagingClient];
+		var clientConfiguration = mainConfiguration[messagingClient];
 
-		app.messagingClient = new Models[messagingClient](kafkaConfiguration, 'telepat-api');
-		app.messagingClient.on('ready', function() {
+		/**
+		 * @type {MessagingClient}
+		 */
+		app.messagingClient = new Models[messagingClient](clientConfiguration, 'telepat-api');
+		app.messagingClient.onReady(function() {
 			console.log(('Connected to Messaging Client '+messagingClient).green);
 			callback();
 		});
-		app.messagingClient.on('error', function(err) {
-			console.log('Messaging client not available.'.red+' Trying to reconnect.'+err);
-		});
-
-		/*app.kafkaClient = new kafka.Client(app.kafkaConfig.host+':'+app.kafkaConfig.port+'/',
-										app.kafkaConfig.clientName);
-		app.kafkaClient.on('ready', function() {
-			console.log('Client connected to Zookeeper.'.green);
-
-			app.kafkaProducer = new kafka.HighLevelProducer(app.kafkaClient);
-			app.kafkaProducer.on('error', function() {});
-
-			callback();
-		});
-		app.kafkaClient.on('error', function() {
-			console.log('Kafka broker not available.'.red+' Trying to reconnect.');
-		});*/
 	}
 ], OnServicesConnect);
 
