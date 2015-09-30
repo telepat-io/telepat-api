@@ -204,7 +204,7 @@ router.post('/subscribe', function(req, res, next) {
 					if (err) return callback(err);
 
 					if (Array.isArray(results))
-						objects.concat(results);
+						objects = objects.concat(results);
 
 					callback();
 				});
@@ -234,11 +234,11 @@ router.post('/subscribe', function(req, res, next) {
 				callback(err, results);
 			});
 		}*/
-	], function(err, result) {
+	], function(err) {
 		if (err)
 			return next(err);
 
-		res.status(200).json({status: 200, content: result}).end();
+		res.status(200).json({status: 200, content: objects}).end();
 	});
 });
 
