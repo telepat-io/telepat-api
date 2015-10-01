@@ -196,7 +196,6 @@ async.waterfall([
 		 */
 		app.messagingClient = new Models[messagingClient](clientConfiguration, 'telepat-api');
 		app.messagingClient.onReady(function() {
-			console.log(('Connected to Messaging Client '+messagingClient).green);
 			callback();
 		});
 	}

@@ -1423,7 +1423,7 @@ describe('Schema', function() {
 	});
 
 	it('should return a success response to indicate a model was removed from the application', function(done) {
-
+		this.timeout(6*DELAY);
 		var clientrequest = {
 			"model_name": "things"
 		};

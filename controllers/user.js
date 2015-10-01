@@ -5,7 +5,6 @@ var async = require('async');
 var Models = require('telepat-models');
 var security = require('./security');
 var jwt = require('jsonwebtoken');
-var crypto = require('crypto');
 var microtime = require('microtime-nodejs');
 
 var options = {

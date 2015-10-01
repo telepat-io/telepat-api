@@ -20,16 +20,6 @@ security.encryptPassword = function(password, callback) {
 	bcrypt.hash(password, app.get('password_salt'), callback);
 };
 
-security.deviceIDExists = function(req, res, next) {
-	var deviceId = req._telepat.device_id;
-
-	if (!deviceId) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.DeviceIdMissing));
-	}
-
-	next();
-};
-
 security.contentTypeValidation = function(req, res, next) {
 	if (req.get('Content-Type') && req.get('Content-Type').substring(0, 16) !== 'application/json')
 		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidContentType));
