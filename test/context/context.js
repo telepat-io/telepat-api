@@ -27,30 +27,30 @@ var admin = {
 };
 
 before(function(done){
-	
+
 	this.timeout(10000);
-	
+
 	var clientrequest = {
 		"name": "test-app",
 		"keys": [ common.appKey ]
 	};
-	
+
 	request(url)
 		.post('/admin/add')
 		.send(admin)
 		.end(function(err, res) {
-			
+
 			setTimeout(function () {
-				
+
 				request(url)
 					.post('/admin/login')
 					.set('Content-type','application/json')
 					.send(admin)
 					.end(function(err, res) {
-						
+
 						var token = res.body.content.token;
 						authValue = 'Bearer ' + token;
-						
+
 						request(url)
 							.post('/admin/app/add')
 							.set('Content-type','application/json')
@@ -66,14 +66,14 @@ before(function(done){
 });
 
 before(function(done){
-	
+
 	this.timeout(10*DELAY);
-	
+
 	var clientrequest = {
 		"name": "context",
 		"meta": {"info": "some meta info"},
 	};
-	
+
 	request(url)
 		.post('/admin/context/add')
 		.set('Content-type','application/json')
@@ -81,18 +81,18 @@ before(function(done){
 		.set('X-BLGREQ-APPID', appID )
 		.send(clientrequest)
 		.end(function(err, res) {
-			
+
 			contextID = res.body.content.id;
 			done();
 		});
 });
 
 it('should return a success response to indicate context succesfully retrived', function(done) {
-	
+
 	var clientrequest = {
 		"id": contextID
 	};
-	
+
 	request(url)
 		.post('/context')
 		.set('Content-type','application/json')
@@ -102,16 +102,14 @@ it('should return a success response to indicate context succesfully retrived', 
 		.set('Authorization', authValue )
 		.send(clientrequest)
 		.end(function(err, res) {
-			
+
 			res.statusCode.should.be.equal(200);
 			done();
 		});
 });
 
 it('should return an error response to indicate context wa NOT succesfully retrived because of missing context ID', function(done) {
-	
-	var clientrequest = {};
-	
+
 	request(url)
 		.post('/context')
 		.set('Content-type','application/json')
@@ -119,36 +117,36 @@ it('should return an error response to indicate context wa NOT succesfully retri
 		.set('X-BLGREQ-APPID', appID )
 		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 		.set('Authorization', authValue )
-		.send(clientrequest)
+		.send()
 		.end(function(err, res) {
-			
+
 			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
 
 it('should return an error response to indicate context NOT succesfully retrived because of bad context ID', function(done) {
-	
+
 	var clientrequest = {
 		id: Math.round(Math.random()*1000000)+1000
 	};
-	
+
 	request(url)
-		.get('/context')
+		.post('/context')
 		.set('X-BLGREQ-SIGN', appIDsha256 )
 		.set('X-BLGREQ-APPID', appID )
 		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 		.set('Authorization', authValue )
 		.send(clientrequest)
 		.end(function(err, res) {
-			
+
 			res.statusCode.should.be.equal(404);
 			done();
 		});
 });
 
 it('should return a success response to indicate all contexts succesfully retrived', function(done) {
-	
+
 	request(url)
 		.get('/context/all')
 		.set('Content-type','application/json')
@@ -158,7 +156,7 @@ it('should return a success response to indicate all contexts succesfully retriv
 		.set('Authorization', authValue )
 		.send()
 		.end(function(err, res) {
-			
+
 			res.statusCode.should.be.equal(200);
 			done();
 		});
