@@ -1126,9 +1126,8 @@ it('should return an error response to indicate that the object id was missing',
 	var clientrequest = {
 		"model": "comments",
 		"context": contextID,
-		"content": {
-		}
-	}
+		"content": {}
+	};
 
 	request(url)
 		.post('/object/delete')
@@ -1149,8 +1148,7 @@ it('should return an error response to indicate that the object model was missin
 	var clientrequest = {
 		"context": contextID,
 		"id" : 1,
-		"content": {
-		}
+		"content": {}
 	};
 
 	request(url)
@@ -1173,8 +1171,7 @@ it('should return an error response to indicate that the object was not deleted 
 		"model": "comments",
 		"context": contextID,
 		"id" : 1,
-		"content": {
-		}
+		"content": {}
 	};
 
 	request(url)
@@ -1195,8 +1192,7 @@ it('should return an error response to indicate that the object was not deleted 
 	var clientrequest = {
 		"model": "comments",
 		"id" : 1,
-		"content": {
-		}
+		"content": {}
 	};
 
 	request(url)
