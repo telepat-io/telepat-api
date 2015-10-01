@@ -495,7 +495,7 @@ it('should return a success response to indicate that a object has been updated'
 		});
 });
 
-it('should return a success response to indicate that a object has NOT been updated bacause of bad authentication', function(done) {
+it('should return a success response to indicate that a object has NOT been updated because of bad authentication', function(done) {
 
 	var clientrequest = {
 		"model": "comments",

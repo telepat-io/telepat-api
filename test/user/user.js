@@ -194,7 +194,7 @@ it('should return a success response to indicate that the user has logged in via
 		});
 });
 
-it('should return a success response to indicate that the user info was retrived', function(done) {
+it('should return a success response to indicate that the user info was retrieved', function(done) {
 
 	request(url)
 		.get('/user/me')
@@ -208,6 +208,73 @@ it('should return a success response to indicate that the user info was retrived
 
 			res.statusCode.should.be.equal(200);
 			done();
+		});
+});
+
+it('should return an error response to indicate that the user info was NOT retrieved because user was not found', function(done) {
+
+	this.timeout(25*DELAY);
+
+	var clientrequest = {
+		"email": "exampleUser@appscend.com",
+		"password": "secure_password1337",
+		"name": "John Smith"
+	};
+
+	request(url)
+		.post('/user/register')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256 )
+		.set('X-BLGREQ-APPID', appID )
+		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+		.send(clientrequest)
+		.end(function(err, res) {
+			setTimeout(function() {
+				request(url)
+					.post('/user/login_password')
+					.set('Content-type','application/json')
+					.set('X-BLGREQ-SIGN', appIDsha256 )
+					.set('X-BLGREQ-APPID', appID )
+					.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+					.send(clientrequest)
+					.end(function(err, res) {
+
+						var token3 = res.body.content.token;
+						var userID3 = res.body.content.user.id;
+						var authValue3 = 'Bearer ' + token3;
+						var subclientrequest = {
+							"id" : userID3,
+							"email" : "exampleUser@appscend.com"
+						};
+
+						request(url)
+							.post('/user/delete')
+							.set('X-BLGREQ-SIGN', appIDsha256)
+							.set('X-BLGREQ-UDID', deviceIdentification)
+							.set('X-BLGREQ-APPID',appID)
+							.set('Authorization', authValue3)
+							.send(subclientrequest)
+							.end(function(err, res) {
+
+								setTimeout(function(){
+
+									request(url)
+										.get('/user/me')
+										.set('Content-type','application/json')
+										.set('X-BLGREQ-SIGN', appIDsha256 )
+										.set('X-BLGREQ-APPID', appID )
+										.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+										.set('Authorization', authValue3 )
+										.send()
+										.end(function(err, res) {
+
+											res.statusCode.should.be.equal(404);
+											done();
+										});
+								},10*DELAY);
+							});
+					});
+			}, 7*DELAY);
 		});
 });
 
@@ -250,6 +317,46 @@ it('should return an error response to indicate that the user has NOT logged in 
 		.send(clientrequest)
 		.end(function(err, res) {
 			res.statusCode.should.be.equal(404);
+			done();
+		});
+});
+
+it('should return an error response to indicate that the user has NOT logged in via user & password because email was missing for request', function(done) {
+
+	var clientrequest = {
+		"password": "secure_password",
+		"name": "John Smith"
+	};
+
+	request(url)
+		.post('/user/login_password')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256 )
+		.set('X-BLGREQ-APPID', appID )
+		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+		.send(clientrequest)
+		.end(function(err, res) {
+			res.statusCode.should.be.equal(400);
+			done();
+		});
+});
+
+it('should return an error response to indicate that the user has NOT logged in via user & password because password was missing for request', function(done) {
+
+	var clientrequest = {
+		"email": 'user'+Math.round(Math.random()*1000000)+'@example.com',
+		"name": "John Smith"
+	};
+
+	request(url)
+		.post('/user/login_password')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256 )
+		.set('X-BLGREQ-APPID', appID )
+		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+		.send(clientrequest)
+		.end(function(err, res) {
+			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
@@ -473,6 +580,105 @@ it('should return an error response to indicate that the token was NOT updated b
 		});
 });
 
+it('should return an error response to indicate that the token was NOT updated because authorization is missing', function(done) {
+
+	request(url)
+		.get('/user/refresh_token')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256)
+		.set('X-BLGREQ-UDID', deviceIdentification)
+		.set('X-BLGREQ-APPID',appID)
+		.send()
+		.end(function(err, res) {
+
+			res.statusCode.should.be.equal(401);
+			done();
+		});
+});
+
+it('should return an error response to indicate that the token was NOT updated because X-BLGREQ-SIGN is missing', function(done) {
+
+	request(url)
+		.get('/user/refresh_token')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-UDID', deviceIdentification)
+		.set('X-BLGREQ-APPID',appID)
+		.set('Authorization', authValue )
+		.send()
+		.end(function(err, res) {
+
+			res.statusCode.should.be.equal(400);
+			done();
+		});
+});
+
+it('should return an error response to indicate that the token was NOT updated because Content-type is not application/json', function(done) {
+
+	request(url)
+		.get('/user/refresh_token')
+		.set('Content-type','application/other')
+		.set('X-BLGREQ-SIGN', appIDsha256)
+		.set('X-BLGREQ-UDID', deviceIdentification)
+		.set('X-BLGREQ-APPID',appID)
+		.set('Authorization', authValue )
+		.send()
+		.end(function(err, res) {
+
+			res.statusCode.should.be.equal(415);
+			done();
+		});
+});
+
+it('should return an error response to indicate that the token was NOT updated because of invalid api key', function(done) {
+
+	request(url)
+		.get('/user/refresh_token')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256 + '66')
+		.set('X-BLGREQ-UDID', deviceIdentification)
+		.set('X-BLGREQ-APPID',appID)
+		.set('Authorization', authValue )
+		.send()
+		.end(function(err, res) {
+
+			res.statusCode.should.be.equal(401);
+			done();
+		});
+});
+
+it('should return an error response to indicate that the token was NOT updated because of missing UDID', function(done) {
+
+	request(url)
+		.get('/user/refresh_token')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256 )
+		.set('X-BLGREQ-APPID',appID)
+		.set('Authorization', authValue )
+		.send()
+		.end(function(err, res) {
+
+			res.statusCode.should.be.equal(400);
+			done();
+		});
+});
+
+it('should return an error response to indicate that the token was NOT updated because device ID does not exist', function(done) {
+
+	request(url)
+		.get('/user/refresh_token')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256)
+		.set('X-BLGREQ-UDID', deviceIdentification + '66')
+		.set('X-BLGREQ-APPID',appID+ '66')
+		.set('Authorization', authValue )
+		.send()
+		.end(function(err, res) {
+
+			res.statusCode.should.be.equal(404);
+			done();
+		});
+});
+
 it('should return a success response to indicate that the user logged out', function(done) {
 
 	request(url)
@@ -514,8 +720,8 @@ it('should return a success response to indicate that the user has registered', 
 		});
 });
 
-it('should return a success response to indicate that the user has NOT registered', function(done) {
-	this.timeout(10*DELAY);
+it('should return a success response to indicate that the user has NOT registered because user is already registered', function(done) {
+
 	var clientrequest = {
 		"email": userEmail,
 		"password": "secure_password1337",
@@ -532,7 +738,23 @@ it('should return a success response to indicate that the user has NOT registere
 		.end(function(err, res) {
 
 			res.statusCode.should.be.equal(409);
-			setTimeout(done, 5*DELAY);
+			done();
+		});
+});
+
+it('should return a success response to indicate that the user has NOT registered because of empty body', function(done) {
+
+	request(url)
+		.post('/user/register')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256 )
+		.set('X-BLGREQ-APPID', appID)
+		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+		.send()
+		.end(function(err, res) {
+
+			res.statusCode.should.be.equal(400);
+			done();
 		});
 });
 

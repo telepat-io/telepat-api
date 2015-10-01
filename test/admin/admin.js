@@ -1,8 +1,6 @@
 var common = require('../common');
 var request = common.request;
 var should = common.should;
-var assert = common.assert;
-var crypto = common.crypto;
 var url = common.url;
 var DELAY = common.DELAY;
 
@@ -27,7 +25,6 @@ var admin2 = {
 
 var token2;
 var authValue2;
-var deletedcontextID;
 
 var userEmail = 'user'+Math.round(Math.random()*1000000)+'@example.com';
 
@@ -809,9 +806,29 @@ describe('App', function() {
 			});
 	});
 
+	it('should return an error response to indicate admin has NOT been deauthorized because of empty request body', function(done) {
+
+		request(url)
+			.post('/admin/app/deauthorize')
+			.set('Content-type','application/json')
+			.set('X-BLGREQ-APPID', appID)
+			.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28')
+			.set('Authorization', authValue )
+			.send()
+			.end(function(err, res) {
+
+				if(res)
+					res.statusCode.should.be.equal(400);
+				done();
+			});
+	});
+
+
 	it('should return an error response to indicate admin has NOT been deauthorized because of the email field is missing', function(done) {
 
-		var clientrequest = {};
+		var clientrequest = {
+			"something": adminEmail2
+		};
 
 		request(url)
 			.post('/admin/app/deauthorize')
@@ -824,6 +841,27 @@ describe('App', function() {
 
 				if(res)
 					res.statusCode.should.be.equal(400);
+				done();
+			});
+	});
+
+	it('should return an error response to indicate admin has NOT been deauthorized because admin was not found in application', function(done) {
+
+		var clientrequest = {
+			"email": adminEmail2
+		};
+
+		request(url)
+			.post('/admin/app/deauthorize')
+			.set('Content-type','application/json')
+			.set('X-BLGREQ-APPID', appID)
+			.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28')
+			.set('Authorization', authValue2 )
+			.send(clientrequest)
+			.end(function(err, res) {
+
+				if(res)
+					res.statusCode.should.be.equal(401);
 				done();
 			});
 	});
@@ -873,7 +911,7 @@ describe('App', function() {
 
 describe('Context', function() {
 
-	it('should return a success response to indicate context succesfully created', function(done) {
+	it('should return a success response to indicate context successfully created', function(done) {
 
 		var clientrequest = {
 			"name": "context",
@@ -892,6 +930,21 @@ describe('Context', function() {
 				contextID = res.body.content.id;
 				(res.body.content[objectKey].name == clientrequest.name).should.be.ok;
 				res.statusCode.should.be.equal(200);
+				done();
+			});
+	});
+
+	it('should return an error response to indicate context was NOT successfully created because of empty request body', function(done) {
+
+		request(url)
+			.post('/admin/context/add')
+			.set('Content-type','application/json')
+			.set('Authorization', authValue )
+			.set('X-BLGREQ-APPID', appID )
+			.send()
+			.end(function(err, res) {
+
+				res.statusCode.should.be.equal(400);
 				done();
 			});
 	});
@@ -991,6 +1044,32 @@ describe('Context', function() {
 			});
 	});
 
+	it('should return an error response to indicate context was NOT updated because context was not found', function(done) {
+
+		var clientrequest = {
+			"id": contextID + '66',
+			"patches": [
+				{
+					"op": "replace",
+					"path": "context/"+contextID + '66' +"/name",
+					"value": "New name"
+				}
+			]
+		};
+
+		request(url)
+			.post('/admin/context/update')
+			.set('Content-type','application/json')
+			.set('X-BLGREQ-APPID', appID )
+			.set('Authorization', authValue )
+			.send(clientrequest)
+			.end(function(err, res) {
+
+				res.statusCode.should.be.equal(404);
+				done();
+			});
+	});
+
 	it('should return an error response to indicate context was NOT updated because patches are missing', function(done) {
 
 		var clientrequest = {
@@ -1026,27 +1105,6 @@ describe('Context', function() {
 			});
 	});
 
-	it('should return an error response to indicate context was NOT updated because patches are missing', function(done) {
-
-		var clientrequest = {
-			"id": Math.round(Math.random()*1000000)+100,
-			"name": "new name"
-		};
-
-		request(url)
-			.post('/admin/context/update')
-			.set('Content-type','application/json')
-			.set('Authorization', authValue )
-			.set('X-BLGREQ-APPID', appID )
-			.send(clientrequest)
-			.end(function(err, res) {
-
-				res.statusCode.should.be.equal(400);
-				done();
-			});
-	});
-
-
 	it('should return an error response to indicate context was NOT updated because patches is empty', function(done) {
 
 		var clientrequest = {
@@ -1070,7 +1128,14 @@ describe('Context', function() {
 	it('should return an error response to indicate context was NOT updated because of missing context id', function(done) {
 
 		var clientrequest = {
-			"name": "new name"
+			"name": "new name",
+			"patches": [
+				{
+					"op": "replace",
+					"path": "context/"+contextID+"/name",
+					"value": "New name"
+				}
+			]
 		};
 
 		request(url)
@@ -1423,7 +1488,7 @@ describe('Schema', function() {
 	});
 
 	it('should return a success response to indicate a model was removed from the application', function(done) {
-		this.timeout(6*DELAY);
+
 		var clientrequest = {
 			"model_name": "things"
 		};
@@ -1471,7 +1536,7 @@ describe('Schema', function() {
 			.post('/admin/schema/remove_model')
 			.set('Content-type','application/json')
 			.set('Authorization', authValue )
-			.set('X-BLGREQ-APPID', appID + '66' )
+			.set('X-BLGREQ-APPID', appID )
 			.send(clientrequest)
 			.end(function(err, res) {
 
@@ -1481,16 +1546,20 @@ describe('Schema', function() {
 	});
 
 	it('should return a error response to indicate a model was NOT removed from the application because model was missing from the request', function(done) {
-		this.timeout(4*DELAY);
+
+		var clientrequest = {
+			"something": "others"
+		};
+
 		request(url)
 			.post('/admin/schema/remove_model')
 			.set('Content-type','application/json')
 			.set('Authorization', authValue )
-			.set('X-BLGREQ-APPID', appID + '66' )
-			.send()
+			.set('X-BLGREQ-APPID', appID)
+			.send(clientrequest)
 			.end(function(err, res) {
 
-				res.statusCode.should.be.equal(404);
+				res.statusCode.should.be.equal(400);
 				done();
 			});
 	});
@@ -1522,7 +1591,7 @@ describe('User', function() {
 			});
 	});
 
-	it('should return a success response to indicate that an user was updated', function(done) {
+	it('should return a success response to indicate that an user name was updated', function(done) {
 		this.timeout(12*DELAY);
 
 		var clientrequest = {
@@ -1545,6 +1614,36 @@ describe('User', function() {
 			.set('Authorization', authValue)
 			.send(clientrequest)
 			.end(function(err, res) {
+				//console.log(clientrequest);
+				//console.log(res.body);
+				res.statusCode.should.be.equal(200);
+				setTimeout(done, 8*DELAY);
+			});
+	});
+
+	it('should return a success response to indicate that an user password was updated', function(done) {
+		this.timeout(12*DELAY);
+
+		var clientrequest = {
+			"email" : userEmail,
+			"patches": [
+				{
+					"op": "replace",
+					"path": "user/"+userEmail+"/password",
+					"value": "new value"
+				}
+			]
+		};
+
+		request(url)
+			.post('/admin/user/update')
+			.set('Content-type','application/json')
+			.set('X-BLGREQ-SIGN', appIDsha256)
+			.set('X-BLGREQ-APPID', appID)
+			.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28')
+			.set('Authorization', authValue)
+			.send(clientrequest)
+			.end(function(err, res) {
 
 				//console.log(res.body);
 				res.statusCode.should.be.equal(200);
@@ -1552,9 +1651,30 @@ describe('User', function() {
 			});
 	});
 
-	it('should return a success response to indicate that an user was NOT updated, user was missing from the request', function(done) {
+	it('should return an error response to indicate that an user was NOT updated, user was missing from the request', function(done) {
 
-		var clientrequest = {};
+		request(url)
+			.post('/admin/user/update')
+			.set('Content-type','application/json')
+			.set('X-BLGREQ-SIGN', appIDsha256 )
+			.set('X-BLGREQ-APPID', appID )
+			.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+			.set('Authorization', authValue )
+			.send()
+			.end(function(err, res) {
+
+				res.statusCode.should.be.equal(400);
+				done();
+			});
+	});
+
+	it('should return an error response to indicate that an user was NOT updated, user email address was missing from the request', function(done) {
+
+		var clientrequest = {
+			"user": {
+				"name": "New Name"
+			}
+		};
 
 		request(url)
 			.post('/admin/user/update')
@@ -1571,12 +1691,11 @@ describe('User', function() {
 			});
 	});
 
-	it('should return a success response to indicate that an user was NOT updated, user email address was missing from the request', function(done) {
+	it('should return an error response to indicate that an user was NOT updated because patches is empty', function(done) {
 
 		var clientrequest = {
-			"user": {
-				"name": "New Name"
-			}
+			"email" : userEmail,
+			"patches": []
 		};
 
 		request(url)
