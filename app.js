@@ -80,6 +80,11 @@ if (validEnvVariables) {
 	messagingClient = mainConfiguration.message_queue;
 }
 
+if (!Models[mainDatabase]) {
+	console.log('Unable to load'.red+' "'+mainDatabase+'" main database: not found.\nAborting...');
+	process.exit(-1);
+}
+
 Models.Application.datasource = new Models.Datasource();
 Models.Application.datasource.setMainDatabase(new Models[mainDatabase](mainConfiguration[mainDatabase]));
 
@@ -190,6 +195,11 @@ async.waterfall([
 		console.log('Waiting for Messaging Client connection...');
 
 		var clientConfiguration = mainConfiguration[messagingClient];
+
+		if (!Models[messagingClient]) {
+			console.log('Unable to load'.red+' "'+messagingClient+'" messaging queue: not found. Aborting...');
+			process.exit(-1);
+		}
 
 		/**
 		 * @type {MessagingClient}
