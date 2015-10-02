@@ -195,9 +195,7 @@ async.waterfall([
 		 * @type {MessagingClient}
 		 */
 		app.messagingClient = new Models[messagingClient](clientConfiguration, 'telepat-api');
-		app.messagingClient.onReady(function() {
-			callback();
-		});
+		app.messagingClient.onReady(callback);
 	}
 ], OnServicesConnect);
 
