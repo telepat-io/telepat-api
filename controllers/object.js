@@ -125,6 +125,7 @@ router.post('/subscribe', function(req, res, next) {
 		return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
 	}
 
+	var page = req.body.page ? req.body.page : 1;
 	var channel = req.body.channel;
 
 	if (!channel) {
@@ -200,7 +201,7 @@ router.post('/subscribe', function(req, res, next) {
 					callback();
 				});
 			} else {
-				Models.Model.search(channelObject, function(err, results) {
+				Models.Model.search(channelObject, page, function(err, results) {
 					if (err) return callback(err);
 
 					if (Array.isArray(results))

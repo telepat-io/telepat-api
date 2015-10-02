@@ -11,7 +11,7 @@ router.use('/all',
 	security.applicationIdValidation,
 	security.adminAppValidation);
 /**
- * @api {get} /admin/user/all GetAppUsers
+ * @api {post} /admin/user/all GetAppUsers
  * @apiDescription Gets all users of the app
  * @apiName AdminGetUsers
  * @apiGroup Admin
@@ -22,6 +22,12 @@ router.use('/all',
                        The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
+ *
+ * @apiExample {json} Client Request
+ *
+ * {
+ * 		"page": 1
+ * }
  *
  * 	@apiSuccessExample {json} Success Response
  * 	{
@@ -34,10 +40,11 @@ router.use('/all',
  * @apiError 404 [011]ApplicationNotFound If the Application doesn't exist
  */
 
-router.get('/all', function(req, res, next) {
+router.post('/all', function(req, res, next) {
 	var appId = req._telepat.applicationId;
+	var page = req.body.page ? req.body.page : 1;
 
-	Models.User.getAll(appId, function(err, results) {
+	Models.User.getAll(appId, page, function(err, results) {
 		if (err) return next(err);
 
 		results.forEach(function(item, index, originalArray) {

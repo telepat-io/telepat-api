@@ -160,7 +160,7 @@ it('should return an error response to indicate context NOT succesfully retrived
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.statusCode.should.be.equal(404);
+			res.statusCode.should.be.equal(401);
 			done();
 		});
 });
