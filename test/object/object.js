@@ -207,7 +207,7 @@ before(function(done){
 
 			deviceIdentification =  res.body.content.identifier;
 			var clientrequest = {
-				"email": 'admin'+Math.round(Math.random()*1000000)+'@example.com',
+				"email": 'user'+Math.round(Math.random()*1000000)+'@example.com',
 				"password": "secure_password1337",
 				"name": "John Smith"
 			};

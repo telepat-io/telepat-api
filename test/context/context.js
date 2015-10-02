@@ -108,7 +108,7 @@ it('should return a success response to indicate context succesfully retrived', 
 		});
 });
 
-it('should return an error response to indicate context wa NOT succesfully retrived because of missing context ID', function(done) {
+it('should return an error response to indicate context wa NOT successfully retrieved because of missing context ID', function(done) {
 
 	request(url)
 		.post('/context')
@@ -125,7 +125,7 @@ it('should return an error response to indicate context wa NOT succesfully retri
 		});
 });
 
-it('should return an error response to indicate context NOT succesfully retrived because of bad context ID', function(done) {
+it('should return an error response to indicate context NOT successfully retrieved because of bad context ID', function(done) {
 
 	var clientrequest = {
 		id: Math.round(Math.random()*1000000)+1000
@@ -145,7 +145,7 @@ it('should return an error response to indicate context NOT succesfully retrived
 		});
 });
 
-it('should return an error response to indicate context NOT succesfully retrived because of missing authorization', function(done) {
+it('should return an error response to indicate context NOT successfully retrieved because of missing authorization', function(done) {
 
 	var clientrequest = {
 		id: contextID
@@ -156,7 +156,6 @@ it('should return an error response to indicate context NOT succesfully retrived
 		.set('X-BLGREQ-SIGN', appIDsha256 )
 		.set('X-BLGREQ-APPID', appID )
 		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
-
 		.send(clientrequest)
 		.end(function(err, res) {
 
@@ -165,7 +164,27 @@ it('should return an error response to indicate context NOT succesfully retrived
 		});
 });
 
-it('should return a success response to indicate all contexts succesfully retrived', function(done) {
+it('should return an error response to indicate context NOT successfully retrieved because of bad authorization', function(done) {
+
+	var clientrequest = {
+		id: contextID
+	};
+
+	request(url)
+		.post('/context')
+		.set('X-BLGREQ-SIGN', appIDsha256 )
+		.set('X-BLGREQ-APPID', appID )
+		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+		.set('Authorization', authValue + '66')
+		.send(clientrequest)
+		.end(function(err, res) {
+
+			res.statusCode.should.be.equal(400);
+			done();
+		});
+});
+
+it('should return a success response to indicate all contexts successfully retrieved', function(done) {
 
 	request(url)
 		.get('/context/all')
