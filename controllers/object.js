@@ -9,8 +9,6 @@ router.use(security.applicationIdValidation);
 router.use(security.apiKeyValidation);
 router.use(security.deviceIdValidation);
 
-router.use(security.tokenValidation);
-
 /**
  * Middleware used to load application model schema
  */
@@ -121,16 +119,8 @@ var validateContext = function(appId, context, callback) {
  *
  */
 router.post('/subscribe', function(req, res, next) {
-	if (Object.getOwnPropertyNames(req.body).length === 0) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
-	}
-
 	var page = req.body.page ? req.body.page : 1;
 	var channel = req.body.channel;
-
-	if (!channel) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['channel']));
-	}
 
 	var id = channel.id,
 		context = channel.context,
@@ -143,12 +133,6 @@ router.post('/subscribe', function(req, res, next) {
 
 	if (!context)
 		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['channel.context']));
-
-	if (!mdl)
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['channel.model']));
-
-	if (!Models.Application.loadedAppModels[appId][mdl])
-		return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationSchemaModelNotFound, [appId, mdl]));
 
 	var channelObject = new Models.Channel(appId);
 
@@ -275,15 +259,7 @@ router.post('/subscribe', function(req, res, next) {
  * @apiError 400 [027]InvalidChannel When trying to subscribe to an invalid channel
  */
 router.post('/unsubscribe', function(req, res, next) {
-	if (Object.getOwnPropertyNames(req.body).length === 0) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
-	}
-
 	var channel = req.body.channel;
-
-	if (!channel) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['channel']));
-	}
 
 	var id = channel.id,
 	context = channel.context,
@@ -296,12 +272,6 @@ router.post('/unsubscribe', function(req, res, next) {
 
 	if (!context)
 		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['channel.context']));
-
-	if (!mdl)
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['channel.model']));
-
-	if (!Models.Application.loadedAppModels[appId][mdl])
-		return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationSchemaModelNotFound, [appId, mdl]));
 
 	var channelObject = new Models.Channel(appId);
 
@@ -398,10 +368,6 @@ router.post('/unsubscribe', function(req, res, next) {
  *
  */
 router.post('/create', function(req, res, next) {
-	if (Object.getOwnPropertyNames(req.body).length === 0) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
-	}
-
 	var content = req.body.content;
 	var mdl = req.body.model;
 	var context = req.body.context;
@@ -410,12 +376,6 @@ router.post('/create', function(req, res, next) {
 
 	if (!context)
 		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['channel.context']));
-
-	if (!mdl)
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['channel.model']));
-
-	if (!Models.Application.loadedAppModels[appId][mdl])
-		return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationSchemaModelNotFound, [appId, mdl]));
 
 	content.type = mdl;
 	content.context_id = context;
@@ -517,10 +477,6 @@ router.post('/create', function(req, res, next) {
  * 	}
  */
 router.post('/update', function(req, res, next) {
-	if (Object.getOwnPropertyNames(req.body).length === 0) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
-	}
-
 	var modifiedMicrotime = microtime.now();
 	var context = req.body.context;
 	var patch = req.body.patches;
@@ -533,12 +489,6 @@ router.post('/update', function(req, res, next) {
 
 	if (!context)
 		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['context']));
-
-	if (!mdl)
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['model']));
-
-	if (!Models.Application.loadedAppModels[appId][mdl])
-		return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationSchemaModelNotFound, [appId, mdl]));
 
 	if (!Array.isArray(req.body.patches)) {
 		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidFieldValue,
@@ -629,10 +579,6 @@ router.post('/update', function(req, res, next) {
  *
  */
 router.post('/delete', function(req, res, next) {
-	if (Object.getOwnPropertyNames(req.body).length === 0) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
-	}
-
 	var id = req.body.id;
 	var context = req.body.context;
 	var mdl = req.body.model;
@@ -643,12 +589,6 @@ router.post('/delete', function(req, res, next) {
 
 	if (!context)
 		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['context']));
-
-	if (!mdl)
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['model']));
-
-	if (!Models.Application.loadedAppModels[appId][mdl])
-		return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationSchemaModelNotFound, [appId, mdl]));
 
 	async.series([
 		function(aggCallback) {
@@ -697,10 +637,6 @@ router.post('/delete', function(req, res, next) {
  *
  */
 router.post('/count', function(req, res, next) {
-	if (Object.getOwnPropertyNames(req.body).length === 0) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
-	}
-
 	var appId = req._telepat.applicationId,
 		channel = req.body.channel;
 

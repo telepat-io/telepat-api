@@ -121,8 +121,10 @@ security.adminAppValidation = function (req, res, next) {
 
 security.objectACL = function (accessControl) {
 	return function(req, res, next) {
-		if (!Object.getOwnPropertyNames(req.body).length) {
-			next();
+		if (!req.headers.authorization)
+			return next(new Models.TelepatError(Models.TelepatError.errors.AuthorizationMissing));
+		if (!req.body || !Object.getOwnPropertyNames(req.body).length) {
+			return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
 		} else if (req.body.model || (req.body.channel && req.body.channel.model)) {
 			var mdl = req.body.model || req.body.channel.model;
 
@@ -136,9 +138,6 @@ security.objectACL = function (accessControl) {
 
 			var acl = Models.Application.loadedAppModels[req._telepat.applicationId][mdl][accessControl];
 
-			if (!req.headers.authorization)
-				return next(new Models.TelepatError(Models.TelepatError.errors.AuthorizationMissing));
-
 			if (acl & ACL_AUTHENTICATED || acl & ACL_ADMIN) {
 				var authHeaderParts = req.headers.authorization.split(' ');
 				var authToken = authHeaderParts[1];
@@ -146,7 +145,7 @@ security.objectACL = function (accessControl) {
 				if (authToken) {
 					jwt.verify(authToken, security.authSecret, function (err, decoded) {
 						if (err)
-							return next(new Models.TelepatError(Models.TelepatError.errors.InvalidAuthorization, [err.message]));
+							return next(new Models.TelepatError(Models.TelepatError.errors.MalformedAuthorizationToken, [err.message]));
 
 						if ((!(acl & ACL_UNAUTHENTICATED)) && (!(acl & ACL_AUTHENTICATED)) &&  (acl & ACL_ADMIN) && (!decoded.isAdmin) )
 							return next(new Models.TelepatError(Models.TelepatError.errors.OperationNotAllowed));
@@ -166,7 +165,7 @@ security.objectACL = function (accessControl) {
 				return next(new Models.TelepatError(Models.TelepatError.errors.OperationNotAllowed));
 			}
 		} else {
-			next();
+			next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['model or channel.model']));
 		}
 	}
 };
