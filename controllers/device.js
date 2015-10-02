@@ -105,10 +105,11 @@ router.post('/register', function(req, res, next) {
 			});
 		}
 	} else {
-		req.body.id = req._telepat.device_id;
 
 		if (Object.getOwnPropertyNames(req.body).length === 0)
 			return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
+
+		req.body.id = req._telepat.device_id;
 
 		Models.Subscription.updateDevice(req._telepat.device_id, req.body, function(err, result) {
 			if (err && err.status == 404) {

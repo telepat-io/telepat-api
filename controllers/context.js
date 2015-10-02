@@ -100,7 +100,7 @@ router.post('/', function (req, res, next) {
 	}
 
 	Models.Context(req.body.id, function (err, res1) {
-		if (err && err.status === 404){
+		if (err && err.status == 404){
 			return next(new Models.TelepatError(Models.TelepatError.errors.ContextNotFound));
 		} else if (err)
 			next(err);

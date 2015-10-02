@@ -206,14 +206,27 @@ it('should return an error response to indicate device NOT succesfully registere
 
 it('should return an error response to indicate device NOT succesfully registered because of missing body', function(done) {
 
-	var clientrequest = {};
-
 	request(url)
 		.post('/device/register')
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', '')
 		.set('X-BLGREQ-APPID',1)
-		.send(clientrequest)
+		.send()
+		.end(function(err, res) {
+
+			res.statusCode.should.be.equal(400);
+			done();
+		});
+});
+
+it('should return an error response to indicate device NOT succesfully registered because of missing body and invalidUDID', function(done) {
+
+	request(url)
+		.post('/device/register')
+		.set('X-BLGREQ-SIGN', appIDsha256)
+		.set('X-BLGREQ-UDID', 'invalidUDID')
+		.set('X-BLGREQ-APPID',1)
+		.send()
 		.end(function(err, res) {
 
 			res.statusCode.should.be.equal(400);
