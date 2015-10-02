@@ -145,6 +145,26 @@ it('should return an error response to indicate context NOT succesfully retrived
 		});
 });
 
+it('should return an error response to indicate context NOT succesfully retrived because of missing authorization', function(done) {
+
+	var clientrequest = {
+		id: contextID
+	};
+
+	request(url)
+		.post('/context')
+		.set('X-BLGREQ-SIGN', appIDsha256 )
+		.set('X-BLGREQ-APPID', appID )
+		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+
+		.send(clientrequest)
+		.end(function(err, res) {
+
+			res.statusCode.should.be.equal(404);
+			done();
+		});
+});
+
 it('should return a success response to indicate all contexts succesfully retrived', function(done) {
 
 	request(url)

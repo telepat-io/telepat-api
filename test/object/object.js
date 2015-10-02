@@ -1,8 +1,6 @@
 var common = require('../common');
 var request = common.request;
 var should = common.should;
-var assert = common.assert;
-var crypto = common.crypto;
 var url = common.url;
 var DELAY = common.DELAY;
 
@@ -14,6 +12,7 @@ var appID;
 var authValue;
 var userAuthValue;
 var contextID;
+var appKey = common.appKey;
 
 var subclientrequest = {
 	"channel": {
@@ -114,9 +113,36 @@ before(function(done){
 												"type": "string"
 											}
 										},
+										"belongsTo": [
+											{
+												"parentModel": "events",
+												"relationType": "hasMany"
+											}
+										],
 										"read_acl": 6,
 										"write_acl": 6,
 										"meta_read_acl": 6
+									},
+									"events": {
+										"namespace": "events",
+										"type": "events",
+										"properties": {
+											"text": {
+												"type": "string"
+											},
+											"image": {
+												"type": "string"
+											},
+											"options": {
+												"type": "object"
+											}
+										},
+										"hasMany": [
+											"comments"
+										],
+										"read_acl": 7,
+										"write_acl": 7,
+										"meta_read_acl": 4
 									}
 								}
 							};
@@ -330,7 +356,7 @@ it('should return an error response to indicate that object has NOT been created
 		});
 });
 
-it('should return an error response to indicate that object has NOT been created because of missing model', function(done) {
+it('should return an error response to indicate that object has NOT been created because of missing model in request body', function(done) {
 
 	var clientrequest = {
 		"context": contextID,
@@ -349,6 +375,97 @@ it('should return an error response to indicate that object has NOT been created
 		.end(function(err, res) {
 
 			res.statusCode.should.be.equal(400);
+			done();
+		});
+});
+
+it('should return an error response to indicate that object has NOT been created because content is missing', function(done) {
+
+	var clientrequest = {
+		"context": contextID,
+		"model": "comments",
+	};
+
+	request(url)
+		.post('/object/create')
+		.set('X-BLGREQ-SIGN', appIDsha256)
+		.set('X-BLGREQ-UDID', deviceIdentification)
+		.set('X-BLGREQ-APPID',appID)
+		.set('Authorization', userAuthValue )
+		.send(clientrequest)
+		.end(function(err, res) {
+
+			res.statusCode.should.be.equal(500);
+			done();
+		});
+});
+
+it('should return an error response to indicate that object has NOT been created because content is empty', function(done) {
+
+	var clientrequest = {
+		"context": contextID,
+		"model": "comments",
+		"content": {}
+	};
+
+	request(url)
+		.post('/object/create')
+		.set('X-BLGREQ-SIGN', appIDsha256)
+		.set('X-BLGREQ-UDID', deviceIdentification)
+		.set('X-BLGREQ-APPID',appID)
+		.set('Authorization', userAuthValue )
+		.send(clientrequest)
+		.end(function(err, res) {
+
+			res.statusCode.should.be.equal(400);
+			done();
+		});
+});
+
+it('should return an error response to indicate that object has NOT been created because of invalid parent', function(done) {
+
+	var clientrequest = {
+		"context": contextID,
+		"model": "comments",
+		"content": {
+			"event_id" :1,
+		}
+	};
+
+	request(url)
+		.post('/object/create')
+		.set('X-BLGREQ-SIGN', appIDsha256)
+		.set('X-BLGREQ-UDID', deviceIdentification)
+		.set('X-BLGREQ-APPID',appID)
+		.set('Authorization', userAuthValue )
+		.send(clientrequest)
+		.end(function(err, res) {
+
+			res.statusCode.should.be.equal(400);
+			done();
+		});
+});
+
+it('should return an error response to indicate that object has NOT been created because of model does not exist', function(done) {
+
+	var clientrequest = {
+		"context": contextID,
+		"model": "something",
+		"content": {
+			"events_id" :1,
+		}
+	};
+
+	request(url)
+		.post('/object/create')
+		.set('X-BLGREQ-SIGN', appIDsha256)
+		.set('X-BLGREQ-UDID', deviceIdentification)
+		.set('X-BLGREQ-APPID',appID)
+		.set('Authorization', userAuthValue )
+		.send(clientrequest)
+		.end(function(err, res) {
+
+			res.statusCode.should.be.equal(404);
 			done();
 		});
 });
@@ -750,6 +867,93 @@ it('should return a success response to indicate that a object has been subscrib
 			done();
 		});
 });
+
+it('should return a success response to indicate that a object has been subscribed', function(done) {
+
+	var subclientrequest = {
+		"channel": {
+			"context": contextID,
+			"model": "events"
+		},
+	};
+
+	request(url)
+		.post('/object/subscribe')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256)
+		.set('X-BLGREQ-UDID', deviceIdentification)
+		.set('X-BLGREQ-APPID',appID)
+		.set('Authorization', userAuthValue )
+		.send(subclientrequest)
+		.end(function(err, res) {
+
+			res.statusCode.should.be.equal(200);
+			done();
+		});
+});
+
+it('should return an error response to indicate that a object has NOT been subscribed because of invalid context', function(done) {
+
+	var subclientrequest = {
+		"channel": {
+			"context": Math.round(Math.random()*1000000),
+			"model": "comments"
+		},
+	};
+
+	request(url)
+		.post('/object/subscribe')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256)
+		.set('X-BLGREQ-UDID', deviceIdentification)
+		.set('X-BLGREQ-APPID',appID)
+		.set('Authorization', userAuthValue )
+		.send(subclientrequest)
+		.end(function(err, res) {
+
+			res.statusCode.should.be.equal(500);
+			done();
+		});
+});
+
+it('should return an error response to indicate that a object has NOT been subscribed because context does not belong to app', function(done) {
+
+	var clientrequest = {
+		"name": "test-app",
+		"keys": [ appKey ]
+	};
+
+	request(url)
+		.post('/admin/app/add')
+		.set('Content-type','application/json')
+		.set('Authorization', authValue)
+		.send(clientrequest)
+		.end(function(err, res) {
+
+			var appID2 =  res.body.content.id;
+			var subclientrequest = {
+				"channel": {
+					"context": contextID,
+					"model": "comments"
+				},
+			};
+
+			request(url)
+				.post('/object/subscribe')
+				.set('Content-type', 'application/json')
+				.set('X-BLGREQ-SIGN', appIDsha256)
+				.set('X-BLGREQ-UDID', deviceIdentification)
+				.set('X-BLGREQ-APPID', appID2)
+				.set('Authorization', userAuthValue)
+				.send(subclientrequest)
+				.end(function (err, res) {
+
+					res.statusCode.should.be.equal(404);
+					done();
+				});
+		});
+});
+
 
 it('should return a success response to indicate that a object has NOT been subscribed', function(done) {
 

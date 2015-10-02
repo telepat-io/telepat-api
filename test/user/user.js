@@ -91,7 +91,25 @@ before(function(done){
 
 it('should return an error response to indicate that the user has NOT logged via Facebook because of missing access token', function(done) {
 
-	var clientrequest = {};
+	request(url)
+		.post('/user/login')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256 )
+		.set('X-BLGREQ-APPID', appID )
+		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+		.send()
+		.end(function(err, res) {
+			//console.log(res.body);
+			res.statusCode.should.be.equal(400);
+			done();
+		});
+});
+
+it('should return an error response to indicate that the user has NOT logged via Facebook because of invalid token', function(done) {
+
+	var clientrequest = {
+		"access_token": "invalidToken"
+	};
 
 	request(url)
 		.post('/user/login')
@@ -101,8 +119,8 @@ it('should return an error response to indicate that the user has NOT logged via
 		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 		.send(clientrequest)
 		.end(function(err, res) {
-			//console.log(res.body);
-			res.statusCode.should.be.equal(400);
+
+			res.statusCode.should.be.equal(500);
 			done();
 		});
 });

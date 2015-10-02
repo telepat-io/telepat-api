@@ -1564,6 +1564,25 @@ describe('Schema', function() {
 				done();
 			});
 	});
+
+	it('should return a error response to indicate a model was NOT removed from the application because of bad route', function(done) {
+
+		var clientrequest = {
+			"something": "others"
+		};
+
+		request(url)
+			.post('/admin/schema/remove_mode')
+			.set('Content-type','application/json')
+			.set('Authorization', authValue )
+			.set('X-BLGREQ-APPID', appID)
+			.send(clientrequest)
+			.end(function(err, res) {
+
+				res.statusCode.should.be.equal(404);
+				done();
+			});
+	});
 });
 
 describe('User', function() {
