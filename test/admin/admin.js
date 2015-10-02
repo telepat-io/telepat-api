@@ -1917,7 +1917,7 @@ describe('User', function() {
 	it('should return a success response to indicate that an admin list was retrived', function(done) {
 
 		request(url)
-			.get('/admin/users')
+			.post('/admin/users')
 			.set('Content-type','application/json')
 			.set('X-BLGREQ-SIGN', appIDsha256)
 			.set('X-BLGREQ-APPID', appID)
@@ -1934,7 +1934,7 @@ describe('User', function() {
 	it('should return an error response to indicate that an admin list was NOT retrived for a bad app id', function(done) {
 
 		request(url)
-			.get('/admin/users')
+			.post('/admin/users')
 			.set('Content-type','application/json')
 			.set('X-BLGREQ-SIGN', appIDsha256)
 			.set('X-BLGREQ-APPID', Math.round(Math.random()*1000000)+1000)
@@ -1952,7 +1952,7 @@ describe('User', function() {
 	it('should return a success response to indicate that an users list was retrived', function(done) {
 
 		request(url)
-			.get('/admin/user/all')
+			.post('/admin/user/all')
 			.set('Content-type','application/json')
 			.set('X-BLGREQ-SIGN', appIDsha256)
 			.set('X-BLGREQ-APPID', appID)
@@ -1973,7 +1973,7 @@ describe('User', function() {
 	it('should return an error response to indicate that an users list was NOT retrived for a bad app id', function(done) {
 
 		request(url)
-			.get('/admin/user/all')
+			.post('/admin/user/all')
 			.set('Content-type','application/json')
 			.set('X-BLGREQ-SIGN', appIDsha256)
 			.set('X-BLGREQ-APPID', Math.round(Math.random()*1000000)+1000)

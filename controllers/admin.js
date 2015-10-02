@@ -155,8 +155,9 @@ router.use('/users',
  *
  */
 
-router.get('/users', function(req, res, next) {
-	Models.User.getAll(req._telepat.applicationId, function(err, results) {
+router.post('/users', function(req, res, next) {
+	var page = req.body.page ? req.body.page : 1;
+	Models.User.getAll(req._telepat.applicationId, page, function(err, results) {
 		if (err) return next(err);
 
 		results.forEach(function(item, index, originalArray) {
