@@ -1184,7 +1184,7 @@ it('should return an error response to indicate that a object has NOT been unsub
 		});
 });
 
-it('should return a error response to indicate that a object has NOT been unsubscribed', function(done) {
+it('should return a error response (400) to indicate that a object has NOT been unsubscribed', function(done) {
 
 	var subclientrequest = {
 		"channel": {
@@ -1206,6 +1206,89 @@ it('should return a error response to indicate that a object has NOT been unsubs
 		.end(function(err, res) {
 
 			res.statusCode.should.be.equal(400);
+			done();
+		});
+});
+
+it('should return a error response (404) to indicate that a object has NOT been unsubscribed', function(done) {
+
+	var subclientrequest = {
+		"channel": {
+			"context": contextID,
+			"model": "comments",
+			"id" : '66',
+			"parent": "parent",
+			"user": "user"
+		}
+	};
+
+	request(url)
+		.post('/object/unsubscribe')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256)
+		.set('X-BLGREQ-UDID', deviceIdentification)
+		.set('X-BLGREQ-APPID',appID)
+		.set('Authorization', userAuthValue )
+		.send(subclientrequest)
+		.end(function(err, res) {
+
+			res.statusCode.should.be.equal(404);
+			done();
+		});
+});
+
+it('should return a error response (404) to indicate that a object has NOT been unsubscribed, using filters', function(done) {
+
+	var subclientrequest = {
+		"channel": {
+			"context": contextID,
+			"model": "comments"
+		},
+		"filters": {
+			"or": [
+				{
+					"and": [
+						{
+							"is": {
+								"gender": "male",
+								"age": 23
+							}
+						},
+						{
+							"range": {
+								"experience": {
+									"gte": 1,
+									"lte": 6
+								}
+							}
+						}
+					]
+				},
+				{
+					"and": [
+						{
+							"like": {
+								"image_url": "png",
+								"website": "png"
+							}
+						}
+					]
+				}
+			]
+		}
+	};
+
+	request(url)
+		.post('/object/unsubscribe')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256)
+		.set('X-BLGREQ-UDID', deviceIdentification)
+		.set('X-BLGREQ-APPID',appID)
+		.set('Authorization', userAuthValue )
+		.send(subclientrequest)
+		.end(function(err, res) {
+
+			res.statusCode.should.be.equal(404);
 			done();
 		});
 });
