@@ -661,7 +661,7 @@ router.post('/count', function(req, res, next) {
 		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidChannel));
 	}
 
-	Models.Model.count(channel.model, appId, function(err, result) {
+	Models.Model.modelCountByChannel(channelObject, function(err, result) {
 		if (err) return next(err);
 
 		res.status(200).json({status: 200, content: result}).end();
