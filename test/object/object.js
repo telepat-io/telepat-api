@@ -105,6 +105,20 @@ before(function(done){
 							var clientrequest = {
 								"appId": appID,
 								"schema": {
+									"answers": {
+										"namespace": "answers",
+										"type": "answers",
+										"properties": {},
+										"belongsTo": [
+											{
+												"parentModel": "events",
+												"relationType": "hasSome"
+											}
+										],
+										"read_acl": 6,
+										"write_acl": 6,
+										"meta_read_acl": 6
+									},
 									"comments": {
 										"namespace": "comments",
 										"type": "comments",
@@ -124,6 +138,32 @@ before(function(done){
 										"meta_read_acl": 6
 									},
 									"events": {
+										"namespace": "events",
+										"type": "events",
+										"properties": {
+											"text": {
+												"type": "string"
+											},
+											"image": {
+												"type": "string"
+											},
+											"options": {
+												"type": "object"
+											}
+										},
+										"hasMany": [
+											"comments"
+										],
+										"hasSome": [
+											"answers"
+										],
+										"read_acl": 7,
+										"write_acl": 7,
+										"meta_read_acl": 4,
+										"icon": "fa-image",
+										"hasSome_property": "options"
+									},
+									"things": {
 										"namespace": "events",
 										"type": "events",
 										"properties": {
@@ -245,15 +285,13 @@ it('should return an error (400) response to indicate that the client made a bad
 
 	this.timeout(10*DELAY);
 
-	var clientrequest = {};
-
 	request(url)
 		.post('/object/create')
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', deviceIdentification )
 		.set('X-BLGREQ-APPID',appID)
 		.set('Authorization', userAuthValue )
-		.send(clientrequest)
+		.send()
 		.end(function(err, res) {
 
 			res.statusCode.should.be.equal(400);
@@ -279,6 +317,33 @@ it('should return an error (401) response to indicate that only authenticated us
 		.end(function(err, res) {
 
 			res.statusCode.should.be.equal(401);
+			done();
+		});
+});
+
+it('should return a error response to indicate that a object has NOT been created', function(done) {
+
+	var subclientrequest = {
+		"context": contextID,
+		"model": "answers",
+		"content": {
+			events_id: -1
+		}
+	};
+
+	request(url)
+		.post('/object/create')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256)
+		.set('X-BLGREQ-UDID', deviceIdentification)
+		.set('X-BLGREQ-APPID',appID)
+		.set('Authorization', userAuthValue )
+		.send(subclientrequest)
+		.end(function(err, res) {
+
+			res.body.code.should.be.equal('004');
+			res.body.status.should.be.equal(400);
+			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
@@ -850,7 +915,7 @@ it('should return a success response to indicate that a object has been subscrib
 		"channel": {
 			"context": contextID,
 			"model": "comments"
-		},
+		}
 	};
 
 	request(url)
@@ -868,13 +933,70 @@ it('should return a success response to indicate that a object has been subscrib
 		});
 });
 
-it('should return a success response to indicate that a object has been subscribed', function(done) {
+it('should return an error response to indicate that a object has NOT been subscribed because of invalid authorization', function(done) {
+
+	var subclientrequest = {
+		"channel": {
+			"context": contextID,
+			"model": "comments"
+		}
+	};
+	var userAuthValue = 'Bearer ';
+	request(url)
+		.post('/object/subscribe')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256)
+		.set('X-BLGREQ-UDID', deviceIdentification)
+		.set('X-BLGREQ-APPID',appID)
+		.set('Authorization', userAuthValue )
+		.send(subclientrequest)
+		.end(function(err, res) {
+console.log(res.body);
+			res.body.code.should.be.equal('014');
+			res.statusCode.should.be.equal(401);
+			done();
+		});
+});
+
+it('should return an error response to indicate that a object has been NOT subscribed because of filters', function(done) {
 
 	var subclientrequest = {
 		"channel": {
 			"context": contextID,
 			"model": "events"
 		},
+		"filters": {
+			"or": [
+				{
+					"and": [
+						{
+							"is": {
+								"gender": "male",
+								"age": 23
+							}
+						},
+						{
+							"range": {
+								"experience": {
+									"gte": 1,
+									"lte": 6
+								}
+							}
+						}
+					]
+				},
+				{
+					"and": [
+						{
+							"like": {
+								"image_url": "png",
+								"website": "png"
+							}
+						}
+					]
+				}
+			]
+		}
 	};
 
 	request(url)
@@ -887,7 +1009,8 @@ it('should return a success response to indicate that a object has been subscrib
 		.send(subclientrequest)
 		.end(function(err, res) {
 
-			res.statusCode.should.be.equal(200);
+			res.body.code.should.be.equal('002');
+			res.statusCode.should.be.equal(500);
 			done();
 		});
 });
@@ -1074,7 +1197,7 @@ it('should return a success response to indicate that a object has NOT been subs
 	var subclientrequest = {
 		"channel": {
 			"context": contextID,
-			"model": "things"
+			"model": "somethings"
 		}
 	};
 

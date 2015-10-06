@@ -105,10 +105,6 @@ security.tokenValidation = function(req, res, next) {
 security.adminAppValidation = function (req, res, next) {
 	var appId = req._telepat.applicationId;
 
-	if (!app.applications[appId]) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationNotFound, [appId]));
-	}
-
 	if (!req.user)
 		return next();
 

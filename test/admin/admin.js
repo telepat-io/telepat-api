@@ -1273,6 +1273,27 @@ describe('Context', function() {
 		}, 6*DELAY);
 	});
 
+	it('should NOT return all contexts using the old API because of invalid appID', function(done) {
+
+		this.timeout(9*DELAY);
+
+		setTimeout(function () {
+
+			request(url)
+				.get('/admin/contexts')
+				.set('Content-type','application/json')
+				.set('Authorization', authValue)
+				.set('X-BLGREQ-APPID', appID + '66')
+				.send()
+				.end(function(err, res) {
+
+					res.body.code.should.be.equal('011');
+					res.statusCode.should.be.equal(404);
+					done();
+				});
+		}, 6*DELAY);
+	});
+
 	it('should return a success response to indicate context was removed', function(done) {
 
 		var clientrequest = {
