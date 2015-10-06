@@ -8,8 +8,8 @@ router.use(security.deviceIdValidation);
 
 /**
  * @api {post} /device/register Register
- * @apiDescription Registers a new device or updates an already existing one. If device udid is supplied in info it will try
- * to search for a device with this udid and return the device id.
+ * @apiDescription Registers a new device or updates an already existing one. If device UDID is supplied in info it will try
+ * to search for a device with this UDID and return the device ID.
  * @apiName DeviceRegister
  * @apiGroup Device
  * @apiVersion 0.2.3

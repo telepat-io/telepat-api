@@ -86,7 +86,7 @@ router.post('/login', function (req, res, next) {
  *
  * @apiHeader {String} Content-type application/json
  *
- * @apiParam {String} email (REQUIRED) Admin e-mail
+ * @apiParam {String} email (REQUIRED) Admin email
  * @apiParam {String} password (REQUIRED) The password
  * @apiParam {String} name Real name of the admin
  *
@@ -164,7 +164,7 @@ router.use('/update', security.tokenValidation);
 /**
  * @api {post} /admin/update Update
  * @apiDescription Updates the currently logged admin.
-                   Every property in the request body is used to udpate the admin.
+                   Every property in the request body is used to update the admin.
  * @apiName AdminUpdate
  * @apiGroup Admin
  * @apiVersion 0.2.3

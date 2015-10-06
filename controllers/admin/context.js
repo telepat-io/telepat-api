@@ -12,7 +12,7 @@ router.use('/',
 	security.adminAppValidation);
 /**
  * @api {get} /admin/context/all GetContexts
- * @apiDescription Get all contexsts
+ * @apiDescription Get all contexts
  * @apiName AdminGetContexts
  * @apiGroup Admin
  * @apiVersion 0.2.3

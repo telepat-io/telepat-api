@@ -12,7 +12,7 @@ router.use('/all',
 	security.adminAppValidation);
 /**
  * @api {post} /admin/user/all GetAppUsers
- * @apiDescription Gets all users of the app
+ * @apiDescription Gets all users of the application
  * @apiName AdminGetUsers
  * @apiGroup Admin
  * @apiVersion 0.2.3
@@ -37,7 +37,7 @@ router.use('/all',
  * 		]
  * 	}
  *
- * @apiError 404 [011]ApplicationNotFound If the Application doesn't exist
+ * @apiError 404 [011]ApplicationNotFound If the application doesn't exist
  */
 
 router.post('/all', function(req, res, next) {
@@ -61,7 +61,7 @@ router.use('/update',
 	security.adminAppValidation);
 /**
  * @api {post} /admin/user/update UserUpdate
- * @apiDescription Updates an user from an app
+ * @apiDescription Updates an user from an application
  * @apiName AdminUpdateUser
  * @apiGroup Admin
  * @apiVersion 0.2.3
@@ -91,7 +91,7 @@ router.use('/update',
  * 		"content" : "User has been updated"
  * 	}
  *
- * @apiError 404 [023]UserNotFound If the User doesn't exist.
+ * @apiError 404 [023]UserNotFound If the user doesn't exist.
  *
  */
 router.post('/update', function(req, res, next) {
@@ -150,7 +150,7 @@ router.use('/delete',
 	security.adminAppValidation);
 /**
  * @api {post} /admin/user/delete UserDelete
- * @apiDescription Deletes an user from an app
+ * @apiDescription Deletes an user from an application
  * @apiName AdminDeleteUser
  * @apiGroup Admin
  * @apiVersion 0.2.3
@@ -161,7 +161,7 @@ router.use('/delete',
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  *
- * @apiParam {String} email The email address of an user from an app
+ * @apiParam {String} email The email address of an user from an application
  *
  * @apiExample {json} Client Request
  * 	{
@@ -174,7 +174,7 @@ router.use('/delete',
  * 		"content" : "User deleted"
  * 	}
  *
- * @apiError 404 [023]UserNotFound If the User doesn't exist.
+ * @apiError 404 [023]UserNotFound If the user doesn't exist.
  */
 router.post('/delete', function(req, res, next) {
 	if (!req.body.email) {

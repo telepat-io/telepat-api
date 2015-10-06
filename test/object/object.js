@@ -951,7 +951,7 @@ it('should return an error response to indicate that a object has NOT been subsc
 		.set('Authorization', userAuthValue )
 		.send(subclientrequest)
 		.end(function(err, res) {
-console.log(res.body);
+
 			res.body.code.should.be.equal('014');
 			res.statusCode.should.be.equal(401);
 			done();

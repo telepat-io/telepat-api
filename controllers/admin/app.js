@@ -9,8 +9,8 @@ var Models = require('telepat-models');
 router.use('/add', security.tokenValidation);
 /**
  * @api {post} /admin/app/add AppCreate
- * @apiDescription Creates a app for the admin.
-                   The request body should contain the app itself.
+ * @apiDescription Creates a application for the admin.
+                   The request body should contain the application itself.
  * @apiName AdminAppAdd
  * @apiGroup Admin
  * @apiVersion 0.2.3
@@ -67,7 +67,7 @@ router.use('/remove',
 	security.adminAppValidation);
 /**
  * @api {post} /admin/app/remove RemoveApp
- * @apiDescription Removes an app from the admin.
+ * @apiDescription Removes an application from the admin.
  * @apiName AdminAppRemove
  * @apiGroup Admin
  * @apiVersion 0.2.3
@@ -90,7 +90,7 @@ router.use('/remove',
  * 	{
  * 		"code": "011",
  * 		"status": 404,
- * 		"message": "Application with ID $APPID doest not exist."
+ * 		"message": "Application with ID $APPID does not exist."
  * 	}
  *
  */
@@ -149,7 +149,7 @@ router.use('/update',
  * 	{
  * 		"code": "011",
  * 		"status": 404,
- * 		"message": "Application with ID $APPID doest not exist."
+ * 		"message": "Application with ID $APPID does not exist."
  * 	}
  *
  */
@@ -215,7 +215,7 @@ router.use('/authorize',
  * 	{
  * 		"code": "011",
  * 		"status": 404,
- * 		"message": "Application with ID $APPID doest not exist."
+ * 		"message": "Application with ID $APPID does not exist."
  * 	}
  */
 router.post('/authorize', function(req, res, next) {
@@ -290,7 +290,7 @@ router.use('/deauthorize',
  * 	{
  * 		"code": "011",
  * 		"status": 404,
- * 		"message": "Application with ID $APPID doest not exist."
+ * 		"message": "Application with ID $APPID does not exist."
  * 	}
  *
  */

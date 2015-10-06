@@ -54,7 +54,7 @@ var validateContext = function(appId, context, callback) {
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
- * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
+ * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from device/register)
  *
  * @apiParam {Object} channel Object representing the channel
  * @apiParam {Object} filters Object representing channel filters
@@ -240,7 +240,7 @@ router.post('/subscribe', function(req, res, next) {
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
- * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
+ * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from device/register)
  *
  * @apiParam {Object} channel Object representing the channel
  * @apiParam {Object} filters Object representing the filters for the channel
@@ -346,7 +346,7 @@ router.post('/unsubscribe', function(req, res, next) {
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
- * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
+ * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from device/register)
  *
  * @apiParam {String} model The type of object to subscribe to
  * @apiParam {Object} content Content of the object
@@ -448,7 +448,7 @@ router.post('/create', function(req, res, next) {
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
- * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
+ * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from device/register)
  *
  * @apiParam {Number} id ID of the object (optional)
  * @apiParam {Number} context Context of the object
@@ -558,7 +558,7 @@ router.post('/update', function(req, res, next) {
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
- * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
+ * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from device/register)
  *
  * @apiParam {Number} id ID of the object (optional)
  * @apiParam {Number} context Context of the object
@@ -630,9 +630,9 @@ router.post('/delete', function(req, res, next) {
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
- * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
+ * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from device/register)
  *
- * @apiParam {Object} channel The object reperesenting a channel
+ * @apiParam {Object} channel The object representing a channel
  * @apiParam {Object} filters Additional filters to the subscription channel
  *
  */

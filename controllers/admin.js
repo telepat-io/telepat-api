@@ -40,7 +40,7 @@ router.use('/contexts',
 	security.adminAppValidation);
 /**
  * @api {get} /admin/contexts GetContexts
- * @apiDescription Get all contexsts
+ * @apiDescription Get all contexts
  * @apiName AdminGetContexts
  * @apiGroup Admin
  * @apiVersion 0.2.3
@@ -133,7 +133,7 @@ router.use('/users',
 	security.adminAppValidation);
 /**
  * @api {get} /admin/users GetAppusers
- * @apiDescription Gets all users of the app
+ * @apiDescription Gets all users of the application
  * @apiName AdminGetUsers
  * @apiGroup Admin
  * @apiVersion 0.2.3

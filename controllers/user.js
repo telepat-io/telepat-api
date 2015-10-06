@@ -22,7 +22,7 @@ router.use(['/logout', '/me', '/update', '/update_immediate', '/delete'], securi
 
 /**
  * @api {post} /user/login Login
- * @apiDescription Log in the user through facebook User is not created immediately.
+ * @apiDescription Log in the user through Facebook.
  * @apiName UserLogin
  * @apiGroup User
  * @apiVersion 0.2.3
@@ -30,7 +30,7 @@ router.use(['/logout', '/me', '/update', '/update_immediate', '/delete'], securi
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
- * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
+ * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from device/register)
  *
  * @apiParam {String} access_token Facebook access token.
  *
@@ -60,7 +60,7 @@ router.use(['/logout', '/me', '/update', '/update_immediate', '/delete'], securi
  * 	}
  *
  * 	@apiError 400 [028]InsufficientFacebookPermissions User email is not publicly available
- * 	(insufficient facebook permissions)
+ * 	(insufficient Facebook permissions)
  * 	@apiError 404 [023]UserNotFound User not found
  *
  */
@@ -151,7 +151,7 @@ router.post('/login', function(req, res, next) {
 
 /**
  * @api {post} /user/register Register
- * @apiDescription Registers a new user using a fb token or directly with an email and password. User is not created
+ * @apiDescription Registers a new user using a Facebook token or directly with an email and password. User is not created
  * immediately.
  * @apiName UserRegister
  * @apiGroup User
@@ -160,7 +160,7 @@ router.post('/login', function(req, res, next) {
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
- * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
+ * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from device/register)
  *
  * @apiParam {String} access_token Facebook access token.
  *
@@ -312,7 +312,7 @@ router.post('/register', function(req, res, next) {
  * Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
- * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
+ * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from device/register)
  *
  * @apiParam {String} password The password
  * @apiParam {String} email The email
@@ -355,7 +355,7 @@ router.get('/me', function(req, res, next) {
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
- * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
+ * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from device/register)
  *
  * @apiParam {String} password The password
  * @apiParam {String} email The email
@@ -453,7 +453,7 @@ router.post('/login_password', function(req, res, next) {
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
- * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
+ * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from device/register)
  *
  * 	@apiSuccessExample {json} Success Response
  * 	{
@@ -497,8 +497,8 @@ router.get('/logout', function(req, res, next) {
 
 /**
  * @api {get} /user/refresh_token Refresh Token
- * @apiDescription Sends a new authentification token to the user. The old token must be provide (and it may or not
- * may not be aleady expired).
+ * @apiDescription Sends a new authentication token to the user. The old token must be provide (and it may or not
+ * may not be already expired).
  * @apiName RefreshToken
  * @apiGroup User
  * @apiVersion 0.2.3
@@ -508,7 +508,7 @@ router.get('/logout', function(req, res, next) {
  * Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
- * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
+ * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from device/register)
  *
  * @apiSuccessExample {json} Success Response
  * 	{
@@ -521,7 +521,7 @@ router.get('/logout', function(req, res, next) {
  *
  * @apiError 400 [013]AuthorizationMissing  If authorization header is missing
  * @apiError 400 [039]ClientBadRequest Error decoding auth token
- * @apiError 400 [040]MalformedAuthorizationToken Auth token is malformed
+ * @apiError 400 [040]MalformedAuthorizationToken Authorization token is malformed
  * @apiError 400 [014]InvalidAuthorization Authorization header is invalid
  */
 router.get('/refresh_token', function(req, res, next) {

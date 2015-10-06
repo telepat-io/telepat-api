@@ -127,7 +127,23 @@ describe('Admin', function() {
 			});
 	});
 
-	it('should return an error for logging in with wrong user or password', function(done) {
+	it('should return an error for logging in with wrong password', function(done) {
+
+		var admin = {
+			email: adminEmail,
+			password: adminPassword + '66'
+		};
+		request(url)
+			.post('/admin/login')
+			.send(admin)
+			.end(function(err, res) {
+
+				res.statusCode.should.be.equal(401);
+				done();
+			});
+	});
+
+	it('should return an error for logging in with wrong user', function(done) {
 
 		var randEmail = 'adminx@example.com';
 		var admin = {

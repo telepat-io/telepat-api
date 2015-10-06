@@ -124,8 +124,8 @@ router.use('/remove_model',
  * 		"model_name": "events"
  * 	}
  *
- * @apiError 404 [011]ApplicationNotFound If the Application doesn't exist
- * @apiError 404 [022]ApplicationSchemaModelNotFound If the App does not have a model with that name
+ * @apiError 404 [011]ApplicationNotFound If the application doesn't exist
+ * @apiError 404 [022]ApplicationSchemaModelNotFound If the application does not have a model with that name
  */
 router.post('/remove_model', function(req, res, next) {
 	if (!req.body.model_name) {
