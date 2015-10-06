@@ -271,11 +271,7 @@ router.post('/update', function (req, res, next) {
 				Models.Context(req.body.id, callback);
 			},
 			function(context, callback) {
-				if (app.applications[context.application_id].admins.indexOf(req.user.id) === -1) {
-					callback(new Models.TelepatError(Models.TelepatError.errors.ContextNotAllowed));
-				} else {
-					Models.Context.update(req.body.id, req.body.patches, callback);
-				}
+				Models.Context.update(req.body.id, req.body.patches, callback);
 			}
 		], function (err, result) {
 			if (err && err.status == 404)

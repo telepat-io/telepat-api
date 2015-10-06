@@ -189,11 +189,7 @@ router.post('/delete', function(req, res, next) {
 			Models.User(userEmail, appId, callback);
 		},
 		function(user, callback) {
-			if (user.application_id != appId) {
-				return callback(new Models.TelepatError(Models.TelepatError.errors.UserNotFound));
-			} else {
-				Models.User.delete(userEmail, appId, callback);
-			}
+			Models.User.delete(userEmail, appId, callback);
 		}
 	], function(error, results) {
 		if (error && error.status == 404)

@@ -6,6 +6,7 @@ var DELAY = common.DELAY;
 
 var authValue;
 var appID;
+var appID2;
 var appIDsha256 = common.appIDsha256;
 var appKey = common.appKey;
 
@@ -13,6 +14,8 @@ var adminEmail = 'admin'+Math.round(Math.random()*1000000)+'@example.com';
 var adminPassword = '5f4dcc3b5aa765d61d8327deb882cf99';
 
 var adminEmail2 = 'admin'+Math.round(Math.random()*1000000)+'@example.com';
+var adminEmail3 = 'admin'+Math.round(Math.random()*1000000)+'@example.com';
+
 var admin = {
 	email: adminEmail,
 	password: adminPassword
@@ -21,10 +24,18 @@ var admin = {
 var admin2 = {
 	email: adminEmail2,
 	password: adminPassword
-}
+};
+
+var admin3 = {
+	email: adminEmail3,
+	password: adminPassword
+};
+
+
 
 var token2;
 var authValue2;
+var authValue3;
 
 var userEmail = 'user'+Math.round(Math.random()*1000000)+'@example.com';
 
@@ -416,26 +427,55 @@ describe('App', function() {
 			.send(clientrequest)
 			.end(function(err, res) {
 
-				appID =  res.body.content.id;
+				appID = res.body.content.id;
 
 				request(url)
-					.post('/admin/add')
-					.send(admin2)
-					.end(function(err, res) {
+					.post('/admin/app/add')
+					.set('Content-type', 'application/json')
+					.set('Authorization', authValue)
+					.send(clientrequest)
+					.end(function (err, res) {
 
-						setTimeout(function () {
+						appID2 = res.body.content.id;
 
-							request(url)
-								.post('/admin/login')
-								.set('Content-type','application/json')
-								.send(admin2)
-								.end(function(err, res) {
+						request(url)
+							.post('/admin/add')
+							.send(admin2)
+							.end(function (err, res) {
 
-									token2 = res.body.content.token;
-									authValue2 = 'Bearer ' + token2;
-									done();
-								});
-						}, 3*DELAY);
+								setTimeout(function () {
+
+									request(url)
+										.post('/admin/login')
+										.set('Content-type', 'application/json')
+										.send(admin2)
+										.end(function (err, res) {
+
+											token2 = res.body.content.token;
+											authValue2 = 'Bearer ' + token2;
+
+											request(url)
+												.post('/admin/add')
+												.send(admin3)
+												.end(function (err, res) {
+
+													setTimeout(function () {
+
+														request(url)
+															.post('/admin/login')
+															.set('Content-type', 'application/json')
+															.send(admin3)
+															.end(function (err, res) {
+
+																token3 = res.body.content.token;
+																authValue3 = 'Bearer ' + token3;
+																done();
+															});
+													}, 3 * DELAY);
+												});
+										});
+								}, 3 * DELAY);
+							});
 					});
 			});
 	});
@@ -695,7 +735,7 @@ describe('App', function() {
 			});
 	});
 
-	it('should return an succes to indicate an admin has been authorized to an application', function(done) {
+	it('should return an success to indicate an admin has been authorized to an application', function(done) {
 
 		var clientrequest = {
 			"email": adminEmail2
@@ -801,7 +841,7 @@ describe('App', function() {
 			});
 	});
 
-	it('should return an succes to indicate an admin has been deauthorized to an application', function(done) {
+	it('should return an success to indicate an admin has been deauthorized to an application', function(done) {
 
 		var clientrequest = {
 			"email": adminEmail2
@@ -821,6 +861,30 @@ describe('App', function() {
 				done();
 			});
 	});
+
+/*	it('should return an error to indicate an admin has NOT been deauthorized to an application, admin not authorized', function(done) {
+
+		var clientrequest = {
+			"email": adminEmail3
+		};
+
+		request(url)
+			.post('/admin/app/deauthorize')
+			.set('Content-type','application/json')
+			.set('X-BLGREQ-APPID', appID)
+			.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28')
+			.set('Authorization', authValue )
+			.send(clientrequest)
+			.end(function(err, res) {
+
+				if(res){
+					res.body.code.should.be.equal('012');
+					res.statusCode.should.be.equal(401);
+				}
+				done();
+			});
+	});*/
+
 
 	it('should return an error response to indicate admin has NOT been deauthorized because of empty request body', function(done) {
 
@@ -1841,6 +1905,7 @@ describe('User', function() {
 						.send(clientrequest)
 						.end(function(err, res) {
 
+							res.body.code.should.be.equal('023');
 							res.statusCode.should.be.equal(404);
 							done();
 						});

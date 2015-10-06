@@ -67,7 +67,7 @@ var admin = {
 	password: adminPassword
 };
 
-var invalidUDID = 'invalid';
+var contextID2;
 
 before(function(done){
 
@@ -209,7 +209,34 @@ before(function(done){
 
 											var objectKey = Object.keys(res.body.content)[0];
 											contextID = res.body.content.id;
-											done();
+
+											var clientrequest = {
+												"name": "test-app2",
+												"keys": [ common.appKey ]
+											};
+
+											request(url)
+												.post('/admin/app/add')
+												.set('Content-type','application/json')
+												.set('Authorization', authValue)
+												.send(clientrequest)
+												.end(function(err, res) {
+
+													appID2 = res.body.content.id;
+
+													request(url)
+														.post('/admin/context/add')
+														.set('Content-type','application/json')
+														.set('Authorization', authValue )
+														.set('X-BLGREQ-APPID', appID2 )
+														.send(clientrequest)
+														.end(function(err, res) {
+
+
+															contextID2 = res.body.content.id;
+															done();
+														});
+												});
 										});
 								});
 						});
@@ -929,6 +956,56 @@ it('should return a success response to indicate that a object has been subscrib
 		.end(function(err, res) {
 
 			res.statusCode.should.be.equal(200);
+			done();
+		});
+});
+
+it('should return a success response to indicate that a object has been subscribed with pagination', function(done) {
+
+	var subclientrequest = {
+		page: 2,
+		"channel": {
+			"context": contextID,
+			"model": "comments"
+		}
+	};
+
+	request(url)
+		.post('/object/subscribe')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256)
+		.set('X-BLGREQ-UDID', deviceIdentification)
+		.set('X-BLGREQ-APPID',appID)
+		.set('Authorization', userAuthValue )
+		.send(subclientrequest)
+		.end(function(err, res) {
+
+			res.statusCode.should.be.equal(200);
+			done();
+		});
+});
+
+it('should return a success response to indicate that a object has NOT been subscribed because context does not belong to application', function(done) {
+
+	var subclientrequest = {
+		"channel": {
+			"context": contextID2,
+			"model": "comments"
+		}
+	};
+
+	request(url)
+		.post('/object/subscribe')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256)
+		.set('X-BLGREQ-UDID', deviceIdentification)
+		.set('X-BLGREQ-APPID',appID)
+		.set('Authorization', userAuthValue )
+		.send(subclientrequest)
+		.end(function(err, res) {
+
+			res.body.code.should.be.equal('026');
+			res.statusCode.should.be.equal(403);
 			done();
 		});
 });
