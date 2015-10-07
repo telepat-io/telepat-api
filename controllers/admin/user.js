@@ -183,35 +183,51 @@ router.post('/delete', function(req, res, next) {
 
 	var appId = req._telepat.applicationId;
 	var userEmail = req.body.email;
+	var objectsToBeDeleted = null;
 
 	async.waterfall([
 		function(callback) {
 			Models.User(userEmail, appId, callback);
 		},
 		function(user, callback) {
-			Models.User.delete(userEmail, appId, callback);
+			if (user.application_id != appId) {
+				return callback(new Models.TelepatError(Models.TelepatError.errors.UserNotFound));
+			} else {
+				Models.User.delete(userEmail, appId, function(err, results) {
+					if (err) return callback(err);
+					objectsToBeDeleted = results;
+					callback();
+				});
+			}
 		}
-	], function(error, results) {
+	], function(error) {
 		if (error && error.status == 404)
 			return next(new Models.TelepatError(Models.TelepatError.errors.UserNotFound));
 		else if (error) return next(error);
 
-		if (results) {
-			async.each(results, function(item, c) {
-				var context = item.context_id;
-				var mdl = item.value.type;
-				var id = item.value.id;
+		if (objectsToBeDeleted) {
+			var brokerMessages = [];
 
-				app.messagingClient.send([JSON.stringify({
+			async.each(objectsToBeDeleted, function(item, c) {
+				var context = item.context_id;
+				var mdl = item.type;
+				var id = item.id;
+
+				brokerMessages.push(JSON.stringify({
 					op: 'delete',
 					object: {path: mdl+'/'+id},
 					context: context,
 					applicationId: appId
-				})], 'aggregation', c);
+				}));
+				c();
+			}, function() {
+				app.messagingClient.send(brokerMessages, 'aggregation', function(err){
+					if (err) return next(err);
+
+					res.status(200).json({status: 200, content: 'User deleted'}).end();
+				});
 			});
 		}
-
-		res.status(200).json({status: 200, content: 'User deleted'}).end();
 	});
 });
 

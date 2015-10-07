@@ -419,6 +419,20 @@ router.post('/login_password', function(req, res, next) {
 			});
 		},
 		function(callback) {
+			var patches = [];
+			patches.push(Models.Delta.formPatch(userProfile, 'append', {devices: deviceId}));
+
+			if (userProfile.devices) {
+				var idx = userProfile.devices.indexOf(deviceId);
+				if (idx === -1) {
+					Models.User.update(userProfile.email, appId, patches, callback);
+				} else
+					callback();
+			} else {
+				Models.User.update(userProfile.email, appId, patches, callback);
+			}
+		},
+		function(callback) {
 			security.encryptPassword(req.body.password, function(err, hash) {
 				if (err)
 					return callback(err);

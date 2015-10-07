@@ -9,22 +9,6 @@ router.use(security.applicationIdValidation);
 router.use(security.apiKeyValidation);
 router.use(security.deviceIdValidation);
 
-/**
- * Middleware used to load application model schema
- */
-router.use(function(req, res, next) {
-	//roughly 67M - it self cleares so it doesn't get too big
-	if (sizeof(Models.Application.loadedAppModels) > (1 << 26)) {
-		delete Models.Application.loadedAppModels;
-		Models.Application.loadedAppModels = {};
-	}
-
-	if (!Models.Application.loadedAppModels[req._telepat.applicationId]) {
-		Models.Application.loadAppModels(req._telepat.applicationId, next);
-	} else
-		next();
-});
-
 router.use(['/subscribe', '/unsubscribe'], security.objectACL('read_acl'));
 router.use(['/create', '/update', '/delete'], security.objectACL('write_acl'));
 router.use(['/count'], security.objectACL('meta_read_acl'));
@@ -381,15 +365,15 @@ router.post('/create', function(req, res, next) {
 	content.context_id = context;
 	content.application_id = appId;
 
-	if (Models.Application.loadedAppModels[appId][mdl].belongsTo &&
-				Models.Application.loadedAppModels[appId][mdl].belongsTo.length) {
-		var parentModel = Models.Application.loadedAppModels[appId][mdl].belongsTo[0].parentModel;
+	if (Models.Application.loadedAppModels[appId].schema[mdl].belongsTo &&
+				Models.Application.loadedAppModels[appId].schema[mdl].belongsTo.length) {
+		var parentModel = Models.Application.loadedAppModels[appId].schema[mdl].belongsTo[0].parentModel;
 		if (!content[parentModel+'_id']) {
 			return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, [parentModel+'_id']));
-		} else if (Models.Application.loadedAppModels[appId][mdl].belongsTo[0].relationType == 'hasSome' &&
-			content[Models.Application.loadedAppModels[appId][parentModel].hasSome_property+'_index'] === undefined) {
+		} else if (Models.Application.loadedAppModels[appId].schema[mdl].belongsTo[0].relationType == 'hasSome' &&
+			content[Models.Application.loadedAppModels[appId].schema[parentModel].hasSome_property+'_index'] === undefined) {
 			return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField,
-				[Models.Application.loadedAppModels[appId][parentModel].hasSome_property+'_index']));
+				[Models.Application.loadedAppModels[appId].schema[parentModel].hasSome_property+'_index']));
 		}
 	}
 

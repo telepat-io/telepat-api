@@ -32,7 +32,7 @@ security.apiKeyValidation = function(req, res, next) {
 	else {
 		var clientHash = req.get('X-BLGREQ-SIGN').toLowerCase();
 		var serverHash = null;
-		var apiKeys = app.applications[req.get('X-BLGREQ-APPID')].keys;
+		var apiKeys = Models.Application.loadedAppModels[req.get('X-BLGREQ-APPID')].keys;
 
 		async.detect(apiKeys, function(item ,cb) {
 			if (item)
@@ -64,7 +64,7 @@ security.applicationIdValidation = function(req, res, next) {
 	if (!req.get('X-BLGREQ-APPID'))
 		return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationIdMissing));
 	else {
-		if (!app.applications[req.get('X-BLGREQ-APPID')]) {
+		if (!Models.Application.loadedAppModels[req.get('X-BLGREQ-APPID')]) {
 			return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationNotFound,
 				[req.get('X-BLGREQ-APPID')]));
 		}
@@ -108,7 +108,7 @@ security.adminAppValidation = function (req, res, next) {
 	if (!req.user)
 		return next();
 
-	if (app.applications[appId].admins.indexOf(req.user.id) === -1) {
+	if (Models.Application.loadedAppModels[appId].admins.indexOf(req.user.id) === -1) {
 		return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationForbidden));
 	}
 
@@ -127,12 +127,16 @@ security.objectACL = function (accessControl) {
 			if (['user', 'context', 'application'].indexOf(mdl) !== -1)
 				return next();
 
-			if (!Models.Application.loadedAppModels[req._telepat.applicationId][mdl]) {
+			if (!Models.Application.loadedAppModels[req._telepat.applicationId].schema) {
+				return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationHasNoSchema));
+			}
+
+			if (!Models.Application.loadedAppModels[req._telepat.applicationId].schema[mdl]) {
 				return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationSchemaModelNotFound,
 					[req._telepat.applicationId, mdl]));
 			}
 
-			var acl = Models.Application.loadedAppModels[req._telepat.applicationId][mdl][accessControl];
+			var acl = Models.Application.loadedAppModels[req._telepat.applicationId].schema[mdl][accessControl];
 
 			if (acl & ACL_AUTHENTICATED || acl & ACL_ADMIN) {
 				var authHeaderParts = req.headers.authorization.split(' ');

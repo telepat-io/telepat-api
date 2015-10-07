@@ -1187,11 +1187,31 @@ it('should return an error response to indicate that a object has NOT been subsc
 		});
 });
 
-it('should return an error response to indicate that a object has NOT been subscribed because no schema is defined', function(done) {
+it('should return an error response to indicate that a object has NOT been subscribed because context does not belong to app', function(done) {
 
 	var clientrequest = {
-		"name": "test-app",
-		"keys": [ appKey ]
+		name: "test-app",
+		keys: [ appKey ],
+		schema: {
+			"comments": {
+				"namespace": "comments",
+				"type": "comments",
+				"properties": {
+					"text": {
+						"type": "string"
+					}
+				},
+				"belongsTo": [
+					{
+						"parentModel": "events",
+						"relationType": "hasMany"
+					}
+				],
+				"read_acl": 6,
+				"write_acl": 6,
+				"meta_read_acl": 6
+			}
+		}
 	};
 
 	request(url)
@@ -1220,124 +1240,8 @@ it('should return an error response to indicate that a object has NOT been subsc
 				.send(subclientrequest)
 				.end(function (err, res) {
 
-					res.body.code.should.be.equal('043');
-					res.statusCode.should.be.equal(501);
+					res.statusCode.should.be.equal(403);
 					done();
-				});
-		});
-});
-
-it('should return an error response to indicate that a object has NOT been subscribed because context does not belong to app', function(done) {
-
-	var clientrequest = {
-		"name": "test-app",
-		"keys": [ appKey ]
-	};
-
-	request(url)
-		.post('/admin/app/add')
-		.set('Content-type','application/json')
-		.set('Authorization', authValue)
-		.send(clientrequest)
-		.end(function(err, res) {
-
-			var appID2 =  res.body.content.id;
-
-			var clientrequest = {
-				"appId": appID,
-				"schema": {
-					"comments": {
-						"namespace": "comments",
-						"type": "comments",
-						"properties": {
-							"text": {
-								"type": "string"
-							}
-						},
-						"belongsTo": [
-							{
-								"parentModel": "events",
-								"relationType": "hasMany"
-							}
-						],
-						"read_acl": 6,
-						"write_acl": 6,
-						"meta_read_acl": 6
-					},
-					"events": {
-						"namespace": "events",
-						"type": "events",
-						"properties": {
-							"text": {
-								"type": "string"
-							},
-							"image": {
-								"type": "string"
-							},
-							"options": {
-								"type": "object"
-							}
-						},
-						"hasMany": [
-							"comments"
-						],
-						"read_acl": 7,
-						"write_acl": 7,
-						"meta_read_acl": 4
-					},
-					"things": {
-						"namespace": "events",
-						"type": "events",
-						"properties": {
-							"text": {
-								"type": "string"
-							},
-							"image": {
-								"type": "string"
-							},
-							"options": {
-								"type": "object"
-							}
-						},
-						"hasMany": [
-							"comments"
-						],
-						"read_acl": 7,
-						"write_acl": 7,
-						"meta_read_acl": 4
-					}
-				}
-			};
-
-			request(url)
-				.post('/admin/schema/update')
-				.set('Content-type','application/json')
-				.set('Authorization', authValue )
-				.set('X-BLGREQ-APPID', appID2 )
-				.send(clientrequest)
-				.end(function(err, res) {
-
-					var subclientrequest = {
-						"channel": {
-							"context": contextID,
-							"model": "comments"
-						},
-					};
-
-					request(url)
-						.post('/object/subscribe')
-						.set('Content-type', 'application/json')
-						.set('X-BLGREQ-SIGN', appIDsha256)
-						.set('X-BLGREQ-UDID', deviceIdentification)
-						.set('X-BLGREQ-APPID', appID2)
-						.set('Authorization', userAuthValue)
-						.send(subclientrequest)
-						.end(function (err, res) {
-
-							res.body.code.should.be.equal('026');
-							res.statusCode.should.be.equal(403);
-							done();
-						});
 				});
 		});
 });

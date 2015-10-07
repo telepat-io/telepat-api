@@ -55,7 +55,7 @@ router.post('/add', function (req, res, next) {
 		if (err)
 			next(err);
 		else {
-			app.applications[res1.id] = res1;
+			Models.Application.loadedAppModels[res1.id] = res1;
 			res.status(200).json({status: 200, content: res1});
 		}
 	});
@@ -101,7 +101,7 @@ router.post('/remove', function (req, res, next) {
 		if (err)
 			next(err);
 		else {
-			delete app.applications[appId];
+			delete Models.Application.loadedAppModels[appId];
 			res.status(200).json({status: 200, content: 'App removed'}).end();
 		}
 	});
@@ -169,7 +169,7 @@ router.post('/update', function (req, res, next) {
 			if (err)
 				return next(err);
 			else {
-				app.applications[appId] = result;
+				Models.Application.loadedAppModels[appId] = result;
 				res.status(200).json({status: 200, content: 'Updated'}).end();
 			}
 		});
@@ -233,17 +233,17 @@ router.post('/authorize', function(req, res, next) {
 			Models.Admin({email: adminEmail}, callback);
 		},
 		function(admin, callback) {
-			if (app.applications[appId].admins.indexOf(admin.id) !== -1) {
+			if (Models.Application.loadedAppModels[appId].admins.indexOf(admin.id) !== -1) {
 				return callback(new Models.TelepatError(Models.TelepatError.errors.AdminAlreadyAuthorized));
 			}
 
-			var patches = [Models.Delta.formPatch(app.applications[appId], 'append', {admins: admin.id})];
+			var patches = [Models.Delta.formPatch(Models.Application.loadedAppModels[appId], 'append', {admins: admin.id})];
 			Models.Application.update(appId, patches, callback);
 		}
 	], function(err, application) {
 		if (err) return next(err);
 
-		app.applications[appId] = application;
+		Models.Application.loadedAppModels[appId] = application;
 
 		res.status(200).json({status: 200, content: 'Admin added to application'}).end();
 	});
@@ -304,8 +304,8 @@ router.post('/deauthorize', function(req, res, next) {
 	var appId = req._telepat.applicationId;
 	var adminEmail = req.body.email;
 
-	if (adminEmail == req.user.email && app.applications[appId].admins.indexOf(req.user.id) == 0
-		&& app.applications[appId].admins.length == 1) {
+	if (adminEmail == req.user.email && Models.Application.loadedAppModels[appId].admins.indexOf(req.user.id) == 0
+		&& Models.Application.loadedAppModels[appId].admins.length == 1) {
 		return next(new Models.TelepatError(Models.TelepatError.errors.AdminDeauthorizeLastAdmin));
 	}
 
@@ -314,17 +314,17 @@ router.post('/deauthorize', function(req, res, next) {
 			Models.Admin({email: adminEmail}, callback);
 		},
 		function(admin, callback) {
-			if (app.applications[appId].admins.indexOf(admin.id) === -1) {
+			if (Models.Application.loadedAppModels[appId].admins.indexOf(admin.id) === -1) {
 				return callback(Models.TelepatError(Models.TelepatError.errors.AdminNotFoundInApplication, [adminEmail]));
 			} else {
-				var patches = [Models.Delta.formPatch(app.applications[appId], 'remove', {admins: admin.id})];
+				var patches = [Models.Delta.formPatch(Models.Application.loadedAppModels[appId], 'remove', {admins: admin.id})];
 				Models.Application.update(appId, patches, callback);
 			}
 		}
 	], function(err, application) {
 		if (err) return next(err);
 
-		app.applications[appId] = application;
+		Models.Application.loadedAppModels[appId] = application;
 
 		res.status(200).json({status: 200, content: 'Admin removed from application'}).end();
 	});

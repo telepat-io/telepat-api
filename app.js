@@ -94,8 +94,6 @@ if(mainConfiguration.passwordSalt === undefined || mainConfiguration.passwordSal
 }
 app.set('password_salt', mainConfiguration.passwordSalt);
 
-app.applications = {};
-
 app.use(function(req, res, next) {
 	if (dbConnected)
 		return next();
@@ -103,21 +101,18 @@ app.use(function(req, res, next) {
 	next(new Models.TelepatError(Models.TelepatError.errors.ServerNotAvailable));
 });
 
-var loadApplications = function() {
-	Models.Application.getAll(function(err, results) {
+var loadApplications = function(callback) {
+	Models.Application.loadAllApplications(function(err) {
 		if (err) {
 			console.log('Fatal error: '.red+' in retrieving all aplications', err);
 			process.exit(-1);
 		}
 
-		async.each(results, function(item, c){
-			app.applications[item.id] = item;
-			c();
-		});
+		callback();
 	});
 };
 
-var linkMiddlewaresAndRoutes = function() {
+var linkMiddlewaresAndRoutes = function(callback) {
 	app.use(security.corsValidation);
 	app.use(security.contentTypeValidation);
 	app.use(logger('dev'));
@@ -128,9 +123,10 @@ var linkMiddlewaresAndRoutes = function() {
 	app.use('/user', userRoute);
 	app.use('/context', contextRoute);
 	app.use('/device', deviceRoute);
+	callback();
 };
 
-var linkErrorHandlingMiddlewares = function() {
+var linkErrorHandlingMiddlewares = function(callback) {
 	// error handlers
 	// catch 404 and forward to error handler
 	app.use(function(req, res, next) {
@@ -154,21 +150,26 @@ var linkErrorHandlingMiddlewares = function() {
 
 		res.json(responseBody).end();
 	});
+	callback();
 };
 
-var monitorUsrSignals = function() {
+var monitorUsrSignals = function(callback) {
 	//signal sent by nodemon when restarting the server
 	process.on('SIGUSR2', function() {
 		app.kafkaClient.close();
 	});
+	callback();
 };
 
 var OnServicesConnect = function() {
-	dbConnected = true;
-	loadApplications();
-	linkMiddlewaresAndRoutes();
-	linkErrorHandlingMiddlewares();
-	monitorUsrSignals();
+	async.series([
+		loadApplications,
+		linkMiddlewaresAndRoutes,
+		linkErrorHandlingMiddlewares,
+		monitorUsrSignals
+	], function() {
+		dbConnected = true;
+	});
 };
 
 async.waterfall([

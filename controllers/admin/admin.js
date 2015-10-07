@@ -281,9 +281,9 @@ router.use('/apps', security.tokenValidation);
  */
 router.get('/apps', function (req, res, next) {
 	var adminApps = [];
-	async.each(Object.keys(app.applications), function(applicationId, c){
-		if (app.applications[applicationId].admins.indexOf(req.user.id) !== -1)
-			adminApps.push(app.applications[applicationId]);
+	async.each(Object.keys(Models.Application.loadedAppModels), function(applicationId, c){
+		if (Models.Application.loadedAppModels[applicationId].admins.indexOf(req.user.id) !== -1)
+			adminApps.push(Models.Application.loadedAppModels[applicationId]);
 		c();
 	}, function(err) {
 		if (err) return next(err);
