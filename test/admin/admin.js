@@ -2033,7 +2033,28 @@ describe('User', function() {
 			});
 	});
 
-	it('should return an error response to indicate that an admin list was NOT retrived for a bad app id', function(done) {
+	it('should return a success response to indicate that an admin list was retrieved with pagination', function(done) {
+
+		var clientRequest = {
+			page: 2
+		};
+
+		request(url)
+			.post('/admin/users')
+			.set('Content-type','application/json')
+			.set('X-BLGREQ-SIGN', appIDsha256)
+			.set('X-BLGREQ-APPID', appID)
+			.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28')
+			.set('Authorization', authValue )
+			.send(clientRequest)
+			.end(function(err, res) {
+
+				res.statusCode.should.be.equal(200);
+				done();
+			});
+	});
+
+	it('should return an error response to indicate that an admin list was NOT retrieved for a bad app id', function(done) {
 
 		request(url)
 			.post('/admin/users')
@@ -2065,6 +2086,30 @@ describe('User', function() {
 
 				if(res) {
 					//console.log(res.body);
+					res.body.content.should.not.be.empty;
+					res.statusCode.should.be.equal(200);
+				}
+				done();
+			});
+	});
+
+	it('should return a success response to indicate that an users list was retrieved with pagination', function(done) {
+
+		var clientRequest = {
+			page: 2
+		};
+
+		request(url)
+			.post('/admin/user/all')
+			.set('Content-type','application/json')
+			.set('X-BLGREQ-SIGN', appIDsha256)
+			.set('X-BLGREQ-APPID', appID)
+			.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28')
+			.set('Authorization', authValue )
+			.send(clientRequest)
+			.end(function(err, res) {
+
+				if(res) {
 					res.body.content.should.not.be.empty;
 					res.statusCode.should.be.equal(200);
 				}

@@ -180,8 +180,29 @@ before(function(done){
 										"hasMany": [
 											"comments"
 										],
-										"read_acl": 7,
-										"write_acl": 7,
+										"read_acl": 0,
+										"write_acl": 0,
+										"meta_read_acl": 0
+									},
+									"others": {
+										"namespace": "events",
+										"type": "events",
+										"properties": {
+											"text": {
+												"type": "string"
+											},
+											"image": {
+												"type": "string"
+											},
+											"options": {
+												"type": "object"
+											}
+										},
+										"hasMany": [
+											"comments"
+										],
+										"read_acl": 4,
+										"write_acl": 4,
 										"meta_read_acl": 4
 									}
 								}
@@ -308,7 +329,7 @@ before(function(done){
 		});
 });
 
-it('should return an error (400) response to indicate that the client made a bad request', function(done) {
+it('should return an error (400) response to indicate that request body is empty', function(done) {
 
 	this.timeout(10*DELAY);
 
@@ -396,6 +417,56 @@ it('should return a success response to indicate that object has been created', 
 
 			res.statusCode.should.be.equal(202);
 			res.body.content.should.be.equal("Created");
+			done();
+		});
+});
+
+it('should return a success response to indicate that object has NOT been created because of ACL', function(done) {
+
+	var clientrequest = {
+		"model": "others",
+		"context": contextID,
+		"content": {
+			"events_id" :1
+		}
+	};
+
+	request(url)
+		.post('/object/create')
+		.set('X-BLGREQ-SIGN', appIDsha256)
+		.set('X-BLGREQ-UDID', deviceIdentification)
+		.set('X-BLGREQ-APPID',appID)
+		.set('Authorization', userAuthValue )
+		.send(clientrequest)
+		.end(function(err, res) {
+
+			res.body.code.should.be.equal('015');
+			res.statusCode.should.be.equal(403);
+			done();
+		});
+});
+
+it('should return a success response to indicate that object has NOT been created because of ACL', function(done) {
+
+	var clientrequest = {
+		"model": "things",
+		"context": contextID,
+		"content": {
+			"events_id" :1
+		}
+	};
+
+	request(url)
+		.post('/object/create')
+		.set('X-BLGREQ-SIGN', appIDsha256)
+		.set('X-BLGREQ-UDID', deviceIdentification)
+		.set('X-BLGREQ-APPID',appID)
+		.set('Authorization', authValue )
+		.send(clientrequest)
+		.end(function(err, res) {
+
+			res.body.code.should.be.equal('015');
+			res.statusCode.should.be.equal(403);
 			done();
 		});
 });
@@ -733,7 +804,7 @@ it('should return a success response to indicate that a object has NOT been upda
 		});
 });
 
-it('should return a success response to indicate that a object has NOT been updated because of missing authorization ', function(done) {
+it('should return a success response to indicate that a object has NOT been updated because of missing authorization', function(done) {
 
 	var clientrequest = {
 		"model": "comments",
@@ -1116,7 +1187,7 @@ it('should return an error response to indicate that a object has NOT been subsc
 		});
 });
 
-it('should return an error response to indicate that a object has NOT been subscribed because context does not belong to app', function(done) {
+it('should return an error response to indicate that a object has NOT been subscribed because no schema is defined', function(done) {
 
 	var clientrequest = {
 		"name": "test-app",
@@ -1131,6 +1202,7 @@ it('should return an error response to indicate that a object has NOT been subsc
 		.end(function(err, res) {
 
 			var appID2 =  res.body.content.id;
+
 			var subclientrequest = {
 				"channel": {
 					"context": contextID,
@@ -1148,8 +1220,124 @@ it('should return an error response to indicate that a object has NOT been subsc
 				.send(subclientrequest)
 				.end(function (err, res) {
 
-					res.statusCode.should.be.equal(404);
+					res.body.code.should.be.equal('043');
+					res.statusCode.should.be.equal(501);
 					done();
+				});
+		});
+});
+
+it('should return an error response to indicate that a object has NOT been subscribed because context does not belong to app', function(done) {
+
+	var clientrequest = {
+		"name": "test-app",
+		"keys": [ appKey ]
+	};
+
+	request(url)
+		.post('/admin/app/add')
+		.set('Content-type','application/json')
+		.set('Authorization', authValue)
+		.send(clientrequest)
+		.end(function(err, res) {
+
+			var appID2 =  res.body.content.id;
+
+			var clientrequest = {
+				"appId": appID,
+				"schema": {
+					"comments": {
+						"namespace": "comments",
+						"type": "comments",
+						"properties": {
+							"text": {
+								"type": "string"
+							}
+						},
+						"belongsTo": [
+							{
+								"parentModel": "events",
+								"relationType": "hasMany"
+							}
+						],
+						"read_acl": 6,
+						"write_acl": 6,
+						"meta_read_acl": 6
+					},
+					"events": {
+						"namespace": "events",
+						"type": "events",
+						"properties": {
+							"text": {
+								"type": "string"
+							},
+							"image": {
+								"type": "string"
+							},
+							"options": {
+								"type": "object"
+							}
+						},
+						"hasMany": [
+							"comments"
+						],
+						"read_acl": 7,
+						"write_acl": 7,
+						"meta_read_acl": 4
+					},
+					"things": {
+						"namespace": "events",
+						"type": "events",
+						"properties": {
+							"text": {
+								"type": "string"
+							},
+							"image": {
+								"type": "string"
+							},
+							"options": {
+								"type": "object"
+							}
+						},
+						"hasMany": [
+							"comments"
+						],
+						"read_acl": 7,
+						"write_acl": 7,
+						"meta_read_acl": 4
+					}
+				}
+			};
+
+			request(url)
+				.post('/admin/schema/update')
+				.set('Content-type','application/json')
+				.set('Authorization', authValue )
+				.set('X-BLGREQ-APPID', appID2 )
+				.send(clientrequest)
+				.end(function(err, res) {
+
+					var subclientrequest = {
+						"channel": {
+							"context": contextID,
+							"model": "comments"
+						},
+					};
+
+					request(url)
+						.post('/object/subscribe')
+						.set('Content-type', 'application/json')
+						.set('X-BLGREQ-SIGN', appIDsha256)
+						.set('X-BLGREQ-UDID', deviceIdentification)
+						.set('X-BLGREQ-APPID', appID2)
+						.set('Authorization', userAuthValue)
+						.send(subclientrequest)
+						.end(function (err, res) {
+
+							res.body.code.should.be.equal('026');
+							res.statusCode.should.be.equal(403);
+							done();
+						});
 				});
 		});
 });
