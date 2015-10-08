@@ -1,8 +1,6 @@
 var common = require('../common');
 var request = common.request;
 var should = common.should;
-var assert = common.assert;
-var crypto = common.crypto;
 var url = common.url;
 var DELAY = common.DELAY;
 
@@ -26,8 +24,8 @@ before(function(done){
 	this.timeout(25*DELAY);
 
 	var clientrequest = {
-		"name": "test-app",
-		"keys": [ common.appKey ]
+		name: "test-app",
+		keys: [ common.appKey ]
 	};
 
 	request(url)
@@ -61,20 +59,20 @@ before(function(done){
 		});
 });
 
-it('should return a success response to indicate device succesfully registered', function(done) {
+it('3.1 should return a success response to indicate device successfully registered', function(done) {
 
-	var clientrequest = {
-		"info": {
-			"os": "Android",
-			"version": "4.4.3",
-			"sdk_level": 19,
-			"manufacturer": "HTC",
-			"model": "HTC One_M8",
-			"udid": invalidUDID
+	var clientRequest = {
+		info: {
+			os: "Android",
+			version: "4.4.3",
+			sdk_level: 19,
+			manufacturer: "HTC",
+			model: "HTC One_M8",
+			udid: invalidUDID
 		},
-		"persistent": {
-			"type": "android",
-			"token": "android pn token"
+		persistent: {
+			type: "android",
+			token: "android pn token"
 		}
 	};
 
@@ -83,7 +81,7 @@ it('should return a success response to indicate device succesfully registered',
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', '')
 		.set('X-BLGREQ-APPID', appID)
-		.send(clientrequest)
+		.send(clientRequest)
 		.end(function(err, res) {
 
 			res.statusCode.should.be.equal(200);
@@ -92,20 +90,20 @@ it('should return a success response to indicate device succesfully registered',
 		});
 });
 
-it('should return a success response to indicate device succesfully registered with random udid', function(done) {
+it('3.2 should return a success response to indicate device successfully registered with random UDID', function(done) {
 
-	var clientrequest = {
-		"info": {
-			"os": "Android",
-			"version": "4.4.3",
-			"sdk_level": 19,
-			"manufacturer": "HTC",
-			"model": "HTC One_M8",
-			"udid": Math.round(Math.random()*1000000)+1000
+	var clientRequest = {
+		info: {
+			os: "Android",
+			version: "4.4.3",
+			sdk_level: 19,
+			manufacturer: "HTC",
+			model: "HTC One_M8",
+			udid: Math.round(Math.random()*1000000)+1000
 		},
-		"persistent": {
-			"type": "android",
-			"token": "android pn token"
+		persistent: {
+			type: "android",
+			token: "android pn token"
 		}
 	};
 
@@ -114,7 +112,7 @@ it('should return a success response to indicate device succesfully registered w
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', '')
 		.set('X-BLGREQ-APPID',1)
-		.send(clientrequest)
+		.send(clientRequest)
 		.end(function(err, res) {
 
 			res.statusCode.should.be.equal(200);
@@ -123,19 +121,19 @@ it('should return a success response to indicate device succesfully registered w
 		});
 });
 
-it('should return a success response to indicate device succesfully updated', function(done) {
+it('3.3 should return a success response to indicate device successfully updated', function(done) {
 
-	var clientrequest = {
-		"info": {
-			"os": "Android",
-			"version": "4.4.3",
-			"sdk_level": 19,
-			"manufacturer": "HTC",
-			"model": "HTC One_M8",
+	var clientRequest = {
+		info: {
+			os: "Android",
+			version: "4.4.3",
+			sdk_level: 19,
+			manufacturer: "HTC",
+			model: "HTC One_M8",
 		},
-		"persistent": {
-			"type": "android",
-			"token": "android pn token"
+		persistent: {
+			type: "android",
+			token: "android pn token"
 		}
 	};
 
@@ -144,7 +142,7 @@ it('should return a success response to indicate device succesfully updated', fu
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', deviceIdentifier)
 		.set('X-BLGREQ-APPID',1)
-		.send(clientrequest)
+		.send(clientRequest)
 		.end(function(err, res) {
 
 			res.statusCode.should.be.equal(200);
@@ -152,20 +150,19 @@ it('should return a success response to indicate device succesfully updated', fu
 		});
 });
 
-it('should return an error response to indicate device succesfully registered, uuid missing from request', function(done) {
+it('3.4 should return an error response to indicate device successfully registered, uuid missing from request', function(done) {
 
-	var clientrequest = {
-		"info": {
-			"os": "Android",
-			"version": "4.4.3",
-			"sdk_level": 19,
-			"manufacturer": "HTC",
-			"model": "HTC One_M8",
-
+	var clientRequest = {
+		info: {
+			os: "Android",
+			version: "4.4.3",
+			sdk_level: 19,
+			manufacturer: "HTC",
+			model: "HTC One_M8",
 		},
-		"persistent": {
-			"type": "android",
-			"token": "android pn token"
+		persistent: {
+			type: "android",
+			token: "android pn token"
 		}
 	};
 
@@ -174,7 +171,7 @@ it('should return an error response to indicate device succesfully registered, u
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', '')
 		.set('X-BLGREQ-APPID',1)
-		.send(clientrequest)
+		.send(clientRequest)
 		.end(function(err, res) {
 
 			res.statusCode.should.be.equal(200);
@@ -182,12 +179,12 @@ it('should return an error response to indicate device succesfully registered, u
 		});
 });
 
-it('should return an error response to indicate device NOT succesfully registered because of missing info', function(done) {
+it('3.5 should return an error response to indicate device NOT successfully registered because of missing info', function(done) {
 
-	var clientrequest = {
-		"persistent": {
-			"type": "android",
-			"token": "android pn token"
+	var clientRequest = {
+		persistent: {
+			type: "android",
+			token: "android pn token"
 		}
 	};
 
@@ -196,15 +193,16 @@ it('should return an error response to indicate device NOT succesfully registere
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', '')
 		.set('X-BLGREQ-APPID',1)
-		.send(clientrequest)
+		.send(clientRequest)
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('004');
 			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
 
-it('should return an error response to indicate device NOT succesfully registered because of missing body', function(done) {
+it('3.6 should return an error response to indicate device NOT successfully registered because of missing body', function(done) {
 
 	request(url)
 		.post('/device/register')
@@ -214,12 +212,13 @@ it('should return an error response to indicate device NOT succesfully registere
 		.send()
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('005');
 			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
 
-it('should return an error response to indicate device NOT succesfully registered because of missing body and invalidUDID', function(done) {
+it('3.7 should return an error response to indicate device NOT successfully registered because of missing body and invalidUDID', function(done) {
 
 	request(url)
 		.post('/device/register')
@@ -229,25 +228,25 @@ it('should return an error response to indicate device NOT succesfully registere
 		.send()
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('005');
 			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
 
-it('should return an error response to indicate device NOT succesfully registered because of invalid UDID', function(done) {
+it('3.8 should return an error response to indicate device NOT successfully registered because of invalid UDID', function(done) {
 
-	var clientrequest = {
-		"info": {
-			"os": "Android",
-			"version": "4.4.3",
-			"sdk_level": 19,
-			"manufacturer": "HTC",
-			"model": "HTC One_M8",
-
+	var clientRequest = {
+		info: {
+			os: "Android",
+			version: "4.4.3",
+			sdk_level: 19,
+			manufacturer: "HTC",
+			model: "HTC One_M8",
 		},
-		"persistent": {
-			"type": "android",
-			"token": "android pn token"
+		persistent: {
+			type: "android",
+			token: "android pn token"
 		}
 	};
 
@@ -256,9 +255,10 @@ it('should return an error response to indicate device NOT succesfully registere
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', invalidUDID)
 		.set('X-BLGREQ-APPID',appID)
-		.send(clientrequest)
+		.send(clientRequest)
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('025');
 			res.statusCode.should.be.equal(404);
 			done();
 		});

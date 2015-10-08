@@ -26,7 +26,7 @@ var admin = {
 
 before(function(done){
 
-	this.timeout(10000);
+	this.timeout(25*DELAY);
 
 	var deviceRegisterRequest = {
 		"info": {
@@ -89,7 +89,7 @@ before(function(done){
 		});
 });
 
-it('should return an error response to indicate that the user has NOT logged via Facebook because of missing access token', function(done) {
+it('5.1 should return an error response to indicate that the user has NOT logged via Facebook because request body is empty', function(done) {
 
 	request(url)
 		.post('/user/login')
@@ -99,13 +99,35 @@ it('should return an error response to indicate that the user has NOT logged via
 		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 		.send()
 		.end(function(err, res) {
-			//console.log(res.body);
+
+			res.body.code.should.be.equal('005');
 			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
 
-it('should return an error response to indicate that the user has NOT logged via Facebook because of invalid token', function(done) {
+it('5.2 should return an error response to indicate that the user has NOT logged via Facebook because of missing access token', function(done) {
+
+	var clientRequest = {
+		"something_else": "invalidToken"
+	};
+
+	request(url)
+		.post('/user/login')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256 )
+		.set('X-BLGREQ-APPID', appID )
+		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+		.send(clientRequest)
+		.end(function(err, res) {
+
+			res.body.code.should.be.equal('004');
+			res.statusCode.should.be.equal(400);
+			done();
+		});
+});
+
+it('5.3 should return an error response to indicate that the user has NOT logged via Facebook because of invalid token', function(done) {
 
 	var clientrequest = {
 		"access_token": "invalidToken"
@@ -120,12 +142,13 @@ it('should return an error response to indicate that the user has NOT logged via
 		.send(clientrequest)
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('002');
 			res.statusCode.should.be.equal(500);
 			done();
 		});
 });
 
-it('should return a success response to indicate that the user has logged in via user & password', function(done) {
+it('5.4 should return a success response to indicate that the user has logged in via user & password', function(done) {
 
 	this.timeout(13*DELAY);
 
@@ -164,7 +187,7 @@ it('should return a success response to indicate that the user has logged in via
 		});
 });
 
-it('should return a success response to indicate that the user has logged in via Facebook', function(done) {
+it('5.5 should return a success response to indicate that the user has logged in via Facebook', function(done) {
 
 	this.timeout(100*DELAY);
 
@@ -212,7 +235,7 @@ it('should return a success response to indicate that the user has logged in via
 		});
 });
 
-it('should return a success response to indicate that the user info was retrieved', function(done) {
+it('5.6 should return a success response to indicate that the user info was retrieved', function(done) {
 
 	request(url)
 		.get('/user/me')
@@ -229,7 +252,7 @@ it('should return a success response to indicate that the user info was retrieve
 		});
 });
 
-it('should return an error response to indicate that the user info was NOT retrieved because user was not found', function(done) {
+it('5.7 should return an error response to indicate that the user info was NOT retrieved because user was not found', function(done) {
 
 	this.timeout(25*DELAY);
 
@@ -286,6 +309,7 @@ it('should return an error response to indicate that the user info was NOT retri
 										.send()
 										.end(function(err, res) {
 
+											res.body.code.should.be.equal('023');
 											res.statusCode.should.be.equal(404);
 											done();
 										});
@@ -296,7 +320,7 @@ it('should return an error response to indicate that the user info was NOT retri
 		});
 });
 
-it('should return an error response to indicate that the user has NOT logged in via user & password because of Invalid Credentials', function(done) {
+it('5.8 should return an error response to indicate that the user has NOT logged in via user & password because of invalid credentials', function(done) {
 
 	var clientrequest = {
 		"email": userEmail,
@@ -313,12 +337,13 @@ it('should return an error response to indicate that the user has NOT logged in 
 		.send(clientrequest)
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('031');
 			res.statusCode.should.be.equal(401);
 			done();
 		});
 });
 
-it('should return an error response to indicate that the user has NOT logged in via user & password because user not found', function(done) {
+it('5.9 should return an error response to indicate that the user has NOT logged in via user & password because user not found', function(done) {
 
 	var clientrequest = {
 		"email": 'user'+Math.round(Math.random()*1000000)+'@example.com',
@@ -334,12 +359,14 @@ it('should return an error response to indicate that the user has NOT logged in 
 		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 		.send(clientrequest)
 		.end(function(err, res) {
+
+			res.body.code.should.be.equal('023');
 			res.statusCode.should.be.equal(404);
 			done();
 		});
 });
 
-it('should return an error response to indicate that the user has NOT logged in via user & password because email was missing for request', function(done) {
+it('5.10 should return an error response to indicate that the user has NOT logged in via user & password because email was missing for request', function(done) {
 
 	var clientrequest = {
 		"password": "secure_password",
@@ -354,12 +381,14 @@ it('should return an error response to indicate that the user has NOT logged in 
 		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 		.send(clientrequest)
 		.end(function(err, res) {
+
+			res.body.code.should.be.equal('004');
 			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
 
-it('should return an error response to indicate that the user has NOT logged in via user & password because password was missing for request', function(done) {
+it('5.11 should return an error response to indicate that the user has NOT logged in via user & password because password was missing for request', function(done) {
 
 	var clientrequest = {
 		"email": 'user'+Math.round(Math.random()*1000000)+'@example.com',
@@ -374,12 +403,14 @@ it('should return an error response to indicate that the user has NOT logged in 
 		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 		.send(clientrequest)
 		.end(function(err, res) {
+
+			res.body.code.should.be.equal('004');
 			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
 
-it('should return a success response to indicate that the user was updated', function(done) {
+it('5.12 should return a success response to indicate that the user was updated', function(done) {
 
 	var clientrequest = {
 		"patches" : [
@@ -400,12 +431,13 @@ it('should return a success response to indicate that the user was updated', fun
 		.set('Authorization', authValue )
 		.send(clientrequest)
 		.end(function(err, res) {
+
 			res.statusCode.should.be.equal(202);
 			done();
 		});
 });
 
-it('should return a success response to indicate that the user password was updated', function(done) {
+it('5.13 should return a success response to indicate that the user password was updated', function(done) {
 
 	var clientrequest = {
 		"patches" : [
@@ -432,7 +464,7 @@ it('should return a success response to indicate that the user password was upda
 		});
 });
 
-it('should return an error response to indicate that the userID is not valid', function(done) {
+it('5.14 should return an error response to indicate that the userID is not valid', function(done) {
 
 	var clientrequest = {
 		"patches" : [
@@ -454,12 +486,13 @@ it('should return an error response to indicate that the userID is not valid', f
 		.send(clientrequest)
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('042');
 			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
 
-it('should return a success response to indicate that the user password was NOT updated because of empty request body', function(done) {
+it('5.15 should return a success response to indicate that the user password was NOT updated because of empty request body', function(done) {
 
 	request(url)
 		.post('/user/update')
@@ -470,12 +503,14 @@ it('should return a success response to indicate that the user password was NOT 
 		.set('Authorization', authValue )
 		.send()
 		.end(function(err, res) {
+
+			res.body.code.should.be.equal('005');
 			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
 
-it('should return a success response to indicate that the user password was NOT updated because patches is not an array', function(done) {
+it('5.16 should return a success response to indicate that the user password was NOT updated because patches is not an array', function(done) {
 
 	var clientrequest = {
 		"patches" : {}
@@ -490,12 +525,14 @@ it('should return a success response to indicate that the user password was NOT 
 		.set('Authorization', authValue )
 		.send(clientrequest)
 		.end(function(err, res) {
+
+			res.body.code.should.be.equal('038');
 			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
 
-it('should return a success response to indicate that the user password was NOT updated because patches is an empty array', function(done) {
+it('5.17 should return a success response to indicate that the user password was NOT updated because patches is an empty array', function(done) {
 
 	var clientrequest = {
 		"patches" : []
@@ -510,12 +547,14 @@ it('should return a success response to indicate that the user password was NOT 
 		.set('Authorization', authValue )
 		.send(clientrequest)
 		.end(function(err, res) {
+
+			res.body.code.should.be.equal('038');
 			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
 
-it('should return a success response to indicate that the user was updated immidiate', function(done) {
+it('5.18 should return a success response to indicate that the user was updated immediate', function(done) {
 
 	this.timeout(20*DELAY);
 
@@ -539,7 +578,7 @@ it('should return a success response to indicate that the user was updated immid
 		});
 });
 
-it('should return a success response to indicate that the token was updated', function(done) {
+it('5.19 should return a success response to indicate that the token was updated', function(done) {
 
 	request(url)
 		.get('/user/refresh_token')
@@ -559,7 +598,7 @@ it('should return a success response to indicate that the token was updated', fu
 		});
 });
 
-it('should return an error response to indicate that the token was NOT updated because of bad Authorization', function(done) {
+it('5.20 should return an error response to indicate that the token was NOT updated because of bad authorization', function(done) {
 
 	var authValue = "something";
 
@@ -573,12 +612,13 @@ it('should return an error response to indicate that the token was NOT updated b
 		.send()
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('014');
 			res.statusCode.should.be.equal(401);
 			done();
 		});
 });
 
-it('should return an error response to indicate that the token was NOT updated because of bad token', function(done) {
+it('5.21 should return an error response to indicate that the token was NOT updated because of bad token', function(done) {
 
 	var authValue = 'Bearer something';
 
@@ -592,13 +632,14 @@ it('should return an error response to indicate that the token was NOT updated b
 		.send()
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('040');
 			res.statusCode.should.be.equal(400);
 			res.body.message.should.be.equal("Malformed authorization token");
 			done();
 		});
 });
 
-it('should return an error response to indicate that the token was NOT updated because authorization is missing', function(done) {
+it('5.22 should return an error response to indicate that the token was NOT updated because authorization is missing', function(done) {
 
 	request(url)
 		.get('/user/refresh_token')
@@ -609,12 +650,13 @@ it('should return an error response to indicate that the token was NOT updated b
 		.send()
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('013');
 			res.statusCode.should.be.equal(401);
 			done();
 		});
 });
 
-it('should return an error response to indicate that the token was NOT updated because X-BLGREQ-SIGN is missing', function(done) {
+it('5.23 should return an error response to indicate that the token was NOT updated because X-BLGREQ-SIGN is missing', function(done) {
 
 	request(url)
 		.get('/user/refresh_token')
@@ -625,12 +667,13 @@ it('should return an error response to indicate that the token was NOT updated b
 		.send()
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('007');
 			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
 
-it('should return an error response to indicate that the token was NOT updated because Content-type is not application/json', function(done) {
+it('5.24 should return an error response to indicate that the token was NOT updated because Content-type is not application/json', function(done) {
 
 	request(url)
 		.get('/user/refresh_token')
@@ -642,12 +685,13 @@ it('should return an error response to indicate that the token was NOT updated b
 		.send()
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('006');
 			res.statusCode.should.be.equal(415);
 			done();
 		});
 });
 
-it('should return an error response to indicate that the token was NOT updated because of invalid api key', function(done) {
+it('5.25 should return an error response to indicate that the token was NOT updated because of invalid API key', function(done) {
 
 	request(url)
 		.get('/user/refresh_token')
@@ -659,12 +703,13 @@ it('should return an error response to indicate that the token was NOT updated b
 		.send()
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('008');
 			res.statusCode.should.be.equal(401);
 			done();
 		});
 });
 
-it('should return an error response to indicate that the token was NOT updated because of missing UDID', function(done) {
+it('5.26 should return an error response to indicate that the token was NOT updated because of missing UDID', function(done) {
 
 	request(url)
 		.get('/user/refresh_token')
@@ -675,29 +720,13 @@ it('should return an error response to indicate that the token was NOT updated b
 		.send()
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('009');
 			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
 
-it('should return an error response to indicate that the token was NOT updated because device ID does not exist', function(done) {
-
-	request(url)
-		.get('/user/refresh_token')
-		.set('Content-type','application/json')
-		.set('X-BLGREQ-SIGN', appIDsha256)
-		.set('X-BLGREQ-UDID', deviceIdentification + '66')
-		.set('X-BLGREQ-APPID',appID+ '66')
-		.set('Authorization', authValue )
-		.send()
-		.end(function(err, res) {
-
-			res.statusCode.should.be.equal(404);
-			done();
-		});
-});
-
-it('should return a success response to indicate that the user logged out', function(done) {
+it('5.27 should return a success response to indicate that the user logged out', function(done) {
 
 	request(url)
 		.get('/user/logout')
@@ -714,7 +743,7 @@ it('should return a success response to indicate that the user logged out', func
 		});
 });
 
-it('should return a success response to indicate that the user has registered', function(done) {
+it('5.28 should return a success response to indicate that the user has registered', function(done) {
 
 	this.timeout(20*DELAY);
 
@@ -738,7 +767,7 @@ it('should return a success response to indicate that the user has registered', 
 		});
 });
 
-it('should return a success response to indicate that the user has NOT registered because user is already registered', function(done) {
+it('5.29 should return a success response to indicate that the user has NOT registered because user is already registered', function(done) {
 
 	var clientrequest = {
 		"email": userEmail,
@@ -755,12 +784,13 @@ it('should return a success response to indicate that the user has NOT registere
 		.send(clientrequest)
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('029');
 			res.statusCode.should.be.equal(409);
 			done();
 		});
 });
 
-it('should return a success response to indicate that the user has NOT registered because of empty body', function(done) {
+it('5.30 should return a success response to indicate that the user has NOT registered because of empty body', function(done) {
 
 	request(url)
 		.post('/user/register')
@@ -771,12 +801,13 @@ it('should return a success response to indicate that the user has NOT registere
 		.send()
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('005');
 			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
 
-it('should return a success response to indicate that the user was deleted', function(done) {
+it('5.31 should return a success response to indicate that the user was deleted', function(done) {
 
 	var clientrequest = {
 		"email": userEmail2,

@@ -1,8 +1,6 @@
 var common = require('../common');
 var request = common.request;
 var should = common.should;
-var assert = common.assert;
-var crypto = common.crypto;
 var url = common.url;
 var DELAY = common.DELAY;
 
@@ -28,7 +26,7 @@ var admin = {
 
 before(function(done){
 
-	this.timeout(10000);
+	this.timeout(25*DELAY);
 
 	var clientrequest = {
 		"name": "test-app",
@@ -87,7 +85,7 @@ before(function(done){
 		});
 });
 
-it('should return a success response to indicate context succesfully retrived', function(done) {
+it('2.1 should return a success response to indicate context successfully retrieved', function(done) {
 
 	var clientrequest = {
 		"id": contextID
@@ -108,7 +106,7 @@ it('should return a success response to indicate context succesfully retrived', 
 		});
 });
 
-it('should return an error response to indicate context wa NOT successfully retrieved because of missing context ID', function(done) {
+it('2.2 should return an error response to indicate context was NOT successfully retrieved because of missing context ID', function(done) {
 
 	request(url)
 		.post('/context')
@@ -120,12 +118,13 @@ it('should return an error response to indicate context wa NOT successfully retr
 		.send()
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('004');
 			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
 
-it('should return an error response to indicate context NOT successfully retrieved because of bad context ID', function(done) {
+it('2.3 should return an error response to indicate context NOT successfully retrieved because of bad context ID', function(done) {
 
 	var clientrequest = {
 		id: Math.round(Math.random()*1000000)+1000
@@ -140,12 +139,13 @@ it('should return an error response to indicate context NOT successfully retriev
 		.send(clientrequest)
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('020');
 			res.statusCode.should.be.equal(404);
 			done();
 		});
 });
 
-it('should return an error response to indicate context NOT successfully retrieved because of missing authorization', function(done) {
+it('2.4 should return an error response to indicate context NOT successfully retrieved because of missing authorization', function(done) {
 
 	var clientrequest = {
 		id: contextID
@@ -159,12 +159,13 @@ it('should return an error response to indicate context NOT successfully retriev
 		.send(clientrequest)
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('013');
 			res.statusCode.should.be.equal(401);
 			done();
 		});
 });
 
-it('should return an error response to indicate context NOT successfully retrieved because of bad authorization', function(done) {
+it('2.5 should return an error response to indicate context NOT successfully retrieved because of bad authorization', function(done) {
 
 	var clientrequest = {
 		id: contextID
@@ -179,12 +180,13 @@ it('should return an error response to indicate context NOT successfully retriev
 		.send(clientrequest)
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('040');
 			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
 
-it('should return a success response to indicate all contexts successfully retrieved', function(done) {
+it('2.6 should return a success response to indicate all contexts successfully retrieved', function(done) {
 
 	request(url)
 		.get('/context/all')

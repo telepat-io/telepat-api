@@ -65,6 +65,10 @@ router.use(['/logout', '/me', '/update', '/update_immediate', '/delete'], securi
  *
  */
 router.post('/login', function(req, res, next) {
+
+	if (Object.getOwnPropertyNames(req.body).length === 0)
+		return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
+
 	if (!req.body.access_token)
 		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['access_token']));
 

@@ -70,6 +70,11 @@ router.use(security.deviceIdValidation);
  */
 router.post('/register', function(req, res, next) {
 	if (req._telepat.device_id == 'TP_EMPTY_UDID' || req._telepat.device_id == '') {
+
+		if (Object.getOwnPropertyNames(req.body).length === 0){
+			return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
+		}
+
 		if (!req.body.info) {
 			return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['info']));
 		}
@@ -106,8 +111,9 @@ router.post('/register', function(req, res, next) {
 		}
 	} else {
 
-		if (Object.getOwnPropertyNames(req.body).length === 0)
+		if (Object.getOwnPropertyNames(req.body).length === 0){
 			return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
+		}
 
 		req.body.id = req._telepat.device_id;
 

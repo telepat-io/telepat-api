@@ -31,17 +31,15 @@ var admin3 = {
 	password: adminPassword
 };
 
-
-
 var token2;
 var authValue2;
 var authValue3;
 
 var userEmail = 'user'+Math.round(Math.random()*1000000)+'@example.com';
 
-describe('Admin', function() {
+describe('1.1.Admin', function() {
 
-	it('should return a 200 code to indicate success when creating a new admin', function(done) {
+	it('1.1.1 should return a 200 code to indicate success when creating a new admin', function(done) {
 
 		this.timeout(12*DELAY);
 
@@ -54,25 +52,27 @@ describe('Admin', function() {
 					throw err;
 					done(err);
 				}
+
 				res.statusCode.should.be.equal(200);
 				setTimeout(done, 8*DELAY);
 			});
 	});
 
-	it('should return a 409 code to indicate failure when admin already exists', function(done) {
+	it('1.1.2 should return an error (409) response to indicate failure when admin already exists', function(done) {
 
 		request(url)
 			.post('/admin/add')
 			.send(admin)
 			.end(function(err, res) {
 
+				res.body.code.should.be.equal('030');
 				res.statusCode.should.be.equal(409);
 				done();
 			});
 
 	});
 
-	it('should return a 4xx code to indicate failure when admin email is missing', function(done) {
+	it('1.1.3 should return an error response indicate failure when admin email is missing', function(done) {
 
 		var admin = {
 			password: adminPassword
@@ -83,12 +83,13 @@ describe('Admin', function() {
 			.send(admin)
 			.end(function(err, res) {
 
-				res.statusCode.should.be.within(400,499);
+				res.body.code.should.be.equal('004');
+				res.statusCode.should.be.equal(400);
 				done();
 			});
 	});
 
-	it('should return a 4xx code to indicate failure when admin email is empty', function(done) {
+	it('1.1.4 should return an error response to indicate failure when admin email is empty', function(done) {
 
 		var admin = {
 			email: "",
@@ -100,12 +101,13 @@ describe('Admin', function() {
 			.send(admin)
 			.end(function(err, res) {
 
-				res.statusCode.should.be.within(400,499);
+				res.body.code.should.be.equal('004');
+				res.statusCode.should.be.equal(400);
 				done();
 			});
 	});
 
-	it('should return a 4xx code to indicate failure when admin password is empty', function(done) {
+	it('1.1.5 should return an error response to indicate failure when admin password is empty', function(done) {
 
 		var admin = {
 			email: adminEmail,
@@ -117,12 +119,13 @@ describe('Admin', function() {
 			.send(admin)
 			.end(function(err, res) {
 
-				res.statusCode.should.be.within(400,499);
+				res.body.code.should.be.equal('004');
+				res.statusCode.should.be.equal(400);
 				done();
 			});
 	});
 
-	it('should return a 4xx code to indicate failure when admin password is missing', function(done) {
+	it('1.1.6 should return an error response to indicate failure when admin password is missing', function(done) {
 
 		var admin = {
 			email: adminEmail
@@ -133,12 +136,13 @@ describe('Admin', function() {
 			.send(admin)
 			.end(function(err, res) {
 
-				res.statusCode.should.be.within(400,499);
+				res.body.code.should.be.equal('004');
+				res.statusCode.should.be.equal(400);
 				done();
 			});
 	});
 
-	it('should return an error for logging in with wrong password', function(done) {
+	it('1.1.7 should return an error for logging in with wrong password', function(done) {
 
 		var admin = {
 			email: adminEmail,
@@ -149,12 +153,13 @@ describe('Admin', function() {
 			.send(admin)
 			.end(function(err, res) {
 
+				res.body.code.should.be.equal('016');
 				res.statusCode.should.be.equal(401);
 				done();
 			});
 	});
 
-	it('should return an error for logging in with wrong user', function(done) {
+	it('1.1.8 should return an error for logging in with wrong user', function(done) {
 
 		var randEmail = 'adminx@example.com';
 		var admin = {
@@ -166,12 +171,13 @@ describe('Admin', function() {
 			.send(admin)
 			.end(function(err, res) {
 
+				res.body.code.should.be.equal('016');
 				res.statusCode.should.be.equal(401);
 				done();
 			});
 	});
 
-	it('should return an error for logging in missing password', function(done) {
+	it('1.1.9 should return an error for logging in missing password', function(done) {
 
 		var randEmail = 'adminx@example.com';
 		var admin = {
@@ -183,12 +189,13 @@ describe('Admin', function() {
 			.send(admin)
 			.end(function(err, res) {
 
+				res.body.code.should.be.equal('004');
 				res.statusCode.should.be.equal(400);
 				done();
 			});
 	});
 
-	it('should return an error for logging in missing email & password', function(done) {
+	it('1.1.10 should return an error for logging in missing email & password', function(done) {
 
 		var admin = {};
 
@@ -197,12 +204,13 @@ describe('Admin', function() {
 			.send(admin)
 			.end(function(err, res) {
 
+				res.body.code.should.be.equal('004');
 				res.statusCode.should.be.equal(400);
 				done();
 			});
 	});
 
-	it('should return a valid authorization token', function(done) {
+	it('1.1.11 should return a valid authorization token', function(done) {
 
 		request(url)
 			.post('/admin/login')
@@ -217,7 +225,7 @@ describe('Admin', function() {
 			});
 	});
 
-	it('should return information about the logged admin', function(done) {
+	it('1.1.12 should return information about the logged admin', function(done) {
 
 		request(url)
 			.get('/admin/me')
@@ -233,7 +241,7 @@ describe('Admin', function() {
 			});
 	});
 
-	it('should return a succes response indicating the admin account has been updated', function(done) {
+	it('1.1.13 should return an success response indicating the admin account has been updated', function(done) {
 
 		var requestBody = {
 			patches: [
@@ -257,7 +265,7 @@ describe('Admin', function() {
 			});
 	});
 
-	it('should return an error response indicating the admin account has NOT been updated because of invalid admin id', function(done) {
+	it('1.1.14 should return an error response indicating the admin account has NOT been updated because of invalid admin id', function(done) {
 
 		var admin = {
 			patches: [
@@ -276,12 +284,13 @@ describe('Admin', function() {
 			.send(admin)
 			.end(function(err, res) {
 
+				res.body.code.should.be.equal('041');
 				res.statusCode.should.be.equal(401);
 				done();
 			});
 	});
 
-	it('should return an error response indicating the admin account has NOT been updated because of missing authorization header', function(done) {
+	it('1.1.15 should return an error response indicating the admin account has NOT been updated because of missing authorization header', function(done) {
 
 		var admin = {
 			patches: [
@@ -299,12 +308,13 @@ describe('Admin', function() {
 			.send(admin)
 			.end(function(err, res) {
 
+				res.body.code.should.be.equal('013');
 				res.statusCode.should.be.equal(401);
 				done();
 			});
 	});
 
-	it('should return an error response indicating the admin account has NOT been updated because of missing request body', function(done) {
+	it('1.1.16 should return an error response indicating the admin account has NOT been updated because of missing request body', function(done) {
 
 		request(url)
 			.post('/admin/update')
@@ -313,13 +323,14 @@ describe('Admin', function() {
 			.send()
 			.end(function(err, res) {
 
+				res.body.code.should.be.equal('005');
 				res.statusCode.should.be.equal(400);
 				done();
 			});
 	});
 
 
-	it('should return an error response indicating the admin account has NOT been updated because patches is not an array', function(done) {
+	it('1.1.17 should return an error response indicating the admin account has NOT been updated because patches is not an array', function(done) {
 
 		var admin = {
 			patches: {}
@@ -332,12 +343,13 @@ describe('Admin', function() {
 			.send(admin)
 			.end(function(err, res) {
 
+				res.body.code.should.be.equal('038');
 				res.statusCode.should.be.equal(400);
 				done();
 			});
 	});
 
-	it('should return an error response indicating the admin account has NOT been updated because patches is empty', function(done) {
+	it('1.1.18 should return an error response indicating the admin account has NOT been updated because patches is empty', function(done) {
 
 		var admin = {
 			patches: []
@@ -350,12 +362,13 @@ describe('Admin', function() {
 			.send(admin)
 			.end(function(err, res) {
 
+				res.body.code.should.be.equal('038');
 				res.statusCode.should.be.equal(400);
 				done();
 			});
 	});
 
-	it('should return an error response indicating the admin account has NOT been deleted because of missing credentials', function(done) {
+	it('1.1.19 should return an error response indicating the admin account has NOT been deleted because of missing credentials', function(done) {
 
 		request(url)
 			.post('/admin/delete')
@@ -368,7 +381,7 @@ describe('Admin', function() {
 			});
 	});
 
-	it('should return a succes response indicating the admin account has been deleted', function(done) {
+	it('1.1.20 should return an success response indicating the admin account has been deleted', function(done) {
 
 		this.timeout(20*DELAY);
 
@@ -409,7 +422,7 @@ describe('Admin', function() {
 	});
 });
 
-describe('App', function() {
+describe('1.2.App', function() {
 
 	before(function(done){
 
@@ -480,11 +493,13 @@ describe('App', function() {
 			});
 	});
 
-	it('should return a success response to indicate app succesfully created', function(done) {
+	it('1.2.1 should return a success response to indicate app successfully created', function(done) {
+
 		var clientrequest = {
 			"name": "test-app",
 			"keys": [ appKey ]
 		};
+
 		var successResponse =  {
 			"1": {
 				"admin_id": adminEmail,
@@ -492,7 +507,8 @@ describe('App', function() {
 				"type": "application",
 				"keys": [ appKey ]
 			}
-		}
+		};
+
 		request(url)
 			.post('/admin/app/add')
 			.set('Content-type','application/json')
@@ -507,7 +523,7 @@ describe('App', function() {
 			});
 	});
 
-	it('should return an error response to indicate app was not created because of missing app name', function(done) {
+	it('1.2.2 should return an error response to indicate app was not created because of missing app name', function(done) {
 
 		var clientrequest = {
 			"keys": ["3406870085495689e34d878f09faf52c"]
@@ -520,12 +536,13 @@ describe('App', function() {
 			.send(clientrequest)
 			.end(function(err, res) {
 
+				res.body.code.should.be.equal('004');
 				res.statusCode.should.be.equal(400);
 				done();
 			});
 	});
 
-	it('should return a list of applications for the current admin', function(done) {
+	it('1.2.3 should return a list of applications for the current admin', function(done) {
 
 		var clientrequest = {
 			"name": "test-app",
@@ -565,7 +582,7 @@ describe('App', function() {
 			});
 	});
 
-	it('should return a success response for updating an app', function(done) {
+	it('1.2.4 should return a success response for updating an app', function(done) {
 
 		var clientrequest = {
 			"name": "test-app",
@@ -600,6 +617,7 @@ describe('App', function() {
 						.set('X-BLGREQ-APPID', appID )
 						.send(clientrequest2)
 						.end(function(err, res) {
+
 							res.statusCode.should.be.equal(200);
 							done();
 						});
@@ -607,7 +625,7 @@ describe('App', function() {
 			});
 	});
 
-	it('should return an error response for NOT updating an app because patches is not an array', function(done) {
+	it('1.2.5 should return an error response for NOT updating an app because patches is not an array', function(done) {
 
 		var clientrequest2 = {
 			patches: {}
@@ -621,12 +639,13 @@ describe('App', function() {
 			.send(clientrequest2)
 			.end(function(err, res) {
 
+				res.body.code.should.be.equal('038');
 				res.statusCode.should.be.equal(400);
 				done();
 			});
 	});
 
-	it('should return an error response for NOT updating an app because patches is an empty array', function(done) {
+	it('1.2.6 should return an error response for NOT updating an app because patches is an empty array', function(done) {
 
 		var clientrequest2 = {
 			patches: []
@@ -640,12 +659,13 @@ describe('App', function() {
 			.send(clientrequest2)
 			.end(function(err, res) {
 
+				res.body.code.should.be.equal('038');
 				res.statusCode.should.be.equal(400);
 				done();
 			});
 	});
 
-	it('should return an error response for NOT updating an app because of missing request body', function(done) {
+	it('1.2.7 should return an error response for NOT updating an app because of missing request body', function(done) {
 
 		request(url)
 			.post('/admin/app/update')
@@ -655,12 +675,13 @@ describe('App', function() {
 			.send()
 			.end(function(err, res) {
 
+				res.body.code.should.be.equal('005');
 				res.statusCode.should.be.equal(400);
 				done();
 			});
 	});
 
-	it('should return an error response for NOT updating an app because of missing appID', function(done) {
+	it('1.2.8 should return an error response for NOT updating an app because of missing appID', function(done) {
 
 		var clientrequest2 = {
 			patches: [
@@ -680,12 +701,13 @@ describe('App', function() {
 			.send(clientrequest2)
 			.end(function(err, res) {
 
+				res.body.code.should.be.equal('011');
 				res.statusCode.should.be.equal(404);
 				done();
 			});
 	});
 
-	it('should return a success response for removing an app', function(done) {
+	it('1.2.9 should return a success response for removing an app', function(done) {
 
 		var clientrequest = {
 			"name": "test-app",
@@ -720,7 +742,7 @@ describe('App', function() {
 			});
 	});
 
-	it('should return an error response for trying to remove an app that does NOT exist', function(done) {
+	it('1.2.10 should return an error response for trying to remove an app that does NOT exist', function(done) {
 
 		request(url)
 			.post('/admin/app/remove')
@@ -730,12 +752,13 @@ describe('App', function() {
 			.send()
 			.end(function(err, res) {
 
+				res.body.code.should.be.equal('011');
 				res.statusCode.should.be.equal(404);
 				done();
 			});
 	});
 
-	it('should return an success to indicate an admin has been authorized to an application', function(done) {
+	it('1.2.11 should return an success to indicate an admin has been authorized to an application', function(done) {
 
 		var clientrequest = {
 			"email": adminEmail2
@@ -757,7 +780,7 @@ describe('App', function() {
 	});
 
 
-	it('should return an error response to indicate admin has NOT been authorized because of missing email from body', function(done) {
+	it('1.2.12 should return an error response to indicate admin has NOT been authorized because of missing email from body', function(done) {
 
 		var clientrequest = {
 			"something": adminEmail2
@@ -773,12 +796,13 @@ describe('App', function() {
 			.end(function(err, res) {
 
 				if(res)
+					res.body.code.should.be.equal('004');
 					res.statusCode.should.be.equal(400);
 				done();
 			});
 	});
 
-	it('should return an error response to indicate admin has NOT been authorized because request body', function(done) {
+	it('1.2.13 should return an error response to indicate admin has NOT been authorized because request body', function(done) {
 
 		request(url)
 			.post('/admin/app/authorize')
@@ -790,12 +814,13 @@ describe('App', function() {
 			.end(function(err, res) {
 
 				if(res)
+					res.body.code.should.be.equal('005');
 					res.statusCode.should.be.equal(400);
 				done();
 			});
 	});
 
-	it('should return an error response to indicate admin with email address already authorized for application', function(done) {
+	it('1.2.14 should return an error response to indicate admin with email address already authorized for application', function(done) {
 
 		this.timeout(10*DELAY);
 
@@ -814,13 +839,14 @@ describe('App', function() {
 			.end(function(err, res) {
 
 				if(res)
+					res.body.code.should.be.equal('017');
 					res.statusCode.should.be.equal(409);
 				done();
 			});
 		}, 6*DELAY);
 	});
 
-	it('should return an error response to indicate admin has NOT been authenticated because application with that ID doesn\'t exist', function(done) {
+	it('1.2.15 should return an error response to indicate admin has NOT been authenticated because application with that ID doesn\'t exist', function(done) {
 
 		var clientrequest = {
 			"email": adminEmail2
@@ -836,12 +862,13 @@ describe('App', function() {
 			.end(function(err, res) {
 
 				if(res)
+					res.body.code.should.be.equal('011');
 					res.statusCode.should.be.equal(404);
 				done();
 			});
 	});
 
-	it('should return an success to indicate an admin has been deauthorized to an application', function(done) {
+	it('1.2.16 should return an success to indicate an admin has been deauthorized to an application', function(done) {
 
 		var clientrequest = {
 			"email": adminEmail2
@@ -862,7 +889,7 @@ describe('App', function() {
 			});
 	});
 
-/*	it('should return an error to indicate an admin has NOT been deauthorized to an application, admin not authorized', function(done) {
+/*	it('1.2.17 should return an error to indicate an admin has NOT been deauthorized to an application, admin not authorized', function(done) {
 
 		var clientrequest = {
 			"email": adminEmail3
@@ -886,7 +913,7 @@ describe('App', function() {
 	});*/
 
 
-	it('should return an error response to indicate admin has NOT been deauthorized because of empty request body', function(done) {
+	it('1.2.18 should return an error response to indicate admin has NOT been deauthorized because of empty request body', function(done) {
 
 		request(url)
 			.post('/admin/app/deauthorize')
@@ -898,13 +925,14 @@ describe('App', function() {
 			.end(function(err, res) {
 
 				if(res)
+					res.body.code.should.be.equal('005');
 					res.statusCode.should.be.equal(400);
 				done();
 			});
 	});
 
 
-	it('should return an error response to indicate admin has NOT been deauthorized because of the email field is missing', function(done) {
+	it('1.2.19 should return an error response to indicate admin has NOT been deauthorized because of the email field is missing', function(done) {
 
 		var clientrequest = {
 			"something": adminEmail2
@@ -920,12 +948,13 @@ describe('App', function() {
 			.end(function(err, res) {
 
 				if(res)
+					res.body.code.should.be.equal('004');
 					res.statusCode.should.be.equal(400);
 				done();
 			});
 	});
 
-	it('should return an error response to indicate admin has NOT been deauthorized because admin was not found in application', function(done) {
+	it('1.2.20 should return an error response to indicate admin has NOT been deauthorized because admin was not found in application', function(done) {
 
 		var clientrequest = {
 			"email": adminEmail2
@@ -941,12 +970,13 @@ describe('App', function() {
 			.end(function(err, res) {
 
 				if(res)
+					res.body.code.should.be.equal('012');
 					res.statusCode.should.be.equal(401);
 				done();
 			});
 	});
 
-	it('should return an error response to indicate admin with email address is the last admin of the application', function(done) {
+	it('1.2.21 should return an error response to indicate admin with email address is the last admin of the application', function(done) {
 
 		var clientrequest = {
 			"email": adminEmail
@@ -962,12 +992,13 @@ describe('App', function() {
 			.end(function(err, res) {
 
 				if(res)
+					res.body.code.should.be.equal('018');
 					res.statusCode.should.be.equal(409);
 				done();
 			});
 	});
 
-	it('should return an error response to indicate admin has NOT been deauthenticated because application with that ID doesn\'t exist', function(done) {
+	it('1.2.22 should return an error response to indicate admin has NOT been deauthenticated because application with that ID doesn\'t exist', function(done) {
 
 		var clientrequest = {
 			"email": adminEmail2
@@ -983,15 +1014,16 @@ describe('App', function() {
 			.end(function(err, res) {
 
 				if(res)
+					res.body.code.should.be.equal('011');
 					res.statusCode.should.be.equal(404);
 				done();
 			});
 	});
 });
 
-describe('Context', function() {
+describe('1.3.Context', function() {
 
-	it('should return a success response to indicate context successfully created', function(done) {
+	it('1.3.1 should return a success response to indicate context successfully created', function(done) {
 
 		var clientrequest = {
 			"name": "context",
@@ -1014,7 +1046,7 @@ describe('Context', function() {
 			});
 	});
 
-	it('should return an error response to indicate context was NOT successfully created because of empty request body', function(done) {
+	it('1.3.2 should return an error response to indicate context was NOT successfully created because of empty request body', function(done) {
 
 		request(url)
 			.post('/admin/context/add')
@@ -1024,12 +1056,13 @@ describe('Context', function() {
 			.send()
 			.end(function(err, res) {
 
+				res.body.code.should.be.equal('005');
 				res.statusCode.should.be.equal(400);
 				done();
 			});
 	});
 
-	it('should return the requested context', function(done) {
+	it('1.3.3 should return the requested context', function(done) {
 
 		var clientrequest = {
 			"id": contextID
@@ -1048,24 +1081,23 @@ describe('Context', function() {
 			});
 	});
 
-	it('should NOT return the requested context, requested context ID is missing', function(done) {
-
-		var clientrequest = {};
+	it('1.3.4 should NOT return the requested context, requested context ID is missing', function(done) {
 
 		request(url)
 			.post('/admin/context')
 			.set('Content-type','application/json')
 			.set('Authorization', authValue)
 			.set('X-BLGREQ-APPID', appID)
-			.send(clientrequest)
+			.send()
 			.end(function(err, res) {
 
+				res.body.code.should.be.equal('004');
 				res.statusCode.should.be.equal(400);
 				done();
 			});
 	});
 
-	it('should return an error response to indicate context NOT succesfully created because of bad client headers', function(done) {
+	it('1.3.5 should return an error response to indicate context NOT successfully created because of bad client headers', function(done) {
 
 		var clientrequest = {
 			"name": "context",
@@ -1079,12 +1111,13 @@ describe('Context', function() {
 			.send(clientrequest)
 			.end(function(err, res) {
 
+				res.body.code.should.be.equal('010');
 				res.statusCode.should.be.equal(400);
 				done();
 			});
 	});
 
-	it('should return an error response to indicate context NOT successfully created because request body is empty', function(done) {
+	it('1.3.6 should return an error response to indicate context NOT successfully created because request body is empty', function(done) {
 
 		request(url)
 			.post('/admin/context/add')
@@ -1093,12 +1126,13 @@ describe('Context', function() {
 			.send()
 			.end(function(err, res) {
 
+				res.body.code.should.be.equal('010');
 				res.statusCode.should.be.equal(400);
 				done();
 			});
 	});
 
-	it('should return a success response to indicate context was updated', function(done) {
+	it('1.3.7 should return a success response to indicate context was updated', function(done) {
 
 		var clientrequest = {
 			"id": contextID,
@@ -1124,7 +1158,7 @@ describe('Context', function() {
 			});
 	});
 
-	it('should return an error response to indicate context was NOT updated because context was not found', function(done) {
+	it('1.3.8 should return an error response to indicate context was NOT updated because context was not found', function(done) {
 
 		var clientrequest = {
 			"id": contextID + '66',
@@ -1145,12 +1179,13 @@ describe('Context', function() {
 			.send(clientrequest)
 			.end(function(err, res) {
 
+				res.body.code.should.be.equal('020');
 				res.statusCode.should.be.equal(404);
 				done();
 			});
 	});
 
-	it('should return an error response to indicate context was NOT updated because patches are missing', function(done) {
+	it('1.3.9 should return an error response to indicate context was NOT updated because patches are missing', function(done) {
 
 		var clientrequest = {
 			"id": Math.round(Math.random()*1000000)+100,
@@ -1165,12 +1200,13 @@ describe('Context', function() {
 			.send(clientrequest)
 			.end(function(err, res) {
 
+				res.body.code.should.be.equal('038');
 				res.statusCode.should.be.equal(400);
 				done();
 			});
 	});
 
-	it('should return an error response to indicate context was NOT updated because of missing request body', function(done) {
+	it('1.3.10 should return an error response to indicate context was NOT updated because of missing request body', function(done) {
 
 		request(url)
 			.post('/admin/context/update')
@@ -1180,12 +1216,13 @@ describe('Context', function() {
 			.send()
 			.end(function(err, res) {
 
+				res.body.code.should.be.equal('005');
 				res.statusCode.should.be.equal(400);
 				done();
 			});
 	});
 
-	it('should return an error response to indicate context was NOT updated because patches is empty', function(done) {
+	it('1.3.11 should return an error response to indicate context was NOT updated because patches is empty', function(done) {
 
 		var clientrequest = {
 			"id": Math.round(Math.random()*1000000)+100,
@@ -1200,12 +1237,13 @@ describe('Context', function() {
 			.send(clientrequest)
 			.end(function(err, res) {
 
+				res.body.code.should.be.equal('038');
 				res.statusCode.should.be.equal(400);
 				done();
 			});
 	});
 
-	it('should return an error response to indicate context was NOT updated because of missing context id', function(done) {
+	it('1.3.12 should return an error response to indicate context was NOT updated because of missing context id', function(done) {
 
 		var clientrequest = {
 			"name": "new name",
@@ -1226,12 +1264,13 @@ describe('Context', function() {
 			.send(clientrequest)
 			.end(function(err, res) {
 
+				res.body.code.should.be.equal('004');
 				res.statusCode.should.be.equal(400);
 				done();
 			});
 	});
 
-	it('should return an error response to indicate context was NOT updated by another admin', function(done) {
+	it('1.3.13 should return an error response to indicate context was NOT updated by another admin', function(done) {
 
 		var clientrequest = {
 			"id": contextID,
@@ -1252,12 +1291,13 @@ describe('Context', function() {
 			.send(clientrequest)
 			.end(function(err, res) {
 
+				res.body.code.should.be.equal('012');
 				res.statusCode.should.be.equal(401);
 				done();
 			});
 	});
 
-	it('should return an error response to indicate context was NOT removed because of invalid context id', function(done) {
+	it('1.3.14 should return an error response to indicate context was NOT removed because of invalid context id', function(done) {
 
 		var clientrequest = {
 			"id": 1
@@ -1271,12 +1311,13 @@ describe('Context', function() {
 			.send(clientrequest)
 			.end(function(err, res) {
 
+				res.body.code.should.be.equal('020');
 				res.statusCode.should.be.equal(404);
 				done();
 			});
 	});
 
-	it('should return an error indicating the requested context does NOT exist', function(done) {
+	it('1.3.15 should return an error indicating the requested context does NOT exist', function(done) {
 
 		var clientrequest = {
 			"id": Math.round(Math.random()*1000000)+100
@@ -1290,13 +1331,14 @@ describe('Context', function() {
 			.send(clientrequest)
 			.end(function(err, res) {
 
+				res.body.code.should.be.equal('020');
 				res.statusCode.should.be.equal(404);
 				res.body.message.should.be.equal("Context not found");
 				done();
 			});
 	});
 
-	it('should return an error response to indicate context was NOT removed because of missing id from request body', function(done) {
+	it('1.3.16 should return an error response to indicate context was NOT removed because of missing id from request body', function(done) {
 
 		request(url)
 			.post('/admin/context/remove')
@@ -1306,12 +1348,13 @@ describe('Context', function() {
 			.send()
 			.end(function(err, res) {
 
+				res.body.code.should.be.equal('004');
 				res.statusCode.should.be.equal(400);
 				done();
 			});
 	});
 
-	it('should return all contexts using the old API', function(done) {
+	it('1.3.17 should return all contexts using the old API', function(done) {
 
 		this.timeout(9*DELAY);
 
@@ -1332,7 +1375,7 @@ describe('Context', function() {
 		}, 6*DELAY);
 	});
 
-	it('should return all contexts using the new API', function(done) {
+	it('1.3.18 should return all contexts using the new API', function(done) {
 
 		this.timeout(9*DELAY);
 
@@ -1353,7 +1396,7 @@ describe('Context', function() {
 		}, 6*DELAY);
 	});
 
-	it('should NOT return all contexts using the old API because of invalid appID', function(done) {
+	it('1.3.19 should NOT return all contexts using the old API because of invalid appID', function(done) {
 
 		this.timeout(9*DELAY);
 
@@ -1374,7 +1417,7 @@ describe('Context', function() {
 		}, 6*DELAY);
 	});
 
-	it('should return a success response to indicate context was removed', function(done) {
+	it('1.3.20 should return a success response to indicate context was removed', function(done) {
 
 		var clientrequest = {
 			"id": contextID
@@ -1395,9 +1438,9 @@ describe('Context', function() {
 	});
 });
 
-describe('Schema', function() {
+describe('1.4.Schema', function() {
 
-	it('should return a success response to indicate schema succesfully updated', function(done) {
+	it('1.4.1 should return a success response to indicate schema successfully updated', function(done) {
 
 		var clientrequest = {
 			"appId": appID,
@@ -1478,7 +1521,7 @@ describe('Schema', function() {
 			});
 	});
 
-	it('should return an error response to indicate schema was NOT succesfully updated because of appID', function(done) {
+	it('1.4.2 should return an error response to indicate schema was NOT successfully updated because of appID', function(done) {
 
 		var clientrequest = {
 			"appId": "1",
@@ -1534,12 +1577,13 @@ describe('Schema', function() {
 			.send(clientrequest)
 			.end(function(err, res) {
 
+				res.body.code.should.be.equal('011');
 				res.statusCode.should.be.equal(404);
 				done();
 			});
 	});
 
-	it('should return an error response to indicate schema was NOT succesfully updated because of missing schema object', function(done) {
+	it('1.4.3 should return an error response to indicate schema was NOT successfully updated because of missing schema object', function(done) {
 
 		var clientrequest = {
 			"appId": "1"
@@ -1553,12 +1597,13 @@ describe('Schema', function() {
 			.send(clientrequest)
 			.end(function(err, res) {
 
+				res.body.code.should.be.equal('004');
 				res.statusCode.should.be.equal(400);
 				done();
 			});
 	});
 
-	it('should return a success response to indicate schema was retrived succesfully using the old API', function(done) {
+	it('1.4.4 should return a success response to indicate schema was retrieved successfully using the old API', function(done) {
 
 		request(url)
 			.get('/admin/schemas')
@@ -1573,7 +1618,7 @@ describe('Schema', function() {
 			});
 	});
 
-	it('should return a success response to indicate schema was retrived succesfully using the new API', function(done) {
+	it('1.4.5 should return a success response to indicate schema was retrievedsuccessfullyy using the new API', function(done) {
 
 		request(url)
 			.get('/admin/schema/all')
@@ -1588,7 +1633,7 @@ describe('Schema', function() {
 			});
 	});
 
-	it('should return a success response to indicate a model was removed from the application', function(done) {
+	it('1.4.6 should return a success response to indicate a model was removed from the application', function(done) {
 		this.timeout(6*DELAY);
 
 		var clientrequest = {
@@ -1603,13 +1648,12 @@ describe('Schema', function() {
 			.send(clientrequest)
 			.end(function(err, res) {
 
-				//console.log(res.body);
 				res.statusCode.should.be.equal(200);
 				done();
 			});
 	});
 
-	it('should return a error response to indicate a model was NOT removed from the application because of wrong appID', function(done) {
+	it('1.4.7 should return a error response to indicate a model was NOT removed from the application because of wrong appID', function(done) {
 
 		var clientrequest = {
 			"model_name": "things"
@@ -1623,12 +1667,13 @@ describe('Schema', function() {
 			.send(clientrequest)
 			.end(function(err, res) {
 
+				res.body.code.should.be.equal('011');
 				res.statusCode.should.be.equal(404);
 				done();
 			});
 	});
 
-	it('should return a error response to indicate a model was NOT removed from the application because model name does NOT exist', function(done) {
+	it('1.4.8 should return a error response to indicate a model was NOT removed from the application because model name does NOT exist', function(done) {
 
 		var clientrequest = {
 			"model_name": "others"
@@ -1642,12 +1687,13 @@ describe('Schema', function() {
 			.send(clientrequest)
 			.end(function(err, res) {
 
+				res.body.code.should.be.equal('022');
 				res.statusCode.should.be.equal(404);
 				done();
 			});
 	});
 
-	it('should return a error response to indicate a model was NOT removed from the application because model was missing from the request', function(done) {
+	it('1.4.9 should return a error response to indicate a model was NOT removed from the application because model was missing from the request', function(done) {
 
 		var clientrequest = {
 			"something": "others"
@@ -1661,12 +1707,13 @@ describe('Schema', function() {
 			.send(clientrequest)
 			.end(function(err, res) {
 
+				res.body.code.should.be.equal('004');
 				res.statusCode.should.be.equal(400);
 				done();
 			});
 	});
 
-	it('should return a error response to indicate a model was NOT removed from the application because of bad route', function(done) {
+	it('1.4.10 should return a error response to indicate a model was NOT removed from the application because of bad route', function(done) {
 
 		var clientrequest = {
 			"something": "others"
@@ -1680,13 +1727,14 @@ describe('Schema', function() {
 			.send(clientrequest)
 			.end(function(err, res) {
 
+				res.body.code.should.be.equal('003');
 				res.statusCode.should.be.equal(404);
 				done();
 			});
 	});
 });
 
-describe('User', function() {
+describe('1.5.User', function() {
 
 	var clientrequest = {
 		"email": userEmail,
@@ -1707,12 +1755,11 @@ describe('User', function() {
 			.send(clientrequest)
 			.end(function(err, res) {
 
-				//console.log(res.body);
 				setTimeout(done, 7*DELAY);
 			});
 	});
 
-	it('should return a success response to indicate that an user name was updated', function(done) {
+	it('1.5.1 should return a success response to indicate that an user name was updated', function(done) {
 		this.timeout(12*DELAY);
 
 		var clientrequest = {
@@ -1735,14 +1782,13 @@ describe('User', function() {
 			.set('Authorization', authValue)
 			.send(clientrequest)
 			.end(function(err, res) {
-				//console.log(clientrequest);
-				//console.log(res.body);
+
 				res.statusCode.should.be.equal(200);
 				setTimeout(done, 8*DELAY);
 			});
 	});
 
-	it('should return a success response to indicate that an user password was updated', function(done) {
+	it('1.5.2 should return a success response to indicate that an user password was updated', function(done) {
 		this.timeout(12*DELAY);
 
 		var clientrequest = {
@@ -1766,13 +1812,12 @@ describe('User', function() {
 			.send(clientrequest)
 			.end(function(err, res) {
 
-				//console.log(res.body);
 				res.statusCode.should.be.equal(200);
 				setTimeout(done, 8*DELAY);
 			});
 	});
 
-	it('should return an error response to indicate that an user was NOT updated, user was missing from the request', function(done) {
+	it('1.5.3 should return an error response to indicate that an user was NOT updated, user was missing from the request', function(done) {
 
 		request(url)
 			.post('/admin/user/update')
@@ -1784,12 +1829,13 @@ describe('User', function() {
 			.send()
 			.end(function(err, res) {
 
+				res.body.code.should.be.equal('005');
 				res.statusCode.should.be.equal(400);
 				done();
 			});
 	});
 
-	it('should return an error response to indicate that an user was NOT updated, user email address was missing from the request', function(done) {
+	it('1.5.4 should return an error response to indicate that an user was NOT updated, user email address was missing from the request', function(done) {
 
 		var clientrequest = {
 			"user": {
@@ -1807,12 +1853,13 @@ describe('User', function() {
 			.send(clientrequest)
 			.end(function(err, res) {
 
+				res.body.code.should.be.equal('038');
 				res.statusCode.should.be.equal(400);
 				done();
 			});
 	});
 
-	it('should return an error response to indicate that an user was NOT updated because patches is empty', function(done) {
+	it('1.5.5 should return an error response to indicate that an user was NOT updated because patches is empty', function(done) {
 
 		var clientrequest = {
 			"email" : userEmail,
@@ -1829,12 +1876,13 @@ describe('User', function() {
 			.send(clientrequest)
 			.end(function(err, res) {
 
+				res.body.code.should.be.equal('038');
 				res.statusCode.should.be.equal(400);
 				done();
 			});
 	});
 
-	it('should return a success response indicating that a user has been deleted', function(done) {
+	it('1.5.6 should return a success response indicating that a user has been deleted', function(done) {
 
 		this.timeout(40*DELAY);
 
@@ -1866,7 +1914,7 @@ describe('User', function() {
 			});
 	});
 
-	it('should return a success response indicating that a user has NOT been deleted, user does not belong to application', function(done) {
+	it('1.5.7 should return a success response indicating that a user has NOT been deleted, user does not belong to application', function(done) {
 
 		this.timeout(24*DELAY);
 
@@ -1913,7 +1961,7 @@ describe('User', function() {
 			});
 	});
 
-	it('should return a error response indicating that a user has NOT been deleted because of missing email address', function(done) {
+	it('1.5.8 should return a error response indicating that a user has NOT been deleted because of missing email address', function(done) {
 
 		var clientrequest = {
 			"password": "secure_password1337",
@@ -1930,12 +1978,13 @@ describe('User', function() {
 			.send(clientrequest)
 			.end(function(err, res) {
 
+				res.body.code.should.be.equal('004');
 				res.statusCode.should.be.equal(400);
 				done();
 			});
 	});
 
-	it('should return an error response indicating that a user has NOT been deleted because of appID not found', function(done) {
+	it('1.5.9 should return an error response indicating that a user has NOT been deleted because of appID not found', function(done) {
 
 		this.timeout(40*DELAY);
 
@@ -1956,12 +2005,13 @@ describe('User', function() {
 			.send(clientrequest)
 			.end(function(err, res) {
 
+				res.body.code.should.be.equal('011');
 				res.statusCode.should.be.equal(404);
 				done();
 			});
 	});
 
-	it('should return an error response to indicate that an user was NOT found when trying to update', function(done) {
+	it('1.5.10 should return an error response to indicate that an user was NOT found when trying to update', function(done) {
 
 		var clientrequest = {
 			"email" : "wrong@example.com",
@@ -1984,12 +2034,13 @@ describe('User', function() {
 			.send(clientrequest)
 			.end(function(err, res) {
 
+				res.body.code.should.be.equal('023');
 				res.statusCode.should.be.equal(404);
 				done();
 			});
 	});
 
-	it('should return an error response to indicate that the user email is missing', function(done) {
+	it('1.5.11 should return an error response to indicate that the user email is missing', function(done) {
 
 		var clientrequest = {
 			"patches": [
@@ -2011,12 +2062,13 @@ describe('User', function() {
 			.send(clientrequest)
 			.end(function(err, res) {
 
+				res.body.code.should.be.equal('004');
 				res.statusCode.should.be.equal(400);
 				done();
 			});
 	});
 
-	it('should return a success response to indicate that an admin list was retrived', function(done) {
+	it('1.5.12 should return a success response to indicate that an admin list was retrieved', function(done) {
 
 		request(url)
 			.post('/admin/users')
@@ -2033,7 +2085,7 @@ describe('User', function() {
 			});
 	});
 
-	it('should return a success response to indicate that an admin list was retrieved with pagination', function(done) {
+	it('1.5.13 should return a success response to indicate that an admin list was retrieved with pagination', function(done) {
 
 		var clientRequest = {
 			page: 2
@@ -2054,7 +2106,7 @@ describe('User', function() {
 			});
 	});
 
-	it('should return an error response to indicate that an admin list was NOT retrieved for a bad app id', function(done) {
+	it('1.5.14 should return an error response to indicate that an admin list was NOT retrieved for a bad app id', function(done) {
 
 		request(url)
 			.post('/admin/users')
@@ -2066,13 +2118,16 @@ describe('User', function() {
 			.send()
 			.end(function(err, res) {
 
-				if(res)
+				if(res) {
+					res.body.code.should.be.equal('011');
 					res.statusCode.should.be.equal(404);
+				}
+
 				done();
 			});
 	});
 
-	it('should return a success response to indicate that an users list was retrived', function(done) {
+	it('1.5.15 should return a success response to indicate that an users list was retrieved', function(done) {
 
 		request(url)
 			.post('/admin/user/all')
@@ -2085,7 +2140,6 @@ describe('User', function() {
 			.end(function(err, res) {
 
 				if(res) {
-					//console.log(res.body);
 					res.body.content.should.not.be.empty;
 					res.statusCode.should.be.equal(200);
 				}
@@ -2093,7 +2147,7 @@ describe('User', function() {
 			});
 	});
 
-	it('should return a success response to indicate that an users list was retrieved with pagination', function(done) {
+	it('1.5.16 should return a success response to indicate that an users list was retrieved with pagination', function(done) {
 
 		var clientRequest = {
 			page: 2
@@ -2117,7 +2171,7 @@ describe('User', function() {
 			});
 	});
 
-	it('should return an error response to indicate that an users list was NOT retrived for a bad app id', function(done) {
+	it('1.5.17 should return an error response to indicate that an users list was NOT retrieved for a bad app id', function(done) {
 
 		request(url)
 			.post('/admin/user/all')
@@ -2129,8 +2183,10 @@ describe('User', function() {
 			.send()
 			.end(function(err, res) {
 
-				if(res)
+				if(res) {
+					res.body.code.should.be.equal('011');
 					res.statusCode.should.be.equal(404);
+				}
 				done();
 			});
 	});

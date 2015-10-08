@@ -73,9 +73,9 @@ before(function(done){
 
 	this.timeout(25*DELAY);
 
-	var clientrequest = {
-		"name": "test-app",
-		"keys": [ common.appKey ]
+	var clientRequest = {
+		name: "test-app",
+		keys: [ common.appKey ]
 	};
 
 	request(url)
@@ -98,7 +98,7 @@ before(function(done){
 						.post('/admin/app/add')
 						.set('Content-type','application/json')
 						.set('Authorization', authValue)
-						.send(clientrequest)
+						.send(clientRequest)
 						.end(function(err, res) {
 
 							appID =  res.body.content.id;
@@ -232,8 +232,8 @@ before(function(done){
 											contextID = res.body.content.id;
 
 											var clientrequest = {
-												"name": "test-app2",
-												"keys": [ common.appKey ]
+												name: "test-app2",
+												keys: [ common.appKey ]
 											};
 
 											request(url)
@@ -271,8 +271,8 @@ before(function(done){
 	this.timeout(25*DELAY);
 
 	var clientrequest = {
-		"info": {
-			"os": "Android",
+		info: {
+			os: "Android",
 			"version": "4.4.3",
 			"sdk_level": 19,
 			"manufacturer": "HTC",
@@ -329,7 +329,7 @@ before(function(done){
 		});
 });
 
-it('should return an error (400) response to indicate that request body is empty', function(done) {
+it('4.1 should return an error (400) response to indicate that request body is empty', function(done) {
 
 	this.timeout(10*DELAY);
 
@@ -342,12 +342,13 @@ it('should return an error (400) response to indicate that request body is empty
 		.send()
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('005');
 			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
 
-it('should return an error (401) response to indicate that only authenticated users may access this endpoint', function(done) {
+it('4.2 should return an error (401) response to indicate that only authenticated users may access this endpoint', function(done) {
 
 	var clientrequest = {
 		"model": "something",
@@ -364,12 +365,13 @@ it('should return an error (401) response to indicate that only authenticated us
 		.send(clientrequest)
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('013');
 			res.statusCode.should.be.equal(401);
 			done();
 		});
 });
 
-it('should return a error response to indicate that a object has NOT been created', function(done) {
+it('4.3 should return a error response to indicate that a object has NOT been created', function(done) {
 
 	var subclientrequest = {
 		"context": contextID,
@@ -396,7 +398,7 @@ it('should return a error response to indicate that a object has NOT been create
 		});
 });
 
-it('should return a success response to indicate that object has been created', function(done) {
+it('4.4 should return a success response to indicate that object has been created', function(done) {
 
 	var clientrequest = {
 		"model": "comments",
@@ -421,7 +423,7 @@ it('should return a success response to indicate that object has been created', 
 		});
 });
 
-it('should return a success response to indicate that object has NOT been created because of ACL', function(done) {
+it('4.5 should return a success response to indicate that object has NOT been created because of ACL', function(done) {
 
 	var clientrequest = {
 		"model": "others",
@@ -446,7 +448,7 @@ it('should return a success response to indicate that object has NOT been create
 		});
 });
 
-it('should return a success response to indicate that object has NOT been created because of ACL', function(done) {
+it('4.6 should return a success response to indicate that object has NOT been created because of ACL', function(done) {
 
 	var clientrequest = {
 		"model": "things",
@@ -471,7 +473,7 @@ it('should return a success response to indicate that object has NOT been create
 		});
 });
 
-it('should return a success response to indicate that object has been created by an admin', function(done) {
+it('4.7 should return a success response to indicate that object has been created by an admin', function(done) {
 
 	var clientrequest = {
 		"model": "comments",
@@ -496,7 +498,7 @@ it('should return a success response to indicate that object has been created by
 		});
 });
 
-it('should return an error response to indicate that object has NOT been created because of missing authentication', function(done) {
+it('4.8 should return an error response to indicate that object has NOT been created because of missing authentication', function(done) {
 
 	var clientrequest = {
 		"model": "comments",
@@ -514,12 +516,13 @@ it('should return an error response to indicate that object has NOT been created
 		.send(clientrequest)
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('013');
 			res.statusCode.should.be.equal(401);
 			done();
 		});
 });
 
-it('should return an error response to indicate that object has NOT been created because of missing model in request body', function(done) {
+it('4.9 should return an error response to indicate that object has NOT been created because of missing model in request body', function(done) {
 
 	var clientrequest = {
 		"context": contextID,
@@ -537,12 +540,13 @@ it('should return an error response to indicate that object has NOT been created
 		.send(clientrequest)
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('004');
 			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
 
-it('should return an error response to indicate that object has NOT been created because content is missing', function(done) {
+it('4.10 should return an error response to indicate that object has NOT been created because content is missing', function(done) {
 
 	var clientrequest = {
 		"context": contextID,
@@ -558,12 +562,13 @@ it('should return an error response to indicate that object has NOT been created
 		.send(clientrequest)
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('002');
 			res.statusCode.should.be.equal(500);
 			done();
 		});
 });
 
-it('should return an error response to indicate that object has NOT been created because content is empty', function(done) {
+it('4.11 should return an error response to indicate that object has NOT been created because content is empty', function(done) {
 
 	var clientrequest = {
 		"context": contextID,
@@ -580,12 +585,13 @@ it('should return an error response to indicate that object has NOT been created
 		.send(clientrequest)
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('004');
 			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
 
-it('should return an error response to indicate that object has NOT been created because of invalid parent', function(done) {
+it('4.12 should return an error response to indicate that object has NOT been created because of invalid parent', function(done) {
 
 	var clientrequest = {
 		"context": contextID,
@@ -604,12 +610,13 @@ it('should return an error response to indicate that object has NOT been created
 		.send(clientrequest)
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('004');
 			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
 
-it('should return an error response to indicate that object has NOT been created because of model does not exist', function(done) {
+it('4.13 should return an error response to indicate that object has NOT been created because of model does not exist', function(done) {
 
 	var clientrequest = {
 		"context": contextID,
@@ -628,12 +635,13 @@ it('should return an error response to indicate that object has NOT been created
 		.send(clientrequest)
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('022');
 			res.statusCode.should.be.equal(404);
 			done();
 		});
 });
 
-it('should return an error response to indicate that object has NOT been created because of missing context', function(done) {
+it('4.14 should return an error response to indicate that object has NOT been created because of missing context', function(done) {
 
 	var clientrequest = {
 		"model": "comments",
@@ -651,12 +659,13 @@ it('should return an error response to indicate that object has NOT been created
 		.send(clientrequest)
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('004');
 			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
 
-it('should return an error response to indicate that object has NOT been created because of invalid appID', function(done) {
+it('4.15 should return an error response to indicate that object has NOT been created because of invalid appID', function(done) {
 
 	var clientrequest = {
 		"model": "comments",
@@ -674,12 +683,13 @@ it('should return an error response to indicate that object has NOT been created
 		.send(clientrequest)
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('011');
 			res.statusCode.should.be.equal(404);
 			done();
 		});
 });
 
-it('should return a success response to indicate the count of a certain filter/subscription', function(done) {
+it('4.16 should return a success response to indicate the count of a certain filter/subscription', function(done) {
 
 	var clientrequest = {
 		"channel": {
@@ -702,7 +712,7 @@ it('should return a success response to indicate the count of a certain filter/s
 		});
 });
 
-it('should return an error response because of invalid channel request', function(done) {
+it('4.17 should return an error response because of invalid channel request', function(done) {
 
 	var clientrequest = {
 		"channel": {
@@ -723,12 +733,13 @@ it('should return an error response because of invalid channel request', functio
 		.send(clientrequest)
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('027');
 			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
 
-it('should return an error response to indicate the count was not returned because of empty request', function(done) {
+it('4.18 should return an error response to indicate the count was not returned because of empty request', function(done) {
 
 	request(url)
 		.post('/object/count')
@@ -739,6 +750,7 @@ it('should return an error response to indicate the count was not returned becau
 		.send()
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('005');
 			res.statusCode.should.be.equal(400);
 			done();
 		});
@@ -746,7 +758,7 @@ it('should return an error response to indicate the count was not returned becau
 
 
 
-it('should return a success response to indicate that a object has been updated', function(done) {
+it('4.19 should return a success response to indicate that a object has been updated', function(done) {
 
 	var clientrequest = {
 		"model": "comments",
@@ -775,7 +787,7 @@ it('should return a success response to indicate that a object has been updated'
 		});
 });
 
-it('should return a success response to indicate that a object has NOT been updated because of bad authentication', function(done) {
+it('4.20 should return a success response to indicate that a object has NOT been updated because of bad authentication', function(done) {
 
 	var clientrequest = {
 		"model": "comments",
@@ -799,12 +811,13 @@ it('should return a success response to indicate that a object has NOT been upda
 		.send(clientrequest)
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('040');
 			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
 
-it('should return a success response to indicate that a object has NOT been updated because of missing authorization', function(done) {
+it('4.21 should return a success response to indicate that a object has NOT been updated because of missing authorization', function(done) {
 
 	var clientrequest = {
 		"model": "comments",
@@ -827,12 +840,13 @@ it('should return a success response to indicate that a object has NOT been upda
 		.send(clientrequest)
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('013');
 			res.statusCode.should.be.equal(401);
 			done();
 		});
 });
 
-it('should return an error response to indicate that a object has NOT been updated because of missing id', function(done) {
+it('4.22 should return an error response to indicate that a object has NOT been updated because of missing id', function(done) {
 
 	var clientrequest = {
 		"model": "comments",
@@ -855,12 +869,13 @@ it('should return an error response to indicate that a object has NOT been updat
 		.send(clientrequest)
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('004');
 			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
 
-it('should return a success response to indicate that a object has NOT been updated because of missing context ', function(done) {
+it('4.23 should return a success response to indicate that a object has NOT been updated because of missing context ', function(done) {
 
 	var clientrequest = {
 		"model": "comments",
@@ -883,12 +898,13 @@ it('should return a success response to indicate that a object has NOT been upda
 		.send(clientrequest)
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('004');
 			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
 
-it('should return an error response to indicate that a object has NOT been updated because of model not found ', function(done) {
+it('4.24 should return an error response to indicate that a object has NOT been updated because of model not found ', function(done) {
 
 	var clientrequest = {
 		"model": "thingy",
@@ -911,12 +927,13 @@ it('should return an error response to indicate that a object has NOT been updat
 		.send(clientrequest)
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('022');
 			res.statusCode.should.be.equal(404);
 			done();
 		});
 });
 
-it('should return a success response to indicate that a object has NOT been updated because of missing model ', function(done) {
+it('4.25 should return a success response to indicate that a object has NOT been updated because of missing model ', function(done) {
 
 	var clientrequest = {
 		"context": contextID,
@@ -939,12 +956,13 @@ it('should return a success response to indicate that a object has NOT been upda
 		.send(clientrequest)
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('004');
 			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
 
-it('should return a success response to indicate that a object has NOT been updated because patches is not an array ', function(done) {
+it('4.26 should return a success response to indicate that a object has NOT been updated because patches is not an array ', function(done) {
 
 	var clientrequest = {
 		"context": contextID,
@@ -962,12 +980,13 @@ it('should return a success response to indicate that a object has NOT been upda
 		.send(clientrequest)
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('038');
 			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
 
-it('should return a success response to indicate that a object has NOT been updated because patches is an empty array', function(done) {
+it('4.27 should return a success response to indicate that a object has NOT been updated because patches is an empty array', function(done) {
 
 	var clientrequest = {
 		"context": contextID,
@@ -985,12 +1004,13 @@ it('should return a success response to indicate that a object has NOT been upda
 		.send(clientrequest)
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('038');
 			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
 
-it('should return a success response to indicate that a object has NOT been updated because of empty request ', function(done) {
+it('4.28 should return a success response to indicate that a object has NOT been updated because of empty request ', function(done) {
 
 	request(url)
 		.post('/object/update')
@@ -1001,13 +1021,14 @@ it('should return a success response to indicate that a object has NOT been upda
 		.send()
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('005');
 			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
 
 
-it('should return a success response to indicate that a object has been subscribed', function(done) {
+it('4.29 should return a success response to indicate that a object has been subscribed', function(done) {
 
 	var subclientrequest = {
 		"channel": {
@@ -1031,7 +1052,7 @@ it('should return a success response to indicate that a object has been subscrib
 		});
 });
 
-it('should return a success response to indicate that a object has been subscribed with pagination', function(done) {
+it('4.30 should return a success response to indicate that a object has been subscribed with pagination', function(done) {
 
 	var subclientrequest = {
 		page: 2,
@@ -1056,7 +1077,7 @@ it('should return a success response to indicate that a object has been subscrib
 		});
 });
 
-it('should return a success response to indicate that a object has NOT been subscribed because context does not belong to application', function(done) {
+it('4.31 should return a success response to indicate that a object has NOT been subscribed because context does not belong to application', function(done) {
 
 	var subclientrequest = {
 		"channel": {
@@ -1081,7 +1102,7 @@ it('should return a success response to indicate that a object has NOT been subs
 		});
 });
 
-it('should return an error response to indicate that a object has NOT been subscribed because of invalid authorization', function(done) {
+it('4.32 should return an error response to indicate that a object has NOT been subscribed because of invalid authorization', function(done) {
 
 	var subclientrequest = {
 		"channel": {
@@ -1106,7 +1127,7 @@ it('should return an error response to indicate that a object has NOT been subsc
 		});
 });
 
-it('should return an error response to indicate that a object has been NOT subscribed because of filters', function(done) {
+it('4.33 should return an error response to indicate that a object has been NOT subscribed because of filters', function(done) {
 
 	var subclientrequest = {
 		"channel": {
@@ -1163,7 +1184,7 @@ it('should return an error response to indicate that a object has been NOT subsc
 		});
 });
 
-it('should return an error response to indicate that a object has NOT been subscribed because of invalid context', function(done) {
+it('4.34 should return an error response to indicate that a object has NOT been subscribed because of invalid context', function(done) {
 
 	var subclientrequest = {
 		"channel": {
@@ -1182,36 +1203,17 @@ it('should return an error response to indicate that a object has NOT been subsc
 		.send(subclientrequest)
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('002');
 			res.statusCode.should.be.equal(500);
 			done();
 		});
 });
 
-it('should return an error response to indicate that a object has NOT been subscribed because context does not belong to app', function(done) {
+it('4.35 should return an error response to indicate that a object has NOT been subscribed because no schema is defined', function(done) {
 
 	var clientrequest = {
-		name: "test-app",
-		keys: [ appKey ],
-		schema: {
-			"comments": {
-				"namespace": "comments",
-				"type": "comments",
-				"properties": {
-					"text": {
-						"type": "string"
-					}
-				},
-				"belongsTo": [
-					{
-						"parentModel": "events",
-						"relationType": "hasMany"
-					}
-				],
-				"read_acl": 6,
-				"write_acl": 6,
-				"meta_read_acl": 6
-			}
-		}
+		"name": "test-app",
+		"keys": [ appKey ]
 	};
 
 	request(url)
@@ -1240,14 +1242,130 @@ it('should return an error response to indicate that a object has NOT been subsc
 				.send(subclientrequest)
 				.end(function (err, res) {
 
-					res.statusCode.should.be.equal(403);
+					res.body.code.should.be.equal('043');
+					res.statusCode.should.be.equal(501);
 					done();
 				});
 		});
 });
 
+it('4.36 should return an error response to indicate that a object has NOT been subscribed because context does not belong to app', function(done) {
 
-it('should return a success response to indicate that a object has NOT been subscribed', function(done) {
+	var clientrequest = {
+		"name": "test-app",
+		"keys": [ appKey ]
+	};
+
+	request(url)
+		.post('/admin/app/add')
+		.set('Content-type','application/json')
+		.set('Authorization', authValue)
+		.send(clientrequest)
+		.end(function(err, res) {
+
+			var appID2 =  res.body.content.id;
+
+			var clientrequest = {
+				"appId": appID,
+				"schema": {
+					"comments": {
+						"namespace": "comments",
+						"type": "comments",
+						"properties": {
+							"text": {
+								"type": "string"
+							}
+						},
+						"belongsTo": [
+							{
+								"parentModel": "events",
+								"relationType": "hasMany"
+							}
+						],
+						"read_acl": 6,
+						"write_acl": 6,
+						"meta_read_acl": 6
+					},
+					"events": {
+						"namespace": "events",
+						"type": "events",
+						"properties": {
+							"text": {
+								"type": "string"
+							},
+							"image": {
+								"type": "string"
+							},
+							"options": {
+								"type": "object"
+							}
+						},
+						"hasMany": [
+							"comments"
+						],
+						"read_acl": 7,
+						"write_acl": 7,
+						"meta_read_acl": 4
+					},
+					"things": {
+						"namespace": "events",
+						"type": "events",
+						"properties": {
+							"text": {
+								"type": "string"
+							},
+							"image": {
+								"type": "string"
+							},
+							"options": {
+								"type": "object"
+							}
+						},
+						"hasMany": [
+							"comments"
+						],
+						"read_acl": 7,
+						"write_acl": 7,
+						"meta_read_acl": 4
+					}
+				}
+			};
+
+			request(url)
+				.post('/admin/schema/update')
+				.set('Content-type','application/json')
+				.set('Authorization', authValue )
+				.set('X-BLGREQ-APPID', appID2 )
+				.send(clientrequest)
+				.end(function(err, res) {
+
+					var subclientrequest = {
+						"channel": {
+							"context": contextID,
+							"model": "comments"
+						},
+					};
+
+					request(url)
+						.post('/object/subscribe')
+						.set('Content-type', 'application/json')
+						.set('X-BLGREQ-SIGN', appIDsha256)
+						.set('X-BLGREQ-UDID', deviceIdentification)
+						.set('X-BLGREQ-APPID', appID2)
+						.set('Authorization', userAuthValue)
+						.send(subclientrequest)
+						.end(function (err, res) {
+
+							res.body.code.should.be.equal('026');
+							res.statusCode.should.be.equal(403);
+							done();
+						});
+				});
+		});
+});
+
+
+it('4.37 should return a success response to indicate that a object has NOT been subscribed because of invalid channel', function(done) {
 
 	var subclientrequest = {
 		"channel": {
@@ -1268,12 +1386,13 @@ it('should return a success response to indicate that a object has NOT been subs
 		.send(subclientrequest)
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('027');
 			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
 
-it('should return an error response to indicate that a object has NOT been subscribed because object was not found', function(done) {
+it('4.38 should return an error response to indicate that a object has NOT been subscribed because object was not found', function(done) {
 
 	var subclientrequest = {
 		"channel": {
@@ -1293,12 +1412,13 @@ it('should return an error response to indicate that a object has NOT been subsc
 		.send(subclientrequest)
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('034');
 			res.statusCode.should.be.equal(404);
 			done();
 		});
 });
 
-it('should return an error response to indicate that a object has NOT been subscribed because of empty body', function(done) {
+it('4.39 should return an error response to indicate that a object has NOT been subscribed because of empty body', function(done) {
 
 	request(url)
 		.post('/object/subscribe')
@@ -1310,12 +1430,13 @@ it('should return an error response to indicate that a object has NOT been subsc
 		.send()
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('005');
 			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
 
-it('should return a success response to indicate that a object has NOT been subscribed because of missing context', function(done) {
+it('4.40 should return a success response to indicate that a object has NOT been subscribed because of missing context', function(done) {
 
 	var subclientrequest = {
 		"channel": {
@@ -1333,12 +1454,13 @@ it('should return a success response to indicate that a object has NOT been subs
 		.send(subclientrequest)
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('004');
 			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
 
-it('should return a success response to indicate that a object has NOT been subscribed because of missing model', function(done) {
+it('4.41 should return a success response to indicate that a object has NOT been subscribed because of missing model', function(done) {
 
 	var subclientrequest = {
 		"channel": {
@@ -1356,12 +1478,13 @@ it('should return a success response to indicate that a object has NOT been subs
 		.send(subclientrequest)
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('004');
 			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
 
-it('should return a success response to indicate that a object has NOT been subscribed because of model not found', function(done) {
+it('4.42 should return a success response to indicate that a object has NOT been subscribed because of model not found', function(done) {
 
 	var subclientrequest = {
 		"channel": {
@@ -1380,12 +1503,13 @@ it('should return a success response to indicate that a object has NOT been subs
 		.send(subclientrequest)
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('022');
 			res.statusCode.should.be.equal(404);
 			done();
 		});
 });
 
-it('should return an error response to indicate that a object has NOT been subscribed because of missing channel', function(done) {
+it('4.43 should return an error response to indicate that a object has NOT been subscribed because of missing channel', function(done) {
 
 	var subclientrequest = {
 		"filters": {
@@ -1432,12 +1556,13 @@ it('should return an error response to indicate that a object has NOT been subsc
 		.send(subclientrequest)
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('004');
 			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
 
-it('should return an success response to indicate that a object has been unsubscribed', function(done) {
+it('4.44 should return an success response to indicate that a object has been unsubscribed', function(done) {
 
 	var subclientrequest = {
 		"channel": {
@@ -1460,7 +1585,7 @@ it('should return an success response to indicate that a object has been unsubsc
 		});
 });
 
-it('should return an error response to indicate that a object has NOT been unsubscribed because of empty body', function(done) {
+it('4.45 should return an error response to indicate that a object has NOT been unsubscribed because of empty body', function(done) {
 
 	request(url)
 		.post('/object/unsubscribe')
@@ -1471,12 +1596,13 @@ it('should return an error response to indicate that a object has NOT been unsub
 		.send()
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('005');
 			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
 
-it('should return a error response (400) to indicate that a object has NOT been unsubscribed', function(done) {
+it('4.46 should return a error response (400) to indicate that a object has NOT been unsubscribed', function(done) {
 
 	var subclientrequest = {
 		"channel": {
@@ -1497,12 +1623,13 @@ it('should return a error response (400) to indicate that a object has NOT been 
 		.send(subclientrequest)
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('027');
 			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
 
-it('should return a error response (404) to indicate that a object has NOT been unsubscribed', function(done) {
+it('4.47 should return a error response (404) to indicate that a object has NOT been unsubscribed', function(done) {
 
 	var subclientrequest = {
 		"channel": {
@@ -1524,12 +1651,13 @@ it('should return a error response (404) to indicate that a object has NOT been 
 		.send(subclientrequest)
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('037');
 			res.statusCode.should.be.equal(404);
 			done();
 		});
 });
 
-it('should return a error response (404) to indicate that a object has NOT been unsubscribed, using filters', function(done) {
+it('4.48 should return a error response (404) to indicate that a object has NOT been unsubscribed, using filters', function(done) {
 
 	var subclientrequest = {
 		"channel": {
@@ -1580,13 +1708,14 @@ it('should return a error response (404) to indicate that a object has NOT been 
 		.send(subclientrequest)
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('037');
 			res.statusCode.should.be.equal(404);
 			done();
 		});
 });
 
 
-it('should return a success response to indicate that a object has NOT been unsubscribed because of missing channel', function(done) {
+it('4.49 should return a success response to indicate that a object has NOT been unsubscribed because of missing channel', function(done) {
 
 	var subclientrequest = {
 		"something": {}
@@ -1600,12 +1729,14 @@ it('should return a success response to indicate that a object has NOT been unsu
 		.set('Authorization', userAuthValue)
 		.send(subclientrequest)
 		.end(function(err, res) {
+
+			res.body.code.should.be.equal('004');
 			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
 
-it('should return a success response to indicate that a object has NOT been unsubscribed because of missing context', function(done) {
+it('4.50 should return a success response to indicate that a object has NOT been unsubscribed because of missing context', function(done) {
 
 	var subclientrequest = {
 		"channel": {
@@ -1623,12 +1754,13 @@ it('should return a success response to indicate that a object has NOT been unsu
 		.send(subclientrequest)
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('004');
 			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
 
-it('should return a success response to indicate that a object has NOT been unsubscribed because of missing model', function(done) {
+it('4.51 should return a success response to indicate that a object has NOT been unsubscribed because of missing model', function(done) {
 
 	var subclientrequest = {
 		"channel": {
@@ -1645,12 +1777,13 @@ it('should return a success response to indicate that a object has NOT been unsu
 		.send(subclientrequest)
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('004');
 			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
 
-it('should return a success response to indicate that a object has been deleted', function(done) {
+it('4.52 should return a success response to indicate that a object has been deleted', function(done) {
 
 	var clientrequest = {
 		"model": "comments",
@@ -1672,7 +1805,7 @@ it('should return a success response to indicate that a object has been deleted'
 		});
 });
 
-it('should return an error response to indicate that a object was NOT deleted', function(done) {
+it('4.53 should return an error response to indicate that a object was NOT deleted', function(done) {
 
 	this.timeout(20*DELAY);
 
@@ -1693,6 +1826,7 @@ it('should return an error response to indicate that a object was NOT deleted', 
 			.send(clientrequest)
 			.end(function(err, res) {
 
+				res.body.code.should.be.equal('011');
 				res.statusCode.should.be.equal(404);
 				done();
 			});
@@ -1700,7 +1834,7 @@ it('should return an error response to indicate that a object was NOT deleted', 
 
 });
 
-it('should return an error response to indicate that the object id was missing', function(done) {
+it('4.54 should return an error response to indicate that the object id was missing', function(done) {
 
 	var clientrequest = {
 		"model": "comments",
@@ -1717,12 +1851,13 @@ it('should return an error response to indicate that the object id was missing',
 		.send(clientrequest)
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('004');
 			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
 
-it('should return an error response to indicate that the object model was missing', function(done) {
+it('4.55 should return an error response to indicate that the object model was missing', function(done) {
 
 	var clientrequest = {
 		"context": contextID,
@@ -1739,12 +1874,13 @@ it('should return an error response to indicate that the object model was missin
 		.send(clientrequest)
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('004');
 			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
 
-it('should return an error response to indicate that the object was not deleted because of missing authentication', function(done) {
+it('4.56 should return an error response to indicate that the object was not deleted because of missing authentication', function(done) {
 
 	var clientrequest = {
 		"model": "comments",
@@ -1761,12 +1897,13 @@ it('should return an error response to indicate that the object was not deleted 
 		.send(clientrequest)
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('013');
 			res.statusCode.should.be.equal(401);
 			done();
 		});
 });
 
-it('should return an error response to indicate that the object was not deleted because of missing context', function(done) {
+it('4.57 should return an error response to indicate that the object was not deleted because of missing context', function(done) {
 
 	var clientrequest = {
 		"model": "comments",
@@ -1783,12 +1920,13 @@ it('should return an error response to indicate that the object was not deleted 
 		.send(clientrequest)
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('004');
 			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
 
-it('should return an error response to indicate that the object was not deleted because of empty request', function(done) {
+it('4.58 should return an error response to indicate that the object was not deleted because of empty request', function(done) {
 
 	request(url)
 		.post('/object/delete')
@@ -1799,6 +1937,7 @@ it('should return an error response to indicate that the object was not deleted 
 		.send()
 		.end(function(err, res) {
 
+			res.body.code.should.be.equal('005');
 			res.statusCode.should.be.equal(400);
 			done();
 		});
