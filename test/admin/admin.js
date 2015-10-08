@@ -41,7 +41,7 @@ describe('1.1.Admin', function() {
 
 	it('1.1.1 should return a 200 code to indicate success when creating a new admin', function(done) {
 
-		this.timeout(12*DELAY);
+		this.timeout(20*DELAY);
 
 		request(url)
 			.post('/admin/add')
@@ -54,7 +54,7 @@ describe('1.1.Admin', function() {
 				}
 
 				res.statusCode.should.be.equal(200);
-				setTimeout(done, 8*DELAY);
+				setTimeout(done, 12*DELAY);
 			});
 	});
 
@@ -889,7 +889,7 @@ describe('1.2.App', function() {
 			});
 	});
 
-/*	it('1.2.17 should return an error to indicate an admin has NOT been deauthorized to an application, admin not authorized', function(done) {
+	/*it('1.2.17 should return an error to indicate an admin has NOT been deauthorized to an application, admin not authorized', function(done) {
 
 		var clientrequest = {
 			"email": adminEmail3
@@ -1618,7 +1618,7 @@ describe('1.4.Schema', function() {
 			});
 	});
 
-	it('1.4.5 should return a success response to indicate schema was retrievedsuccessfullyy using the new API', function(done) {
+	it('1.4.5 should return a success response to indicate schema was retrieved successfully using the new API', function(done) {
 
 		request(url)
 			.get('/admin/schema/all')
