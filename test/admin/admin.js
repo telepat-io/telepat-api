@@ -1634,7 +1634,7 @@ describe('1.4.Schema', function() {
 	});
 
 	it('1.4.6 should return a success response to indicate a model was removed from the application', function(done) {
-		this.timeout(6*DELAY);
+		this.timeout(12*DELAY);
 
 		var clientrequest = {
 			"model_name": "things"
