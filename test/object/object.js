@@ -15,42 +15,42 @@ var contextID;
 var appKey = common.appKey;
 
 var subclientrequest = {
-	"channel": {
-		"id": 1,
-		"context": 1,
-		"model": "comments",
-		"parent": {
-			"id": 1,
-			"model": "events"
+	channel: {
+		id: 1,
+		context: 1,
+		model: "comments",
+		parent: {
+			id: 1,
+			model: "events"
 		},
-		"user": 2
+		user: 2
 	},
-	"filters": {
-		"or": [
+	filters: {
+		or: [
 			{
-				"and": [
+				and: [
 					{
-						"is": {
-							"gender": "male",
-							"age": 23
+						is: {
+							gender: "male",
+							age: 23
 						}
 					},
 					{
-						"range": {
-							"experience": {
-								"gte": 1,
-								"lte": 6
+						range: {
+							experience: {
+								gte: 1,
+								lte: 6
 							}
 						}
 					}
 				]
 			},
 			{
-				"and": [
+				and: [
 					{
-						"like": {
-							"image_url": "png",
-							"website": "png"
+						like: {
+							image_url: "png",
+							website: "png"
 						}
 					}
 				]
@@ -71,7 +71,7 @@ var contextID2;
 
 before(function(done){
 
-	this.timeout(25*DELAY);
+	this.timeout(100*DELAY);
 
 	var clientRequest = {
 		name: "test-app",
@@ -83,9 +83,7 @@ before(function(done){
 		.send(admin)
 		.end(function(err, res) {
 
-			setTimeout(function () {
-
-				request(url)
+			request(url)
 				.post('/admin/login')
 				.set('Content-type','application/json')
 				.send(admin)
@@ -103,107 +101,107 @@ before(function(done){
 
 							appID =  res.body.content.id;
 							var clientrequest = {
-								"appId": appID,
-								"schema": {
-									"answers": {
-										"namespace": "answers",
-										"type": "answers",
-										"properties": {},
-										"belongsTo": [
+								appId: appID,
+								schema: {
+									answers: {
+										namespace: "answers",
+										type: "answers",
+										properties: {},
+										belongsTo: [
 											{
-												"parentModel": "events",
-												"relationType": "hasSome"
+												parentModel: "events",
+												relationType: "hasSome"
 											}
 										],
-										"read_acl": 6,
-										"write_acl": 6,
-										"meta_read_acl": 6
+										read_acl: 6,
+										write_acl: 6,
+										meta_read_acl: 6
 									},
-									"comments": {
-										"namespace": "comments",
-										"type": "comments",
-										"properties": {
-											"text": {
-												"type": "string"
+									comments: {
+										namespace: "comments",
+										type: "comments",
+										properties: {
+											text: {
+												type: "string"
 											}
 										},
-										"belongsTo": [
+										belongsTo: [
 											{
-												"parentModel": "events",
-												"relationType": "hasMany"
+												parentModel: "events",
+												relationType: "hasMany"
 											}
 										],
-										"read_acl": 6,
-										"write_acl": 6,
-										"meta_read_acl": 6
+										read_acl: 6,
+										write_acl: 6,
+										meta_read_acl: 6
 									},
-									"events": {
-										"namespace": "events",
-										"type": "events",
-										"properties": {
-											"text": {
-												"type": "string"
+									events: {
+										namespace: "events",
+										type: "events",
+										properties: {
+											text: {
+												type: "string"
 											},
-											"image": {
-												"type": "string"
+											image: {
+												type: "string"
 											},
-											"options": {
-												"type": "object"
+											options: {
+												type: "object"
 											}
 										},
-										"hasMany": [
+										hasMany: [
 											"comments"
 										],
-										"hasSome": [
+										hasSome: [
 											"answers"
 										],
-										"read_acl": 7,
-										"write_acl": 7,
-										"meta_read_acl": 4,
-										"icon": "fa-image",
-										"hasSome_property": "options"
+										read_acl: 7,
+										write_acl: 7,
+										meta_read_acl: 4,
+										icon: "fa-image",
+										hasSome_property: "options"
 									},
-									"things": {
-										"namespace": "events",
-										"type": "events",
-										"properties": {
-											"text": {
-												"type": "string"
+									things: {
+										namespace: "events",
+										type: "events",
+										properties: {
+											text: {
+												type: "string"
 											},
-											"image": {
-												"type": "string"
+											image: {
+												type: "string"
 											},
-											"options": {
+											options: {
 												"type": "object"
 											}
 										},
-										"hasMany": [
+										hasMany: [
 											"comments"
 										],
-										"read_acl": 0,
-										"write_acl": 0,
-										"meta_read_acl": 0
+										read_acl: 0,
+										write_acl: 0,
+										meta_read_acl: 0
 									},
-									"others": {
-										"namespace": "events",
-										"type": "events",
-										"properties": {
-											"text": {
-												"type": "string"
+									others: {
+										namespace: "events",
+										type: "events",
+										properties: {
+											text: {
+												type: "string"
 											},
-											"image": {
-												"type": "string"
+											image: {
+												type: "string"
 											},
-											"options": {
-												"type": "object"
+											options: {
+												type: "object"
 											}
 										},
-										"hasMany": [
+										hasMany: [
 											"comments"
 										],
-										"read_acl": 4,
-										"write_acl": 4,
-										"meta_read_acl": 4
+										read_acl: 4,
+										write_acl: 4,
+										meta_read_acl: 4
 									}
 								}
 							};
@@ -217,7 +215,7 @@ before(function(done){
 								.end(function(err, res) {
 
 									var clientrequest = {
-										"name": "context"
+										name: "context"
 									};
 
 									request(url)
@@ -262,26 +260,25 @@ before(function(done){
 								});
 						});
 				});
-			}, 3*DELAY);
 		});
 });
 
 before(function(done){
 
-	this.timeout(25*DELAY);
+	this.timeout(100*DELAY);
 
 	var clientrequest = {
 		info: {
 			os: "Android",
-			"version": "4.4.3",
-			"sdk_level": 19,
-			"manufacturer": "HTC",
-			"model": "HTC One_M8",
-			"udid": invalidUDID
+			version: "4.4.3",
+			sdk_level: 19,
+			manufacturer: "HTC",
+			model: "HTC One_M8",
+			udid: invalidUDID
 		},
-		"persistent": {
-			"type": "android",
-			"token": "android pn token"
+		persistent: {
+			type: "android",
+			token: "android pn token"
 		}
 	};
 
@@ -295,9 +292,9 @@ before(function(done){
 
 			deviceIdentification =  res.body.content.identifier;
 			var clientrequest = {
-				"email": 'user'+Math.round(Math.random()*1000000)+'@example.com',
-				"password": "secure_password1337",
-				"name": "John Smith"
+				email: 'user'+Math.round(Math.random()*1000000)+'@example.com',
+				password: "secure_password1337",
+				name: "John Smith"
 			};
 
 			request(url)
@@ -324,14 +321,14 @@ before(function(done){
 								userAuthValue = 'Bearer ' + token;
 								done();
 							});
-					}, 14*DELAY);
+					}, 20*DELAY);
 				});
 		});
 });
 
 it('4.1 should return an error (400) response to indicate that request body is empty', function(done) {
 
-	this.timeout(10*DELAY);
+	this.timeout(100*DELAY);
 
 	request(url)
 		.post('/object/create')
@@ -350,10 +347,12 @@ it('4.1 should return an error (400) response to indicate that request body is e
 
 it('4.2 should return an error (401) response to indicate that only authenticated users may access this endpoint', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var clientrequest = {
-		"model": "something",
-		"context": contextID,
-		"content": {
+		model: "something",
+		context: contextID,
+		content: {
 		}
 	};
 
@@ -373,10 +372,12 @@ it('4.2 should return an error (401) response to indicate that only authenticate
 
 it('4.3 should return a error response to indicate that a object has NOT been created', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var subclientrequest = {
-		"context": contextID,
-		"model": "answers",
-		"content": {
+		context: contextID,
+		model: "answers",
+		content: {
 			events_id: -1
 		}
 	};
@@ -400,11 +401,13 @@ it('4.3 should return a error response to indicate that a object has NOT been cr
 
 it('4.4 should return a success response to indicate that object has been created', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var clientrequest = {
-		"model": "comments",
-		"context": contextID,
-		"content": {
-			"events_id" :1
+		model: "comments",
+		context: contextID,
+		content: {
+			events_id :1
 		}
 	};
 
@@ -425,11 +428,13 @@ it('4.4 should return a success response to indicate that object has been create
 
 it('4.5 should return a success response to indicate that object has NOT been created because of ACL', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var clientrequest = {
-		"model": "others",
-		"context": contextID,
-		"content": {
-			"events_id" :1
+		model: "others",
+		context: contextID,
+		content: {
+			events_id :1
 		}
 	};
 
@@ -450,11 +455,13 @@ it('4.5 should return a success response to indicate that object has NOT been cr
 
 it('4.6 should return a success response to indicate that object has NOT been created because of ACL', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var clientrequest = {
-		"model": "things",
-		"context": contextID,
-		"content": {
-			"events_id" :1
+		model: "things",
+		context: contextID,
+		content: {
+			events_id: 1
 		}
 	};
 
@@ -475,11 +482,13 @@ it('4.6 should return a success response to indicate that object has NOT been cr
 
 it('4.7 should return a success response to indicate that object has been created by an admin', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var clientrequest = {
-		"model": "comments",
-		"context": contextID,
-		"content": {
-			"events_id" :1
+		model: "comments",
+		context: contextID,
+		content: {
+			events_id: 1
 		}
 	};
 
@@ -500,11 +509,13 @@ it('4.7 should return a success response to indicate that object has been create
 
 it('4.8 should return an error response to indicate that object has NOT been created because of missing authentication', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var clientrequest = {
-		"model": "comments",
-		"context": contextID,
-		"content": {
-			"events_id" :1,
+		model: "comments",
+		context: contextID,
+		content: {
+			events_id: 1
 		}
 	};
 
@@ -524,10 +535,12 @@ it('4.8 should return an error response to indicate that object has NOT been cre
 
 it('4.9 should return an error response to indicate that object has NOT been created because of missing model in request body', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var clientrequest = {
-		"context": contextID,
-		"content": {
-			"events_id" :1,
+		context: contextID,
+		content: {
+			events_id :1
 		}
 	};
 
@@ -548,9 +561,11 @@ it('4.9 should return an error response to indicate that object has NOT been cre
 
 it('4.10 should return an error response to indicate that object has NOT been created because content is missing', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var clientrequest = {
-		"context": contextID,
-		"model": "comments",
+		context: contextID,
+		model: "comments"
 	};
 
 	request(url)
@@ -570,10 +585,12 @@ it('4.10 should return an error response to indicate that object has NOT been cr
 
 it('4.11 should return an error response to indicate that object has NOT been created because content is empty', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var clientrequest = {
-		"context": contextID,
-		"model": "comments",
-		"content": {}
+		context: contextID,
+		model: "comments",
+		content: {}
 	};
 
 	request(url)
@@ -593,11 +610,13 @@ it('4.11 should return an error response to indicate that object has NOT been cr
 
 it('4.12 should return an error response to indicate that object has NOT been created because of invalid parent', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var clientrequest = {
-		"context": contextID,
-		"model": "comments",
-		"content": {
-			"event_id" :1,
+		context: contextID,
+		model: "comments",
+		content: {
+			event_id: 1
 		}
 	};
 
@@ -618,11 +637,13 @@ it('4.12 should return an error response to indicate that object has NOT been cr
 
 it('4.13 should return an error response to indicate that object has NOT been created because of model does not exist', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var clientrequest = {
-		"context": contextID,
-		"model": "something",
-		"content": {
-			"events_id" :1,
+		context: contextID,
+		model: "something",
+		content: {
+			events_id: 1
 		}
 	};
 
@@ -643,10 +664,12 @@ it('4.13 should return an error response to indicate that object has NOT been cr
 
 it('4.14 should return an error response to indicate that object has NOT been created because of missing context', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var clientrequest = {
-		"model": "comments",
-		"content": {
-			"events_id" :1,
+		model: "comments",
+		content: {
+			events_id: 1
 		}
 	};
 
@@ -667,10 +690,12 @@ it('4.14 should return an error response to indicate that object has NOT been cr
 
 it('4.15 should return an error response to indicate that object has NOT been created because of invalid appID', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var clientrequest = {
-		"model": "comments",
-		"content": {
-			"events_id" :1,
+		model: "comments",
+		content: {
+			events_id: 1
 		}
 	};
 
@@ -691,10 +716,12 @@ it('4.15 should return an error response to indicate that object has NOT been cr
 
 it('4.16 should return a success response to indicate the count of a certain filter/subscription', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var clientrequest = {
-		"channel": {
-			"context": contextID,
-			"model": "comments"
+		channel: {
+			context: contextID,
+			model: "comments"
 		}
 	};
 
@@ -714,12 +741,14 @@ it('4.16 should return a success response to indicate the count of a certain fil
 
 it('4.17 should return an error response because of invalid channel request', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var clientrequest = {
-		"channel": {
-			"context": contextID,
-			"model": "comments",
-			"parent": "parent",
-			"user": "user"
+		channel: {
+			context: contextID,
+			model: "comments",
+			parent: "parent",
+			user: "user"
 		},
 		filters: {}
 	};
@@ -741,6 +770,8 @@ it('4.17 should return an error response because of invalid channel request', fu
 
 it('4.18 should return an error response to indicate the count was not returned because of empty request', function(done) {
 
+	this.timeout(100*DELAY);
+
 	request(url)
 		.post('/object/count')
 		.set('X-BLGREQ-SIGN', appIDsha256)
@@ -760,15 +791,17 @@ it('4.18 should return an error response to indicate the count was not returned 
 
 it('4.19 should return a success response to indicate that a object has been updated', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var clientrequest = {
-		"model": "comments",
-		"id": 1,
-		"context": contextID,
-		"patches": [
+		model: "comments",
+		id: 1,
+		context: contextID,
+		patches: [
 			{
-				"op": "replace",
-				"path": "comments/1/text",
-				"value": "some edited text"
+				op: "replace",
+				path: "comments/1/text",
+				value: "some edited text"
 			}
 		]
 	};
@@ -789,15 +822,17 @@ it('4.19 should return a success response to indicate that a object has been upd
 
 it('4.20 should return a success response to indicate that a object has NOT been updated because of bad authentication', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var clientrequest = {
-		"model": "comments",
-		"id": 1,
-		"context": contextID,
-		"patches": [
+		model: "comments",
+		id: 1,
+		context: contextID,
+		patches: [
 			{
-				"op": "replace",
-				"path": "comments/1/text",
-				"value": "some edited text"
+				op: "replace",
+				path: "comments/1/text",
+				value: "some edited text"
 			}
 		]
 	};
@@ -819,16 +854,18 @@ it('4.20 should return a success response to indicate that a object has NOT been
 
 it('4.21 should return a success response to indicate that a object has NOT been updated because of missing authorization', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var clientrequest = {
-		"model": "comments",
-		"id": 1,
-		"context": contextID,
-		"patches": [
+		model: "comments",
+		id: 1,
+		context: contextID,
+		patches: [
 			{
-				"op": "replace",
-				"path": "comments/1/text",
-				"value": "some edited text"
-			},
+				op: "replace",
+				path: "comments/1/text",
+				value: "some edited text"
+			}
 		]
 	};
 
@@ -848,15 +885,17 @@ it('4.21 should return a success response to indicate that a object has NOT been
 
 it('4.22 should return an error response to indicate that a object has NOT been updated because of missing id', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var clientrequest = {
-		"model": "comments",
-		"context": contextID,
-		"patches": [
+		model: "comments",
+		context: contextID,
+		patches: [
 			{
-				"op": "replace",
-				"path": "comments/1/text",
-				"value": "some edited text"
-			},
+				op: "replace",
+				path: "comments/1/text",
+				value: "some edited text"
+			}
 		],
 	};
 
@@ -877,16 +916,18 @@ it('4.22 should return an error response to indicate that a object has NOT been 
 
 it('4.23 should return a success response to indicate that a object has NOT been updated because of missing context ', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var clientrequest = {
-		"model": "comments",
-		"id": 1,
-		"patches": [
+		model: "comments",
+		id: 1,
+		patches: [
 			{
-				"op": "replace",
-				"path": "comments/1/text",
-				"value": "some edited text"
-			},
-		],
+				op: "replace",
+				path: "comments/1/text",
+				value: "some edited text"
+			}
+		]
 	};
 
 	request(url)
@@ -906,16 +947,18 @@ it('4.23 should return a success response to indicate that a object has NOT been
 
 it('4.24 should return an error response to indicate that a object has NOT been updated because of model not found ', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var clientrequest = {
-		"model": "thingy",
-		"id": 1,
-		"patches": [
+		model: "thingy",
+		id: 1,
+		patches: [
 			{
-				"op": "replace",
-				"path": "thingy/1/text",
-				"value": "some edited text"
-			},
-		],
+				op: "replace",
+				path: "thingy/1/text",
+				value: "some edited text"
+			}
+		]
 	};
 
 	request(url)
@@ -935,16 +978,18 @@ it('4.24 should return an error response to indicate that a object has NOT been 
 
 it('4.25 should return a success response to indicate that a object has NOT been updated because of missing model ', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var clientrequest = {
-		"context": contextID,
-		"id": 1,
-		"patches": [
+		context: contextID,
+		id: 1,
+		patches: [
 			{
-				"op": "replace",
-				"path": "comments/1/text",
-				"value": "some edited text"
-			},
-		],
+				op: "replace",
+				path: "comments/1/text",
+				value: "some edited text"
+			}
+		]
 	};
 
 	request(url)
@@ -964,11 +1009,13 @@ it('4.25 should return a success response to indicate that a object has NOT been
 
 it('4.26 should return a success response to indicate that a object has NOT been updated because patches is not an array ', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var clientrequest = {
-		"context": contextID,
-		"model": "comments",
-		"id": 1,
-		"patches": {},
+		context: contextID,
+		model: "comments",
+		id: 1,
+		patches: {}
 	};
 
 	request(url)
@@ -988,11 +1035,13 @@ it('4.26 should return a success response to indicate that a object has NOT been
 
 it('4.27 should return a success response to indicate that a object has NOT been updated because patches is an empty array', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var clientrequest = {
-		"context": contextID,
-		"model": "comments",
-		"id": 1,
-		"patches": [],
+		context: contextID,
+		model: "comments",
+		id: 1,
+		patches: []
 	};
 
 	request(url)
@@ -1012,6 +1061,8 @@ it('4.27 should return a success response to indicate that a object has NOT been
 
 it('4.28 should return a success response to indicate that a object has NOT been updated because of empty request ', function(done) {
 
+	this.timeout(100*DELAY);
+
 	request(url)
 		.post('/object/update')
 		.set('X-BLGREQ-SIGN', appIDsha256)
@@ -1030,10 +1081,12 @@ it('4.28 should return a success response to indicate that a object has NOT been
 
 it('4.29 should return a success response to indicate that a object has been subscribed', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var subclientrequest = {
-		"channel": {
-			"context": contextID,
-			"model": "comments"
+		channel: {
+			context: contextID,
+			model: "comments"
 		}
 	};
 
@@ -1054,11 +1107,13 @@ it('4.29 should return a success response to indicate that a object has been sub
 
 it('4.30 should return a success response to indicate that a object has been subscribed with pagination', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var subclientrequest = {
 		page: 2,
-		"channel": {
-			"context": contextID,
-			"model": "comments"
+		channel: {
+			context: contextID,
+			model: "comments"
 		}
 	};
 
@@ -1079,10 +1134,12 @@ it('4.30 should return a success response to indicate that a object has been sub
 
 it('4.31 should return a success response to indicate that a object has NOT been subscribed because context does not belong to application', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var subclientrequest = {
-		"channel": {
-			"context": contextID2,
-			"model": "comments"
+		channel: {
+			context: contextID2,
+			model: "comments"
 		}
 	};
 
@@ -1104,10 +1161,12 @@ it('4.31 should return a success response to indicate that a object has NOT been
 
 it('4.32 should return an error response to indicate that a object has NOT been subscribed because of invalid authorization', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var subclientrequest = {
-		"channel": {
-			"context": contextID,
-			"model": "comments"
+		channel: {
+			context: contextID,
+			model: "comments"
 		}
 	};
 	var userAuthValue = 'Bearer ';
@@ -1129,37 +1188,39 @@ it('4.32 should return an error response to indicate that a object has NOT been 
 
 it('4.33 should return an error response to indicate that a object has been NOT subscribed because of filters', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var subclientrequest = {
-		"channel": {
-			"context": contextID,
-			"model": "events"
+		channel: {
+			context: contextID,
+			model: "events"
 		},
-		"filters": {
-			"or": [
+		filters: {
+			or: [
 				{
-					"and": [
+					and: [
 						{
-							"is": {
-								"gender": "male",
-								"age": 23
+							is: {
+								gender: "male",
+								age: 23
 							}
 						},
 						{
-							"range": {
-								"experience": {
-									"gte": 1,
-									"lte": 6
+							range: {
+								experience: {
+									gte: 1,
+									lte: 6
 								}
 							}
 						}
 					]
 				},
 				{
-					"and": [
+					and: [
 						{
-							"like": {
-								"image_url": "png",
-								"website": "png"
+							like: {
+								image_url: "png",
+								website: "png"
 							}
 						}
 					]
@@ -1186,11 +1247,13 @@ it('4.33 should return an error response to indicate that a object has been NOT 
 
 it('4.34 should return an error response to indicate that a object has NOT been subscribed because of invalid context', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var subclientrequest = {
-		"channel": {
-			"context": Math.round(Math.random()*1000000),
-			"model": "comments"
-		},
+		channel: {
+			context: Math.round(Math.random()*1000000),
+			model: "comments"
+		}
 	};
 
 	request(url)
@@ -1211,9 +1274,11 @@ it('4.34 should return an error response to indicate that a object has NOT been 
 
 it('4.35 should return an error response to indicate that a object has NOT been subscribed because no schema is defined', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var clientrequest = {
-		"name": "test-app",
-		"keys": [ appKey ]
+		name: "test-app",
+		keys: [ appKey ]
 	};
 
 	request(url)
@@ -1226,10 +1291,10 @@ it('4.35 should return an error response to indicate that a object has NOT been 
 			var appID2 =  res.body.content.id;
 
 			var subclientrequest = {
-				"channel": {
-					"context": contextID,
-					"model": "comments"
-				},
+				channel: {
+					context: contextID,
+					model: "comments"
+				}
 			};
 
 			request(url)
@@ -1251,9 +1316,11 @@ it('4.35 should return an error response to indicate that a object has NOT been 
 
 it('4.36 should return an error response to indicate that a object has NOT been subscribed because context does not belong to app', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var clientrequest = {
-		"name": "test-app",
-		"keys": [ appKey ]
+		name: "test-app",
+		keys: [ appKey ]
 	};
 
 	request(url)
@@ -1266,67 +1333,67 @@ it('4.36 should return an error response to indicate that a object has NOT been 
 			var appID2 =  res.body.content.id;
 
 			var clientrequest = {
-				"appId": appID,
-				"schema": {
-					"comments": {
-						"namespace": "comments",
-						"type": "comments",
-						"properties": {
-							"text": {
-								"type": "string"
+				appId: appID,
+				schema: {
+					comments: {
+						namespace: "comments",
+						type: "comments",
+						properties: {
+							text: {
+								type: "string"
 							}
 						},
-						"belongsTo": [
+						belongsTo: [
 							{
-								"parentModel": "events",
-								"relationType": "hasMany"
+								parentModel: "events",
+								relationType: "hasMany"
 							}
 						],
-						"read_acl": 6,
-						"write_acl": 6,
-						"meta_read_acl": 6
+						read_acl: 6,
+						write_acl: 6,
+						meta_read_acl: 6
 					},
-					"events": {
-						"namespace": "events",
-						"type": "events",
-						"properties": {
-							"text": {
-								"type": "string"
+					events: {
+						namespace: "events",
+						type: "events",
+						properties: {
+							text: {
+								type: "string"
 							},
-							"image": {
-								"type": "string"
+							image: {
+								type: "string"
 							},
-							"options": {
-								"type": "object"
+							options: {
+								type: "object"
 							}
 						},
-						"hasMany": [
+						hasMany: [
 							"comments"
 						],
-						"read_acl": 7,
-						"write_acl": 7,
-						"meta_read_acl": 4
+						read_acl: 7,
+						write_acl: 7,
+						meta_read_acl: 4
 					},
-					"things": {
-						"namespace": "events",
-						"type": "events",
-						"properties": {
-							"text": {
-								"type": "string"
+					things: {
+						namespace: "events",
+						type: "events",
+						properties: {
+							text: {
+								type: "string"
 							},
-							"image": {
-								"type": "string"
+							image: {
+								type: "string"
 							},
-							"options": {
-								"type": "object"
+							options: {
+								type: "object"
 							}
 						},
-						"hasMany": [
+						hasMany: [
 							"comments"
 						],
-						"read_acl": 7,
-						"write_acl": 7,
-						"meta_read_acl": 4
+						read_acl: 7,
+						write_acl: 7,
+						meta_read_acl: 4
 					}
 				}
 			};
@@ -1340,10 +1407,10 @@ it('4.36 should return an error response to indicate that a object has NOT been 
 				.end(function(err, res) {
 
 					var subclientrequest = {
-						"channel": {
-							"context": contextID,
-							"model": "comments"
-						},
+						channel: {
+							context: contextID,
+							model: "comments"
+						}
 					};
 
 					request(url)
@@ -1367,12 +1434,14 @@ it('4.36 should return an error response to indicate that a object has NOT been 
 
 it('4.37 should return a success response to indicate that a object has NOT been subscribed because of invalid channel', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var subclientrequest = {
-		"channel": {
-			"context": contextID,
-			"model": "comments",
-			"parent": "parent",
-			"user": "user"
+		channel: {
+			context: contextID,
+			model: "comments",
+			parent: "parent",
+			user: "user"
 		}
 	};
 
@@ -1394,11 +1463,13 @@ it('4.37 should return a success response to indicate that a object has NOT been
 
 it('4.38 should return an error response to indicate that a object has NOT been subscribed because object was not found', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var subclientrequest = {
-		"channel": {
-			"context": contextID,
-			"model": "comments",
-			"id" : "66"
+		channel: {
+			context: contextID,
+			model: "comments",
+			id : "66"
 		}
 	};
 
@@ -1420,6 +1491,8 @@ it('4.38 should return an error response to indicate that a object has NOT been 
 
 it('4.39 should return an error response to indicate that a object has NOT been subscribed because of empty body', function(done) {
 
+	this.timeout(100*DELAY);
+
 	request(url)
 		.post('/object/subscribe')
 		.set('Content-type','application/json')
@@ -1438,9 +1511,11 @@ it('4.39 should return an error response to indicate that a object has NOT been 
 
 it('4.40 should return a success response to indicate that a object has NOT been subscribed because of missing context', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var subclientrequest = {
-		"channel": {
-			"model": "comments"
+		channel: {
+			model: "comments"
 		}
 	};
 
@@ -1462,9 +1537,11 @@ it('4.40 should return a success response to indicate that a object has NOT been
 
 it('4.41 should return a success response to indicate that a object has NOT been subscribed because of missing model', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var subclientrequest = {
-		"channel": {
-			"context": contextID
+		channel: {
+			context: contextID
 		}
 	};
 
@@ -1486,10 +1563,12 @@ it('4.41 should return a success response to indicate that a object has NOT been
 
 it('4.42 should return a success response to indicate that a object has NOT been subscribed because of model not found', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var subclientrequest = {
-		"channel": {
-			"context": contextID,
-			"model": "somethings"
+		channel: {
+			context: contextID,
+			model: "somethings"
 		}
 	};
 
@@ -1511,33 +1590,35 @@ it('4.42 should return a success response to indicate that a object has NOT been
 
 it('4.43 should return an error response to indicate that a object has NOT been subscribed because of missing channel', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var subclientrequest = {
-		"filters": {
-			"or": [
+		filters: {
+			or: [
 				{
-					"and": [
+					and: [
 						{
-							"is": {
-								"gender": "male",
-								"age": 23
+							is: {
+								gender: "male",
+								age: 23
 							}
 						},
 						{
-							"range": {
-								"experience": {
-									"gte": 1,
-									"lte": 6
+							range: {
+								experience: {
+									gte: 1,
+									lte: 6
 								}
 							}
 						}
 					]
 				},
 				{
-					"and": [
+					and: [
 						{
-							"like": {
-								"image_url": "png",
-								"website": "png"
+							like: {
+								image_url: "png",
+								website: "png"
 							}
 						}
 					]
@@ -1564,10 +1645,12 @@ it('4.43 should return an error response to indicate that a object has NOT been 
 
 it('4.44 should return an success response to indicate that a object has been unsubscribed', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var subclientrequest = {
-		"channel": {
-			"context": contextID,
-			"model": "comments"
+		channel: {
+			context: contextID,
+			model: "comments"
 		}
 	};
 
@@ -1587,6 +1670,8 @@ it('4.44 should return an success response to indicate that a object has been un
 
 it('4.45 should return an error response to indicate that a object has NOT been unsubscribed because of empty body', function(done) {
 
+	this.timeout(100*DELAY);
+
 	request(url)
 		.post('/object/unsubscribe')
 		.set('X-BLGREQ-SIGN', appIDsha256)
@@ -1604,12 +1689,14 @@ it('4.45 should return an error response to indicate that a object has NOT been 
 
 it('4.46 should return a error response (400) to indicate that a object has NOT been unsubscribed', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var subclientrequest = {
-		"channel": {
-			"context": contextID,
-			"model": "comments",
-			"parent": "parent",
-			"user": "user"
+		channel: {
+			context: contextID,
+			model: "comments",
+			parent: "parent",
+			user: "user"
 		}
 	};
 
@@ -1631,13 +1718,13 @@ it('4.46 should return a error response (400) to indicate that a object has NOT 
 
 it('4.47 should return a error response (404) to indicate that a object has NOT been unsubscribed', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var subclientrequest = {
-		"channel": {
-			"context": contextID,
-			"model": "comments",
-			"id" : '66',
-			"parent": "parent",
-			"user": "user"
+		channel: {
+			context: contextID,
+			model: "comments",
+			id : '66654654646546546546546546546546546546546'
 		}
 	};
 
@@ -1651,45 +1738,47 @@ it('4.47 should return a error response (404) to indicate that a object has NOT 
 		.send(subclientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('037');
 			res.statusCode.should.be.equal(404);
+			res.body.code.should.be.equal('037');
 			done();
 		});
 });
 
 it('4.48 should return a error response (404) to indicate that a object has NOT been unsubscribed, using filters', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var subclientrequest = {
-		"channel": {
-			"context": contextID,
-			"model": "comments"
+		channel: {
+			context: contextID,
+			model: "comments"
 		},
-		"filters": {
-			"or": [
+		filters: {
+			or: [
 				{
-					"and": [
+					and: [
 						{
-							"is": {
-								"gender": "male",
-								"age": 23
+							is: {
+								gender: "male",
+								age: 23
 							}
 						},
 						{
-							"range": {
-								"experience": {
-									"gte": 1,
-									"lte": 6
+							range: {
+								experience: {
+									gte: 1,
+									lte: 6
 								}
 							}
 						}
 					]
 				},
 				{
-					"and": [
+					and: [
 						{
-							"like": {
-								"image_url": "png",
-								"website": "png"
+							like: {
+								image_url: "png",
+								website: "png"
 							}
 						}
 					]
@@ -1717,8 +1806,10 @@ it('4.48 should return a error response (404) to indicate that a object has NOT 
 
 it('4.49 should return a success response to indicate that a object has NOT been unsubscribed because of missing channel', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var subclientrequest = {
-		"something": {}
+		something: {}
 	};
 
 	request(url)
@@ -1738,10 +1829,12 @@ it('4.49 should return a success response to indicate that a object has NOT been
 
 it('4.50 should return a success response to indicate that a object has NOT been unsubscribed because of missing context', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var subclientrequest = {
-		"channel": {
-			"model": "comments",
-			"id" : "66"
+		channel: {
+			model: "comments",
+			id : "66"
 		}
 	};
 
@@ -1762,9 +1855,11 @@ it('4.50 should return a success response to indicate that a object has NOT been
 
 it('4.51 should return a success response to indicate that a object has NOT been unsubscribed because of missing model', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var subclientrequest = {
-		"channel": {
-			"context": contextID
+		channel: {
+			context: contextID
 		}
 	};
 
@@ -1785,10 +1880,12 @@ it('4.51 should return a success response to indicate that a object has NOT been
 
 it('4.52 should return a success response to indicate that a object has been deleted', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var clientrequest = {
-		"model": "comments",
-		"context": contextID,
-		"id" : 1,
+		model: "comments",
+		context: contextID,
+		id : 1
 	};
 
 	request(url)
@@ -1807,39 +1904,38 @@ it('4.52 should return a success response to indicate that a object has been del
 
 it('4.53 should return an error response to indicate that a object was NOT deleted', function(done) {
 
-	this.timeout(20*DELAY);
+	this.timeout(100*DELAY);
 
-	setTimeout(function() {
+	var clientrequest = {
+		model: "comments",
+		context: 1,
+		id : 1
+	};
 
-		var clientrequest = {
-			"model": "comments",
-			"context": 1,
-			"id" : 1,
-		};
+	request(url)
+		.post('/object/delete')
+		.set('X-BLGREQ-SIGN', appIDsha256)
+		.set('X-BLGREQ-UDID', deviceIdentification)
+		.set('X-BLGREQ-APPID',1)
+		.set('Authorization', authValue )
+		.send(clientrequest)
+		.end(function(err, res) {
 
-		request(url)
-			.post('/object/delete')
-			.set('X-BLGREQ-SIGN', appIDsha256)
-			.set('X-BLGREQ-UDID', deviceIdentification)
-			.set('X-BLGREQ-APPID',1)
-			.set('Authorization', authValue )
-			.send(clientrequest)
-			.end(function(err, res) {
-
-				res.body.code.should.be.equal('011');
-				res.statusCode.should.be.equal(404);
-				done();
-			});
-	}, 14*DELAY);
+			res.body.code.should.be.equal('011');
+			res.statusCode.should.be.equal(404);
+			done();
+		});
 
 });
 
 it('4.54 should return an error response to indicate that the object id was missing', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var clientrequest = {
-		"model": "comments",
-		"context": contextID,
-		"content": {}
+		model: "comments",
+		context: contextID,
+		content: {}
 	};
 
 	request(url)
@@ -1859,10 +1955,12 @@ it('4.54 should return an error response to indicate that the object id was miss
 
 it('4.55 should return an error response to indicate that the object model was missing', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var clientrequest = {
-		"context": contextID,
-		"id" : 1,
-		"content": {}
+		context: contextID,
+		id : 1,
+		content: {}
 	};
 
 	request(url)
@@ -1882,11 +1980,13 @@ it('4.55 should return an error response to indicate that the object model was m
 
 it('4.56 should return an error response to indicate that the object was not deleted because of missing authentication', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var clientrequest = {
-		"model": "comments",
-		"context": contextID,
-		"id" : 1,
-		"content": {}
+		model: "comments",
+		context: contextID,
+		id : 1,
+		content: {}
 	};
 
 	request(url)
@@ -1905,10 +2005,12 @@ it('4.56 should return an error response to indicate that the object was not del
 
 it('4.57 should return an error response to indicate that the object was not deleted because of missing context', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var clientrequest = {
-		"model": "comments",
-		"id" : 1,
-		"content": {}
+		model: "comments",
+		id: 1,
+		content: {}
 	};
 
 	request(url)
@@ -1927,6 +2029,8 @@ it('4.57 should return an error response to indicate that the object was not del
 });
 
 it('4.58 should return an error response to indicate that the object was not deleted because of empty request', function(done) {
+
+	this.timeout(100*DELAY);
 
 	request(url)
 		.post('/object/delete')

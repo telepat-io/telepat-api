@@ -21,7 +21,7 @@ var deviceIdentifier;
 
 before(function(done){
 
-	this.timeout(25*DELAY);
+	this.timeout(100*DELAY);
 
 	var clientrequest = {
 		name: "test-app",
@@ -33,33 +33,32 @@ before(function(done){
 		.send(admin)
 		.end(function(err, res) {
 
-			setTimeout(function () {
+			request(url)
+				.post('/admin/login')
+				.set('Content-type','application/json')
+				.send(admin)
+				.end(function(err, res) {
 
-				request(url)
-					.post('/admin/login')
-					.set('Content-type','application/json')
-					.send(admin)
-					.end(function(err, res) {
+					var token = res.body.content.token;
+					authValue = 'Bearer ' + token;
 
-						var token = res.body.content.token;
-						authValue = 'Bearer ' + token;
+					request(url)
+						.post('/admin/app/add')
+						.set('Content-type','application/json')
+						.set('Authorization', authValue)
+						.send(clientrequest)
+						.end(function(err, res) {
 
-						request(url)
-							.post('/admin/app/add')
-							.set('Content-type','application/json')
-							.set('Authorization', authValue)
-							.send(clientrequest)
-							.end(function(err, res) {
-
-								appID =  res.body.content.id;
-								done();
-							});
-					});
-			}, 3*DELAY);
+							appID =  res.body.content.id;
+							done();
+						});
+				});
 		});
 });
 
 it('3.1 should return a success response to indicate device successfully registered', function(done) {
+
+	this.timeout(100*DELAY);
 
 	var clientRequest = {
 		info: {
@@ -92,6 +91,8 @@ it('3.1 should return a success response to indicate device successfully registe
 
 it('3.2 should return a success response to indicate device successfully registered with random UDID', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var clientRequest = {
 		info: {
 			os: "Android",
@@ -123,6 +124,8 @@ it('3.2 should return a success response to indicate device successfully registe
 
 it('3.3 should return a success response to indicate device successfully updated', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var clientRequest = {
 		info: {
 			os: "Android",
@@ -151,6 +154,8 @@ it('3.3 should return a success response to indicate device successfully updated
 });
 
 it('3.4 should return an error response to indicate device successfully registered, uuid missing from request', function(done) {
+
+	this.timeout(100*DELAY);
 
 	var clientRequest = {
 		info: {
@@ -181,6 +186,8 @@ it('3.4 should return an error response to indicate device successfully register
 
 it('3.5 should return an error response to indicate device NOT successfully registered because of missing info', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var clientRequest = {
 		persistent: {
 			type: "android",
@@ -204,6 +211,8 @@ it('3.5 should return an error response to indicate device NOT successfully regi
 
 it('3.6 should return an error response to indicate device NOT successfully registered because of missing body', function(done) {
 
+	this.timeout(100*DELAY);
+
 	request(url)
 		.post('/device/register')
 		.set('X-BLGREQ-SIGN', appIDsha256)
@@ -220,6 +229,8 @@ it('3.6 should return an error response to indicate device NOT successfully regi
 
 it('3.7 should return an error response to indicate device NOT successfully registered because of missing body and invalidUDID', function(done) {
 
+	this.timeout(100*DELAY);
+
 	request(url)
 		.post('/device/register')
 		.set('X-BLGREQ-SIGN', appIDsha256)
@@ -235,6 +246,8 @@ it('3.7 should return an error response to indicate device NOT successfully regi
 });
 
 it('3.8 should return an error response to indicate device NOT successfully registered because of invalid UDID', function(done) {
+
+	this.timeout(100*DELAY);
 
 	var clientRequest = {
 		info: {

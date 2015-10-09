@@ -26,70 +26,70 @@ var admin = {
 
 before(function(done){
 
-	this.timeout(25*DELAY);
+	this.timeout(100*DELAY);
 
 	var deviceRegisterRequest = {
-		"info": {
-			"os": "Android",
-			"version": "4.4.3",
-			"sdk_level": 19,
-			"manufacturer": "HTC",
-			"model": "HTC One_M8",
-			"udid": invalidUDID
+		info: {
+			os: "Android",
+			version: "4.4.3",
+			sdk_level: 19,
+			manufacturer: "HTC",
+			model: "HTC One_M8",
+			udid: invalidUDID
 		},
-		"persistent": {
-			"type": "android",
-			"token": "android pn token"
+		persistent: {
+			type: "android",
+			token: "android pn token"
 		}
 	};
 
 
 	var appRequest = {
-		"name": "test-app",
-		"keys": [ common.appKey ]
+		name: "test-app",
+		keys: [ common.appKey ]
 	};
 
 	request(url)
 		.post('/admin/add')
 		.send(admin)
 		.end(function(err, res) {
-			setTimeout(function () {
-				request(url)
-					.post('/admin/login')
-					.set('Content-type','application/json')
-					.send(admin)
-					.end(function(err, res) {
+			request(url)
+				.post('/admin/login')
+				.set('Content-type','application/json')
+				.send(admin)
+				.end(function(err, res) {
 
-						var token = res.body.content.token;
-						adminAuthValue = 'Bearer ' + token;
+					var token = res.body.content.token;
+					adminAuthValue = 'Bearer ' + token;
 
-						request(url)
-							.post('/admin/app/add')
-							.set('Content-type','application/json')
-							.set('Authorization', adminAuthValue)
-							.send(appRequest)
-							.end(function(err, res) {
+					request(url)
+						.post('/admin/app/add')
+						.set('Content-type','application/json')
+						.set('Authorization', adminAuthValue)
+						.send(appRequest)
+						.end(function(err, res) {
 
-								appID =  res.body.content.id;
+							appID =  res.body.content.id;
 
-								request(url)
-									.post('/device/register')
-									.set('X-BLGREQ-SIGN', appIDsha256)
-									.set('X-BLGREQ-UDID', '')
-									.set('X-BLGREQ-APPID',appID)
-									.send(deviceRegisterRequest)
-									.end(function(err, res) {
+							request(url)
+								.post('/device/register')
+								.set('X-BLGREQ-SIGN', appIDsha256)
+								.set('X-BLGREQ-UDID', '')
+								.set('X-BLGREQ-APPID',appID)
+								.send(deviceRegisterRequest)
+								.end(function(err, res) {
 
-										deviceIdentification =  res.body.content.identifier;
-										done();
-									});
-							});
-					});
-			}, 4*DELAY);
+									deviceIdentification =  res.body.content.identifier;
+									done();
+								});
+						});
+				});
 		});
 });
 
 it('5.1 should return an error response to indicate that the user has NOT logged via Facebook because request body is empty', function(done) {
+
+	this.timeout(100*DELAY);
 
 	request(url)
 		.post('/user/login')
@@ -108,8 +108,10 @@ it('5.1 should return an error response to indicate that the user has NOT logged
 
 it('5.2 should return an error response to indicate that the user has NOT logged via Facebook because of missing access token', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var clientRequest = {
-		"something_else": "invalidToken"
+		something_else: "invalidToken"
 	};
 
 	request(url)
@@ -129,8 +131,10 @@ it('5.2 should return an error response to indicate that the user has NOT logged
 
 it('5.3 should return an error response to indicate that the user has NOT logged via Facebook because of invalid token', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var clientrequest = {
-		"access_token": "invalidToken"
+		access_token: "invalidToken"
 	};
 
 	request(url)
@@ -150,12 +154,12 @@ it('5.3 should return an error response to indicate that the user has NOT logged
 
 it('5.4 should return a success response to indicate that the user has logged in via user & password', function(done) {
 
-	this.timeout(13*DELAY);
+	this.timeout(100*DELAY);
 
 	var clientrequest = {
-		"email": userEmail,
-		"password": "secure_password1337",
-		"name": "John Smith"
+		email: userEmail,
+		password: "secure_password1337",
+		name: "John Smith"
 	};
 
 	request(url)
@@ -183,7 +187,7 @@ it('5.4 should return a success response to indicate that the user has logged in
 						res.statusCode.should.be.equal(200);
 						done();
 					});
-			}, 7*DELAY);
+			}, 20*DELAY);
 		});
 });
 
@@ -203,7 +207,7 @@ it('5.5 should return a success response to indicate that the user has logged in
 
 					var data = JSON.parse(res.text);
 					var clientrequest = {
-						"access_token": data.data[0].access_token
+						access_token: data.data[0].access_token
 					};
 
 					request(url)
@@ -229,13 +233,15 @@ it('5.5 should return a success response to indicate that the user has logged in
 										res.statusCode.should.be.equal(200);
 										done();
 									});
-							}, 4*DELAY);
+							}, 20*DELAY);
 						});
 				});
 		});
 });
 
 it('5.6 should return a success response to indicate that the user info was retrieved', function(done) {
+
+	this.timeout(100*DELAY);
 
 	request(url)
 		.get('/user/me')
@@ -254,12 +260,12 @@ it('5.6 should return a success response to indicate that the user info was retr
 
 it('5.7 should return an error response to indicate that the user info was NOT retrieved because user was not found', function(done) {
 
-	this.timeout(25*DELAY);
+	this.timeout(100*DELAY);
 
 	var clientrequest = {
-		"email": "exampleUser@appscend.com",
-		"password": "secure_password1337",
-		"name": "John Smith"
+		email: "exampleUser@appscend.com",
+		password: "secure_password1337",
+		name: "John Smith"
 	};
 
 	request(url)
@@ -284,8 +290,8 @@ it('5.7 should return an error response to indicate that the user info was NOT r
 						var userID3 = res.body.content.user.id;
 						var authValue3 = 'Bearer ' + token3;
 						var subclientrequest = {
-							"id" : userID3,
-							"email" : "exampleUser@appscend.com"
+							id : userID3,
+							email : "exampleUser@appscend.com"
 						};
 
 						request(url)
@@ -313,19 +319,21 @@ it('5.7 should return an error response to indicate that the user info was NOT r
 											res.statusCode.should.be.equal(404);
 											done();
 										});
-								},10*DELAY);
+								}, 20*DELAY);
 							});
 					});
-			}, 7*DELAY);
+			}, 20*DELAY);
 		});
 });
 
 it('5.8 should return an error response to indicate that the user has NOT logged in via user & password because of invalid credentials', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var clientrequest = {
-		"email": userEmail,
-		"password": "secure_password",
-		"name": "John Smith"
+		email: userEmail,
+		password: "secure_password",
+		name: "John Smith"
 	};
 
 	request(url)
@@ -345,10 +353,12 @@ it('5.8 should return an error response to indicate that the user has NOT logged
 
 it('5.9 should return an error response to indicate that the user has NOT logged in via user & password because user not found', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var clientrequest = {
-		"email": 'user'+Math.round(Math.random()*1000000)+'@example.com',
-		"password": "secure_password",
-		"name": "John Smith"
+		email: 'user'+Math.round(Math.random()*1000000)+'@example.com',
+		password: "secure_password",
+		name: "John Smith"
 	};
 
 	request(url)
@@ -368,9 +378,11 @@ it('5.9 should return an error response to indicate that the user has NOT logged
 
 it('5.10 should return an error response to indicate that the user has NOT logged in via user & password because email was missing for request', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var clientrequest = {
-		"password": "secure_password",
-		"name": "John Smith"
+		password: "secure_password",
+		name: "John Smith"
 	};
 
 	request(url)
@@ -390,9 +402,11 @@ it('5.10 should return an error response to indicate that the user has NOT logge
 
 it('5.11 should return an error response to indicate that the user has NOT logged in via user & password because password was missing for request', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var clientrequest = {
-		"email": 'user'+Math.round(Math.random()*1000000)+'@example.com',
-		"name": "John Smith"
+		email: 'user'+Math.round(Math.random()*1000000)+'@example.com',
+		name: "John Smith"
 	};
 
 	request(url)
@@ -412,12 +426,14 @@ it('5.11 should return an error response to indicate that the user has NOT logge
 
 it('5.12 should return a success response to indicate that the user was updated', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var clientrequest = {
-		"patches" : [
+		patches : [
 			{
-				"op": "replace",
-				"path": "user/"+userID+"/name",
-				"value": "new value"
+				op: "replace",
+				path: "user/"+userID+"/name",
+				value: "new value"
 			}
 		]
 	};
@@ -439,12 +455,14 @@ it('5.12 should return a success response to indicate that the user was updated'
 
 it('5.13 should return a success response to indicate that the user password was updated', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var clientrequest = {
-		"patches" : [
+		patches : [
 			{
-				"op": "replace",
-				"path": "user/"+userID+"/password",
-				"value": "new value"
+				op: "replace",
+				path: "user/"+userID+"/password",
+				value: "new value"
 			}
 		]
 	};
@@ -466,12 +484,14 @@ it('5.13 should return a success response to indicate that the user password was
 
 it('5.14 should return an error response to indicate that the userID is not valid', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var clientrequest = {
-		"patches" : [
+		patches : [
 			{
-				"op": "replace",
-				"path": "user/" + userID + "66" +"/password",
-				"value": "new value"
+				op: "replace",
+				path: "user/" + userID + "66" +"/password",
+				value: "new value"
 			}
 		]
 	};
@@ -494,6 +514,8 @@ it('5.14 should return an error response to indicate that the userID is not vali
 
 it('5.15 should return a success response to indicate that the user password was NOT updated because of empty request body', function(done) {
 
+	this.timeout(100*DELAY);
+
 	request(url)
 		.post('/user/update')
 		.set('Content-type','application/json')
@@ -512,8 +534,10 @@ it('5.15 should return a success response to indicate that the user password was
 
 it('5.16 should return a success response to indicate that the user password was NOT updated because patches is not an array', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var clientrequest = {
-		"patches" : {}
+		patches : {}
 	};
 
 	request(url)
@@ -534,8 +558,10 @@ it('5.16 should return a success response to indicate that the user password was
 
 it('5.17 should return a success response to indicate that the user password was NOT updated because patches is an empty array', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var clientrequest = {
-		"patches" : []
+		patches : []
 	};
 
 	request(url)
@@ -556,7 +582,7 @@ it('5.17 should return a success response to indicate that the user password was
 
 it('5.18 should return a success response to indicate that the user was updated immediate', function(done) {
 
-	this.timeout(20*DELAY);
+	this.timeout(100*DELAY);
 
 	var clientrequest = {
 		name: "new name",
@@ -574,11 +600,13 @@ it('5.18 should return a success response to indicate that the user was updated 
 		.end(function(err, res) {
 
 			res.statusCode.should.be.equal(200);
-			setTimeout(done, 14*DELAY);
+			done();
 		});
 });
 
 it('5.19 should return a success response to indicate that the token was updated', function(done) {
+
+	this.timeout(100*DELAY);
 
 	request(url)
 		.get('/user/refresh_token')
@@ -600,6 +628,8 @@ it('5.19 should return a success response to indicate that the token was updated
 
 it('5.20 should return an error response to indicate that the token was NOT updated because of bad authorization', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var authValue = "something";
 
 	request(url)
@@ -619,6 +649,8 @@ it('5.20 should return an error response to indicate that the token was NOT upda
 });
 
 it('5.21 should return an error response to indicate that the token was NOT updated because of bad token', function(done) {
+
+	this.timeout(100*DELAY);
 
 	var authValue = 'Bearer something';
 
@@ -641,6 +673,8 @@ it('5.21 should return an error response to indicate that the token was NOT upda
 
 it('5.22 should return an error response to indicate that the token was NOT updated because authorization is missing', function(done) {
 
+	this.timeout(100*DELAY);
+
 	request(url)
 		.get('/user/refresh_token')
 		.set('Content-type','application/json')
@@ -658,6 +692,8 @@ it('5.22 should return an error response to indicate that the token was NOT upda
 
 it('5.23 should return an error response to indicate that the token was NOT updated because X-BLGREQ-SIGN is missing', function(done) {
 
+	this.timeout(100*DELAY);
+
 	request(url)
 		.get('/user/refresh_token')
 		.set('Content-type','application/json')
@@ -674,6 +710,8 @@ it('5.23 should return an error response to indicate that the token was NOT upda
 });
 
 it('5.24 should return an error response to indicate that the token was NOT updated because Content-type is not application/json', function(done) {
+
+	this.timeout(100*DELAY);
 
 	request(url)
 		.get('/user/refresh_token')
@@ -693,6 +731,8 @@ it('5.24 should return an error response to indicate that the token was NOT upda
 
 it('5.25 should return an error response to indicate that the token was NOT updated because of invalid API key', function(done) {
 
+	this.timeout(100*DELAY);
+
 	request(url)
 		.get('/user/refresh_token')
 		.set('Content-type','application/json')
@@ -711,6 +751,8 @@ it('5.25 should return an error response to indicate that the token was NOT upda
 
 it('5.26 should return an error response to indicate that the token was NOT updated because of missing UDID', function(done) {
 
+	this.timeout(100*DELAY);
+
 	request(url)
 		.get('/user/refresh_token')
 		.set('Content-type','application/json')
@@ -727,6 +769,8 @@ it('5.26 should return an error response to indicate that the token was NOT upda
 });
 
 it('5.27 should return a success response to indicate that the user logged out', function(done) {
+
+	this.timeout(100*DELAY);
 
 	request(url)
 		.get('/user/logout')
@@ -745,12 +789,14 @@ it('5.27 should return a success response to indicate that the user logged out',
 
 it('5.28 should return a success response to indicate that the user has registered', function(done) {
 
+	this.timeout(100*DELAY);
+
 	this.timeout(20*DELAY);
 
 	var clientrequest = {
-		"email": userEmail2,
-		"password": "secure_password1337",
-		"name": "John Smith"
+		email: userEmail2,
+		password: "secure_password1337",
+		name: "John Smith"
 	};
 
 	request(url)
@@ -770,9 +816,9 @@ it('5.28 should return a success response to indicate that the user has register
 it('5.29 should return a success response to indicate that the user has NOT registered because user is already registered', function(done) {
 
 	var clientrequest = {
-		"email": userEmail,
-		"password": "secure_password1337",
-		"name": "John Smith"
+		email: userEmail,
+		password: "secure_password1337",
+		name: "John Smith"
 	};
 
 	request(url)
@@ -792,6 +838,8 @@ it('5.29 should return a success response to indicate that the user has NOT regi
 
 it('5.30 should return a success response to indicate that the user has NOT registered because of empty body', function(done) {
 
+	this.timeout(100*DELAY);
+
 	request(url)
 		.post('/user/register')
 		.set('Content-type','application/json')
@@ -809,10 +857,12 @@ it('5.30 should return a success response to indicate that the user has NOT regi
 
 it('5.31 should return a success response to indicate that the user was deleted', function(done) {
 
+	this.timeout(100*DELAY);
+
 	var clientrequest = {
-		"email": userEmail2,
-		"password": "secure_password1337",
-		"name": "John Smith"
+		email: userEmail2,
+		password: "secure_password1337",
+		name: "John Smith"
 	};
 
 	request(url)
@@ -828,8 +878,8 @@ it('5.31 should return a success response to indicate that the user was deleted'
 			userID = res.body.content.user.id;
 			authValue = 'Bearer ' + token;
 			var subclientrequest = {
-				"id" : userID,
-				"email" : userEmail
+				id : userID,
+				email : userEmail
 			};
 
 			request(url)

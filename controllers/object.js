@@ -149,14 +149,15 @@ router.post('/subscribe', function(req, res, next) {
 		function(callback) {
 			validateContext(appId, context, callback);
 		},
-		//see if device exists
 		function(callback) {
-			Models.Subscription.getDevice(deviceId, function(err) {
-				if (err) {
-					callback(err);
-				}
+			//only add subscription on initial /subscribe
+			if (page && page > 1)
+				return callback();
+			Models.Subscription.add(deviceId, channelObject,  function(err) {
+				if (err && err.status === 409)
+					return callback();
 
-				callback();
+				callback(err);
 			});
 		},
 		function(callback) {
@@ -178,14 +179,6 @@ router.post('/subscribe', function(req, res, next) {
 					callback();
 				});
 			}
-		},
-		function(callback) {
-			Models.Subscription.add(deviceId, channelObject,  function(err) {
-				if (err && err.status === 409)
-					return callback();
-
-				callback(err);
-			});
 		}
 		/*,
 		function(results, callback) {
@@ -281,18 +274,13 @@ router.post('/unsubscribe', function(req, res, next) {
 		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidChannel));
 	}
 
-	async.waterfall([
+	async.series([
 		//verify if context belongs to app
 		function(callback) {
 			validateContext(appId, context, callback);
 		},
 		function(callback) {
-			Models.Subscription.remove(deviceId, channelObject, function(err, results) {
-				if (err)
-					callback(err, null);
-				else
-					callback(null, {status: 200, content: 'Subscription removed'});
-			});
+			Models.Subscription.remove(deviceId, channelObject, callback);
 		}/*,
 		function(result, callback) {
 			app.kafkaProducer.send([{
@@ -310,10 +298,12 @@ router.post('/unsubscribe', function(req, res, next) {
 				callback(err, result);
 			});
 		}*/
-	], function(err, results) {
-		if (err) return next(err);
-
-		res.status(200).json(results).end();
+	], function(err) {
+		if (err) {
+			return next(err);
+		} else {
+			res.status(200).json({status: 200, content: 'Subscription removed'}).end();
+		}
 	});
 });
 
