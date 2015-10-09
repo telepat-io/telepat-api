@@ -11,8 +11,8 @@ router.use('/all',
 	security.applicationIdValidation,
 	security.adminAppValidation);
 /**
- * @api {get} /admin/user/all GetAppUsers
- * @apiDescription Gets all users of the app
+ * @api {post} /admin/user/all GetAppUsers
+ * @apiDescription Gets all users of the application
  * @apiName AdminGetUsers
  * @apiGroup Admin
  * @apiVersion 0.2.3
@@ -23,6 +23,12 @@ router.use('/all',
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  *
+ * @apiExample {json} Client Request
+ *
+ * {
+ * 		"page": 1
+ * }
+ *
  * 	@apiSuccessExample {json} Success Response
  * 	{
  * 		"status": 200,
@@ -31,13 +37,14 @@ router.use('/all',
  * 		]
  * 	}
  *
- * @apiError 404 [011]ApplicationNotFound If the Application doesn't exist
+ * @apiError 404 [011]ApplicationNotFound If the application doesn't exist
  */
 
-router.get('/all', function(req, res, next) {
+router.post('/all', function(req, res, next) {
 	var appId = req._telepat.applicationId;
+	var page = req.body.page ? req.body.page : 1;
 
-	Models.User.getAll(appId, function(err, results) {
+	Models.User.getAll(appId, page, function(err, results) {
 		if (err) return next(err);
 
 		results.forEach(function(item, index, originalArray) {
@@ -54,7 +61,7 @@ router.use('/update',
 	security.adminAppValidation);
 /**
  * @api {post} /admin/user/update UserUpdate
- * @apiDescription Updates an user from an app
+ * @apiDescription Updates an user from an application
  * @apiName AdminUpdateUser
  * @apiGroup Admin
  * @apiVersion 0.2.3
@@ -84,7 +91,7 @@ router.use('/update',
  * 		"content" : "User has been updated"
  * 	}
  *
- * @apiError 404 [023]UserNotFound If the User doesn't exist.
+ * @apiError 404 [023]UserNotFound If the user doesn't exist.
  *
  */
 router.post('/update', function(req, res, next) {
@@ -143,7 +150,7 @@ router.use('/delete',
 	security.adminAppValidation);
 /**
  * @api {post} /admin/user/delete UserDelete
- * @apiDescription Deletes an user from an app
+ * @apiDescription Deletes an user from an application
  * @apiName AdminDeleteUser
  * @apiGroup Admin
  * @apiVersion 0.2.3
@@ -154,7 +161,7 @@ router.use('/delete',
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  *
- * @apiParam {String} email The email address of an user from an app
+ * @apiParam {String} email The email address of an user from an application
  *
  * @apiExample {json} Client Request
  * 	{
@@ -167,7 +174,7 @@ router.use('/delete',
  * 		"content" : "User deleted"
  * 	}
  *
- * @apiError 404 [023]UserNotFound If the User doesn't exist.
+ * @apiError 404 [023]UserNotFound If the user doesn't exist.
  */
 router.post('/delete', function(req, res, next) {
 	if (!req.body.email) {
@@ -176,6 +183,7 @@ router.post('/delete', function(req, res, next) {
 
 	var appId = req._telepat.applicationId;
 	var userEmail = req.body.email;
+	var objectsToBeDeleted = null;
 
 	async.waterfall([
 		function(callback) {
@@ -185,30 +193,41 @@ router.post('/delete', function(req, res, next) {
 			if (user.application_id != appId) {
 				return callback(new Models.TelepatError(Models.TelepatError.errors.UserNotFound));
 			} else {
-				Models.User.delete(userEmail, appId, callback);
+				Models.User.delete(userEmail, appId, function(err, results) {
+					if (err) return callback(err);
+					objectsToBeDeleted = results;
+					callback();
+				});
 			}
 		}
-	], function(error, results) {
+	], function(error) {
 		if (error && error.status == 404)
 			return next(new Models.TelepatError(Models.TelepatError.errors.UserNotFound));
 		else if (error) return next(error);
 
-		if (results) {
-			async.each(results, function(item, c) {
-				var context = item.context_id;
-				var mdl = item.value.type;
-				var id = item.value.id;
+		if (objectsToBeDeleted) {
+			var brokerMessages = [];
 
-				app.messagingClient.send([JSON.stringify({
+			async.each(objectsToBeDeleted, function(item, c) {
+				var context = item.context_id;
+				var mdl = item.type;
+				var id = item.id;
+
+				brokerMessages.push(JSON.stringify({
 					op: 'delete',
 					object: {path: mdl+'/'+id},
 					context: context,
 					applicationId: appId
-				})], 'aggregation', c);
+				}));
+				c();
+			}, function() {
+				app.messagingClient.send(brokerMessages, 'aggregation', function(err){
+					if (err) return next(err);
+
+					res.status(200).json({status: 200, content: 'User deleted'}).end();
+				});
 			});
 		}
-
-		res.status(200).json({status: 200, content: 'User deleted'}).end();
 	});
 });
 

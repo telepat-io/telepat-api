@@ -20,16 +20,6 @@ security.encryptPassword = function(password, callback) {
 	bcrypt.hash(password, app.get('password_salt'), callback);
 };
 
-security.deviceIDExists = function(req, res, next) {
-	var deviceId = req._telepat.device_id;
-
-	if (!deviceId) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.DeviceIdMissing));
-	}
-
-	next();
-};
-
 security.contentTypeValidation = function(req, res, next) {
 	if (req.get('Content-Type') && req.get('Content-Type').substring(0, 16) !== 'application/json')
 		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidContentType));
@@ -42,7 +32,7 @@ security.apiKeyValidation = function(req, res, next) {
 	else {
 		var clientHash = req.get('X-BLGREQ-SIGN').toLowerCase();
 		var serverHash = null;
-		var apiKeys = app.applications[req.get('X-BLGREQ-APPID')].keys;
+		var apiKeys = Models.Application.loadedAppModels[req.get('X-BLGREQ-APPID')].keys;
 
 		async.detect(apiKeys, function(item ,cb) {
 			if (item)
@@ -74,7 +64,7 @@ security.applicationIdValidation = function(req, res, next) {
 	if (!req.get('X-BLGREQ-APPID'))
 		return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationIdMissing));
 	else {
-		if (!app.applications[req.get('X-BLGREQ-APPID')]) {
+		if (!Models.Application.loadedAppModels[req.get('X-BLGREQ-APPID')]) {
 			return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationNotFound,
 				[req.get('X-BLGREQ-APPID')]));
 		}
@@ -104,20 +94,21 @@ security.tokenValidation = function(req, res, next) {
 	if (!req.headers.authorization)
 		return next(new Models.TelepatError(Models.TelepatError.errors.AuthorizationMissing));
 
-	return (expressJwt({secret: security.authSecret}))(req, res, next);
+	return (expressJwt({secret: security.authSecret}))(req, res, function(err) {
+		if (err && err.message == 'invalid signature') {
+			return next(new Models.TelepatError(Models.TelepatError.errors.MalformedAuthorizationToken))
+		} else
+			return next(err);
+	});
 };
 
 security.adminAppValidation = function (req, res, next) {
 	var appId = req._telepat.applicationId;
 
-	if (!app.applications[appId]) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationNotFound, [appId]));
-	}
-
 	if (!req.user)
 		return next();
 
-	if (app.applications[appId].admins.indexOf(req.user.id) === -1) {
+	if (Models.Application.loadedAppModels[appId].admins.indexOf(req.user.id) === -1) {
 		return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationForbidden));
 	}
 
@@ -126,23 +117,26 @@ security.adminAppValidation = function (req, res, next) {
 
 security.objectACL = function (accessControl) {
 	return function(req, res, next) {
-		if (!Object.getOwnPropertyNames(req.body).length) {
-			next();
+		if (!req.headers.authorization)
+			return next(new Models.TelepatError(Models.TelepatError.errors.AuthorizationMissing));
+		if (!req.body || !Object.getOwnPropertyNames(req.body).length) {
+			return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
 		} else if (req.body.model || (req.body.channel && req.body.channel.model)) {
 			var mdl = req.body.model || req.body.channel.model;
 
 			if (['user', 'context', 'application'].indexOf(mdl) !== -1)
 				return next();
 
-			if (!Models.Application.loadedAppModels[req._telepat.applicationId][mdl]) {
+			if (!Models.Application.loadedAppModels[req._telepat.applicationId].schema) {
+				return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationHasNoSchema));
+			}
+
+			if (!Models.Application.loadedAppModels[req._telepat.applicationId].schema[mdl]) {
 				return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationSchemaModelNotFound,
 					[req._telepat.applicationId, mdl]));
 			}
 
-			var acl = Models.Application.loadedAppModels[req._telepat.applicationId][mdl][accessControl];
-
-			if (!req.headers.authorization)
-				return next(new Models.TelepatError(Models.TelepatError.errors.AuthorizationMissing));
+			var acl = Models.Application.loadedAppModels[req._telepat.applicationId].schema[mdl][accessControl];
 
 			if (acl & ACL_AUTHENTICATED || acl & ACL_ADMIN) {
 				var authHeaderParts = req.headers.authorization.split(' ');
@@ -151,7 +145,7 @@ security.objectACL = function (accessControl) {
 				if (authToken) {
 					jwt.verify(authToken, security.authSecret, function (err, decoded) {
 						if (err)
-							return next(new Models.TelepatError(Models.TelepatError.errors.InvalidAuthorization, [err.message]));
+							return next(new Models.TelepatError(Models.TelepatError.errors.MalformedAuthorizationToken, [err.message]));
 
 						if ((!(acl & ACL_UNAUTHENTICATED)) && (!(acl & ACL_AUTHENTICATED)) &&  (acl & ACL_ADMIN) && (!decoded.isAdmin) )
 							return next(new Models.TelepatError(Models.TelepatError.errors.OperationNotAllowed));
@@ -171,7 +165,7 @@ security.objectACL = function (accessControl) {
 				return next(new Models.TelepatError(Models.TelepatError.errors.OperationNotAllowed));
 			}
 		} else {
-			next();
+			next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['model or channel.model']));
 		}
 	}
 };

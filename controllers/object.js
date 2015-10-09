@@ -9,33 +9,13 @@ router.use(security.applicationIdValidation);
 router.use(security.apiKeyValidation);
 router.use(security.deviceIdValidation);
 
-router.use(security.tokenValidation);
-
-/**
- * Middleware used to load application model schema
- */
-router.use(function(req, res, next) {
-	//roughly 67M - it self cleares so it doesn't get too big
-	if (sizeof(Models.Application.loadedAppModels) > (1 << 26)) {
-		delete Models.Application.loadedAppModels;
-		Models.Application.loadedAppModels = {};
-	}
-
-	if (!Models.Application.loadedAppModels[req._telepat.applicationId]) {
-		Models.Application.loadAppModels(req._telepat.applicationId, next);
-	} else
-		next();
-});
-
 router.use(['/subscribe', '/unsubscribe'], security.objectACL('read_acl'));
 router.use(['/create', '/update', '/delete'], security.objectACL('write_acl'));
 router.use(['/count'], security.objectACL('meta_read_acl'));
 
 var validateContext = function(appId, context, callback) {
 	Models.Application.hasContext(appId, context, function(err, result) {
-		if (err && err.status == 404) {
-			callback(new Models.TelepatError(Models.TelepatError.errors.ApplicationNotFound));
-		} else if (err)
+		if (err)
 			return callback(err);
 		else if (result === false) {
 			callback(new Models.TelepatError(Models.TelepatError.errors.InvalidContext, [context, appId]));
@@ -58,7 +38,7 @@ var validateContext = function(appId, context, callback) {
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
- * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
+ * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from device/register)
  *
  * @apiParam {Object} channel Object representing the channel
  * @apiParam {Object} filters Object representing channel filters
@@ -123,15 +103,8 @@ var validateContext = function(appId, context, callback) {
  *
  */
 router.post('/subscribe', function(req, res, next) {
-	if (Object.getOwnPropertyNames(req.body).length === 0) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
-	}
-
+	var page = req.body.page ? req.body.page : 1;
 	var channel = req.body.channel;
-
-	if (!channel) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['channel']));
-	}
 
 	var id = channel.id,
 		context = channel.context,
@@ -144,12 +117,6 @@ router.post('/subscribe', function(req, res, next) {
 
 	if (!context)
 		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['channel.context']));
-
-	if (!mdl)
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['channel.model']));
-
-	if (!Models.Application.loadedAppModels[appId][mdl])
-		return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationSchemaModelNotFound, [appId, mdl]));
 
 	var channelObject = new Models.Channel(appId);
 
@@ -175,22 +142,17 @@ router.post('/subscribe', function(req, res, next) {
 		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidChannel));
 	}
 
-	async.waterfall([
+	var objects = [];
+
+	async.series([
 		//verify if context belongs to app
 		function(callback) {
 			validateContext(appId, context, callback);
 		},
-		//see if device exists
 		function(callback) {
-			Models.Subscription.getDevice(deviceId, function(err) {
-				if (err) {
-					callback(err);
-				}
-
-				callback();
-			});
-		},
-		function(callback) {
+			//only add subscription on initial /subscribe
+			if (page && page > 1)
+				return callback();
 			Models.Subscription.add(deviceId, channelObject,  function(err) {
 				if (err && err.status === 409)
 					return callback();
@@ -203,12 +165,22 @@ router.post('/subscribe', function(req, res, next) {
 				Models.Model(mdl, appId, context, id, function(err, results) {
 					if (err) return callback(err);
 
-					callback(null, results);
+					objects.push(results);
+
+					callback();
 				});
 			} else {
-				Models.Model.search(channelObject, callback);
+				Models.Model.search(channelObject, page, function(err, results) {
+					if (err) return callback(err);
+
+					if (Array.isArray(results))
+						objects = objects.concat(results);
+
+					callback();
+				});
 			}
-		}/*,
+		}
+		/*,
 		function(results, callback) {
 			app.kafkaProducer.send([{
 				topic: 'track',
@@ -224,11 +196,11 @@ router.post('/subscribe', function(req, res, next) {
 				callback(err, results);
 			});
 		}*/
-	], function(err, result) {
+	], function(err) {
 		if (err)
 			return next(err);
 
-		res.status(200).json({status: 200, content: result}).end();
+		res.status(200).json({status: 200, content: objects}).end();
 	});
 });
 
@@ -245,7 +217,7 @@ router.post('/subscribe', function(req, res, next) {
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
- * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
+ * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from device/register)
  *
  * @apiParam {Object} channel Object representing the channel
  * @apiParam {Object} filters Object representing the filters for the channel
@@ -264,15 +236,7 @@ router.post('/subscribe', function(req, res, next) {
  * @apiError 400 [027]InvalidChannel When trying to subscribe to an invalid channel
  */
 router.post('/unsubscribe', function(req, res, next) {
-	if (Object.getOwnPropertyNames(req.body).length === 0) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
-	}
-
 	var channel = req.body.channel;
-
-	if (!channel) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['channel']));
-	}
 
 	var id = channel.id,
 	context = channel.context,
@@ -285,12 +249,6 @@ router.post('/unsubscribe', function(req, res, next) {
 
 	if (!context)
 		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['channel.context']));
-
-	if (!mdl)
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['channel.model']));
-
-	if (!Models.Application.loadedAppModels[appId][mdl])
-		return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationSchemaModelNotFound, [appId, mdl]));
 
 	var channelObject = new Models.Channel(appId);
 
@@ -316,18 +274,13 @@ router.post('/unsubscribe', function(req, res, next) {
 		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidChannel));
 	}
 
-	async.waterfall([
+	async.series([
 		//verify if context belongs to app
 		function(callback) {
 			validateContext(appId, context, callback);
 		},
 		function(callback) {
-			Models.Subscription.remove(deviceId, channelObject, function(err, results) {
-				if (err)
-					callback(err, null);
-				else
-					callback(null, {status: 200, content: 'Subscription removed'});
-			});
+			Models.Subscription.remove(deviceId, channelObject, callback);
 		}/*,
 		function(result, callback) {
 			app.kafkaProducer.send([{
@@ -345,10 +298,12 @@ router.post('/unsubscribe', function(req, res, next) {
 				callback(err, result);
 			});
 		}*/
-	], function(err, results) {
-		if (err) return next(err);
-
-		res.status(200).json(results).end();
+	], function(err) {
+		if (err) {
+			return next(err);
+		} else {
+			res.status(200).json({status: 200, content: 'Subscription removed'}).end();
+		}
 	});
 });
 
@@ -365,7 +320,7 @@ router.post('/unsubscribe', function(req, res, next) {
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
- * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
+ * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from device/register)
  *
  * @apiParam {String} model The type of object to subscribe to
  * @apiParam {Object} content Content of the object
@@ -387,10 +342,6 @@ router.post('/unsubscribe', function(req, res, next) {
  *
  */
 router.post('/create', function(req, res, next) {
-	if (Object.getOwnPropertyNames(req.body).length === 0) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
-	}
-
 	var content = req.body.content;
 	var mdl = req.body.model;
 	var context = req.body.context;
@@ -400,46 +351,25 @@ router.post('/create', function(req, res, next) {
 	if (!context)
 		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['channel.context']));
 
-	if (!mdl)
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['channel.model']));
-
-	if (!Models.Application.loadedAppModels[appId][mdl])
-		return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationSchemaModelNotFound, [appId, mdl]));
-
 	content.type = mdl;
 	content.context_id = context;
 	content.application_id = appId;
 
-	if (Models.Application.loadedAppModels[appId][mdl].belongsTo &&
-				Models.Application.loadedAppModels[appId][mdl].belongsTo.length) {
-		var parentModel = Models.Application.loadedAppModels[appId][mdl].belongsTo[0].parentModel;
+	if (Models.Application.loadedAppModels[appId].schema[mdl].belongsTo &&
+				Models.Application.loadedAppModels[appId].schema[mdl].belongsTo.length) {
+		var parentModel = Models.Application.loadedAppModels[appId].schema[mdl].belongsTo[0].parentModel;
 		if (!content[parentModel+'_id']) {
 			return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, [parentModel+'_id']));
-		} else if (Models.Application.loadedAppModels[appId][mdl].belongsTo[0].relationType == 'hasSome' &&
-			content[Models.Application.loadedAppModels[appId][parentModel].hasSome_property+'_index'] === undefined) {
+		} else if (Models.Application.loadedAppModels[appId].schema[mdl].belongsTo[0].relationType == 'hasSome' &&
+			content[Models.Application.loadedAppModels[appId].schema[parentModel].hasSome_property+'_index'] === undefined) {
 			return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField,
-				[Models.Application.loadedAppModels[appId][parentModel].hasSome_property+'_index']));
+				[Models.Application.loadedAppModels[appId].schema[parentModel].hasSome_property+'_index']));
 		}
 	}
 
 	async.series([
-		function(callback) {
-			if (isAdmin) {
-				Models.Admin(req.user.email, function(err, result) {
-					if (err) return callback(err);
-					content.user_id = result.id;
-					isAdmin = true;
-					callback();
-				});
-			} else {
-				Models.User(req.user.email, appId, function(err, result) {
-					if (err) return callback(err);
-					content.user_id = result.id;
-					callback();
-				});
-			}
-		},
 		function(aggCallback) {
+			content.user_id = req.user.id;
 			app.messagingClient.send([JSON.stringify({
 				op: 'add',
 				object: content,
@@ -492,7 +422,7 @@ router.post('/create', function(req, res, next) {
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
- * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
+ * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from device/register)
  *
  * @apiParam {Number} id ID of the object (optional)
  * @apiParam {Number} context Context of the object
@@ -504,7 +434,7 @@ router.post('/create', function(req, res, next) {
  * 		"model": "comment",
  * 		"id": 1,
  * 		"context": 1,
- * 		"patch": [
+ * 		"patches": [
  * 			{
  * 				"op": "replace",
  * 				"path": "comment/1/text",
@@ -521,10 +451,6 @@ router.post('/create', function(req, res, next) {
  * 	}
  */
 router.post('/update', function(req, res, next) {
-	if (Object.getOwnPropertyNames(req.body).length === 0) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
-	}
-
 	var modifiedMicrotime = microtime.now();
 	var context = req.body.context;
 	var patch = req.body.patches;
@@ -537,12 +463,6 @@ router.post('/update', function(req, res, next) {
 
 	if (!context)
 		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['context']));
-
-	if (!mdl)
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['model']));
-
-	if (!Models.Application.loadedAppModels[appId][mdl])
-		return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationSchemaModelNotFound, [appId, mdl]));
 
 	if (!Array.isArray(req.body.patches)) {
 		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidFieldValue,
@@ -589,7 +509,7 @@ router.post('/update', function(req, res, next) {
 				track_callback(err);
 			});
 		}*/
-	], function(err, results) {
+	], function(err) {
 		if (err) {
 			console.log(req.originalUrl+': '+err.message.red);
 			return next(err);
@@ -612,7 +532,7 @@ router.post('/update', function(req, res, next) {
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
- * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
+ * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from device/register)
  *
  * @apiParam {Number} id ID of the object (optional)
  * @apiParam {Number} context Context of the object
@@ -633,10 +553,6 @@ router.post('/update', function(req, res, next) {
  *
  */
 router.post('/delete', function(req, res, next) {
-	if (Object.getOwnPropertyNames(req.body).length === 0) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
-	}
-
 	var id = req.body.id;
 	var context = req.body.context;
 	var mdl = req.body.model;
@@ -647,12 +563,6 @@ router.post('/delete', function(req, res, next) {
 
 	if (!context)
 		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['context']));
-
-	if (!mdl)
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['model']));
-
-	if (!Models.Application.loadedAppModels[appId][mdl])
-		return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationSchemaModelNotFound, [appId, mdl]));
 
 	async.series([
 		function(aggCallback) {
@@ -694,17 +604,13 @@ router.post('/delete', function(req, res, next) {
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
- * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
+ * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from device/register)
  *
- * @apiParam {Object} channel The object reperesenting a channel
+ * @apiParam {Object} channel The object representing a channel
  * @apiParam {Object} filters Additional filters to the subscription channel
  *
  */
 router.post('/count', function(req, res, next) {
-	if (Object.getOwnPropertyNames(req.body).length === 0) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
-	}
-
 	var appId = req._telepat.applicationId,
 		channel = req.body.channel;
 
@@ -729,7 +635,7 @@ router.post('/count', function(req, res, next) {
 		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidChannel));
 	}
 
-	Models.Model.count(channel.model, appId, function(err, result) {
+	Models.Model.modelCountByChannel(channelObject, function(err, result) {
 		if (err) return next(err);
 
 		res.status(200).json({status: 200, content: result}).end();

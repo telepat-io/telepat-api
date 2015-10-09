@@ -12,7 +12,7 @@ router.use('/',
 	security.adminAppValidation);
 /**
  * @api {get} /admin/context/all GetContexts
- * @apiDescription Get all contexsts
+ * @apiDescription Get all contexts
  * @apiName AdminGetContexts
  * @apiGroup Admin
  * @apiVersion 0.2.3
@@ -271,7 +271,7 @@ router.post('/update', function (req, res, next) {
 				Models.Context(req.body.id, callback);
 			},
 			function(context, callback) {
-				if (app.applications[context.application_id].admins.indexOf(req.user.id) === -1) {
+				if (Models.Application.loadedAppModels[context.application_id].admins.indexOf(req.user.id) === -1) {
 					callback(new Models.TelepatError(Models.TelepatError.errors.ContextNotAllowed));
 				} else {
 					Models.Context.update(req.body.id, req.body.patches, callback);

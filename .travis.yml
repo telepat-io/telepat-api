@@ -31,6 +31,8 @@ before_install:
 before_script:
   - telepat configure elasticsearch
   - bash .travis/start.sh
+  - 'echo "script.disable_dynamic: false" | sudo tee -a /etc/elasticsearch/elasticsearch.yml'
+  - 'echo "script.groovy.sandbox.enable: true" | sudo tee -a /etc/elasticsearch/elasticsearch.yml'
 after_script:
     - codeclimate-test-reporter < coverage/lcov.info
 node_js:

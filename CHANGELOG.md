@@ -1,3 +1,14 @@
+# 0.2.5
+
+* Fixed `/user/update` when updating password
+* Further improved the tests, now each test has an ID displayed for easy lookup. Tests should run faster.
+* Variable checks for message queue client and main database
+* Added pagination support for subscribe requests
+* Removed `tokenValidation` in object routes because `objectACL` was already doing that
+* `/object/count` should now work
+* Applications loaded on boot up are saved in Application object from telepat-models
+* Fixed some minor bugs
+
 # 0.2.4
 
 * Implemented /admin/authorize and /admin/deauthorize to add/remove admins to an application
@@ -12,7 +23,7 @@
 * Implemented mocha tests, added istanbul code coverage and integrated with travis CI
 * Lots of bug fixes
 * All update endpoints require patches
-* Admin routes are sepparated in more than 1 file
+* Admin routes are separated in more than 1 file
 * Passwords are stored using bcrypt
 * There's only one configuration file in the root folder. The example provided should be used. The original config file
 was added to .gitignore
@@ -21,7 +32,7 @@ was added to .gitignore
 
 * Fixed lots of bugs and server crashes
 * User info is returned on login calls (user & admin)
-* Sepparated user login and user register endpoints
+* Separated user login and user register endpoints
 * Admin endpoint for deleting users sends messages to aggregator to delete objects (1 message per object removed)
 * Standardized /admin endpoints responses
 * Each patch from /object/update is sent in 1 message to the aggregator
@@ -45,7 +56,7 @@ was added to .gitignore
 
 * Application ID is verified if it exists in all requests that require it
 * Standardized response of get context and get all contexts
-* The npm package now requires the corect telepat-models module from the npm registry
+* The npm package now requires the correct telepat-models module from the npm registry
 
 # 0.1.4
 

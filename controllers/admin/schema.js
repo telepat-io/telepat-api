@@ -94,7 +94,7 @@ router.post('/update', function(req, res, next) {
 		if (err){
 			next(err);
 		} else {
-			app.applications[appId].schema = schema;
+			Models.Application.loadedAppModels[appId].schema = schema;
 			res.status(200).json({status: 200, content: 'Schema updated'}).end();
 		}
 	});
@@ -124,8 +124,8 @@ router.use('/remove_model',
  * 		"model_name": "events"
  * 	}
  *
- * @apiError 404 [011]ApplicationNotFound If the Application doesn't exist
- * @apiError 404 [022]ApplicationSchemaModelNotFound If the App does not have a model with that name
+ * @apiError 404 [011]ApplicationNotFound If the application doesn't exist
+ * @apiError 404 [022]ApplicationSchemaModelNotFound If the application does not have a model with that name
  */
 router.post('/remove_model', function(req, res, next) {
 	if (!req.body.model_name) {
@@ -135,7 +135,7 @@ router.post('/remove_model', function(req, res, next) {
 	var appId = req._telepat.applicationId;
 	var modelName = req.body.model_name;
 
-	if (!app.applications[appId].schema[modelName]) {
+	if (!Models.Application.loadedAppModels[appId].schema[modelName]) {
 		return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationSchemaModelNotFound, [appId, modelName]));
 	}
 
@@ -143,7 +143,7 @@ router.post('/remove_model', function(req, res, next) {
 		if (err){
 			next(err);
 		} else {
-			delete app.applications[appId].schema[modelName];
+			delete Models.Application.loadedAppModels[appId].schema[modelName];
 			res.status(200).json({status: 200, content: 'Schema updated'}).end();
 		}
 	});

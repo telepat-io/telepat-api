@@ -5,7 +5,6 @@ var async = require('async');
 var Models = require('telepat-models');
 var security = require('./security');
 var jwt = require('jsonwebtoken');
-var crypto = require('crypto');
 var microtime = require('microtime-nodejs');
 
 var options = {
@@ -19,11 +18,11 @@ router.use(security.deviceIdValidation);
 router.use(security.applicationIdValidation);
 router.use(security.apiKeyValidation);
 
-router.use(['/logout', '/me', '/update', '/delete'], security.tokenValidation);
+router.use(['/logout', '/me', '/update', '/update_immediate', '/delete'], security.tokenValidation);
 
 /**
  * @api {post} /user/login Login
- * @apiDescription Log in the user through facebook User is not created immediately.
+ * @apiDescription Log in the user through Facebook.
  * @apiName UserLogin
  * @apiGroup User
  * @apiVersion 0.2.3
@@ -31,7 +30,7 @@ router.use(['/logout', '/me', '/update', '/delete'], security.tokenValidation);
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
- * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
+ * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from device/register)
  *
  * @apiParam {String} access_token Facebook access token.
  *
@@ -61,11 +60,15 @@ router.use(['/logout', '/me', '/update', '/delete'], security.tokenValidation);
  * 	}
  *
  * 	@apiError 400 [028]InsufficientFacebookPermissions User email is not publicly available
- * 	(insufficient facebook permissions)
+ * 	(insufficient Facebook permissions)
  * 	@apiError 404 [023]UserNotFound User not found
  *
  */
 router.post('/login', function(req, res, next) {
+
+	if (Object.getOwnPropertyNames(req.body).length === 0)
+		return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
+
 	if (!req.body.access_token)
 		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['access_token']));
 
@@ -152,7 +155,7 @@ router.post('/login', function(req, res, next) {
 
 /**
  * @api {post} /user/register Register
- * @apiDescription Registers a new user using a fb token or directly with an email and password. User is not created
+ * @apiDescription Registers a new user using a Facebook token or directly with an email and password. User is not created
  * immediately.
  * @apiName UserRegister
  * @apiGroup User
@@ -161,7 +164,7 @@ router.post('/login', function(req, res, next) {
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
- * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
+ * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from device/register)
  *
  * @apiParam {String} access_token Facebook access token.
  *
@@ -287,7 +290,7 @@ router.post('/register', function(req, res, next) {
 			})], 'aggregation', callback);
 		},
 		//add this user to his/her friends array
-		function(result, callback) {
+		function(callback) {
 			if (fbFriends.length) {
 				app.messagingClient.send([JSON.stringify({fid: userProfile.id, friends: fbFriends})],
 					'update_friends', callback);
@@ -313,7 +316,7 @@ router.post('/register', function(req, res, next) {
  * Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
- * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
+ * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from device/register)
  *
  * @apiParam {String} password The password
  * @apiParam {String} email The email
@@ -356,7 +359,7 @@ router.get('/me', function(req, res, next) {
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
- * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
+ * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from device/register)
  *
  * @apiParam {String} password The password
  * @apiParam {String} email The email
@@ -420,6 +423,20 @@ router.post('/login_password', function(req, res, next) {
 			});
 		},
 		function(callback) {
+			var patches = [];
+			patches.push(Models.Delta.formPatch(userProfile, 'append', {devices: deviceId}));
+
+			if (userProfile.devices) {
+				var idx = userProfile.devices.indexOf(deviceId);
+				if (idx === -1) {
+					Models.User.update(userProfile.email, appId, patches, callback);
+				} else
+					callback();
+			} else {
+				Models.User.update(userProfile.email, appId, patches, callback);
+			}
+		},
+		function(callback) {
 			security.encryptPassword(req.body.password, function(err, hash) {
 				if (err)
 					return callback(err);
@@ -454,7 +471,7 @@ router.post('/login_password', function(req, res, next) {
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
- * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
+ * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from device/register)
  *
  * 	@apiSuccessExample {json} Success Response
  * 	{
@@ -498,8 +515,8 @@ router.get('/logout', function(req, res, next) {
 
 /**
  * @api {get} /user/refresh_token Refresh Token
- * @apiDescription Sends a new authentification token to the user. The old token must be provide (and it may or not
- * may not be aleady expired).
+ * @apiDescription Sends a new authentication token to the user. The old token must be provide (and it may or not
+ * may not be already expired).
  * @apiName RefreshToken
  * @apiGroup User
  * @apiVersion 0.2.3
@@ -509,7 +526,7 @@ router.get('/logout', function(req, res, next) {
  * Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
- * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
+ * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from device/register)
  *
  * @apiSuccessExample {json} Success Response
  * 	{
@@ -522,7 +539,7 @@ router.get('/logout', function(req, res, next) {
  *
  * @apiError 400 [013]AuthorizationMissing  If authorization header is missing
  * @apiError 400 [039]ClientBadRequest Error decoding auth token
- * @apiError 400 [040]MalformedAuthorizationToken Auth token is malformed
+ * @apiError 400 [040]MalformedAuthorizationToken Authorization token is malformed
  * @apiError 400 [014]InvalidAuthorization Authorization header is invalid
  */
 router.get('/refresh_token', function(req, res, next) {
@@ -602,8 +619,8 @@ router.post('/update', function(req, res, next) {
 
 		if (patches[i].path.split('/')[2] == 'password') {
 
-			security.encryptPassword(patches[p].value, function(err, hash) {
-				patches[p].value = hash;
+			security.encryptPassword(patches[i].value, function(err, hash) {
+				patches[i].value = hash;
 				i++;
 				c();
 			});
@@ -638,27 +655,37 @@ router.post('/update', function(req, res, next) {
 
 router.post('/update_immediate', function(req, res, next) {
 	var user = req.body;
+	var appId = req._telepat.applicationId;
 
-	if (user.password) {
-		var passwordSalt = req.app.get('password_salt');
-		var md5password = crypto.createHash('md5').update(user.password).digest('hex');
-		user.password = crypto.createHash('sha256').update(passwordSalt[0]+md5password+passwordSalt[1]).digest('hex');
-	}
+	req.user.type = 'user';
 
 	async.waterfall([
 		function(callback) {
-			security.encryptPassword(user.password, callback);
+			if (user.password)
+				security.encryptPassword(user.password, callback);
+			else
+				callback(null, false);
 		},
 		function(hash, callback) {
-			user.password = hash;
+			if (hash)
+				user.password = hash;
 
-			Models.User.update(user.email, user, function(err, result) {
-				if (err) return next(err);
+			var patches = [];
 
-				res.status(200).json({status: 200, content: "User updated"}).end();
+			async.each(Object.keys(user), function(prop, c) {
+				var property = {};
+				property[prop] = user[prop];
+				patches.push(Models.Delta.formPatch(req.user, 'replace', property));
+				c();
+			}, function() {
+				Models.User.update(req.user.email, appId, patches, callback);
 			});
 		}
-	]);
+	], function(err) {
+		if (err) return next(err);
+
+		res.status(200).json({status: 200, content: "User updated"}).end();
+	});
 });
 
 /**

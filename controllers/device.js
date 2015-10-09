@@ -8,8 +8,8 @@ router.use(security.deviceIdValidation);
 
 /**
  * @api {post} /device/register Register
- * @apiDescription Registers a new device or updates an already existing one. If device udid is supplied in info it will try
- * to search for a device with this udid and return the device id.
+ * @apiDescription Registers a new device or updates an already existing one. If device UDID is supplied in info it will try
+ * to search for a device with this UDID and return the device ID.
  * @apiName DeviceRegister
  * @apiGroup Device
  * @apiVersion 0.2.3
@@ -70,6 +70,11 @@ router.use(security.deviceIdValidation);
  */
 router.post('/register', function(req, res, next) {
 	if (req._telepat.device_id == 'TP_EMPTY_UDID' || req._telepat.device_id == '') {
+
+		if (Object.getOwnPropertyNames(req.body).length === 0){
+			return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
+		}
+
 		if (!req.body.info) {
 			return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['info']));
 		}
@@ -105,10 +110,12 @@ router.post('/register', function(req, res, next) {
 			});
 		}
 	} else {
-		req.body.id = req._telepat.device_id;
 
-		if (Object.getOwnPropertyNames(req.body).length === 0)
+		if (Object.getOwnPropertyNames(req.body).length === 0){
 			return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
+		}
+
+		req.body.id = req._telepat.device_id;
 
 		Models.Subscription.updateDevice(req._telepat.device_id, req.body, function(err, result) {
 			if (err && err.status == 404) {

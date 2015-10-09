@@ -4,17 +4,18 @@ function importTest(name, path) {
 	});
 }
 
-describe('API', function () {
-	function normalizePort(val) {
-		var port = parseInt(val, 10);
-		if (isNaN(port)) {
-			return val;
-		}
-		if (port >= 0) {
-			return port;
-		}
-		return false;
+function normalizePort(val) {
+	var port = parseInt(val, 10);
+	if (isNaN(port)) {
+		return val;
 	}
+	if (port >= 0) {
+		return port;
+	}
+	return false;
+};
+
+describe('API', function () {
 
 	before(function (done) {
 		this.timeout(15000);
@@ -26,6 +27,7 @@ describe('API', function () {
 		server.listen(port);
 		server.on('listening', function() {
 			setTimeout(done, 3000);
+		//done();
 		});
 	});
 
@@ -34,9 +36,9 @@ describe('API', function () {
 		done();
 	});
 
-	importTest("Admin", './admin/admin');
-	importTest("Context", './context/context');
-	importTest("Device", './device/device');
-	importTest("Object", './object/object');
-	importTest("User", './user/user');
+	importTest("1.Admin", './admin/admin');
+	importTest("2.Context", './context/context');
+	importTest("3.Device", './device/device');
+	importTest("4.Object", './object/object');
+	importTest("5.User", './user/user');
 });

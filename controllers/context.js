@@ -7,6 +7,7 @@ var security = require('./security');
 router.use(security.applicationIdValidation);
 router.use(security.apiKeyValidation);
 router.use(security.deviceIdValidation);
+router.use(security.tokenValidation);
 
 /**
  * @api {get} /context/all GetContexts
@@ -20,7 +21,7 @@ router.use(security.deviceIdValidation);
  * Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
- * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
+ * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from device/register)
  *
  * @apiSuccessExample {json} Success Response
  * 	{
@@ -61,7 +62,7 @@ router.get('/all', function (req, res, next) {
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
- * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from devie/register)
+ * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from device/register)
  *
  * @apiParam {Number} id ID of the context to get
  *
@@ -100,7 +101,7 @@ router.post('/', function (req, res, next) {
 	}
 
 	Models.Context(req.body.id, function (err, res1) {
-		if (err && err.status === 404){
+		if (err && err.status == 404){
 			return next(new Models.TelepatError(Models.TelepatError.errors.ContextNotFound));
 		} else if (err)
 			next(err);

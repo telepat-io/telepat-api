@@ -12,21 +12,21 @@ var userRoute = require('./admin/user');
 var security = require('./security');
 var Models = require('telepat-models');
 
-var unless = function(paths, middleware) {
-	return function(req, res, next) {
-		var excluded = false;
-		for (var i=0; i<paths.length; i++) {
-			if (paths[i] === req.path) {
-				excluded = true;
-			}
-		}
-		if (excluded) {
-			return next();
-		} else {
-			return middleware(req, res, next);
-		}
-	};
-};
+/* var unless = function(paths, middleware) {
+	 return function(req, res, next) {
+		 var excluded = false;
+		 for (var i=0; i<paths.length; i++) {
+			 if (paths[i] === req.path) {
+				 excluded = true;
+			 }
+		 }
+		 if (excluded) {
+			 return next();
+		 } else {
+			 return middleware(req, res, next);
+		 }
+	 };
+ };*/
 
 router.use('/', adminRoute);
 router.use('/app', appRoute);
@@ -40,7 +40,7 @@ router.use('/contexts',
 	security.adminAppValidation);
 /**
  * @api {get} /admin/contexts GetContexts
- * @apiDescription Get all contexsts
+ * @apiDescription Get all contexts
  * @apiName AdminGetContexts
  * @apiGroup Admin
  * @apiVersion 0.2.3
@@ -133,7 +133,7 @@ router.use('/users',
 	security.adminAppValidation);
 /**
  * @api {get} /admin/users GetAppusers
- * @apiDescription Gets all users of the app
+ * @apiDescription Gets all users of the application
  * @apiName AdminGetUsers
  * @apiGroup Admin
  * @apiVersion 0.2.3
@@ -155,8 +155,9 @@ router.use('/users',
  *
  */
 
-router.get('/users', function(req, res, next) {
-	Models.User.getAll(req._telepat.applicationId, function(err, results) {
+router.post('/users', function(req, res, next) {
+	var page = req.body.page ? req.body.page : 1;
+	Models.User.getAll(req._telepat.applicationId, page, function(err, results) {
 		if (err) return next(err);
 
 		results.forEach(function(item, index, originalArray) {

@@ -80,6 +80,11 @@ if (validEnvVariables) {
 	messagingClient = mainConfiguration.message_queue;
 }
 
+if (!Models[mainDatabase]) {
+	console.log('Unable to load'.red+' "'+mainDatabase+'" main database: not found.\nAborting...');
+	process.exit(-1);
+}
+
 Models.Application.datasource = new Models.Datasource();
 Models.Application.datasource.setMainDatabase(new Models[mainDatabase](mainConfiguration[mainDatabase]));
 
@@ -89,8 +94,6 @@ if(mainConfiguration.passwordSalt === undefined || mainConfiguration.passwordSal
 }
 app.set('password_salt', mainConfiguration.passwordSalt);
 
-app.applications = {};
-
 app.use(function(req, res, next) {
 	if (dbConnected)
 		return next();
@@ -98,21 +101,18 @@ app.use(function(req, res, next) {
 	next(new Models.TelepatError(Models.TelepatError.errors.ServerNotAvailable));
 });
 
-var loadApplications = function() {
-	Models.Application.getAll(function(err, results) {
+var loadApplications = function(callback) {
+	Models.Application.loadAllApplications(function(err) {
 		if (err) {
 			console.log('Fatal error: '.red+' in retrieving all aplications', err);
 			process.exit(-1);
 		}
 
-		async.each(results, function(item, c){
-			app.applications[item.id] = item;
-			c();
-		});
+		callback();
 	});
 };
 
-var linkMiddlewaresAndRoutes = function() {
+var linkMiddlewaresAndRoutes = function(callback) {
 	app.use(security.corsValidation);
 	app.use(security.contentTypeValidation);
 	app.use(logger('dev'));
@@ -123,9 +123,10 @@ var linkMiddlewaresAndRoutes = function() {
 	app.use('/user', userRoute);
 	app.use('/context', contextRoute);
 	app.use('/device', deviceRoute);
+	callback();
 };
 
-var linkErrorHandlingMiddlewares = function() {
+var linkErrorHandlingMiddlewares = function(callback) {
 	// error handlers
 	// catch 404 and forward to error handler
 	app.use(function(req, res, next) {
@@ -149,30 +150,35 @@ var linkErrorHandlingMiddlewares = function() {
 
 		res.json(responseBody).end();
 	});
+	callback();
 };
 
-var monitorUsrSignals = function() {
+var monitorUsrSignals = function(callback) {
 	//signal sent by nodemon when restarting the server
 	process.on('SIGUSR2', function() {
 		app.kafkaClient.close();
 	});
+	callback();
 };
 
 var OnServicesConnect = function() {
-	dbConnected = true;
-	loadApplications();
-	linkMiddlewaresAndRoutes();
-	linkErrorHandlingMiddlewares();
-	monitorUsrSignals();
+	async.series([
+		loadApplications,
+		linkMiddlewaresAndRoutes,
+		linkErrorHandlingMiddlewares,
+		monitorUsrSignals
+	], function() {
+		dbConnected = true;
+	});
 };
 
 async.waterfall([
-	function DataBucket(callback) {
+	function(callback) {
 		Models.Application.datasource.dataStorage.onReady(function() {
 			callback();
 		});
 	},
-	function RedisClient(callback) {
+	function(callback) {
 		if (Models.Application.redisClient)
 			Models.Application.redisClient = null;
 
@@ -186,33 +192,22 @@ async.waterfall([
 			callback();
 		});
 	},
-	function Kafka(callback) {
+	function(callback) {
 		console.log('Waiting for Messaging Client connection...');
 
-		var kafkaConfiguration = mainConfiguration[messagingClient];
+		var clientConfiguration = mainConfiguration[messagingClient];
 
-		app.messagingClient = new Models[messagingClient](kafkaConfiguration, 'telepat-api');
-		app.messagingClient.on('ready', function() {
-			console.log(('Connected to Messaging Client '+messagingClient).green);
-			callback();
-		});
-		app.messagingClient.on('error', function(err) {
-			console.log('Messaging client not available.'.red+' Trying to reconnect.'+err);
-		});
+		if (!Models[messagingClient]) {
+			console.log('Unable to load'.red+' "'+messagingClient+'" messaging queue: not found. Aborting...');
+			process.exit(-1);
+		}
 
-		/*app.kafkaClient = new kafka.Client(app.kafkaConfig.host+':'+app.kafkaConfig.port+'/',
-										app.kafkaConfig.clientName);
-		app.kafkaClient.on('ready', function() {
-			console.log('Client connected to Zookeeper.'.green);
-
-			app.kafkaProducer = new kafka.HighLevelProducer(app.kafkaClient);
-			app.kafkaProducer.on('error', function() {});
-
-			callback();
-		});
-		app.kafkaClient.on('error', function() {
-			console.log('Kafka broker not available.'.red+' Trying to reconnect.');
-		});*/
+		clientConfiguration = clientConfiguration || {broadcast: false};
+		/**
+		 * @type {MessagingClient}
+		 */
+		app.messagingClient = new Models[messagingClient](clientConfiguration, 'telepat-api');
+		app.messagingClient.onReady(callback);
 	}
 ], OnServicesConnect);
 
