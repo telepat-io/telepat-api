@@ -1,6 +1,6 @@
 {
   "name": "telepat-api",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "scripts": {
     "start": "./bin/www",
     "test": "istanbul cover _mocha -- test/api.js -R spec"
@@ -20,7 +20,7 @@
     "morgan": "1.5.1",
     "object-sizeof": "1.0.6",
     "redis": "0.12.1",
-    "telepat-models": "telepat-io/telepat-models#develop",
+    "telepat-models": "0.2.5",
     "uuid": "2.0.1"
   },
   "bugs": {

@@ -1,3 +1,14 @@
+# 0.2.5
+
+* Fixed `/user/update` when updating password
+* Further improved the tests, now each test has an ID displayed for easy lookup. Tests should run faster.
+* Variable checks for message queue client and main database
+* Added pagination support for subscribe requests
+* Removed `tokenValidation` in object routes because `objectACL` was already doing that
+* `/object/count` should now work
+* Applications loaded on boot up are saved in Application object from telepat-models
+* Fixed some minor bugs
+
 # 0.2.4
 
 * Implemented /admin/authorize and /admin/deauthorize to add/remove admins to an application
