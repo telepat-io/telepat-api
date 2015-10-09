@@ -202,6 +202,7 @@ async.waterfall([
 			process.exit(-1);
 		}
 
+		clientConfiguration = clientConfiguration || {broadcast: false};
 		/**
 		 * @type {MessagingClient}
 		 */
