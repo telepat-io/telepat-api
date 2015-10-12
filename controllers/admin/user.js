@@ -187,7 +187,7 @@ router.delete('/delete', function(req, res, next) {
 
 	async.waterfall([
 		function(callback) {
-			Models.User(userEmail, appId, callback);
+			Models.User({email: userEmail}, appId, callback);
 		},
 		function(user, callback) {
 			if (user.application_id != appId) {

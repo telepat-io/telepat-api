@@ -315,8 +315,8 @@ it('5.7 should return an error response to indicate that the user info was NOT r
 										.send()
 										.end(function(err, res) {
 
-											res.body.code.should.be.equal('023');
 											res.statusCode.should.be.equal(404);
+											res.body.code.should.be.equal('023');
 											done();
 										});
 								}, 20*DELAY);

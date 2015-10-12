@@ -96,7 +96,7 @@ router.post('/login', function(req, res, next) {
 		},
 		function(callback) {
 			//try and get user profile from DB
-			Models.User(email, appId, function(err, result) {
+			Models.User({email: email}, appId, function(err, result) {
 				if (err && err.status == 404) {
 					callback(new Models.TelepatError(Models.TelepatError.errors.UserNotFound));
 				}
@@ -241,7 +241,7 @@ router.post('/register', function(req, res, next) {
 					['email or access_token']));
 			}
 
-			Models.User(userProfile.email, appId, function(err, result) {
+			Models.User({email: userProfile.email}, appId, function(err, result) {
 				if (!err) {
 					callback(new Models.TelepatError(Models.TelepatError.errors.UserAlreadyExists));
 				}
@@ -337,7 +337,7 @@ router.post('/register', function(req, res, next) {
  *
  */
 router.get('/me', function(req, res, next) {
-	Models.User(req.user.email, req._telepat.applicationId, function(err, result) {
+	Models.User({id: req.user.id}, req._telepat.applicationId, function(err, result) {
 		if (err && err.status == 404) {
 			return next(new Models.TelepatError(Models.TelepatError.errors.UserNotFound));
 		}
@@ -410,7 +410,7 @@ router.post('/login_password', function(req, res, next) {
 	async.series([
 		function(callback) {
 			//try and get user profile from DB
-			Models.User(email, appId, function(err, result) {
+			Models.User({email: email}, appId, function(err, result) {
 				if (err && err.status == 404) {
 					callback(new Models.TelepatError(Models.TelepatError.errors.UserNotFound));
 				}
@@ -486,7 +486,7 @@ router.get('/logout', function(req, res, next) {
 
 	async.waterfall([
 		function(callback) {
-			Models.User(email, appID, callback);
+			Models.User({id: req.user.id}, appID, callback);
 		},
 		function(user, callback) {
 			if (user.devices) {
