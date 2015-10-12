@@ -295,7 +295,7 @@ it('5.7 should return an error response to indicate that the user info was NOT r
 						};
 
 						request(url)
-							.post('/user/delete')
+							.delete('/user/delete')
 							.set('X-BLGREQ-SIGN', appIDsha256)
 							.set('X-BLGREQ-UDID', deviceIdentification)
 							.set('X-BLGREQ-APPID',appID)
@@ -883,7 +883,7 @@ it('5.31 should return a success response to indicate that the user was deleted'
 			};
 
 			request(url)
-				.post('/user/delete')
+				.delete('/user/delete')
 				.set('X-BLGREQ-SIGN', appIDsha256)
 				.set('X-BLGREQ-UDID', deviceIdentification)
 				.set('X-BLGREQ-APPID',appID)

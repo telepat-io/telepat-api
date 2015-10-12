@@ -66,7 +66,7 @@ router.use('/remove',
 	security.applicationIdValidation,
 	security.adminAppValidation);
 /**
- * @api {post} /admin/app/remove RemoveApp
+ * @api {delete} /admin/app/remove RemoveApp
  * @apiDescription Removes an application from the admin.
  * @apiName AdminAppRemove
  * @apiGroup Admin
@@ -94,7 +94,7 @@ router.use('/remove',
  * 	}
  *
  */
-router.post('/remove', function (req, res, next) {
+router.delete('/remove', function (req, res, next) {
 	var appId = req._telepat.applicationId;
 
 	Models.Application.delete(appId, function (err, res1) {

@@ -166,7 +166,7 @@ router.use('/remove',
 	security.applicationIdValidation,
 	security.adminAppValidation);
 /**
- * @api {post} /admin/context/remove RemoveContext
+ * @api {delete} /admin/context/remove RemoveContext
  * @apiDescription Removes a context and all associated objects
  * @apiName AdminRemoveContext
  * @apiGroup Admin
@@ -195,7 +195,7 @@ router.use('/remove',
  * 	}
  *
  */
-router.post('/remove', function (req, res, next) {
+router.delete('/remove', function (req, res, next) {
 	if (!req.body.id) {
 		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['id']));
 	}

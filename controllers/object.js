@@ -520,7 +520,7 @@ router.post('/update', function(req, res, next) {
 });
 
 /**
- * @api {post} /object/delete Delete
+ * @api {delete} /object/delete Delete
  * @apiDescription Deletes an object. The object is not immediately deleted.
  * @apiName ObjectDelete
  * @apiGroup Object
@@ -552,7 +552,7 @@ router.post('/update', function(req, res, next) {
  * 	}
  *
  */
-router.post('/delete', function(req, res, next) {
+router.delete('/delete', function(req, res, next) {
 	var id = req.body.id;
 	var context = req.body.context;
 	var mdl = req.body.model;

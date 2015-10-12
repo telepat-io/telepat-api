@@ -149,7 +149,7 @@ router.use('/delete',
 	security.applicationIdValidation,
 	security.adminAppValidation);
 /**
- * @api {post} /admin/user/delete UserDelete
+ * @api {delete} /admin/user/delete UserDelete
  * @apiDescription Deletes an user from an application
  * @apiName AdminDeleteUser
  * @apiGroup Admin
@@ -176,7 +176,7 @@ router.use('/delete',
  *
  * @apiError 404 [023]UserNotFound If the user doesn't exist.
  */
-router.post('/delete', function(req, res, next) {
+router.delete('/delete', function(req, res, next) {
 	if (!req.body.email) {
 		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['email']));
 	}

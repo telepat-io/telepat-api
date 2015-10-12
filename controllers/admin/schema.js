@@ -105,7 +105,7 @@ router.use('/remove_model',
 	security.applicationIdValidation,
 	security.adminAppValidation);
 /**
- * @api {post} /admin/schema/remove_model RemoveAppModel
+ * @api {delete} /admin/schema/remove_model RemoveAppModel
  * @apiDescription Removes a model from the application (all items of this type will be deleted)
  * @apiName AdminRemoveAppModel
  * @apiGroup Admin
@@ -127,7 +127,7 @@ router.use('/remove_model',
  * @apiError 404 [011]ApplicationNotFound If the application doesn't exist
  * @apiError 404 [022]ApplicationSchemaModelNotFound If the application does not have a model with that name
  */
-router.post('/remove_model', function(req, res, next) {
+router.delete('/remove_model', function(req, res, next) {
 	if (!req.body.model_name) {
 		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['model_name']));
 	}

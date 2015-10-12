@@ -228,7 +228,7 @@ router.post('/update', function (req, res, next) {
 router.use('/delete', security.tokenValidation);
 
 /**
- * @api {post} /admin/delete Delete
+ * @api {delete} /admin/delete Delete
  * @apiDescription Deletes the currently logged admin.
  * @apiName AdminDelete
  * @apiGroup Admin
@@ -240,7 +240,7 @@ router.use('/delete', security.tokenValidation);
                        Should have the format: <i>Bearer $TOKEN</i>
  *
  */
-router.post('/delete', function(req, res, next) {
+router.delete('/delete', function(req, res, next) {
 	Models.Admin.delete({id: req.user.id}, function(err) {
 		if (err) return next(err);
 

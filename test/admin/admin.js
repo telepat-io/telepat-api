@@ -407,7 +407,7 @@ describe('1.1.Admin', function() {
 		this.timeout(100*DELAY);
 
 		request(url)
-			.post('/admin/delete')
+			.delete('/admin/delete')
 			.set('Content-type','application/json')
 			.send()
 			.end(function(err, res) {
@@ -422,7 +422,7 @@ describe('1.1.Admin', function() {
 		this.timeout(100*DELAY);
 
 		request(url)
-			.post('/admin/delete')
+			.delete('/admin/delete')
 			.set('Content-type','application/json')
 			.set('Authorization', authValue)
 			.send()
@@ -759,7 +759,7 @@ describe('1.2.App', function() {
 				var appID = res.body.content.id;
 
 				request(url)
-					.post('/admin/app/remove')
+					.delete('/admin/app/remove')
 					.set('Content-type','application/json')
 					.set('Authorization', authValue )
 					.set('X-BLGREQ-APPID', appID )
@@ -778,7 +778,7 @@ describe('1.2.App', function() {
 		this.timeout(100*DELAY);
 
 		request(url)
-			.post('/admin/app/remove')
+			.delete('/admin/app/remove')
 			.set('Content-type','application/json')
 			.set('Authorization', authValue )
 			.set('X-BLGREQ-APPID', Math.round(Math.random()*1000000)+1000 )
@@ -1383,7 +1383,7 @@ describe('1.3.Context', function() {
 		};
 
 		request(url)
-			.post('/admin/context/remove')
+			.delete('/admin/context/remove')
 			.set('Content-type','application/json')
 			.set('Authorization', authValue)
 			.set('X-BLGREQ-APPID', appID)
@@ -1424,7 +1424,7 @@ describe('1.3.Context', function() {
 		this.timeout(100*DELAY);
 
 		request(url)
-			.post('/admin/context/remove')
+			.delete('/admin/context/remove')
 			.set('Content-type','application/json')
 			.set('Authorization', authValue)
 			.set('X-BLGREQ-APPID', appID)
@@ -1500,7 +1500,7 @@ describe('1.3.Context', function() {
 		};
 
 		request(url)
-			.post('/admin/context/remove')
+			.delete('/admin/context/remove')
 			.set('Content-type','application/json')
 			.set('Authorization', authValue )
 			.set('X-BLGREQ-APPID', appID)
@@ -1728,7 +1728,7 @@ describe('1.4.Schema', function() {
 		};
 
 		request(url)
-			.post('/admin/schema/remove_model')
+			.delete('/admin/schema/remove_model')
 			.set('Content-type','application/json')
 			.set('Authorization', authValue )
 			.set('X-BLGREQ-APPID', appID )
@@ -1749,7 +1749,7 @@ describe('1.4.Schema', function() {
 		};
 
 		request(url)
-			.post('/admin/schema/remove_model')
+			.delete('/admin/schema/remove_model')
 			.set('Content-type','application/json')
 			.set('Authorization', authValue )
 			.set('X-BLGREQ-APPID', appID + '66' )
@@ -1771,7 +1771,7 @@ describe('1.4.Schema', function() {
 		};
 
 		request(url)
-			.post('/admin/schema/remove_model')
+			.delete('/admin/schema/remove_model')
 			.set('Content-type','application/json')
 			.set('Authorization', authValue )
 			.set('X-BLGREQ-APPID', appID )
@@ -1793,7 +1793,7 @@ describe('1.4.Schema', function() {
 		};
 
 		request(url)
-			.post('/admin/schema/remove_model')
+			.delete('/admin/schema/remove_model')
 			.set('Content-type','application/json')
 			.set('Authorization', authValue )
 			.set('X-BLGREQ-APPID', appID)
@@ -1815,7 +1815,7 @@ describe('1.4.Schema', function() {
 		};
 
 		request(url)
-			.post('/admin/schema/remove_mode')
+			.delete('/admin/schema/remove_mode')
 			.set('Content-type','application/json')
 			.set('Authorization', authValue )
 			.set('X-BLGREQ-APPID', appID)
@@ -2000,7 +2000,7 @@ describe('1.5.User', function() {
 				setTimeout(function() {
 
 					request(url)
-						.post('/admin/user/delete')
+						.delete('/admin/user/delete')
 						.set('Content-type','application/json')
 						.set('X-BLGREQ-SIGN', appIDsha256 )
 						.set('X-BLGREQ-APPID', appID )
@@ -2046,7 +2046,7 @@ describe('1.5.User', function() {
 				setTimeout(function() {
 
 					request(url)
-						.post('/admin/user/delete')
+						.delete('/admin/user/delete')
 						.set('Content-type','application/json')
 						.set('X-BLGREQ-SIGN', appIDsha256 )
 						.set('X-BLGREQ-APPID', appID )
@@ -2073,7 +2073,7 @@ describe('1.5.User', function() {
 		};
 
 		request(url)
-			.post('/admin/user/delete')
+			.delete('/admin/user/delete')
 			.set('Content-type','application/json')
 			.set('X-BLGREQ-SIGN', appIDsha256 )
 			.set('X-BLGREQ-APPID', appID )
@@ -2100,7 +2100,7 @@ describe('1.5.User', function() {
 		};
 
 		request(url)
-			.post('/admin/user/delete')
+			.delete('/admin/user/delete')
 			.set('Content-type','application/json')
 			.set('X-BLGREQ-SIGN', appIDsha256 )
 			.set('X-BLGREQ-APPID', Math.round(Math.random()*1000000)+1000 )

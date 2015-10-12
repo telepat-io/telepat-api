@@ -689,7 +689,7 @@ router.post('/update_immediate', function(req, res, next) {
 });
 
 /**
- * @api {post} /user/delete Delete
+ * @api {delete} /user/delete Delete
  * @apiDescription Deletes a user
  * @apiName UserDelete
  * @apiGroup User
@@ -710,7 +710,7 @@ router.post('/update_immediate', function(req, res, next) {
  * 	}
  *
  */
-router.post('/delete', function(req, res, next) {
+router.delete('/delete', function(req, res, next) {
 	var id = req.user.id;
 	var email = req.user.email;
 

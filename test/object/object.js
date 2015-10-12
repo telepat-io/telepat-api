@@ -1889,7 +1889,7 @@ it('4.52 should return a success response to indicate that a object has been del
 	};
 
 	request(url)
-		.post('/object/delete')
+		.delete('/object/delete')
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', deviceIdentification)
 		.set('X-BLGREQ-APPID',appID)
@@ -1913,7 +1913,7 @@ it('4.53 should return an error response to indicate that a object was NOT delet
 	};
 
 	request(url)
-		.post('/object/delete')
+		.delete('/object/delete')
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', deviceIdentification)
 		.set('X-BLGREQ-APPID',1)
@@ -1939,7 +1939,7 @@ it('4.54 should return an error response to indicate that the object id was miss
 	};
 
 	request(url)
-		.post('/object/delete')
+		.delete('/object/delete')
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', deviceIdentification)
 		.set('X-BLGREQ-APPID',appID)
@@ -1964,7 +1964,7 @@ it('4.55 should return an error response to indicate that the object model was m
 	};
 
 	request(url)
-		.post('/object/delete')
+		.delete('/object/delete')
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', deviceIdentification)
 		.set('X-BLGREQ-APPID',appID)
@@ -1990,7 +1990,7 @@ it('4.56 should return an error response to indicate that the object was not del
 	};
 
 	request(url)
-		.post('/object/delete')
+		.delete('/object/delete')
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', deviceIdentification)
 		.set('X-BLGREQ-APPID',appID)
@@ -2014,7 +2014,7 @@ it('4.57 should return an error response to indicate that the object was not del
 	};
 
 	request(url)
-		.post('/object/delete')
+		.delete('/object/delete')
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', deviceIdentification)
 		.set('X-BLGREQ-APPID',appID)
@@ -2033,7 +2033,7 @@ it('4.58 should return an error response to indicate that the object was not del
 	this.timeout(100*DELAY);
 
 	request(url)
-		.post('/object/delete')
+		.delete('/object/delete')
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', deviceIdentification)
 		.set('X-BLGREQ-APPID',appID)
