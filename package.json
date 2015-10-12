@@ -20,7 +20,7 @@
     "morgan": "1.5.1",
     "object-sizeof": "1.0.6",
     "redis": "0.12.1",
-    "telepat-models": "0.2.5",
+    "telepat-models": "telepat-io/telepat-models#develop",
     "uuid": "2.0.1"
   },
   "bugs": {
