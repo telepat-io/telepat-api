@@ -932,7 +932,7 @@ describe('1.2.App', function() {
 			});
 	});
 
-	/*it('1.2.17 should return an error to indicate an admin has NOT been deauthorized to an application, admin not authorized', function(done) {
+	it('1.2.17 should return an error to indicate an admin has NOT been deauthorized to an application, admin not authorized', function(done) {
 
 		var clientrequest = {
 			"email": adminEmail3
@@ -948,12 +948,12 @@ describe('1.2.App', function() {
 			.end(function(err, res) {
 
 				if(res){
-					res.body.code.should.be.equal('012');
-					res.statusCode.should.be.equal(401);
+					res.body.code.should.be.equal('019');
+					res.statusCode.should.be.equal(404);
 				}
 				done();
 			});
-	});*/
+	});
 
 
 	it('1.2.18 should return an error response to indicate admin has NOT been deauthorized because of empty request body', function(done) {
