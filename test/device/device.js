@@ -112,7 +112,7 @@ it('3.2 should return a success response to indicate device successfully registe
 		.post('/device/register')
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', '')
-		.set('X-BLGREQ-APPID',1)
+		.set('X-BLGREQ-APPID', appID)
 		.send(clientRequest)
 		.end(function(err, res) {
 
@@ -139,12 +139,13 @@ it('3.3 should return a success response to indicate device successfully updated
 			token: "android pn token"
 		}
 	};
-
+	console.log(deviceIdentifier);
+	console.log(appID);
 	request(url)
 		.post('/device/register')
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', deviceIdentifier)
-		.set('X-BLGREQ-APPID',1)
+		.set('X-BLGREQ-APPID', appID)
 		.send(clientRequest)
 		.end(function(err, res) {
 
@@ -175,7 +176,7 @@ it('3.4 should return an error response to indicate device successfully register
 		.post('/device/register')
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', '')
-		.set('X-BLGREQ-APPID',1)
+		.set('X-BLGREQ-APPID', appID)
 		.send(clientRequest)
 		.end(function(err, res) {
 
@@ -199,12 +200,12 @@ it('3.5 should return an error response to indicate device NOT successfully regi
 		.post('/device/register')
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', '')
-		.set('X-BLGREQ-APPID',1)
+		.set('X-BLGREQ-APPID', appID)
 		.send(clientRequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('004');
 			res.statusCode.should.be.equal(400);
+			res.body.code.should.be.equal('004');
 			done();
 		});
 });
@@ -217,12 +218,12 @@ it('3.6 should return an error response to indicate device NOT successfully regi
 		.post('/device/register')
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', '')
-		.set('X-BLGREQ-APPID',1)
+		.set('X-BLGREQ-APPID', appID)
 		.send()
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('005');
 			res.statusCode.should.be.equal(400);
+			res.body.code.should.be.equal('005');
 			done();
 		});
 });
@@ -235,12 +236,12 @@ it('3.7 should return an error response to indicate device NOT successfully regi
 		.post('/device/register')
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', 'invalidUDID')
-		.set('X-BLGREQ-APPID',1)
+		.set('X-BLGREQ-APPID', appID)
 		.send()
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('005');
 			res.statusCode.should.be.equal(400);
+			res.body.code.should.be.equal('005');
 			done();
 		});
 });
@@ -267,12 +268,12 @@ it('3.8 should return an error response to indicate device NOT successfully regi
 		.post('/device/register')
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', invalidUDID)
-		.set('X-BLGREQ-APPID',appID)
+		.set('X-BLGREQ-APPID', appID)
 		.send(clientRequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('025');
 			res.statusCode.should.be.equal(404);
+			res.body.code.should.be.equal('025');
 			done();
 		});
 });

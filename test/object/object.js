@@ -1099,7 +1099,7 @@ it('4.29 should return a success response to indicate that a object has been sub
 		.set('Authorization', userAuthValue )
 		.send(subclientrequest)
 		.end(function(err, res) {
-
+			console.log(res.body);
 			res.statusCode.should.be.equal(200);
 			done();
 		});
@@ -1239,8 +1239,10 @@ it('4.33 should return an error response to indicate that a object has been NOT 
 		.send(subclientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('002');
+			console.log(res.body);
+
 			res.statusCode.should.be.equal(500);
+			res.body.code.should.be.equal('002');
 			done();
 		});
 });

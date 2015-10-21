@@ -153,7 +153,7 @@ router.post('/subscribe', function(req, res, next) {
 			//only add subscription on initial /subscribe
 			if (page && page > 1)
 				return callback();
-			Models.Subscription.add(deviceId, channelObject,  function(err) {
+			Models.Subscription.add(appId, deviceId, channelObject,  function(err) {
 				if (err && err.status === 409)
 					return callback();
 
@@ -280,7 +280,7 @@ router.post('/unsubscribe', function(req, res, next) {
 			validateContext(appId, context, callback);
 		},
 		function(callback) {
-			Models.Subscription.remove(deviceId, channelObject, callback);
+			Models.Subscription.remove(appId, deviceId, channelObject, callback);
 		}/*,
 		function(result, callback) {
 			app.kafkaProducer.send([{

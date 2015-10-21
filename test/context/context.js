@@ -164,8 +164,8 @@ it('2.4 should return an error response to indicate context NOT successfully ret
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('013');
 			res.statusCode.should.be.equal(401);
+			res.body.code.should.be.equal('013');
 			done();
 		});
 });
@@ -187,8 +187,8 @@ it('2.5 should return an error response to indicate context NOT successfully ret
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('040');
 			res.statusCode.should.be.equal(400);
+			res.body.code.should.be.equal('040');
 			done();
 		});
 });

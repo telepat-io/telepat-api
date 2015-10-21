@@ -4,6 +4,8 @@ var Models = require('telepat-models');
 var uuid = require('uuid');
 var security = require('./security');
 
+router.use(security.applicationIdValidation);
+router.use(security.apiKeyValidation);
 router.use(security.deviceIdValidation);
 
 /**
@@ -17,6 +19,8 @@ router.use(security.deviceIdValidation);
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID if you want to update device info, or
  * 'TP_EMPTY_UDID' string when you want to register a new device (a device id will be generated in this case)
+ * @apiHeader {String} X-BLGREQ-APPID Custom header containing the application ID on which to register the device
+ * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the hashed API key
  *
  * @apiExample {json} Register new device
  * {
@@ -80,6 +84,7 @@ router.post('/register', function(req, res, next) {
 		}
 
 		var udid = req.body.info.udid;
+		req.body.application_id = req._telepat.applicationId;
 
 		if (!udid) {
 			req.body.id = uuid.v4();
@@ -91,7 +96,7 @@ router.post('/register', function(req, res, next) {
 				next(err);
 			});
 		} else {
-			Models.Subscription.findDeviceByUdid(udid, function(err, result) {
+			Models.Subscription.findDeviceByUdid(req._telepat.applicationId, udid, function(err, result) {
 				if (err) return next(err);
 
 				if (result === null) {
@@ -117,7 +122,7 @@ router.post('/register', function(req, res, next) {
 
 		req.body.id = req._telepat.device_id;
 
-		Models.Subscription.updateDevice(req._telepat.device_id, req.body, function(err, result) {
+		Models.Subscription.updateDevice(req._telepat.applicationId, req._telepat.device_id, req.body, function(err, result) {
 			if (err && err.status == 404) {
 				return next(new Models.TelepatError(Models.TelepatError.errors.DeviceNotFound));
 			} else if (err)

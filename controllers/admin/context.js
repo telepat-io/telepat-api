@@ -5,6 +5,7 @@ var router = express.Router();
 
 var security = require('../security');
 var Models = require('telepat-models');
+var microtime = require('microtime-nodejs');
 
 router.use('/',
 	security.tokenValidation,
@@ -156,6 +157,14 @@ router.post('/add', function (req, res, next) {
 		if (err)
 			next(err);
 		else {
+			app.messagingClient.send([JSON.stringify({
+				op: 'add',
+				object: res1,
+				applicationId: req._telepat.applicationId,
+				isContext: true
+			})], 'aggregation', function(err) {
+				if (err) console.log(err);
+			});
 			res.status(200).json({status: 200, content: res1}).end();
 		}
 	});
@@ -200,13 +209,26 @@ router.delete('/remove', function (req, res, next) {
 		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['id']));
 	}
 
-	Models.Context.delete(req.body.id, function (err, res1) {
+	Models.Context(req.body.id, function(err, context) {
 		if (err && err.status == 404)
 			next(new Models.TelepatError(Models.TelepatError.errors.ContextNotFound));
 		else if (err)
 			next(err);
 		else {
-			res.status(200).json({status: 200, content: 'Context removed'});
+			Models.Context.delete(req.body.id, function (err1) {
+				if (err1) return next(err1);
+
+				app.messagingClient.send([JSON.stringify({
+					op: 'delete',
+					object: {path: 'context/'+req.body.id},
+					context: context,
+					applicationId: req._telepat.applicationId,
+					isContext: true
+				})], 'aggregation', function(err2) {
+					if (err2) console.log(err2);
+				});
+				res.status(200).json({status: 200, content: 'Context removed'});
+			});
 		}
 	});
 });
@@ -281,6 +303,19 @@ router.post('/update', function (req, res, next) {
 			if (err && err.status == 404)
 				next(new Models.TelepatError(Models.TelepatError.errors.ContextNotFound));
 			else {
+				var modifiedMicrotime = microtime.now();
+				async.each(req.body.patches, function(patch, c) {
+					app.messagingClient.send([JSON.stringify({
+						op: 'update',
+						object: patch,
+						applicationId: req._telepat.applicationId,
+						isContext: true,
+						ts: modifiedMicrotime
+					})], 'aggregation', function(err) {
+						if (err) console.log(err);
+					});
+					c();
+				});
 				res.status(200).json({status: 200, content: 'Context updated'}).end();
 			}
 		});
