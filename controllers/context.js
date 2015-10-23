@@ -46,7 +46,7 @@ router.get('/all', function (req, res, next) {
 		if (err)
 			next(err);
 		else {
-			res.status(200).json({status: 200, content: res1}).end();
+			res.status(200).json({status: 200, content: res1});
 		}
 	});
 });
@@ -106,7 +106,7 @@ router.post('/', function (req, res, next) {
 		} else if (err)
 			next(err);
 		else {
-			res.status(200).json({status: 200, content: res1}).end();
+			res.status(200).json({status: 200, content: res1});
 		}
 	});
 });

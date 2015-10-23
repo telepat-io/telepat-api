@@ -148,7 +148,7 @@ router.post('/login', function(req, res, next) {
 		else {
 			var token = jwt.sign({email: userProfile.email, id: userProfile.id}, security.authSecret,
 				{ expiresInMinutes: 60 });
-			res.json({status: 200, content: {token: token, user: userProfile}}).end();
+			res.json({status: 200, content: {token: token, user: userProfile}});
 		}
 	});
 });
@@ -300,7 +300,7 @@ router.post('/register', function(req, res, next) {
 	], function(err) {
 		if (err) return next(err);
 
-		res.status(202).json({status: 202, content: 'User created'}).end();
+		res.status(202).json({status: 202, content: 'User created'});
 	});
 });
 
@@ -345,7 +345,7 @@ router.get('/me', function(req, res, next) {
 			next(err);
 		else
 			delete result.password;
-			res.status(200).json({status: 200, content: result}).end();
+			res.status(200).json({status: 200, content: result});
 	});
 });
 
@@ -457,7 +457,7 @@ router.post('/login_password', function(req, res, next) {
 		delete userProfile.password;
 
 		var token = jwt.sign({email: email, id: userProfile.id}, security.authSecret, { expiresInMinutes: 60 });
-		res.json({status: 200, content: {user: userProfile, token: token }}).end();
+		res.status(200).json({status: 200, content: {user: userProfile, token: token }});
 	});
 });
 
@@ -508,7 +508,7 @@ router.get('/logout', function(req, res, next) {
 	], function(err, result) {
 		if (err) return next(err);
 
-		res.status(200).json({status: 200, content: "Logged out of device"}).end();
+		res.status(200).json({status: 200, content: "Logged out of device"});
 	});
 });
 
@@ -561,7 +561,7 @@ router.get('/refresh_token', function(req, res, next) {
 
 		var newToken = jwt.sign(decoded, security.authSecret, {expiresInMinutes: 60});
 
-		return res.status(200).json({status: 200, content: {token: newToken}}).end();
+		return res.status(200).json({status: 200, content: {token: newToken}});
 	} else {
 		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidAuthorization, ['header invalid']));
 	}
@@ -648,7 +648,7 @@ router.post('/update', function(req, res, next) {
 		}, function(err) {
 			if (err) return next(err);
 
-			res.status(202).json({status: 202, content: "User updated"}).end();
+			res.status(202).json({status: 202, content: "User updated"});
 		});
 	});
 });
@@ -684,7 +684,7 @@ router.post('/update_immediate', function(req, res, next) {
 	], function(err) {
 		if (err) return next(err);
 
-		res.status(200).json({status: 200, content: "User updated"}).end();
+		res.status(200).json({status: 200, content: "User updated"});
 	});
 });
 
@@ -722,7 +722,7 @@ router.delete('/delete', function(req, res, next) {
 	})], 'aggregation', function(err) {
 		if (err) return next(err);
 
-		res.status(202).json({status: 202, content: "User deleted"}).end();
+		res.status(202).json({status: 202, content: "User deleted"});
 	});
 });
 

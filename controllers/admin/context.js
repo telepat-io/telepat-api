@@ -104,7 +104,7 @@ router.post('/', function (req, res, next) {
 		else if (err)
 			next(err);
 		else {
-			res.status(200).json({status: 200, content: res1}).end();
+			res.status(200).json({status: 200, content: res1});
 		}
 	});
 });
@@ -163,9 +163,10 @@ router.post('/add', function (req, res, next) {
 				applicationId: req._telepat.applicationId,
 				isContext: true
 			})], 'aggregation', function(err) {
-				if (err) console.log(err);
+				if (err)
+					Models.Application.logger.warning(app.getFailedRequestMessage(req, res, err));
 			});
-			res.status(200).json({status: 200, content: res1}).end();
+			res.status(200).json({status: 200, content: res1});
 		}
 	});
 });
@@ -225,7 +226,8 @@ router.delete('/remove', function (req, res, next) {
 					applicationId: req._telepat.applicationId,
 					isContext: true
 				})], 'aggregation', function(err2) {
-					if (err2) console.log(err2);
+					if (err2)
+						Models.Application.logger.warning(app.getFailedRequestMessage(req, res, err2));
 				});
 				res.status(200).json({status: 200, content: 'Context removed'});
 			});
@@ -312,11 +314,12 @@ router.post('/update', function (req, res, next) {
 						isContext: true,
 						ts: modifiedMicrotime
 					})], 'aggregation', function(err) {
-						if (err) console.log(err);
+						if (err)
+							Models.Application.logger.warning(app.getFailedRequestMessage(req, res, err));
 					});
 					c();
 				});
-				res.status(200).json({status: 200, content: 'Context updated'}).end();
+				res.status(200).json({status: 200, content: 'Context updated'});
 			}
 		});
 	}

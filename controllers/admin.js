@@ -121,7 +121,7 @@ router.get('/schemas', function(req, res, next) {
 		if (err){
 			next(err);
 		} else {
-			res.status(200).json({status: 200, content: result}).end();
+			res.status(200).json({status: 200, content: result});
 		}
 	});
 });
@@ -164,7 +164,7 @@ router.post('/users', function(req, res, next) {
 			delete originalArray[index].password;
 		});
 
-		res.status(200).json({status: 200, content: results}).end();
+		res.status(200).json({status: 200, content: results});
 	});
 });
 

@@ -1,6 +1,7 @@
 {
   "main_database": "ElasticSearch",
   "message_queue": "kafka",
+  "logger": "console_logger",
   "ElasticSearch": {
 	"host": "hostname",
 	"port": 9200,
@@ -19,5 +20,6 @@
 	"user": "telepat",
 	"password": "password"
   },
+  "syslog_logger": ["LOG_NDELAY", "LOG_PID"],
   "password_salt": "$2a$10$N9qo8uLOickgx2ZMRZoMye"
 }

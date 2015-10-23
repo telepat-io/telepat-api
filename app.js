@@ -1,5 +1,4 @@
 var express = require('express');
-var logger = require('morgan');
 var bodyParser = require('body-parser');
 colors = require('colors');
 
@@ -20,6 +19,7 @@ app = express();
 app.set('port', process.env.PORT || 3000);
 
 app.disable('x-powered-by');
+app.enable('trust proxy');
 
 app.use('/documentation', express.static(__dirname+'/documentation'));
 
@@ -80,16 +80,27 @@ if (validEnvVariables) {
 	messagingClient = mainConfiguration.message_queue;
 }
 
+if (Models[mainConfiguration.logger]) {
+	Models.Application.logger = new Models[mainConfiguration.logger]('TelepatAPI', mainConfiguration[mainConfiguration.logger]);
+} else {
+	Models.Application.logger = new Models['console_logger']('TelepatAPI');
+}
+
+app.getFailedRequestMessage = function(req, res, err) {
+	return req.method +' '+ req.baseUrl+req.url +' '+res.statusCode+' ('+err.toString()+')';
+};
+
 if (!Models[mainDatabase]) {
-	console.log('Unable to load'.red+' "'+mainDatabase+'" main database: not found.\nAborting...');
+	Models.Application.logger.emergency('Unable to load "'+mainDatabase+'" main database: not found. Aborting...');
 	process.exit(-1);
 }
 
 Models.Application.datasource = new Models.Datasource();
 Models.Application.datasource.setMainDatabase(new Models[mainDatabase](mainConfiguration[mainDatabase]));
 
-if(mainConfiguration.passwordSalt === undefined || mainConfiguration.passwordSalt === "" || mainConfiguration.passwordSalt === null) {
-	console.log('Please add salt configuration via TP_PW_SALT or config.json');
+if(mainConfiguration.passwordSalt === undefined || mainConfiguration.passwordSalt === ""
+	|| mainConfiguration.passwordSalt === null) {
+	Models.Application.logger.emergency('Please add salt configuration via TP_PW_SALT or config.json');
 	process.exit(-1);
 }
 app.set('password_salt', mainConfiguration.passwordSalt);
@@ -104,7 +115,7 @@ app.use(function(req, res, next) {
 var loadApplications = function(callback) {
 	Models.Application.loadAllApplications(function(err) {
 		if (err) {
-			console.log('Fatal error: '.red+' in retrieving all aplications', err);
+			Models.Application.logger.emergency('Fatal error: in retrieving all aplications', err);
 			process.exit(-1);
 		}
 
@@ -113,11 +124,35 @@ var loadApplications = function(callback) {
 };
 
 var linkMiddlewaresAndRoutes = function(callback) {
+	app.use(bodyParser.json());
+	app.use(function(req, res, next) {
+		var send = res.send;
+
+		res.send = function (string) {
+			var body = string instanceof Buffer ? string.toString() : string;
+			send.call(this, body);
+			var copyBody = JSON.parse(body);
+			var requestLogMessage = req.method +' '+ req.baseUrl+req.url +' '+res.statusCode;
+
+			if (res._header && req._startAt) {
+				var diff = process.hrtime(req._startAt);
+				var ms = diff[0] * 1e3 + diff[1] * 1e-6;
+
+				requestLogMessage += ms.toFixed(3) + 'ms';
+			}
+
+			if (res.statusCode >= 400)
+				requestLogMessage += ' (['+copyBody.code+']: '+copyBody.message+')';
+
+			requestLogMessage += ' ('+req.ip+')';
+
+			Models.Application.logger.info(requestLogMessage);
+		};
+		next();
+	});
 	app.use(security.corsValidation);
 	app.use(security.contentTypeValidation);
-	app.use(logger('dev'));
 	/*Automatically parses request body from json string to object*/
-	app.use(bodyParser.json());
 	app.use('/admin', adminRoute);
 	app.use('/object', objectRoute);
 	app.use('/user', userRoute);
@@ -148,7 +183,7 @@ var linkErrorHandlingMiddlewares = function(callback) {
 		if (err.stack && app.get('env') === 'development')
 			responseBody.stack = err.stack;
 
-		res.json(responseBody).end();
+		res.json(responseBody);
 	});
 	callback();
 };
@@ -184,21 +219,20 @@ async.waterfall([
 
 		Models.Application.redisClient = redis.createClient(redisConfig.port, redisConfig.host);
 		Models.Application.redisClient.on('error', function(err) {
-			console.log('Failed'.bold.red+' connecting to Redis "'+redisConfig.host+'": '+err.message);
-			console.log('Retrying...');
+			Models.Application.logger.error('Failed connecting to Redis "'+redisConfig.host+'": '+err.message+'.' +
+			'Retrying...');
 		});
 		Models.Application.redisClient.on('ready', function() {
-			console.log('Client connected to Redis.'.green);
+			Models.Application.logger.info('Client connected to Redis.');
 			callback();
 		});
 	},
 	function(callback) {
-		console.log('Waiting for Messaging Client connection...');
-
 		var clientConfiguration = mainConfiguration[messagingClient];
 
 		if (!Models[messagingClient]) {
-			console.log('Unable to load'.red+' "'+messagingClient+'" messaging queue: not found. Aborting...');
+			Models.Application.logger.error('Unable to load "'+messagingClient+'" messaging queue: not found. ' +
+			'Aborting...');
 			process.exit(-1);
 		}
 

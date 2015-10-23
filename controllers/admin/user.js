@@ -51,7 +51,7 @@ router.post('/all', function(req, res, next) {
 			delete originalArray[index].password;
 		});
 
-		res.status(200).json({status: 200, content: results}).end();
+		res.status(200).json({status: 200, content: results});
 	});
 });
 
@@ -140,7 +140,7 @@ router.post('/update', function(req, res, next) {
 	], function(err) {
 		if (err) return next(err);
 
-		res.status(200).json({status: 200, content: 'User has been updated'}).end();
+		res.status(200).json({status: 200, content: 'User has been updated'});
 	});
 });
 
@@ -224,7 +224,7 @@ router.delete('/delete', function(req, res, next) {
 				app.messagingClient.send(brokerMessages, 'aggregation', function(err){
 					if (err) return next(err);
 
-					res.status(200).json({status: 200, content: 'User deleted'}).end();
+					res.status(200).json({status: 200, content: 'User deleted'});
 				});
 			});
 		}

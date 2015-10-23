@@ -90,7 +90,7 @@ router.post('/register', function(req, res, next) {
 			req.body.id = uuid.v4();
 			Models.Subscription.addDevice(req.body, function (err, result) {
 				if (!err) {
-					return res.status(200).json({status: 200, content: {identifier: req.body.id}}).end();
+					return res.status(200).json({status: 200, content: {identifier: req.body.id}});
 				}
 
 				next(err);
@@ -103,13 +103,13 @@ router.post('/register', function(req, res, next) {
 					req.body.id = uuid.v4();
 					Models.Subscription.addDevice(req.body, function(err) {
 						if (!err) {
-							return res.status(200).json({status: 200, content: {identifier: req.body.id}}).end();
+							return res.status(200).json({status: 200, content: {identifier: req.body.id}});
 						}
 
 						next(err);
 					});
 				} else {
-					return res.status(200).json({status: 200, content: {identifier: result}}).end();
+					return res.status(200).json({status: 200, content: {identifier: result}});
 				}
 
 			});

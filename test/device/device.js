@@ -139,8 +139,7 @@ it('3.3 should return a success response to indicate device successfully updated
 			token: "android pn token"
 		}
 	};
-	console.log(deviceIdentifier);
-	console.log(appID);
+
 	request(url)
 		.post('/device/register')
 		.set('X-BLGREQ-SIGN', appIDsha256)

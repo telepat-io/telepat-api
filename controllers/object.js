@@ -200,7 +200,7 @@ router.post('/subscribe', function(req, res, next) {
 		if (err)
 			return next(err);
 
-		res.status(200).json({status: 200, content: objects}).end();
+		res.status(200).json({status: 200, content: objects});
 	});
 });
 
@@ -302,7 +302,7 @@ router.post('/unsubscribe', function(req, res, next) {
 		if (err) {
 			return next(err);
 		} else {
-			res.status(200).json({status: 200, content: 'Subscription removed'}).end();
+			res.status(200).json({status: 200, content: 'Subscription removed'});
 		}
 	});
 });
@@ -401,11 +401,10 @@ router.post('/create', function(req, res, next) {
 		}*/
 	], function(err, results) {
 		if (err) {
-			console.log(req.originalUrl+': '+err.message.red);
 			return next(err);
 		}
 
-		res.status(202).json({status: 202, content: 'Created'}).end();
+		res.status(202).json({status: 202, content: 'Created'});
 	});
 });
 
@@ -511,11 +510,10 @@ router.post('/update', function(req, res, next) {
 		}*/
 	], function(err) {
 		if (err) {
-			console.log(req.originalUrl+': '+err.message.red);
 			return next(err);
 		}
 
-		res.status(202).json({status: 202, content: 'Updated'}).end();
+		res.status(202).json({status: 202, content: 'Updated'});
 	});
 });
 
@@ -587,7 +585,7 @@ router.delete('/delete', function(req, res, next) {
 	], function(err) {
 		if (err) return next(err);
 
-		res.status(202).json({status: 202, content: 'Deleted'}).end();
+		res.status(202).json({status: 202, content: 'Deleted'});
 	});
 });
 
@@ -638,7 +636,7 @@ router.post('/count', function(req, res, next) {
 	Models.Model.modelCountByChannel(channelObject, function(err, result) {
 		if (err) return next(err);
 
-		res.status(200).json({status: 200, content: result}).end();
+		res.status(200).json({status: 200, content: result});
 	});
 });
 

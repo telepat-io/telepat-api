@@ -68,7 +68,7 @@ router.post('/login', function (req, res, next) {
 									email: req.body.email,
 									isAdmin: true
 								})}
-						}).end();
+						});
 				} else {
 					return next(new Models.TelepatError(Models.TelepatError.errors.AdminBadLogin));
 				}
@@ -114,7 +114,7 @@ router.post('/add', function (req, res, next) {
 
 	async.waterfall([
 		function(callback) {
-			security.encryptPassword(req.body.password, callback);
+			security.encryptPassword(req.body.password.toString(), callback);
 		},
 		function(hashedPassword) {
 			req.body.password = hashedPassword;
@@ -123,7 +123,7 @@ router.post('/add', function (req, res, next) {
 				if (err)
 					next(err);
 				else
-					res.status(200).json({status: 200, content: 'Admin added'}).end();
+					res.status(200).json({status: 200, content: 'Admin added'});
 			});
 		}
 	], function(err) {
@@ -157,7 +157,7 @@ router.use('/me', security.tokenValidation);
  * 	}
  */
 router.get('/me', function (req, res) {
-	res.status(200).json({status: 200, content: req.user}).end();
+	res.status(200).json({status: 200, content: req.user});
 });
 
 router.use('/update', security.tokenValidation);
@@ -218,7 +218,7 @@ router.post('/update', function (req, res, next) {
 					if (err)
 						next(err);
 					else
-						res.status(200).json({status: 200, content: 'Admin updated'}).end();
+						res.status(200).json({status: 200, content: 'Admin updated'});
 				});
 			}
 		});
@@ -244,7 +244,7 @@ router.delete('/delete', function(req, res, next) {
 	Models.Admin.delete({id: req.user.id}, function(err) {
 		if (err) return next(err);
 
-		res.status(200).json({status: 200, content: 'Admin deleted'}).end();
+		res.status(200).json({status: 200, content: 'Admin deleted'});
 	});
 });
 
@@ -288,7 +288,7 @@ router.get('/apps', function (req, res, next) {
 	}, function(err) {
 		if (err) return next(err);
 		else {
-			res.status(200).json({status: 200, content: adminApps}).end();
+			res.status(200).json({status: 200, content: adminApps});
 		}
 	});
 });

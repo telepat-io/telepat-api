@@ -102,7 +102,7 @@ router.delete('/remove', function (req, res, next) {
 			next(err);
 		else {
 			delete Models.Application.loadedAppModels[appId];
-			res.status(200).json({status: 200, content: 'App removed'}).end();
+			res.status(200).json({status: 200, content: 'App removed'});
 		}
 	});
 });
@@ -170,7 +170,7 @@ router.post('/update', function (req, res, next) {
 				return next(err);
 			else {
 				Models.Application.loadedAppModels[appId] = result;
-				res.status(200).json({status: 200, content: 'Updated'}).end();
+				res.status(200).json({status: 200, content: 'Updated'});
 			}
 		});
 	}
@@ -245,7 +245,7 @@ router.post('/authorize', function(req, res, next) {
 
 		Models.Application.loadedAppModels[appId] = application;
 
-		res.status(200).json({status: 200, content: 'Admin added to application'}).end();
+		res.status(200).json({status: 200, content: 'Admin added to application'});
 	});
 });
 
@@ -326,7 +326,7 @@ router.post('/deauthorize', function(req, res, next) {
 
 		Models.Application.loadedAppModels[appId] = application;
 
-		res.status(200).json({status: 200, content: 'Admin removed from application'}).end();
+		res.status(200).json({status: 200, content: 'Admin removed from application'});
 	});
 });
 
