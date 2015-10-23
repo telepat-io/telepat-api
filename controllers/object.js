@@ -115,8 +115,10 @@ router.post('/subscribe', function(req, res, next) {
 		deviceId = req._telepat.device_id,
 		appId = req._telepat.applicationId;
 
-	if (!context)
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['channel.context']));
+	if (['user', 'context'].indexOf(mdl) === -1) {
+		if (!context)
+			return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['channel.context']));
+	}
 
 	var channelObject = new Models.Channel(appId);
 
@@ -247,8 +249,10 @@ router.post('/unsubscribe', function(req, res, next) {
 	deviceId = req._telepat.device_id,
 	appId = req._telepat.applicationId;
 
-	if (!context)
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['channel.context']));
+	if (['user', 'context'].indexOf(mdl) === -1) {
+		if (!context)
+			return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['channel.context']));
+	}
 
 	var channelObject = new Models.Channel(appId);
 
