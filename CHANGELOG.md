@@ -1,3 +1,11 @@
+# 0.2.6
+
+* Changed all methods that delete resources to use DELETE HTTP method
+* Fixed a bug on deathorizing admin
+* Context operations also send messages to workers in order to notifiy clients
+* API uses TelepatLogger instead of console.log
+* `context` is not required if subscribing/unsubscribing from user or context builtin models
+
 # 0.2.5
 
 * Fixed `/user/update` when updating password

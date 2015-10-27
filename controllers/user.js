@@ -25,7 +25,7 @@ router.use(['/logout', '/me', '/update', '/update_immediate', '/delete'], securi
  * @apiDescription Log in the user through Facebook.
  * @apiName UserLogin
  * @apiGroup User
- * @apiVersion 0.2.3
+ * @apiVersion 0.2.6
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
@@ -159,7 +159,7 @@ router.post('/login', function(req, res, next) {
  * immediately.
  * @apiName UserRegister
  * @apiGroup User
- * @apiVersion 0.2.3
+ * @apiVersion 0.2.6
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
@@ -309,7 +309,7 @@ router.post('/register', function(req, res, next) {
  * @apiDescription Info about logged user
  * @apiName UserMe
  * @apiGroup User
- * @apiVersion 0.2.3
+ * @apiVersion 0.2.6
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint.
@@ -354,7 +354,7 @@ router.get('/me', function(req, res, next) {
  * @apiDescription Logs in the user with a password
  * @apiName UserLoginPassword
  * @apiGroup User
- * @apiVersion 0.2.3
+ * @apiVersion 0.2.6
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
@@ -466,7 +466,7 @@ router.post('/login_password', function(req, res, next) {
  * @apiDescription Logs out the user removing the device from his array of devices.
  * @apiName UserLogout
  * @apiGroup User
- * @apiVersion 0.2.3
+ * @apiVersion 0.2.6
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
@@ -519,7 +519,7 @@ router.get('/logout', function(req, res, next) {
  * may not be already expired).
  * @apiName RefreshToken
  * @apiGroup User
- * @apiVersion 0.2.3
+ * @apiVersion 0.2.6
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint.
@@ -572,7 +572,7 @@ router.get('/refresh_token', function(req, res, next) {
  * @apiDescription Updates the user information. This operation is not immediate.
  * @apiName UserUpdate
  * @apiGroup User
- * @apiVersion 0.2.3
+ * @apiVersion 0.2.6
  *
  * @apiParam {Object[]} patches Array of patches that describe the modifications
  *
@@ -693,7 +693,7 @@ router.post('/update_immediate', function(req, res, next) {
  * @apiDescription Deletes a user
  * @apiName UserDelete
  * @apiGroup User
- * @apiVersion 0.2.3
+ * @apiVersion 0.2.6
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>

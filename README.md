@@ -21,14 +21,11 @@ or by setting up environment variables (this method is the most convenient):
 
 * `TP_MSG_QUE`: Name of the messaging client you want to use. Should be the same as the exported variable in
 telepat-models
-* `TP_KFK_HOST`: Kafka (zooekeeper) server (if you are using the Kafka Messaging Client)
-* `TP_KFK_PORT`: Kafka (zooekeeper) server port (if you are using the Kafka Messaging Client)
-* `TP_REDIS_HOST`: Redis server
-* `TP_REDIS_PORT`: Redis server port
 * `TP_MAIN_DB`: Name of the main database which to use. Should be the same as the exported variable in telepat-models
-* `TP_ES_HOST`: Elasticsearch server (if you are using the ES database adapter)
-* `TP_ES_PORT`: Elasticsearch server port (if you are using the ES database adapter)
 * `TP_PW_SALT`: Password salt used for hashing passwords
+
+**Important**: You need to set up the other config variables specified in the `telepat-models` README file for resources
+that you're using.
 
 ## Testing
 
