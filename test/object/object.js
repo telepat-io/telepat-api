@@ -292,13 +292,13 @@ before(function(done){
 
 			deviceIdentification =  res.body.content.identifier;
 			var clientrequest = {
-				email: 'user'+Math.round(Math.random()*1000000)+'@example.com',
+				username: 'user'+Math.round(Math.random()*1000000)+'@example.com',
 				password: "secure_password1337",
 				name: "John Smith"
 			};
 
 			request(url)
-				.post('/user/register')
+				.post('/user/register-username')
 				.set('Content-type','application/json')
 				.set('X-BLGREQ-SIGN', appIDsha256 )
 				.set('X-BLGREQ-APPID', appID )

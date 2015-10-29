@@ -1832,7 +1832,7 @@ describe('1.4.Schema', function() {
 describe('1.5.User', function() {
 
 	var clientrequest = {
-		email: userEmail,
+		username: userEmail,
 		password: "secure_password1337",
 		name: "John Smith"
 	};
@@ -1842,7 +1842,7 @@ describe('1.5.User', function() {
 		this.timeout(100*DELAY);
 
 		request(url)
-			.post('/user/register')
+			.post('/user/register-username')
 			.set('Content-type','application/json')
 			.set('X-BLGREQ-SIGN', appIDsha256 )
 			.set('X-BLGREQ-APPID', appID )
@@ -1859,7 +1859,7 @@ describe('1.5.User', function() {
 		this.timeout(100*DELAY);
 
 		var clientrequest = {
-			email : userEmail,
+			username : userEmail,
 			patches: [
 				{
 					op: "replace",
@@ -1888,7 +1888,7 @@ describe('1.5.User', function() {
 		this.timeout(100*DELAY);
 
 		var clientrequest = {
-			"email" : userEmail,
+			"username" : userEmail,
 			"patches": [
 				{
 					"op": "replace",
@@ -1933,7 +1933,7 @@ describe('1.5.User', function() {
 			});
 	});
 
-	it('1.5.4 should return an error response to indicate that an user was NOT updated, user email address was missing from the request', function(done) {
+	it('1.5.4 should return an error response to indicate that an user was NOT updated, user username was missing from the request', function(done) {
 
 		this.timeout(100*DELAY);
 
@@ -1964,7 +1964,7 @@ describe('1.5.User', function() {
 		this.timeout(100*DELAY);
 
 		var clientrequest = {
-			"email" : userEmail,
+			"username" : userEmail,
 			"patches": []
 		};
 
@@ -1989,7 +1989,7 @@ describe('1.5.User', function() {
 		this.timeout(100*DELAY);
 
 		request(url)
-			.post('/user/register')
+			.post('/user/register-username')
 			.set('Content-type','application/json')
 			.set('X-BLGREQ-SIGN', appIDsha256 )
 			.set('X-BLGREQ-APPID', appID )
@@ -2022,13 +2022,13 @@ describe('1.5.User', function() {
 
 		var userEmail = "user3@example.com";
 		var clientrequest = {
-		   email: userEmail,
+			username: userEmail,
 		   password: "secure_password1337",
 		   name: "John Smith"
 		};
 
 		request(url)
-			.post('/user/register')
+			.post('/user/register-username')
 			.set('Content-type','application/json')
 			.set('X-BLGREQ-SIGN', appIDsha256 )
 			.set('X-BLGREQ-APPID', appID )
@@ -2038,9 +2038,9 @@ describe('1.5.User', function() {
 
 				var userEmail = "user2@example.com";
 				var clientrequest = {
-					"email": userEmail,
-					"password": "secure_password1337",
-					"name": "John Smith"
+					username: userEmail,
+					password: "secure_password1337",
+					name: "John Smith"
 				};
 
 				setTimeout(function() {
@@ -2063,7 +2063,7 @@ describe('1.5.User', function() {
 			});
 	});
 
-	it('1.5.8 should return a error response indicating that a user has NOT been deleted because of missing email address', function(done) {
+	it('1.5.8 should return a error response indicating that a user has NOT been deleted because of missing username', function(done) {
 
 		this.timeout(100*DELAY);
 
@@ -2094,7 +2094,7 @@ describe('1.5.User', function() {
 
 		var userEmail = "user3@example.com";
 		var clientrequest = {
-			email: userEmail,
+			username: userEmail,
 			password: "secure_password1337",
 			name: "John Smith"
 		};
@@ -2120,7 +2120,7 @@ describe('1.5.User', function() {
 		this.timeout(100*DELAY);
 
 		var clientrequest = {
-			email : "wrong@example.com",
+			username : "wrong@example.com",
 			patches: [
 				{
 					op: "replace",
@@ -2146,7 +2146,7 @@ describe('1.5.User', function() {
 			});
 	});
 
-	it('1.5.11 should return an error response to indicate that the user email is missing', function(done) {
+	it('1.5.11 should return an error response to indicate that the user username is missing', function(done) {
 
 		this.timeout(100*DELAY);
 

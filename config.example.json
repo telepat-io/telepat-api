@@ -21,5 +21,15 @@
 	"password": "password"
   },
   "syslog_logger": ["LOG_NDELAY", "LOG_PID"],
-  "password_salt": "$2a$10$N9qo8uLOickgx2ZMRZoMye"
+  "password_salt": "$2a$10$N9qo8uLOickgx2ZMRZoMye",
+  "login_providers": {
+	"facebook": {
+	  "client_id": "",
+	  "client_secret": ""
+	},
+	"twitter": {
+	  "consumer_key": "",
+	  "consumer_secret": ""
+	}
+  }
 }

@@ -92,7 +92,7 @@ it('5.1 should return an error response to indicate that the user has NOT logged
 	this.timeout(100*DELAY);
 
 	request(url)
-		.post('/user/login')
+		.post('/user/login-facebook')
 		.set('Content-type','application/json')
 		.set('X-BLGREQ-SIGN', appIDsha256 )
 		.set('X-BLGREQ-APPID', appID )
@@ -115,7 +115,7 @@ it('5.2 should return an error response to indicate that the user has NOT logged
 	};
 
 	request(url)
-		.post('/user/login')
+		.post('/user/login-facebook')
 		.set('Content-type','application/json')
 		.set('X-BLGREQ-SIGN', appIDsha256 )
 		.set('X-BLGREQ-APPID', appID )
@@ -138,7 +138,7 @@ it('5.3 should return an error response to indicate that the user has NOT logged
 	};
 
 	request(url)
-		.post('/user/login')
+		.post('/user/login-facebook')
 		.set('Content-type','application/json')
 		.set('X-BLGREQ-SIGN', appIDsha256 )
 		.set('X-BLGREQ-APPID', appID )
@@ -157,13 +157,13 @@ it('5.4 should return a success response to indicate that the user has logged in
 	this.timeout(100*DELAY);
 
 	var clientrequest = {
-		email: userEmail,
+		username: userEmail,
 		password: "secure_password1337",
 		name: "John Smith"
 	};
 
 	request(url)
-		.post('/user/register')
+		.post('/user/register-username')
 		.set('Content-type','application/json')
 		.set('X-BLGREQ-SIGN', appIDsha256 )
 		.set('X-BLGREQ-APPID', appID )
@@ -211,7 +211,7 @@ it('5.5 should return a success response to indicate that the user has logged in
 					};
 
 					request(url)
-						.post('/user/register')
+						.post('/user/register-facebook')
 						.set('Content-type','application/json')
 						.set('X-BLGREQ-SIGN', appIDsha256 )
 						.set('X-BLGREQ-APPID', appID )
@@ -222,7 +222,7 @@ it('5.5 should return a success response to indicate that the user has logged in
 							setTimeout(function() {
 
 								request(url)
-									.post('/user/login')
+									.post('/user/login-facebook')
 									.set('Content-type','application/json')
 									.set('X-BLGREQ-SIGN', appIDsha256 )
 									.set('X-BLGREQ-APPID', appID )
@@ -263,13 +263,13 @@ it('5.7 should return an error response to indicate that the user info was NOT r
 	this.timeout(100*DELAY);
 
 	var clientrequest = {
-		email: "exampleUser@appscend.com",
+		username: "exampleUser@appscend.com",
 		password: "secure_password1337",
 		name: "John Smith"
 	};
 
 	request(url)
-		.post('/user/register')
+		.post('/user/register-username')
 		.set('Content-type','application/json')
 		.set('X-BLGREQ-SIGN', appIDsha256 )
 		.set('X-BLGREQ-APPID', appID )
@@ -291,7 +291,7 @@ it('5.7 should return an error response to indicate that the user info was NOT r
 						var authValue3 = 'Bearer ' + token3;
 						var subclientrequest = {
 							id : userID3,
-							email : "exampleUser@appscend.com"
+							username : "exampleUser@appscend.com"
 						};
 
 						request(url)
@@ -331,7 +331,7 @@ it('5.8 should return an error response to indicate that the user has NOT logged
 	this.timeout(100*DELAY);
 
 	var clientrequest = {
-		email: userEmail,
+		username: userEmail,
 		password: "secure_password",
 		name: "John Smith"
 	};
@@ -356,7 +356,7 @@ it('5.9 should return an error response to indicate that the user has NOT logged
 	this.timeout(100*DELAY);
 
 	var clientrequest = {
-		email: 'user'+Math.round(Math.random()*1000000)+'@example.com',
+		username: 'user'+Math.round(Math.random()*1000000)+'@example.com',
 		password: "secure_password",
 		name: "John Smith"
 	};
@@ -376,7 +376,7 @@ it('5.9 should return an error response to indicate that the user has NOT logged
 		});
 });
 
-it('5.10 should return an error response to indicate that the user has NOT logged in via user & password because email was missing for request', function(done) {
+it('5.10 should return an error response to indicate that the user has NOT logged in via user & password because username was missing for request', function(done) {
 
 	this.timeout(100*DELAY);
 
@@ -405,7 +405,7 @@ it('5.11 should return an error response to indicate that the user has NOT logge
 	this.timeout(100*DELAY);
 
 	var clientrequest = {
-		email: 'user'+Math.round(Math.random()*1000000)+'@example.com',
+		username: 'user'+Math.round(Math.random()*1000000)+'@example.com',
 		name: "John Smith"
 	};
 
@@ -794,13 +794,13 @@ it('5.28 should return a success response to indicate that the user has register
 	this.timeout(20*DELAY);
 
 	var clientrequest = {
-		email: userEmail2,
+		username: userEmail2,
 		password: "secure_password1337",
 		name: "John Smith"
 	};
 
 	request(url)
-		.post('/user/register')
+		.post('/user/register-username')
 		.set('Content-type','application/json')
 		.set('X-BLGREQ-SIGN', appIDsha256 )
 		.set('X-BLGREQ-APPID', appID )
@@ -816,13 +816,13 @@ it('5.28 should return a success response to indicate that the user has register
 it('5.29 should return a success response to indicate that the user has NOT registered because user is already registered', function(done) {
 
 	var clientrequest = {
-		email: userEmail,
+		username: userEmail,
 		password: "secure_password1337",
 		name: "John Smith"
 	};
 
 	request(url)
-		.post('/user/register')
+		.post('/user/register-username')
 		.set('Content-type','application/json')
 		.set('X-BLGREQ-SIGN', appIDsha256 )
 		.set('X-BLGREQ-APPID', appID)
@@ -841,7 +841,7 @@ it('5.30 should return a success response to indicate that the user has NOT regi
 	this.timeout(100*DELAY);
 
 	request(url)
-		.post('/user/register')
+		.post('/user/register-username')
 		.set('Content-type','application/json')
 		.set('X-BLGREQ-SIGN', appIDsha256 )
 		.set('X-BLGREQ-APPID', appID)
@@ -860,7 +860,7 @@ it('5.31 should return a success response to indicate that the user was deleted'
 	this.timeout(100*DELAY);
 
 	var clientrequest = {
-		email: userEmail2,
+		username: userEmail2,
 		password: "secure_password1337",
 		name: "John Smith"
 	};
@@ -879,7 +879,7 @@ it('5.31 should return a success response to indicate that the user was deleted'
 			authValue = 'Bearer ' + token;
 			var subclientrequest = {
 				id : userID,
-				email : userEmail
+				username : userEmail
 			};
 
 			request(url)

@@ -11,7 +11,7 @@ var appID;
 
 var token;
 var clientrequest = {
-	email: 'user'+Math.round(Math.random()*1000000)+'@example.com',
+	username: 'user'+Math.round(Math.random()*1000000)+'@example.com',
 	password: 'secure_password1337',
 	name: 'John Smith'
 };

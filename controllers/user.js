@@ -1,18 +1,12 @@
 var express = require('express');
 var router = express.Router();
 var FB = require('facebook-node');
+var Twitter = require('twitter');
 var async = require('async');
 var Models = require('telepat-models');
 var security = require('./security');
 var jwt = require('jsonwebtoken');
 var microtime = require('microtime-nodejs');
-
-var options = {
-	client_id:          '1086083914753251',
-	client_secret:      '40f626ca66e4472e0d11c22f048e9ea8'
-};
-
-FB.options(options);
 
 router.use(security.deviceIdValidation);
 router.use(security.applicationIdValidation);
@@ -64,39 +58,75 @@ router.use(['/logout', '/me', '/update', '/update_immediate', '/delete'], securi
  * 	@apiError 404 [023]UserNotFound User not found
  *
  */
-router.post('/login', function(req, res, next) {
-
+router.post('/login-:s', function(req, res, next) {
 	if (Object.getOwnPropertyNames(req.body).length === 0)
 		return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
 
-	if (!req.body.access_token)
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['access_token']));
+	var loginProvider = req.params.s;
+
+	if (loginProvider == 'facebook') {
+		if (!req.body.access_token)
+			return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['access_token']));
+		if (!app.telepatConfig.login_providers || !app.telepatConfig.login_providers.facebook)
+			return next(new Models.TelepatError(Models.TelepatError.errors.LoginProviderNotConfigured, ['facebook']));
+		else
+			FB.options(app.telepatConfig.login_providers.facebook);
+	} else if (loginProvider == 'twitter') {
+		if (!req.body.oauth_token)
+			return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['oauth_token']));
+		if (!req.body.oauth_token_secret)
+			return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['oauth_token_secret']));
+		if (!app.telepatConfig.login_providers || !app.telepatConfig.login_providers.twitter)
+			return next(new Models.TelepatError(Models.TelepatError.errors.LoginProviderNotConfigured, ['twitter']));
+	} else {
+		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidLoginProvider, ['facebook, twitter']));
+	}
 
 	var accessToken = req.body.access_token;
-	var email = null;
+	var username = null;
 	var userProfile = null;
-	var fbProfile = null;
+	var socialProfile = null;
 	var deviceId = req._telepat.device_id;
 	var appId = req._telepat.applicationId;
 
 	async.waterfall([
 		//Retrieve facebook information
 		function(callback) {
-			FB.napi('/me', {access_token: accessToken}, function(err, result) {
-				if (err) return callback(err);
-				email = result.email;
-				fbProfile = result;
+			if (loginProvider == 'facebook') {
+				FB.napi('/me', {access_token: accessToken}, function(err, result) {
+					if (err) return callback(err);
 
-				if (!email) {
-					callback(new Models.TelepatError(Models.TelepatError.errors.InsufficientFacebookPermissions));
-				}
+					if (!result.email) {
+						callback(new Models.TelepatError(Models.TelepatError.errors.InsufficientFacebookPermissions));
+					}
 
-				callback();
-			});
+					username = result.email;
+					socialProfile = result;
+
+					callback();
+				});
+			} else if (loginProvider == 'twitter') {
+				var options = {
+					access_token_key: req.body.oauth_token,
+					access_token_secret: req.body.oauth_token_secret
+				};
+
+				options.consumer_key = app.telepatConfig.login_providers.twitter.consumer_key;
+				options.consumer_secret = app.telepatConfig.login_providers.twitter.consumer_secret;
+
+				var twitterClient = new Twitter(options);
+
+				twitterClient.get('account/settings', {}, function(err, result) {
+					username = result.screen_name;
+					socialProfile = {screen_name: result.screen_name};
+
+					callback();
+				});
+			}
 		},
 		function(callback) {
 			//try and get user profile from DB
-			Models.User({email: email}, appId, function(err, result) {
+			Models.User({username: username}, appId, function(err, result) {
 				if (err && err.status == 404) {
 					callback(new Models.TelepatError(Models.TelepatError.errors.UserNotFound));
 				}
@@ -117,15 +147,18 @@ router.post('/login', function(req, res, next) {
 			} else {
 				userProfile.devices = [deviceId];
 			}
+
 			var patches = [];
 			patches.push(Models.Delta.formPatch(userProfile, 'replace', {devices: userProfile.devices}));
 
-			if (userProfile.name != fbProfile.name)
-				patches.push(Models.Delta.formPatch(userProfile, 'replace', {name: fbProfile.name}));
-			if (userProfile.gender != fbProfile.gender)
-				patches.push(Models.Delta.formPatch(userProfile, 'replace', {gender: fbProfile.gender}));
+			if (loginProvider == 'facebook') {
+				if (userProfile.name != socialProfile.name)
+					patches.push(Models.Delta.formPatch(userProfile, 'replace', {name: socialProfile.name}));
+				if (userProfile.gender != socialProfile.gender)
+					patches.push(Models.Delta.formPatch(userProfile, 'replace', {gender: socialProfile.gender}));
+			}
 
-			Models.User.update(userProfile.email, appId, patches, callback);
+			Models.User.update(username, appId, patches, callback);
 
 			//user first logged in with password then with fb
 			/*if (!userProfile.fid) {
@@ -146,7 +179,7 @@ router.post('/login', function(req, res, next) {
 		if (err)
 			return next(err);
 		else {
-			var token = jwt.sign({email: userProfile.email, id: userProfile.id}, security.authSecret,
+			var token = jwt.sign({username: username, id: userProfile.id}, security.authSecret,
 				{ expiresInMinutes: 60 });
 			res.json({status: 200, content: {token: token, user: userProfile}});
 		}
@@ -192,9 +225,34 @@ router.post('/login', function(req, res, next) {
  * 	@apiError 409 [029]UserAlreadyExists User with that email address already exists
  *
  */
-router.post('/register', function(req, res, next) {
+router.post('/register-:s', function(req, res, next) {
 	if (Object.getOwnPropertyNames(req.body).length === 0) {
 		return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
+	}
+
+	var loginProvider = req.params.s;
+
+	if (loginProvider == 'facebook') {
+		if (!req.body.access_token)
+			return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['access_token']));
+		if (!app.telepatConfig.login_providers || !app.telepatConfig.login_providers.facebook)
+			return next(new Models.TelepatError(Models.TelepatError.errors.LoginProviderNotConfigured, ['facebook']));
+		else
+			FB.options(app.telepatConfig.login_providers.facebook);
+	} else if (loginProvider == 'twitter') {
+		if (!req.body.oauth_token)
+			return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['oauth_token']));
+		if (!req.body.oauth_token_secret)
+			return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['oauth_token_secret']));
+		if (!app.telepatConfig.login_providers || !app.telepatConfig.login_providers.twitter)
+			return next(new Models.TelepatError(Models.TelepatError.errors.LoginProviderNotConfigured, ['twitter']));
+	} else if (loginProvider == 'username') {
+		if (!req.body.username)
+			return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['username']));
+		if (!req.body.password)
+			return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['password']));
+	} else {
+		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidLoginProvider, ['facebook, twitter, username']));
 	}
 
 	var userProfile = req.body;
@@ -205,15 +263,33 @@ router.post('/register', function(req, res, next) {
 
 	async.waterfall([
 		function(callback) {
-			if (accessToken) {
+			if (loginProvider == 'facebook') {
 				FB.napi('/me', {access_token: accessToken}, function(err, result) {
 					if (err) return callback(err);
-
-					userProfile = result;
 
 					if (!userProfile.email) {
 						callback(new Models.TelepatError(Models.TelepatError.errors.InsufficientFacebookPermissions));
 					}
+
+					userProfile = result;
+					userProfile.username = userProfile.email;
+
+					callback();
+				});
+			} else if (loginProvider == 'twitter') {
+				var options = {
+					access_token_key: req.body.oauth_token,
+					access_token_secret: req.body.oauth_token_secret
+				};
+
+				options.consumer_key = app.telepatConfig.login_providers.twitter.consumer_key;
+				options.consumer_secret = app.telepatConfig.login_providers.twitter.consumer_secret;
+
+				var twitterClient = new Twitter(options);
+
+				twitterClient.get('account/settings', {}, function(err, result) {
+
+					userProfile.username = result.screen_name;
 
 					callback();
 				});
@@ -223,7 +299,7 @@ router.post('/register', function(req, res, next) {
 		},
 		function(callback) {
 			//get his/her friends
-			if (accessToken) {
+			if (loginProvider == 'facebook') {
 				FB.napi('/me/friends', {access_token: accessToken}, function(err, result) {
 					if (err) return callback(err);
 
@@ -236,12 +312,12 @@ router.post('/register', function(req, res, next) {
 				callback();
 		},
 		function(callback) {
-			if (!userProfile.email) {
+			if (!userProfile.username) {
 				return callback(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField,
-					['email or access_token']));
+					['username']));
 			}
 
-			Models.User({email: userProfile.email}, appId, function(err, result) {
+			Models.User({username: userProfile.username}, appId, function(err, result) {
 				if (!err) {
 					callback(new Models.TelepatError(Models.TelepatError.errors.UserAlreadyExists));
 				}
@@ -254,16 +330,10 @@ router.post('/register', function(req, res, next) {
 		},
 		//send message to kafka if user doesn't exist in order to create it
 		function(callback) {
-			/*var props = {
-			 email: userProfile.email,
-			 fid: userProfile.id,
-			 name: userProfile.name,
-			 gender: userProfile.gender,
-			 friends: fbFriends,
-			 devices: [deviceId]
-			 };*/
 
-			userProfile.friends = fbFriends;
+			if (fbFriends.length)
+				userProfile.friends = fbFriends;
+
 			userProfile.type = 'user';
 			userProfile.devices = [deviceId];
 
@@ -393,14 +463,14 @@ router.get('/me', function(req, res, next) {
  *
  */
 router.post('/login_password', function(req, res, next) {
-	if (!req.body.email)
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['email']));
+	if (!req.body.username)
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['username']));
 
 	if (!req.body.password)
 		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['password']));
 
 	var userProfile = null;
-	var email = req.body.email;
+	var username = req.body.username;
 	var password = req.body.password.toString();
 	var deviceId = req._telepat.device_id;
 	var appId = req._telepat.applicationId;
@@ -410,7 +480,7 @@ router.post('/login_password', function(req, res, next) {
 	async.series([
 		function(callback) {
 			//try and get user profile from DB
-			Models.User({email: email}, appId, function(err, result) {
+			Models.User({username: username}, appId, function(err, result) {
 				if (err && err.status == 404) {
 					callback(new Models.TelepatError(Models.TelepatError.errors.UserNotFound));
 				}
@@ -429,11 +499,11 @@ router.post('/login_password', function(req, res, next) {
 			if (userProfile.devices) {
 				var idx = userProfile.devices.indexOf(deviceId);
 				if (idx === -1) {
-					Models.User.update(userProfile.email, appId, patches, callback);
+					Models.User.update(userProfile.username, appId, patches, callback);
 				} else
 					callback();
 			} else {
-				Models.User.update(userProfile.email, appId, patches, callback);
+				Models.User.update(userProfile.username, appId, patches, callback);
 			}
 		},
 		function(callback) {
@@ -456,7 +526,7 @@ router.post('/login_password', function(req, res, next) {
 
 		delete userProfile.password;
 
-		var token = jwt.sign({email: email, id: userProfile.id}, security.authSecret, { expiresInMinutes: 60 });
+		var token = jwt.sign({username: username, id: userProfile.id}, security.authSecret, { expiresInMinutes: 60 });
 		res.status(200).json({status: 200, content: {user: userProfile, token: token }});
 	});
 });
@@ -481,7 +551,7 @@ router.post('/login_password', function(req, res, next) {
  */
 router.get('/logout', function(req, res, next) {
 	var deviceId = req._telepat.device_id;
-	var email = req.user.email;
+	var username = req.user.username;
 	var appID = req._telepat.applicationId;
 
 	async.waterfall([
@@ -494,10 +564,10 @@ router.get('/logout', function(req, res, next) {
 				if (idx >= 0)
 					user.devices.splice(idx, 1);
 
-				Models.User.update(email, appID, [
+				Models.User.update(username, appID, [
 		      {
 		        "op": "replace",
-		        "path": "user/"+email+"/devices",
+		        "path": "user/"+username+"/devices",
 		        "value": user.devices
 		      }
 		    ], callback);
@@ -610,12 +680,12 @@ router.post('/update', function(req, res, next) {
 
 	var patches = req.body.patches;
 	var id = req.user.id;
-	var email = req.user.email;
+	var username = req.user.username;
 	var modifiedMicrotime = microtime.now();
 
 	var i = 0;
 	async.eachSeries(patches, function(p, c) {
-		patches[i].email = email;
+		patches[i].username = username;
 
 		if (patches[i].path.split('/')[2] == 'password') {
 
@@ -678,7 +748,7 @@ router.post('/update_immediate', function(req, res, next) {
 				patches.push(Models.Delta.formPatch(req.user, 'replace', property));
 				c();
 			}, function() {
-				Models.User.update(req.user.email, appId, patches, callback);
+				Models.User.update(req.user.username, appId, patches, callback);
 			});
 		}
 	], function(err) {
@@ -712,11 +782,11 @@ router.post('/update_immediate', function(req, res, next) {
  */
 router.delete('/delete', function(req, res, next) {
 	var id = req.user.id;
-	var email = req.user.email;
+	var username = req.user.username;
 
 	app.messagingClient.send([JSON.stringify({
 		op: 'delete',
-		object: {path: 'user/'+id, email: email},
+		object: {path: 'user/'+id, username: username},
 		applicationId: req._telepat.applicationId,
 		isUser: true
 	})], 'aggregation', function(err) {

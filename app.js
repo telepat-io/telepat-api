@@ -30,7 +30,11 @@ var envVariables = {
 	TP_REDIS_HOST: process.env.TP_REDIS_HOST,
 	TP_REDIS_PORT: process.env.TP_REDIS_PORT,
 	TP_MAIN_DB: process.env.TP_MAIN_DB,
-	TP_PW_SALT: process.env.TP_PW_SALT
+	TP_PW_SALT: process.env.TP_PW_SALT,
+	TP_FB_CLIENT_ID: process.env.TP_FB_CLIENT_ID,
+	TP_FB_CLIENT_SECRET: process.env.TP_FB_CLIENT_SECRET,
+	TP_TW_CLIENT_KEY: process.env.TP_TW_CLIENT_KEY,
+	TP_TW_CLIENT_SECRET: process.env.TP_TW_CLIENT_SECRET
 };
 
 var validEnvVariables = true;
@@ -79,6 +83,8 @@ if (validEnvVariables) {
 	mainDatabase = mainConfiguration.mainDatabase;
 	messagingClient = mainConfiguration.message_queue;
 }
+
+app.telepatConfig = mainConfiguration;
 
 if (Models[mainConfiguration.logger]) {
 	Models.Application.logger = new Models[mainConfiguration.logger]('TelepatAPI', mainConfiguration[mainConfiguration.logger]);

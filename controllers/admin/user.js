@@ -103,8 +103,8 @@ router.post('/update', function(req, res, next) {
 	} else if (req.body.patches.length == 0) {
 		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidFieldValue,
 			['"patches" array is empty']));
-	} else if (!req.body.email) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['email']));
+	} else if (!req.body.username) {
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['username']));
 	}
 
 	var patches = req.body.patches;
@@ -127,7 +127,7 @@ router.post('/update', function(req, res, next) {
 			}, callback);
 		},
 		function(callback) {
-			Models.User.update(req.body.email, req._telepat.applicationId, patches, function(err) {
+			Models.User.update(req.body.username, req._telepat.applicationId, patches, function(err) {
 				if (err && err.status == 404) {
 					callback(new Models.TelepatError(Models.TelepatError.errors.UserNotFound));
 				} else if (err)
@@ -161,11 +161,11 @@ router.use('/delete',
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  *
- * @apiParam {String} email The email address of an user from an application
+ * @apiParam {String} username The username of an user from an application
  *
  * @apiExample {json} Client Request
  * 	{
- * 		"email": "user@example.com"
+ * 		"username": "user@example.com"
  * 	}
  *
  * 	@apiSuccessExample {json} Success Response
@@ -177,23 +177,23 @@ router.use('/delete',
  * @apiError 404 [023]UserNotFound If the user doesn't exist.
  */
 router.delete('/delete', function(req, res, next) {
-	if (!req.body.email) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['email']));
+	if (!req.body.username) {
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['username']));
 	}
 
 	var appId = req._telepat.applicationId;
-	var userEmail = req.body.email;
+	var username = req.body.username;
 	var objectsToBeDeleted = null;
 
 	async.waterfall([
 		function(callback) {
-			Models.User({email: userEmail}, appId, callback);
+			Models.User({username: username}, appId, callback);
 		},
 		function(user, callback) {
 			if (user.application_id != appId) {
 				return callback(new Models.TelepatError(Models.TelepatError.errors.UserNotFound));
 			} else {
-				Models.User.delete(userEmail, appId, function(err, results) {
+				Models.User.delete(username, appId, function(err, results) {
 					if (err) return callback(err);
 					objectsToBeDeleted = results;
 					callback();
@@ -215,7 +215,7 @@ router.delete('/delete', function(req, res, next) {
 
 				brokerMessages.push(JSON.stringify({
 					op: 'delete',
-					object: {path: mdl+'/'+id},
+					object: {path: mdl+'/'+id, username: username},
 					context: context,
 					applicationId: appId
 				}));
