@@ -1,6 +1,7 @@
 var common = require('../common');
 var request = common.request;
 var should = common.should;
+var async = common.async;
 var url = common.url;
 var DELAY = common.DELAY;
 
@@ -33,11 +34,17 @@ before(function(done){
 		keys: [ common.appKey ]
 	};
 
-	request(url)
-		.post('/admin/add')
-		.send(admin)
-		.end(function(err, res) {
+	async.waterfall([
+		function(callback) {
+			request(url)
+				.post('/admin/add')
+				.send(admin)
+				.end(function(err, res) {
 
+					callback();
+				});
+		},
+		function(callback) {
 			request(url)
 				.post('/admin/login')
 				.set('Content-type','application/json')
@@ -46,18 +53,23 @@ before(function(done){
 
 					var token = res.body.content.token;
 					authValue = 'Bearer ' + token;
-
-					request(url)
-						.post('/admin/app/add')
-						.set('Content-type','application/json')
-						.set('Authorization', authValue)
-						.send(clientrequest)
-						.end(function(err, res) {
-							appID =  res.body.content.id;
-							done();
-						});
+					callback();
 				});
-		});
+		},
+		function(callback) {
+			request(url)
+				.post('/admin/app/add')
+				.set('Content-type','application/json')
+				.set('Authorization', authValue)
+				.send(clientrequest)
+				.end(function(err, res) {
+
+					appID =  res.body.content.id;
+					callback();
+					done();
+				});
+		}
+	]);
 });
 
 before(function(done){
@@ -100,7 +112,7 @@ it('2.1 should return a success response to indicate context successfully retrie
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.statusCode.should.be.equal(200);
+			common.assertnDebug( { expected: 200, result: res.statusCode }, err, res);
 			done();
 		});
 });
@@ -119,8 +131,7 @@ it('2.2 should return an error response to indicate context was NOT successfully
 		.send()
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('004');
-			res.statusCode.should.be.equal(400);
+			common.assertnDebug([{ expected: '004', result: res.body.code }, { expected: 400, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -142,8 +153,7 @@ it('2.3 should return an error response to indicate context NOT successfully ret
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('020');
-			res.statusCode.should.be.equal(404);
+			common.assertnDebug([{ expected: '020', result: res.body.code }, { expected: 404, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -164,8 +174,7 @@ it('2.4 should return an error response to indicate context NOT successfully ret
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.statusCode.should.be.equal(401);
-			res.body.code.should.be.equal('013');
+			common.assertnDebug([{ expected: '013', result: res.body.code }, { expected: 401, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -187,8 +196,7 @@ it('2.5 should return an error response to indicate context NOT successfully ret
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.statusCode.should.be.equal(400);
-			res.body.code.should.be.equal('040');
+			common.assertnDebug([{ expected: '040', result: res.body.code }, { expected: 400, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -207,7 +215,7 @@ it('2.6 should return a success response to indicate all contexts successfully r
 		.send()
 		.end(function(err, res) {
 
-			res.statusCode.should.be.equal(200);
+			common.assertnDebug({ expected: 200, result: res.statusCode }, err, res);
 			done();
 		});
 });

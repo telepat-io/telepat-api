@@ -1,6 +1,7 @@
 var common = require('../common');
 var request = common.request;
 var should = common.should;
+var async = common.async;
 var url = common.url;
 var DELAY = common.DELAY;
 
@@ -49,10 +50,17 @@ before(function(done){
 		keys: [ common.appKey ]
 	};
 
-	request(url)
-		.post('/admin/add')
-		.send(admin)
-		.end(function(err, res) {
+	async.waterfall([
+		function(callback) {
+			request(url)
+				.post('/admin/add')
+				.send(admin)
+				.end(function(err, res) {
+
+					callback();
+				});
+		},
+		function(callback) {
 			request(url)
 				.post('/admin/login')
 				.set('Content-type','application/json')
@@ -61,30 +69,36 @@ before(function(done){
 
 					var token = res.body.content.token;
 					adminAuthValue = 'Bearer ' + token;
-
-					request(url)
-						.post('/admin/app/add')
-						.set('Content-type','application/json')
-						.set('Authorization', adminAuthValue)
-						.send(appRequest)
-						.end(function(err, res) {
-
-							appID =  res.body.content.id;
-
-							request(url)
-								.post('/device/register')
-								.set('X-BLGREQ-SIGN', appIDsha256)
-								.set('X-BLGREQ-UDID', '')
-								.set('X-BLGREQ-APPID',appID)
-								.send(deviceRegisterRequest)
-								.end(function(err, res) {
-
-									deviceIdentification =  res.body.content.identifier;
-									done();
-								});
-						});
+					callback();
 				});
-		});
+		},
+		function(callback) {
+			request(url)
+				.post('/admin/app/add')
+				.set('Content-type','application/json')
+				.set('Authorization', adminAuthValue)
+				.send(appRequest)
+				.end(function(err, res) {
+
+					appID =  res.body.content.id;
+					callback();
+				});
+		},
+		function(callback) {
+			request(url)
+				.post('/device/register')
+				.set('X-BLGREQ-SIGN', appIDsha256)
+				.set('X-BLGREQ-UDID', '')
+				.set('X-BLGREQ-APPID',appID)
+				.send(deviceRegisterRequest)
+				.end(function(err, res) {
+
+					deviceIdentification =  res.body.content.identifier;
+					callback();
+					done();
+				});
+		}
+	]);
 });
 
 it('5.1 should return an error response to indicate that the user has NOT logged via Facebook because request body is empty', function(done) {
@@ -100,8 +114,7 @@ it('5.1 should return an error response to indicate that the user has NOT logged
 		.send()
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('005');
-			res.statusCode.should.be.equal(400);
+			common.assertnDebug([{ expected: '005', result: res.body.code }, { expected: 400, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -123,8 +136,7 @@ it('5.2 should return an error response to indicate that the user has NOT logged
 		.send(clientRequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('004');
-			res.statusCode.should.be.equal(400);
+			common.assertnDebug([{ expected: '004', result: res.body.code }, { expected: 400, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -146,8 +158,7 @@ it('5.3 should return an error response to indicate that the user has NOT logged
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('002');
-			res.statusCode.should.be.equal(500);
+			common.assertnDebug([{ expected: '002', result: res.body.code }, { expected: 500, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -162,81 +173,102 @@ it('5.4 should return a success response to indicate that the user has logged in
 		name: "John Smith"
 	};
 
-	request(url)
-		.post('/user/register')
-		.set('Content-type','application/json')
-		.set('X-BLGREQ-SIGN', appIDsha256 )
-		.set('X-BLGREQ-APPID', appID )
-		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
-		.send(clientrequest)
-		.end(function(err, res) {
-			setTimeout(function() {
-				request(url)
-					.post('/user/login_password')
-					.set('Content-type','application/json')
-					.set('X-BLGREQ-SIGN', appIDsha256 )
-					.set('X-BLGREQ-APPID', appID )
-					.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
-					.send(clientrequest)
-					.end(function(err, res) {
+	async.waterfall([
+		function(callback) {
+			request(url)
+				.post('/user/register')
+				.set('Content-type','application/json')
+				.set('X-BLGREQ-SIGN', appIDsha256 )
+				.set('X-BLGREQ-APPID', appID )
+				.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+				.send(clientrequest)
+				.end(function(err, res) {
 
-						token = res.body.content.token;
-						userID = res.body.content.user.id;
-						authValue = 'Bearer ' + token;
+					setTimeout(callback, 20*DELAY);
+				});
+		},
+		function(callback) {
+			request(url)
+				.post('/user/login_password')
+				.set('Content-type','application/json')
+				.set('X-BLGREQ-SIGN', appIDsha256 )
+				.set('X-BLGREQ-APPID', appID )
+				.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+				.send(clientrequest)
+				.end(function(err, res) {
 
-						res.statusCode.should.be.equal(200);
-						done();
-					});
-			}, 20*DELAY);
-		});
+					token = res.body.content.token;
+					userID = res.body.content.user.id;
+					authValue = 'Bearer ' + token;
+
+					common.assertnDebug({ expected: 200, result: res.statusCode }, err, res);
+					callback();
+					done();
+				});
+		}
+	]);
 });
 
 it('5.5 should return a success response to indicate that the user has logged in via Facebook', function(done) {
 
 	this.timeout(100*DELAY);
 
-	request('https://graph.facebook.com')
-		.get('/oauth/access_token?client_id=1086083914753251&client_secret=40f626ca66e4472e0d11c22f048e9ea8&grant_type=client_credentials')
-		.send()
-		.end(function(err, res) {
+	var clientrequest;
+	var token;
 
+	async.waterfall([
+		function(callback) {
 			request('https://graph.facebook.com')
-				.get('/v1.0/1086083914753251/accounts/test-users?access_token='+res.text.replace('access_token=', ''))
+				.get('/oauth/access_token?client_id=1086083914753251&client_secret=40f626ca66e4472e0d11c22f048e9ea8&grant_type=client_credentials')
+				.send()
+				.end(function(err, res) {
+
+					token = res.text.replace('access_token=', '');
+					callback();
+				});
+		},
+		function(callback) {
+			request('https://graph.facebook.com')
+				.get('/v1.0/1086083914753251/accounts/test-users?access_token='+token)
 				.send()
 				.end(function(err, res) {
 
 					var data = JSON.parse(res.text);
-					var clientrequest = {
+					clientrequest = {
 						access_token: data.data[0].access_token
 					};
-
-					request(url)
-						.post('/user/register')
-						.set('Content-type','application/json')
-						.set('X-BLGREQ-SIGN', appIDsha256 )
-						.set('X-BLGREQ-APPID', appID )
-						.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
-						.send(clientrequest)
-						.end(function(err, res) {
-
-							setTimeout(function() {
-
-								request(url)
-									.post('/user/login')
-									.set('Content-type','application/json')
-									.set('X-BLGREQ-SIGN', appIDsha256 )
-									.set('X-BLGREQ-APPID', appID )
-									.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
-									.send(clientrequest)
-									.end(function(err, res) {
-
-										res.statusCode.should.be.equal(200);
-										done();
-									});
-							}, 20*DELAY);
-						});
+					callback();
 				});
-		});
+		},
+		function(callback) {
+			request(url)
+				.post('/user/register')
+				.set('Content-type','application/json')
+				.set('X-BLGREQ-SIGN', appIDsha256 )
+				.set('X-BLGREQ-APPID', appID )
+				.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+				.send(clientrequest)
+				.end(function(err, res) {
+
+					setTimeout(callback, 20*DELAY);
+				});
+		},
+		function(callback) {
+			request(url)
+				.post('/user/login')
+				.set('Content-type','application/json')
+				.set('X-BLGREQ-SIGN', appIDsha256 )
+				.set('X-BLGREQ-APPID', appID )
+				.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+				.send(clientrequest)
+				.end(function(err, res) {
+
+					common.assertnDebug({ expected: 200, result: res.statusCode }, err, res);
+					callback();
+					done();
+				});
+		}
+	]);
 });
 
 it('5.6 should return a success response to indicate that the user info was retrieved', function(done) {
@@ -253,7 +285,7 @@ it('5.6 should return a success response to indicate that the user info was retr
 		.send()
 		.end(function(err, res) {
 
-			res.statusCode.should.be.equal(200);
+			common.assertnDebug({ expected: 200, result: res.statusCode }, err, res);
 			done();
 		});
 });
@@ -268,62 +300,72 @@ it('5.7 should return an error response to indicate that the user info was NOT r
 		name: "John Smith"
 	};
 
-	request(url)
-		.post('/user/register')
-		.set('Content-type','application/json')
-		.set('X-BLGREQ-SIGN', appIDsha256 )
-		.set('X-BLGREQ-APPID', appID )
-		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
-		.send(clientrequest)
-		.end(function(err, res) {
-			setTimeout(function() {
-				request(url)
-					.post('/user/login_password')
-					.set('Content-type','application/json')
-					.set('X-BLGREQ-SIGN', appIDsha256 )
-					.set('X-BLGREQ-APPID', appID )
-					.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
-					.send(clientrequest)
-					.end(function(err, res) {
+	var authValue3;
+	var subclientrequest;
 
-						var token3 = res.body.content.token;
-						var userID3 = res.body.content.user.id;
-						var authValue3 = 'Bearer ' + token3;
-						var subclientrequest = {
-							id : userID3,
-							email : "exampleUser@appscend.com"
-						};
+	async.waterfall([
+		function(callback) {
+			request(url)
+				.post('/user/register')
+				.set('Content-type','application/json')
+				.set('X-BLGREQ-SIGN', appIDsha256 )
+				.set('X-BLGREQ-APPID', appID )
+				.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+				.send(clientrequest)
+				.end(function(err, res) {
+					setTimeout(callback, 20*DELAY);
+				});
+		},
+		function(callback) {
+			request(url)
+				.post('/user/login_password')
+				.set('Content-type','application/json')
+				.set('X-BLGREQ-SIGN', appIDsha256 )
+				.set('X-BLGREQ-APPID', appID )
+				.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+				.send(clientrequest)
+				.end(function(err, res) {
 
-						request(url)
-							.delete('/user/delete')
-							.set('X-BLGREQ-SIGN', appIDsha256)
-							.set('X-BLGREQ-UDID', deviceIdentification)
-							.set('X-BLGREQ-APPID',appID)
-							.set('Authorization', authValue3)
-							.send(subclientrequest)
-							.end(function(err, res) {
+					var token3 = res.body.content.token;
+					var userID3 = res.body.content.user.id;
+					authValue3 = 'Bearer ' + token3;
+					subclientrequest = {
+						id : userID3,
+						email : "exampleUser@appscend.com"
+					};
+					callback();
+				});
+		},
+		function(callback) {
+			request(url)
+				.delete('/user/delete')
+				.set('X-BLGREQ-SIGN', appIDsha256)
+				.set('X-BLGREQ-UDID', deviceIdentification)
+				.set('X-BLGREQ-APPID',appID)
+				.set('Authorization', authValue3)
+				.send(subclientrequest)
+				.end(function(err, res) {
 
-								setTimeout(function(){
+					setTimeout(callback, 20*DELAY);
+				});
+		},
+		function(callback) {
+			request(url)
+				.get('/user/me')
+				.set('Content-type','application/json')
+				.set('X-BLGREQ-SIGN', appIDsha256 )
+				.set('X-BLGREQ-APPID', appID )
+				.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+				.set('Authorization', authValue3 )
+				.send()
+				.end(function(err, res) {
 
-									request(url)
-										.get('/user/me')
-										.set('Content-type','application/json')
-										.set('X-BLGREQ-SIGN', appIDsha256 )
-										.set('X-BLGREQ-APPID', appID )
-										.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
-										.set('Authorization', authValue3 )
-										.send()
-										.end(function(err, res) {
-
-											res.statusCode.should.be.equal(404);
-											res.body.code.should.be.equal('023');
-											done();
-										});
-								}, 20*DELAY);
-							});
-					});
-			}, 20*DELAY);
-		});
+					common.assertnDebug([{ expected: '023', result: res.body.code }, { expected: 404, result: res.statusCode }], err, res);
+					callback();
+					done();
+				});
+		}
+	]);
 });
 
 it('5.8 should return an error response to indicate that the user has NOT logged in via user & password because of invalid credentials', function(done) {
@@ -345,8 +387,7 @@ it('5.8 should return an error response to indicate that the user has NOT logged
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('031');
-			res.statusCode.should.be.equal(401);
+			common.assertnDebug([{ expected: '031', result: res.body.code }, { expected: 401, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -370,8 +411,7 @@ it('5.9 should return an error response to indicate that the user has NOT logged
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('023');
-			res.statusCode.should.be.equal(404);
+			common.assertnDebug([{ expected: '023', result: res.body.code }, { expected: 404, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -394,8 +434,7 @@ it('5.10 should return an error response to indicate that the user has NOT logge
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('004');
-			res.statusCode.should.be.equal(400);
+			common.assertnDebug([{ expected: '004', result: res.body.code }, { expected: 400, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -418,8 +457,7 @@ it('5.11 should return an error response to indicate that the user has NOT logge
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('004');
-			res.statusCode.should.be.equal(400);
+			common.assertnDebug([{ expected: '004', result: res.body.code }, { expected: 400, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -448,7 +486,7 @@ it('5.12 should return a success response to indicate that the user was updated'
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.statusCode.should.be.equal(202);
+			common.assertnDebug( { expected: 202, result: res.statusCode }, err, res);
 			done();
 		});
 });
@@ -477,7 +515,7 @@ it('5.13 should return a success response to indicate that the user password was
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.statusCode.should.be.equal(202);
+			common.assertnDebug( { expected: 202, result: res.statusCode }, err, res);
 			done();
 		});
 });
@@ -506,8 +544,7 @@ it('5.14 should return an error response to indicate that the userID is not vali
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('042');
-			res.statusCode.should.be.equal(400);
+			common.assertnDebug([{ expected: '042', result: res.body.code }, { expected: 400, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -526,8 +563,7 @@ it('5.15 should return a success response to indicate that the user password was
 		.send()
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('005');
-			res.statusCode.should.be.equal(400);
+			common.assertnDebug([{ expected: '005', result: res.body.code }, { expected: 400, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -550,8 +586,7 @@ it('5.16 should return a success response to indicate that the user password was
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('038');
-			res.statusCode.should.be.equal(400);
+			common.assertnDebug([{ expected: '038', result: res.body.code }, { expected: 400, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -574,8 +609,7 @@ it('5.17 should return a success response to indicate that the user password was
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('038');
-			res.statusCode.should.be.equal(400);
+			common.assertnDebug([{ expected: '038', result: res.body.code }, { expected: 400, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -599,7 +633,7 @@ it('5.18 should return a success response to indicate that the user was updated 
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.statusCode.should.be.equal(200);
+			common.assertnDebug({ expected: 200, result: res.statusCode }, err, res);
 			done();
 		});
 });
@@ -621,7 +655,7 @@ it('5.19 should return a success response to indicate that the token was updated
 			token = res.body.content.token;
 			authValue = 'Bearer ' + token;
 
-			res.statusCode.should.be.equal(200);
+			common.assertnDebug({ expected: 200, result: res.statusCode }, err, res);
 			done();
 		});
 });
@@ -642,8 +676,7 @@ it('5.20 should return an error response to indicate that the token was NOT upda
 		.send()
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('014');
-			res.statusCode.should.be.equal(401);
+			common.assertnDebug([{ expected: '014', result: res.body.code }, { expected: 401, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -664,9 +697,7 @@ it('5.21 should return an error response to indicate that the token was NOT upda
 		.send()
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('040');
-			res.statusCode.should.be.equal(400);
-			res.body.message.should.be.equal("Malformed authorization token");
+			common.assertnDebug([{ expected: '040', result: res.body.code }, { expected: 400, result: res.statusCode }, { expected: 'Malformed authorization token', result: res.body.message }], err, res);
 			done();
 		});
 });
@@ -684,8 +715,7 @@ it('5.22 should return an error response to indicate that the token was NOT upda
 		.send()
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('013');
-			res.statusCode.should.be.equal(401);
+			common.assertnDebug([{ expected: '013', result: res.body.code }, { expected: 401, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -703,8 +733,7 @@ it('5.23 should return an error response to indicate that the token was NOT upda
 		.send()
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('007');
-			res.statusCode.should.be.equal(400);
+			common.assertnDebug([{ expected: '007', result: res.body.code }, { expected: 400, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -723,8 +752,7 @@ it('5.24 should return an error response to indicate that the token was NOT upda
 		.send()
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('006');
-			res.statusCode.should.be.equal(415);
+			common.assertnDebug([{ expected: '006', result: res.body.code }, { expected: 415, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -743,8 +771,7 @@ it('5.25 should return an error response to indicate that the token was NOT upda
 		.send()
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('008');
-			res.statusCode.should.be.equal(401);
+			common.assertnDebug([{ expected: '008', result: res.body.code }, { expected: 401, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -762,8 +789,7 @@ it('5.26 should return an error response to indicate that the token was NOT upda
 		.send()
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('009');
-			res.statusCode.should.be.equal(400);
+			common.assertnDebug([{ expected: '009', result: res.body.code }, { expected: 400, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -782,14 +808,12 @@ it('5.27 should return a success response to indicate that the user logged out',
 		.send()
 		.end(function(err, res) {
 
-			res.statusCode.should.be.equal(200);
+			common.assertnDebug({ expected: 200, result: res.statusCode }, err, res);
 			done();
 		});
 });
 
 it('5.28 should return a success response to indicate that the user has registered', function(done) {
-
-	this.timeout(100*DELAY);
 
 	this.timeout(20*DELAY);
 
@@ -808,7 +832,7 @@ it('5.28 should return a success response to indicate that the user has register
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.statusCode.should.be.equal(202);
+			common.assertnDebug({ expected: 202, result: res.statusCode }, err, res);
 			setTimeout(done, 14*DELAY);
 		});
 });
@@ -830,8 +854,7 @@ it('5.29 should return a success response to indicate that the user has NOT regi
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('029');
-			res.statusCode.should.be.equal(409);
+			common.assertnDebug([{ expected: '029', result: res.body.code }, { expected: 409, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -849,8 +872,7 @@ it('5.30 should return a success response to indicate that the user has NOT regi
 		.send()
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('005');
-			res.statusCode.should.be.equal(400);
+			common.assertnDebug([{ expected: '005', result: res.body.code }, { expected: 400, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -865,23 +887,31 @@ it('5.31 should return a success response to indicate that the user was deleted'
 		name: "John Smith"
 	};
 
-	request(url)
-		.post('/user/login_password')
-		.set('Content-type','application/json')
-		.set('X-BLGREQ-SIGN', appIDsha256 )
-		.set('X-BLGREQ-APPID', appID )
-		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
-		.send(clientrequest)
-		.end(function(err, res) {
+	var subclientrequest;
 
-			token = res.body.content.token;
-			userID = res.body.content.user.id;
-			authValue = 'Bearer ' + token;
-			var subclientrequest = {
-				id : userID,
-				email : userEmail
-			};
+	async.waterfall([
+		function(callback) {
+			request(url)
+				.post('/user/login_password')
+				.set('Content-type','application/json')
+				.set('X-BLGREQ-SIGN', appIDsha256 )
+				.set('X-BLGREQ-APPID', appID )
+				.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+				.send(clientrequest)
+				.end(function(err, res) {
 
+					token = res.body.content.token;
+					userID = res.body.content.user.id;
+					authValue = 'Bearer ' + token;
+					subclientrequest = {
+						id : userID,
+						email : userEmail
+					};
+
+					callback();
+				});
+		},
+		function(callback) {
 			request(url)
 				.delete('/user/delete')
 				.set('X-BLGREQ-SIGN', appIDsha256)
@@ -891,8 +921,10 @@ it('5.31 should return a success response to indicate that the user was deleted'
 				.send(subclientrequest)
 				.end(function(err, res) {
 
-					res.statusCode.should.be.equal(202);
+					common.assertnDebug({ expected: 202, result: res.statusCode }, err, res);
+					callback();
 					done();
 				});
-		});
+		}
+	]);
 });

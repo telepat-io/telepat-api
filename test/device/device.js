@@ -1,6 +1,7 @@
 var common = require('../common');
 var request = common.request;
 var should = common.should;
+var async = common.async;
 var url = common.url;
 var DELAY = common.DELAY;
 
@@ -28,11 +29,17 @@ before(function(done){
 		keys: [ common.appKey ]
 	};
 
-	request(url)
-		.post('/admin/add')
-		.send(admin)
-		.end(function(err, res) {
+	async.waterfall([
+		function(callback) {
+			request(url)
+				.post('/admin/add')
+				.send(admin)
+				.end(function(err, res) {
 
+					callback();
+				});
+		},
+		function(callback) {
 			request(url)
 				.post('/admin/login')
 				.set('Content-type','application/json')
@@ -41,19 +48,23 @@ before(function(done){
 
 					var token = res.body.content.token;
 					authValue = 'Bearer ' + token;
-
-					request(url)
-						.post('/admin/app/add')
-						.set('Content-type','application/json')
-						.set('Authorization', authValue)
-						.send(clientrequest)
-						.end(function(err, res) {
-
-							appID =  res.body.content.id;
-							done();
-						});
+					callback();
 				});
-		});
+		},
+		function(callback) {
+			request(url)
+				.post('/admin/app/add')
+				.set('Content-type','application/json')
+				.set('Authorization', authValue)
+				.send(clientrequest)
+				.end(function(err, res) {
+
+					appID =  res.body.content.id;
+					callback();
+					done();
+				});
+		}
+	]);
 });
 
 it('3.1 should return a success response to indicate device successfully registered', function(done) {
@@ -83,8 +94,7 @@ it('3.1 should return a success response to indicate device successfully registe
 		.send(clientRequest)
 		.end(function(err, res) {
 
-			res.statusCode.should.be.equal(200);
-			res.body.content.identifier;
+			common.assertnDebug( { expected: 200, result: res.statusCode }, err, res);
 			done();
 		});
 });
@@ -112,11 +122,11 @@ it('3.2 should return a success response to indicate device successfully registe
 		.post('/device/register')
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', '')
-		.set('X-BLGREQ-APPID', appID)
+		.set('X-BLGREQ-APPID',appID)
 		.send(clientRequest)
 		.end(function(err, res) {
 
-			res.statusCode.should.be.equal(200);
+			common.assertnDebug( { expected: 200, result: res.statusCode }, err, res);
 			deviceIdentifier = res.body.content.identifier;
 			done();
 		});
@@ -144,11 +154,11 @@ it('3.3 should return a success response to indicate device successfully updated
 		.post('/device/register')
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', deviceIdentifier)
-		.set('X-BLGREQ-APPID', appID)
+		.set('X-BLGREQ-APPID',appID)
 		.send(clientRequest)
 		.end(function(err, res) {
 
-			res.statusCode.should.be.equal(200);
+			common.assertnDebug( { expected: 200, result: res.statusCode }, err, res);
 			done();
 		});
 });
@@ -175,11 +185,11 @@ it('3.4 should return an error response to indicate device successfully register
 		.post('/device/register')
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', '')
-		.set('X-BLGREQ-APPID', appID)
+		.set('X-BLGREQ-APPID',appID)
 		.send(clientRequest)
 		.end(function(err, res) {
 
-			res.statusCode.should.be.equal(200);
+			common.assertnDebug( { expected: 200, result: res.statusCode }, err, res);
 			done();
 		});
 });
@@ -199,12 +209,11 @@ it('3.5 should return an error response to indicate device NOT successfully regi
 		.post('/device/register')
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', '')
-		.set('X-BLGREQ-APPID', appID)
+		.set('X-BLGREQ-APPID',appID)
 		.send(clientRequest)
 		.end(function(err, res) {
 
-			res.statusCode.should.be.equal(400);
-			res.body.code.should.be.equal('004');
+			common.assertnDebug([{ expected: '004', result: res.body.code }, { expected: 400, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -217,12 +226,11 @@ it('3.6 should return an error response to indicate device NOT successfully regi
 		.post('/device/register')
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', '')
-		.set('X-BLGREQ-APPID', appID)
+		.set('X-BLGREQ-APPID',appID)
 		.send()
 		.end(function(err, res) {
 
-			res.statusCode.should.be.equal(400);
-			res.body.code.should.be.equal('005');
+			common.assertnDebug([{ expected: '005', result: res.body.code }, { expected: 400, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -235,12 +243,11 @@ it('3.7 should return an error response to indicate device NOT successfully regi
 		.post('/device/register')
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', 'invalidUDID')
-		.set('X-BLGREQ-APPID', appID)
+		.set('X-BLGREQ-APPID',appID)
 		.send()
 		.end(function(err, res) {
 
-			res.statusCode.should.be.equal(400);
-			res.body.code.should.be.equal('005');
+			common.assertnDebug([{ expected: '005', result: res.body.code }, { expected: 400, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -267,12 +274,11 @@ it('3.8 should return an error response to indicate device NOT successfully regi
 		.post('/device/register')
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', invalidUDID)
-		.set('X-BLGREQ-APPID', appID)
+		.set('X-BLGREQ-APPID',appID)
 		.send(clientRequest)
 		.end(function(err, res) {
 
-			res.statusCode.should.be.equal(404);
-			res.body.code.should.be.equal('025');
+			common.assertnDebug([{ expected: '025', result: res.body.code }, { expected: 404, result: res.statusCode }], err, res);
 			done();
 		});
 });

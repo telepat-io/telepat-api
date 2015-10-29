@@ -1,6 +1,7 @@
 var common = require('../common');
 var request = common.request;
 var should = common.should;
+var async = common.async;
 var url = common.url;
 var DELAY = common.DELAY;
 
@@ -78,11 +79,125 @@ before(function(done){
 		keys: [ common.appKey ]
 	};
 
-	request(url)
-		.post('/admin/add')
-		.send(admin)
-		.end(function(err, res) {
+	var schemaclientrequest = {
+		appId: appID,
+		schema: {
+			answers: {
+				namespace: "answers",
+				type: "answers",
+				properties: {},
+				belongsTo: [
+					{
+						parentModel: "events",
+						relationType: "hasSome"
+					}
+				],
+				read_acl: 6,
+				write_acl: 6,
+				meta_read_acl: 6
+			},
+			comments: {
+				namespace: "comments",
+				type: "comments",
+				properties: {
+					text: {
+						type: "string"
+					}
+				},
+				belongsTo: [
+					{
+						parentModel: "events",
+						relationType: "hasMany"
+					}
+				],
+				read_acl: 6,
+				write_acl: 6,
+				meta_read_acl: 6
+			},
+			events: {
+				namespace: "events",
+				type: "events",
+				properties: {
+					text: {
+						type: "string"
+					},
+					image: {
+						type: "string"
+					},
+					options: {
+						type: "object"
+					}
+				},
+				hasMany: [
+					"comments"
+				],
+				hasSome: [
+					"answers"
+				],
+				read_acl: 7,
+				write_acl: 7,
+				meta_read_acl: 4,
+				icon: "fa-image",
+				hasSome_property: "options"
+			},
+			things: {
+				namespace: "events",
+				type: "events",
+				properties: {
+					text: {
+						type: "string"
+					},
+					image: {
+						type: "string"
+					},
+					options: {
+						"type": "object"
+					}
+				},
+				hasMany: [
+					"comments"
+				],
+				read_acl: 0,
+				write_acl: 0,
+				meta_read_acl: 0
+			},
+			others: {
+				namespace: "events",
+				type: "events",
+				properties: {
+					text: {
+						type: "string"
+					},
+					image: {
+						type: "string"
+					},
+					options: {
+						type: "object"
+					}
+				},
+				hasMany: [
+					"comments"
+				],
+				read_acl: 4,
+				write_acl: 4,
+				meta_read_acl: 4
+			}
+		}
+	};
 
+	var appID2;
+
+	async.waterfall([
+		function(callback) {
+			request(url)
+				.post('/admin/add')
+				.send(admin)
+				.end(function(err, res) {
+
+					callback();
+				});
+		},
+		function(callback) {
 			request(url)
 				.post('/admin/login')
 				.set('Content-type','application/json')
@@ -91,176 +206,82 @@ before(function(done){
 
 					var token = res.body.content.token;
 					authValue = 'Bearer ' + token;
-
-					request(url)
-						.post('/admin/app/add')
-						.set('Content-type','application/json')
-						.set('Authorization', authValue)
-						.send(clientRequest)
-						.end(function(err, res) {
-
-							appID =  res.body.content.id;
-							var clientrequest = {
-								appId: appID,
-								schema: {
-									answers: {
-										namespace: "answers",
-										type: "answers",
-										properties: {},
-										belongsTo: [
-											{
-												parentModel: "events",
-												relationType: "hasSome"
-											}
-										],
-										read_acl: 6,
-										write_acl: 6,
-										meta_read_acl: 6
-									},
-									comments: {
-										namespace: "comments",
-										type: "comments",
-										properties: {
-											text: {
-												type: "string"
-											}
-										},
-										belongsTo: [
-											{
-												parentModel: "events",
-												relationType: "hasMany"
-											}
-										],
-										read_acl: 6,
-										write_acl: 6,
-										meta_read_acl: 6
-									},
-									events: {
-										namespace: "events",
-										type: "events",
-										properties: {
-											text: {
-												type: "string"
-											},
-											image: {
-												type: "string"
-											},
-											options: {
-												type: "object"
-											}
-										},
-										hasMany: [
-											"comments"
-										],
-										hasSome: [
-											"answers"
-										],
-										read_acl: 7,
-										write_acl: 7,
-										meta_read_acl: 4,
-										icon: "fa-image",
-										hasSome_property: "options"
-									},
-									things: {
-										namespace: "events",
-										type: "events",
-										properties: {
-											text: {
-												type: "string"
-											},
-											image: {
-												type: "string"
-											},
-											options: {
-												"type": "object"
-											}
-										},
-										hasMany: [
-											"comments"
-										],
-										read_acl: 0,
-										write_acl: 0,
-										meta_read_acl: 0
-									},
-									others: {
-										namespace: "events",
-										type: "events",
-										properties: {
-											text: {
-												type: "string"
-											},
-											image: {
-												type: "string"
-											},
-											options: {
-												type: "object"
-											}
-										},
-										hasMany: [
-											"comments"
-										],
-										read_acl: 4,
-										write_acl: 4,
-										meta_read_acl: 4
-									}
-								}
-							};
-
-							request(url)
-								.post('/admin/schema/update')
-								.set('Content-type','application/json')
-								.set('Authorization', authValue )
-								.set('X-BLGREQ-APPID', appID )
-								.send(clientrequest)
-								.end(function(err, res) {
-
-									var clientrequest = {
-										name: "context"
-									};
-
-									request(url)
-										.post('/admin/context/add')
-										.set('Content-type','application/json')
-										.set('Authorization', authValue )
-										.set('X-BLGREQ-APPID', appID )
-										.send(clientrequest)
-										.end(function(err, res) {
-
-											var objectKey = Object.keys(res.body.content)[0];
-											contextID = res.body.content.id;
-
-											var clientrequest = {
-												name: "test-app2",
-												keys: [ common.appKey ]
-											};
-
-											request(url)
-												.post('/admin/app/add')
-												.set('Content-type','application/json')
-												.set('Authorization', authValue)
-												.send(clientrequest)
-												.end(function(err, res) {
-
-													appID2 = res.body.content.id;
-
-													request(url)
-														.post('/admin/context/add')
-														.set('Content-type','application/json')
-														.set('Authorization', authValue )
-														.set('X-BLGREQ-APPID', appID2 )
-														.send(clientrequest)
-														.end(function(err, res) {
-
-
-															contextID2 = res.body.content.id;
-															done();
-														});
-												});
-										});
-								});
-						});
+					callback();
 				});
-		});
+		},
+		function(callback) {
+			request(url)
+				.post('/admin/app/add')
+				.set('Content-type','application/json')
+				.set('Authorization', authValue)
+				.send(clientRequest)
+				.end(function(err, res) {
+
+					appID =  res.body.content.id;
+					callback();
+				});
+		},
+		function(callback) {
+			request(url)
+				.post('/admin/schema/update')
+				.set('Content-type','application/json')
+				.set('Authorization', authValue )
+				.set('X-BLGREQ-APPID', appID )
+				.send(schemaclientrequest)
+				.end(function(err, res) {
+
+					callback();
+				});
+		},
+		function(callback) {
+			var clientrequest = {
+				name: "context"
+			};
+
+			request(url)
+				.post('/admin/context/add')
+				.set('Content-type','application/json')
+				.set('Authorization', authValue )
+				.set('X-BLGREQ-APPID', appID )
+				.send(clientrequest)
+				.end(function(err, res) {
+
+					contextID = res.body.content.id;
+					callback();
+				});
+		},
+		function(callback) {
+			var clientrequest = {
+				name: "test-app2",
+				keys: [ common.appKey ]
+			};
+
+			request(url)
+				.post('/admin/app/add')
+				.set('Content-type','application/json')
+				.set('Authorization', authValue)
+				.send(clientrequest)
+				.end(function(err, res) {
+
+					appID2 = res.body.content.id;
+					callback();
+				});
+		},
+		function(callback) {
+			request(url)
+				.post('/admin/context/add')
+				.set('Content-type','application/json')
+				.set('Authorization', authValue )
+				.set('X-BLGREQ-APPID', appID2 )
+				.send(clientRequest)
+				.end(function(err, res) {
+
+					contextID2 = res.body.content.id;
+					callback();
+					done();
+				});
+		}
+	]);
 });
 
 before(function(done){
@@ -282,48 +303,56 @@ before(function(done){
 		}
 	};
 
-	request(url)
-		.post('/device/register')
-		.set('X-BLGREQ-SIGN', appIDsha256)
-		.set('X-BLGREQ-UDID', '')
-		.set('X-BLGREQ-APPID',appID)
-		.send(clientrequest)
-		.end(function(err, res) {
+	var clientrequest2 = {
+		email: 'user'+Math.round(Math.random()*1000000)+'@example.com',
+		password: "secure_password1337",
+		name: "John Smith"
+	};
 
-			deviceIdentification =  res.body.content.identifier;
-			var clientrequest = {
-				email: 'user'+Math.round(Math.random()*1000000)+'@example.com',
-				password: "secure_password1337",
-				name: "John Smith"
-			};
+	async.waterfall([
+		function(callback) {
+			request(url)
+				.post('/device/register')
+				.set('X-BLGREQ-SIGN', appIDsha256)
+				.set('X-BLGREQ-UDID', '')
+				.set('X-BLGREQ-APPID',appID)
+				.send(clientrequest)
+				.end(function(err, res) {
 
+					deviceIdentification =  res.body.content.identifier;
+					callback();
+				});
+		},
+		function(callback) {
 			request(url)
 				.post('/user/register')
 				.set('Content-type','application/json')
 				.set('X-BLGREQ-SIGN', appIDsha256 )
 				.set('X-BLGREQ-APPID', appID )
 				.set('X-BLGREQ-UDID', deviceIdentification )
-				.send(clientrequest)
+				.send(clientrequest2)
 				.end(function(err, res) {
 
-					setTimeout(function () {
-
-						request(url)
-							.post('/user/login_password')
-							.set('Content-type','application/json')
-							.set('X-BLGREQ-SIGN', appIDsha256 )
-							.set('X-BLGREQ-APPID', appID )
-							.set('X-BLGREQ-UDID', deviceIdentification )
-							.send(clientrequest)
-							.end(function(err, res) {
-
-								token = res.body.content.token;
-								userAuthValue = 'Bearer ' + token;
-								done();
-							});
-					}, 20*DELAY);
+					setTimeout(callback, 20*DELAY);
 				});
-		});
+		},
+		function(callback) {
+			request(url)
+				.post('/user/login_password')
+				.set('Content-type','application/json')
+				.set('X-BLGREQ-SIGN', appIDsha256 )
+				.set('X-BLGREQ-APPID', appID )
+				.set('X-BLGREQ-UDID', deviceIdentification )
+				.send(clientrequest2)
+				.end(function(err, res) {
+
+					token = res.body.content.token;
+					userAuthValue = 'Bearer ' + token;
+					callback();
+					done();
+				});
+		}
+	]);
 });
 
 it('4.1 should return an error (400) response to indicate that request body is empty', function(done) {
@@ -339,8 +368,7 @@ it('4.1 should return an error (400) response to indicate that request body is e
 		.send()
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('005');
-			res.statusCode.should.be.equal(400);
+			common.assertnDebug([{ expected: '005', result: res.body.code }, { expected: 400, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -364,8 +392,7 @@ it('4.2 should return an error (401) response to indicate that only authenticate
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('013');
-			res.statusCode.should.be.equal(401);
+			common.assertnDebug([{ expected: '013', result: res.body.code }, { expected: 401, result: res.statusCode }, { expected: 401, result: res.body.status }], err, res);
 			done();
 		});
 });
@@ -392,9 +419,7 @@ it('4.3 should return a error response to indicate that a object has NOT been cr
 		.send(subclientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('004');
-			res.body.status.should.be.equal(400);
-			res.statusCode.should.be.equal(400);
+			common.assertnDebug([{ expected: '004', result: res.body.code }, { expected: 400, result: res.statusCode }, { expected: 400, result: res.body.status }], err, res);
 			done();
 		});
 });
@@ -420,8 +445,7 @@ it('4.4 should return a success response to indicate that object has been create
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.statusCode.should.be.equal(202);
-			res.body.content.should.be.equal("Created");
+			common.assertnDebug([{ expected: 'Created', result: res.body.content }, { expected: 202, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -447,8 +471,7 @@ it('4.5 should return a success response to indicate that object has NOT been cr
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('015');
-			res.statusCode.should.be.equal(403);
+			common.assertnDebug([{ expected: '015', result: res.body.code }, { expected: 403, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -474,8 +497,7 @@ it('4.6 should return a success response to indicate that object has NOT been cr
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('015');
-			res.statusCode.should.be.equal(403);
+			common.assertnDebug([{ expected: '015', result: res.body.code }, { expected: 403, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -501,8 +523,7 @@ it('4.7 should return a success response to indicate that object has been create
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.statusCode.should.be.equal(202);
-			res.body.content.should.be.equal("Created");
+			common.assertnDebug([{ expected: 'Created', result: res.body.content }, { expected: 202, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -527,8 +548,7 @@ it('4.8 should return an error response to indicate that object has NOT been cre
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('013');
-			res.statusCode.should.be.equal(401);
+			common.assertnDebug([{ expected: '013', result: res.body.code }, { expected: 401, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -553,8 +573,7 @@ it('4.9 should return an error response to indicate that object has NOT been cre
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('004');
-			res.statusCode.should.be.equal(400);
+			common.assertnDebug([{ expected: '004', result: res.body.code }, { expected: 400, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -577,8 +596,7 @@ it('4.10 should return an error response to indicate that object has NOT been cr
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('002');
-			res.statusCode.should.be.equal(500);
+			common.assertnDebug([{ expected: '002', result: res.body.code }, { expected: 500, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -602,8 +620,7 @@ it('4.11 should return an error response to indicate that object has NOT been cr
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('004');
-			res.statusCode.should.be.equal(400);
+			common.assertnDebug([{ expected: '004', result: res.body.code }, { expected: 400, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -629,8 +646,7 @@ it('4.12 should return an error response to indicate that object has NOT been cr
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('004');
-			res.statusCode.should.be.equal(400);
+			common.assertnDebug([{ expected: '004', result: res.body.code }, { expected: 400, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -656,8 +672,7 @@ it('4.13 should return an error response to indicate that object has NOT been cr
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('022');
-			res.statusCode.should.be.equal(404);
+			common.assertnDebug([{ expected: '022', result: res.body.code }, { expected: 404, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -682,8 +697,7 @@ it('4.14 should return an error response to indicate that object has NOT been cr
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('004');
-			res.statusCode.should.be.equal(400);
+			common.assertnDebug([{ expected: '004', result: res.body.code }, { expected: 400, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -708,8 +722,7 @@ it('4.15 should return an error response to indicate that object has NOT been cr
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('011');
-			res.statusCode.should.be.equal(404);
+			common.assertnDebug([{ expected: '011', result: res.body.code }, { expected: 404, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -734,7 +747,7 @@ it('4.16 should return a success response to indicate the count of a certain fil
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.statusCode.should.be.equal(200);
+			common.assertnDebug( { expected: 200, result: res.statusCode }, err, res);
 			done();
 		});
 });
@@ -762,8 +775,7 @@ it('4.17 should return an error response because of invalid channel request', fu
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('027');
-			res.statusCode.should.be.equal(400);
+			common.assertnDebug([{ expected: '027', result: res.body.code }, { expected: 400, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -781,8 +793,7 @@ it('4.18 should return an error response to indicate the count was not returned 
 		.send()
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('005');
-			res.statusCode.should.be.equal(400);
+			common.assertnDebug([{ expected: '005', result: res.body.code }, { expected: 400, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -815,7 +826,7 @@ it('4.19 should return a success response to indicate that a object has been upd
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.statusCode.should.be.equal(202);
+			common.assertnDebug( { expected: 202, result: res.statusCode }, err, res);
 			done();
 		});
 });
@@ -846,8 +857,7 @@ it('4.20 should return a success response to indicate that a object has NOT been
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('040');
-			res.statusCode.should.be.equal(400);
+			common.assertnDebug([{ expected: '040', result: res.body.code }, { expected: 400, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -877,8 +887,7 @@ it('4.21 should return a success response to indicate that a object has NOT been
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('013');
-			res.statusCode.should.be.equal(401);
+			common.assertnDebug([{ expected: '013', result: res.body.code }, { expected: 401, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -908,8 +917,7 @@ it('4.22 should return an error response to indicate that a object has NOT been 
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('004');
-			res.statusCode.should.be.equal(400);
+			common.assertnDebug([{ expected: '004', result: res.body.code }, { expected: 400, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -939,8 +947,7 @@ it('4.23 should return a success response to indicate that a object has NOT been
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('004');
-			res.statusCode.should.be.equal(400);
+			common.assertnDebug([{ expected: '004', result: res.body.code }, { expected: 400, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -970,8 +977,7 @@ it('4.24 should return an error response to indicate that a object has NOT been 
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('022');
-			res.statusCode.should.be.equal(404);
+			common.assertnDebug([{ expected: '022', result: res.body.code }, { expected: 404, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -1001,8 +1007,7 @@ it('4.25 should return a success response to indicate that a object has NOT been
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('004');
-			res.statusCode.should.be.equal(400);
+			common.assertnDebug([{ expected: '004', result: res.body.code }, { expected: 400, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -1027,8 +1032,7 @@ it('4.26 should return a success response to indicate that a object has NOT been
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('038');
-			res.statusCode.should.be.equal(400);
+			common.assertnDebug([{ expected: '038', result: res.body.code }, { expected: 400, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -1053,8 +1057,7 @@ it('4.27 should return a success response to indicate that a object has NOT been
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('038');
-			res.statusCode.should.be.equal(400);
+			common.assertnDebug([{ expected: '038', result: res.body.code }, { expected: 400, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -1072,8 +1075,7 @@ it('4.28 should return a success response to indicate that a object has NOT been
 		.send()
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('005');
-			res.statusCode.should.be.equal(400);
+			common.assertnDebug([{ expected: '005', result: res.body.code }, { expected: 400, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -1100,7 +1102,7 @@ it('4.29 should return a success response to indicate that a object has been sub
 		.send(subclientrequest)
 		.end(function(err, res) {
 
-			res.statusCode.should.be.equal(200);
+			common.assertnDebug( { expected: 200, result: res.statusCode }, err, res);
 			done();
 		});
 });
@@ -1127,7 +1129,7 @@ it('4.30 should return a success response to indicate that a object has been sub
 		.send(subclientrequest)
 		.end(function(err, res) {
 
-			res.statusCode.should.be.equal(200);
+			common.assertnDebug( { expected: 200, result: res.statusCode }, err, res);
 			done();
 		});
 });
@@ -1153,8 +1155,7 @@ it('4.31 should return a success response to indicate that a object has NOT been
 		.send(subclientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('026');
-			res.statusCode.should.be.equal(403);
+			common.assertnDebug([{ expected: '026', result: res.body.code }, { expected: 403, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -1180,8 +1181,7 @@ it('4.32 should return an error response to indicate that a object has NOT been 
 		.send(subclientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('014');
-			res.statusCode.should.be.equal(401);
+			common.assertnDebug([{ expected: '014', result: res.body.code }, { expected: 401, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -1239,8 +1239,7 @@ it('4.33 should return an error response to indicate that a object has been NOT 
 		.send(subclientrequest)
 		.end(function(err, res) {
 
-			res.statusCode.should.be.equal(500);
-			res.body.code.should.be.equal('002');
+			common.assertnDebug([{ expected: '002', result: res.body.code }, { expected: 500, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -1266,8 +1265,7 @@ it('4.34 should return an error response to indicate that a object has NOT been 
 		.send(subclientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('002');
-			res.statusCode.should.be.equal(500);
+			common.assertnDebug([{ expected: '002', result: res.body.code }, { expected: 500, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -1281,22 +1279,29 @@ it('4.35 should return an error response to indicate that a object has NOT been 
 		keys: [ appKey ]
 	};
 
-	request(url)
-		.post('/admin/app/add')
-		.set('Content-type','application/json')
-		.set('Authorization', authValue)
-		.send(clientrequest)
-		.end(function(err, res) {
+	var subclientrequest = {
+		channel: {
+			context: contextID,
+			model: "comments"
+		}
+	};
 
-			var appID2 =  res.body.content.id;
+	var appID2;
 
-			var subclientrequest = {
-				channel: {
-					context: contextID,
-					model: "comments"
-				}
-			};
+	async.waterfall([
+		function(callback) {
+			request(url)
+				.post('/admin/app/add')
+				.set('Content-type','application/json')
+				.set('Authorization', authValue)
+				.send(clientrequest)
+				.end(function(err, res) {
 
+					appID2 =  res.body.content.id;
+					callback();
+				});
+		},
+		function(callback) {
 			request(url)
 				.post('/object/subscribe')
 				.set('Content-type', 'application/json')
@@ -1307,11 +1312,12 @@ it('4.35 should return an error response to indicate that a object has NOT been 
 				.send(subclientrequest)
 				.end(function (err, res) {
 
-					res.body.code.should.be.equal('043');
-					res.statusCode.should.be.equal(501);
+					common.assertnDebug([{ expected: '043', result: res.body.code }, { expected: 501, result: res.statusCode }], err, res);
+					callback();
 					done();
 				});
-		});
+		}
+	]);
 });
 
 it('4.36 should return an error response to indicate that a object has NOT been subscribed because context does not belong to app', function(done) {
@@ -1323,112 +1329,123 @@ it('4.36 should return an error response to indicate that a object has NOT been 
 		keys: [ appKey ]
 	};
 
-	request(url)
-		.post('/admin/app/add')
-		.set('Content-type','application/json')
-		.set('Authorization', authValue)
-		.send(clientrequest)
-		.end(function(err, res) {
-
-			var appID2 =  res.body.content.id;
-
-			var clientrequest = {
-				appId: appID,
-				schema: {
-					comments: {
-						namespace: "comments",
-						type: "comments",
-						properties: {
-							text: {
-								type: "string"
-							}
-						},
-						belongsTo: [
-							{
-								parentModel: "events",
-								relationType: "hasMany"
-							}
-						],
-						read_acl: 6,
-						write_acl: 6,
-						meta_read_acl: 6
-					},
-					events: {
-						namespace: "events",
-						type: "events",
-						properties: {
-							text: {
-								type: "string"
-							},
-							image: {
-								type: "string"
-							},
-							options: {
-								type: "object"
-							}
-						},
-						hasMany: [
-							"comments"
-						],
-						read_acl: 7,
-						write_acl: 7,
-						meta_read_acl: 4
-					},
-					things: {
-						namespace: "events",
-						type: "events",
-						properties: {
-							text: {
-								type: "string"
-							},
-							image: {
-								type: "string"
-							},
-							options: {
-								type: "object"
-							}
-						},
-						hasMany: [
-							"comments"
-						],
-						read_acl: 7,
-						write_acl: 7,
-						meta_read_acl: 4
+	var clientrequest2 = {
+		appId: appID,
+		schema: {
+			comments: {
+				namespace: "comments",
+				type: "comments",
+				properties: {
+					text: {
+						type: "string"
 					}
-				}
-			};
+				},
+				belongsTo: [
+					{
+						parentModel: "events",
+						relationType: "hasMany"
+					}
+				],
+				read_acl: 6,
+				write_acl: 6,
+				meta_read_acl: 6
+			},
+			events: {
+				namespace: "events",
+				type: "events",
+				properties: {
+					text: {
+						type: "string"
+					},
+					image: {
+						type: "string"
+					},
+					options: {
+						type: "object"
+					}
+				},
+				hasMany: [
+					"comments"
+				],
+				read_acl: 7,
+				write_acl: 7,
+				meta_read_acl: 4
+			},
+			things: {
+				namespace: "events",
+				type: "events",
+				properties: {
+					text: {
+						type: "string"
+					},
+					image: {
+						type: "string"
+					},
+					options: {
+						type: "object"
+					}
+				},
+				hasMany: [
+					"comments"
+				],
+				read_acl: 7,
+				write_acl: 7,
+				meta_read_acl: 4
+			}
+		}
+	};
 
+	var subclientrequest = {
+		channel: {
+			context: contextID,
+			model: "comments"
+		}
+	};
+
+	var appID2;
+
+	async.waterfall([
+		function(callback) {
+			request(url)
+				.post('/admin/app/add')
+				.set('Content-type','application/json')
+				.set('Authorization', authValue)
+				.send(clientrequest)
+				.end(function(err, res) {
+
+					appID2 =  res.body.content.id;
+					callback();
+				});
+		},
+		function(callback) {
 			request(url)
 				.post('/admin/schema/update')
 				.set('Content-type','application/json')
 				.set('Authorization', authValue )
 				.set('X-BLGREQ-APPID', appID2 )
-				.send(clientrequest)
+				.send(clientrequest2)
 				.end(function(err, res) {
 
-					var subclientrequest = {
-						channel: {
-							context: contextID,
-							model: "comments"
-						}
-					};
-
-					request(url)
-						.post('/object/subscribe')
-						.set('Content-type', 'application/json')
-						.set('X-BLGREQ-SIGN', appIDsha256)
-						.set('X-BLGREQ-UDID', deviceIdentification)
-						.set('X-BLGREQ-APPID', appID2)
-						.set('Authorization', userAuthValue)
-						.send(subclientrequest)
-						.end(function (err, res) {
-
-							res.body.code.should.be.equal('026');
-							res.statusCode.should.be.equal(403);
-							done();
-						});
+					callback();
 				});
-		});
+		},
+		function(callback) {
+			request(url)
+				.post('/object/subscribe')
+				.set('Content-type', 'application/json')
+				.set('X-BLGREQ-SIGN', appIDsha256)
+				.set('X-BLGREQ-UDID', deviceIdentification)
+				.set('X-BLGREQ-APPID', appID2)
+				.set('Authorization', userAuthValue)
+				.send(subclientrequest)
+				.end(function (err, res) {
+
+					common.assertnDebug([{ expected: '026', result: res.body.code }, { expected: 403, result: res.statusCode }], err, res);
+					callback();
+					done();
+				});
+		}
+	]);
 });
 
 
@@ -1455,8 +1472,7 @@ it('4.37 should return a success response to indicate that a object has NOT been
 		.send(subclientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('027');
-			res.statusCode.should.be.equal(400);
+			common.assertnDebug([{ expected: '027', result: res.body.code }, { expected: 400, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -1483,8 +1499,7 @@ it('4.38 should return an error response to indicate that a object has NOT been 
 		.send(subclientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('034');
-			res.statusCode.should.be.equal(404);
+			common.assertnDebug([{ expected: '034', result: res.body.code }, { expected: 404, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -1503,8 +1518,7 @@ it('4.39 should return an error response to indicate that a object has NOT been 
 		.send()
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('005');
-			res.statusCode.should.be.equal(400);
+			common.assertnDebug([{ expected: '005', result: res.body.code }, { expected: 400, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -1529,8 +1543,7 @@ it('4.40 should return a success response to indicate that a object has NOT been
 		.send(subclientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('004');
-			res.statusCode.should.be.equal(400);
+			common.assertnDebug([{ expected: '004', result: res.body.code }, { expected: 400, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -1555,8 +1568,7 @@ it('4.41 should return a success response to indicate that a object has NOT been
 		.send(subclientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('004');
-			res.statusCode.should.be.equal(400);
+			common.assertnDebug([{ expected: '004', result: res.body.code }, { expected: 400, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -1582,8 +1594,7 @@ it('4.42 should return a success response to indicate that a object has NOT been
 		.send(subclientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('022');
-			res.statusCode.should.be.equal(404);
+			common.assertnDebug([{ expected: '022', result: res.body.code }, { expected: 404, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -1637,8 +1648,7 @@ it('4.43 should return an error response to indicate that a object has NOT been 
 		.send(subclientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('004');
-			res.statusCode.should.be.equal(400);
+			common.assertnDebug([{ expected: '004', result: res.body.code }, { expected: 400, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -1663,7 +1673,7 @@ it('4.44 should return an success response to indicate that a object has been un
 		.send(subclientrequest)
 		.end(function(err, res) {
 
-			res.statusCode.should.be.equal(200);
+			common.assertnDebug({ expected: 200, result: res.statusCode }, err, res);
 			done();
 		});
 });
@@ -1681,8 +1691,7 @@ it('4.45 should return an error response to indicate that a object has NOT been 
 		.send()
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('005');
-			res.statusCode.should.be.equal(400);
+			common.assertnDebug([{ expected: '005', result: res.body.code }, { expected: 400, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -1710,8 +1719,7 @@ it('4.46 should return a error response (400) to indicate that a object has NOT 
 		.send(subclientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('027');
-			res.statusCode.should.be.equal(400);
+			common.assertnDebug([{ expected: '027', result: res.body.code }, { expected: 400, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -1738,8 +1746,7 @@ it('4.47 should return a error response (404) to indicate that a object has NOT 
 		.send(subclientrequest)
 		.end(function(err, res) {
 
-			res.statusCode.should.be.equal(404);
-			res.body.code.should.be.equal('037');
+			common.assertnDebug([{ expected: '037', result: res.body.code }, { expected: 404, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -1797,8 +1804,7 @@ it('4.48 should return a error response (404) to indicate that a object has NOT 
 		.send(subclientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('037');
-			res.statusCode.should.be.equal(404);
+			common.assertnDebug([{ expected: '037', result: res.body.code }, { expected: 404, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -1821,8 +1827,7 @@ it('4.49 should return a success response to indicate that a object has NOT been
 		.send(subclientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('004');
-			res.statusCode.should.be.equal(400);
+			common.assertnDebug([{ expected: '004', result: res.body.code }, { expected: 400, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -1847,8 +1852,7 @@ it('4.50 should return a success response to indicate that a object has NOT been
 		.send(subclientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('004');
-			res.statusCode.should.be.equal(400);
+			common.assertnDebug([{ expected: '004', result: res.body.code }, { expected: 400, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -1872,8 +1876,7 @@ it('4.51 should return a success response to indicate that a object has NOT been
 		.send(subclientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('004');
-			res.statusCode.should.be.equal(400);
+			common.assertnDebug([{ expected: '004', result: res.body.code }, { expected: 400, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -1897,7 +1900,7 @@ it('4.52 should return a success response to indicate that a object has been del
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.statusCode.should.be.equal(202);
+			common.assertnDebug( { expected: 202, result: res.statusCode }, err, res);
 			done();
 		});
 });
@@ -1921,8 +1924,7 @@ it('4.53 should return an error response to indicate that a object was NOT delet
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('011');
-			res.statusCode.should.be.equal(404);
+			common.assertnDebug([{ expected: '011', result: res.body.code }, { expected: 404, result: res.statusCode }], err, res);
 			done();
 		});
 
@@ -1947,8 +1949,7 @@ it('4.54 should return an error response to indicate that the object id was miss
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('004');
-			res.statusCode.should.be.equal(400);
+			common.assertnDebug([{ expected: '004', result: res.body.code }, { expected: 400, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -1972,8 +1973,7 @@ it('4.55 should return an error response to indicate that the object model was m
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('004');
-			res.statusCode.should.be.equal(400);
+			common.assertnDebug([{ expected: '004', result: res.body.code }, { expected: 400, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -1997,8 +1997,7 @@ it('4.56 should return an error response to indicate that the object was not del
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('013');
-			res.statusCode.should.be.equal(401);
+			common.assertnDebug([{ expected: '013', result: res.body.code }, { expected: 401, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -2022,8 +2021,7 @@ it('4.57 should return an error response to indicate that the object was not del
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('004');
-			res.statusCode.should.be.equal(400);
+			common.assertnDebug([{ expected: '004', result: res.body.code }, { expected: 400, result: res.statusCode }], err, res);
 			done();
 		});
 });
@@ -2041,8 +2039,7 @@ it('4.58 should return an error response to indicate that the object was not del
 		.send()
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('005');
-			res.statusCode.should.be.equal(400);
+			common.assertnDebug([{ expected: '005', result: res.body.code }, { expected: 400, result: res.statusCode }], err, res);
 			done();
 		});
 });
