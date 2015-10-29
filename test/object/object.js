@@ -492,7 +492,7 @@ it('4.6 should return a success response to indicate that object has NOT been cr
 		.post('/object/create')
 		.set('X-BLGREQ-SIGN', appIDsha256)
 		.set('X-BLGREQ-UDID', deviceIdentification)
-		.set('X-BLGREQ-APPID',appID)
+		.set('X-BLGREQ-APPID', appID)
 		.set('Authorization', authValue )
 		.send(clientrequest)
 		.end(function(err, res) {
