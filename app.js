@@ -30,12 +30,7 @@ var envVariables = {
 	TP_REDIS_HOST: process.env.TP_REDIS_HOST,
 	TP_REDIS_PORT: process.env.TP_REDIS_PORT,
 	TP_MAIN_DB: process.env.TP_MAIN_DB,
-	TP_LOGGER: process.env.TP_LOGGER,
 	TP_PW_SALT: process.env.TP_PW_SALT,
-	TP_FB_CLIENT_ID: process.env.TP_FB_CLIENT_ID,
-	TP_FB_CLIENT_SECRET: process.env.TP_FB_CLIENT_SECRET,
-	TP_TW_CLIENT_KEY: process.env.TP_TW_CLIENT_KEY,
-	TP_TW_CLIENT_SECRET: process.env.TP_TW_CLIENT_SECRET
 };
 
 var validEnvVariables = true;
@@ -43,7 +38,7 @@ var validEnvVariables = true;
 var mainConfiguration = {
 	main_database: envVariables.TP_MAIN_DB,
 	message_queue: envVariables.TP_MSG_QUE,
-	logger: envVariables.TP_LOGGER,
+	logger: process.env.TP_LOGGER,
 	redis: {
 		host: envVariables.TP_REDIS_HOST,
 		port: envVariables.TP_REDIS_PORT
@@ -51,12 +46,12 @@ var mainConfiguration = {
 	password_salt: envVariables.TP_PW_SALT,
 	login_providers: {
 		facebook: {
-			client_id: envVariables.TP_FB_CLIENT_ID,
-			client_secret: envVariables.TP_FB_CLIENT_SECRET
+			client_id: process.env.TP_FB_CLIENT_ID,
+			client_secret: process.env.TP_FB_CLIENT_SECRET
 		},
 		twitter: {
-			consumer_key: envVariables.TP_TW_CLIENT_KEY,
-			consumer_secret: envVariables.TP_TW_CLIENT_SECRET
+			consumer_key: process.env.TP_TW_CLIENT_KEY,
+			consumer_secret: process.env.TP_TW_CLIENT_SECRET
 		}
 	}
 };
