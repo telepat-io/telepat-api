@@ -161,7 +161,8 @@ router.post('/add', function (req, res, next) {
 				op: 'add',
 				object: res1,
 				applicationId: req._telepat.applicationId,
-				isContext: true
+				isContext: true,
+				instant: true
 			})], 'aggregation', function(err) {
 				if (err)
 					Models.Application.logger.warning(app.getFailedRequestMessage(req, res, err));
@@ -224,7 +225,8 @@ router.delete('/remove', function (req, res, next) {
 					object: {path: 'context/'+req.body.id},
 					context: context,
 					applicationId: req._telepat.applicationId,
-					isContext: true
+					isContext: true,
+					instant: true
 				})], 'aggregation', function(err2) {
 					if (err2)
 						Models.Application.logger.warning(app.getFailedRequestMessage(req, res, err2));
@@ -312,7 +314,8 @@ router.post('/update', function (req, res, next) {
 						object: patch,
 						applicationId: req._telepat.applicationId,
 						isContext: true,
-						ts: modifiedMicrotime
+						ts: modifiedMicrotime,
+						instant: true
 					})], 'aggregation', function(err) {
 						if (err)
 							Models.Application.logger.warning(app.getFailedRequestMessage(req, res, err));

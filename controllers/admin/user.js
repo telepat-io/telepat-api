@@ -5,6 +5,7 @@ var router = express.Router();
 
 var security = require('../security');
 var Models = require('telepat-models');
+var microtime = require('microtime-nodejs');
 
 router.use('/all',
 	security.tokenValidation,
@@ -108,11 +109,15 @@ router.post('/update', function(req, res, next) {
 	}
 
 	var patches = req.body.patches;
+	var timestamp = microtime.now();
+	var userId = null;
 
 	async.series([
 		function(callback) {
 			var i = 0;
 			async.each(patches, function(patch, c) {
+				patches[i].username = req.body.username;
+				patches[i].ts = timestamp;
 				if (patches[i].path.split('/')[2] == 'password') {
 					security.encryptPassword(patches[i].value, function(err, hash) {
 						if (err) return c(err);
@@ -127,15 +132,34 @@ router.post('/update', function(req, res, next) {
 			}, callback);
 		},
 		function(callback) {
-			Models.User.update(req.body.username, req._telepat.applicationId, patches, function(err) {
+			Models.User.update(req.body.username, req._telepat.applicationId, patches, function(err, result) {
 				if (err && err.status == 404) {
 					callback(new Models.TelepatError(Models.TelepatError.errors.UserNotFound));
 				} else if (err)
 					return callback(err);
-				else
+				else {
+					userId = result.id;
 					callback();
+				}
 
 			});
+		},
+		function(callback) {
+			async.each(patches, function(patch, c) {
+				app.messagingClient.send([JSON.stringify({
+					op: 'update',
+					object: patch,
+					id: userId,
+					applicationId: req._telepat.applicationId,
+					isUser: true,
+					instant: true,
+					ts: timestamp
+				})], 'aggregation', function(err) {
+					if (err)
+						Models.Application.logger.warning('Could not send message to aggregation workers: '+err.message);
+				});
+				c();
+			}, callback);
 		}
 	], function(err) {
 		if (err) return next(err);
@@ -184,6 +208,7 @@ router.delete('/delete', function(req, res, next) {
 	var appId = req._telepat.applicationId;
 	var username = req.body.username;
 	var objectsToBeDeleted = null;
+	var userObject = null;
 
 	async.waterfall([
 		function(callback) {
@@ -193,6 +218,7 @@ router.delete('/delete', function(req, res, next) {
 			if (user.application_id != appId) {
 				return callback(new Models.TelepatError(Models.TelepatError.errors.UserNotFound));
 			} else {
+				userObject = user;
 				Models.User.delete(username, appId, function(err, results) {
 					if (err) return callback(err);
 					objectsToBeDeleted = results;
@@ -217,7 +243,9 @@ router.delete('/delete', function(req, res, next) {
 					op: 'delete',
 					object: {path: mdl+'/'+id, username: username},
 					context: context,
-					applicationId: appId
+					applicationId: appId,
+					instant: true,
+					user: userObject
 				}));
 				c();
 			}, function() {
