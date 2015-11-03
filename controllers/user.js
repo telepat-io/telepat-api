@@ -93,11 +93,12 @@ router.post('/login-:s', function(req, res, next) {
 		//Retrieve facebook information
 		function(callback) {
 			if (loginProvider == 'facebook') {
-				FB.napi('/me', {access_token: accessToken}, function(err, result) {
+				FB.napi('/me?fields=name,email,id,gender', {access_token: accessToken}, function(err, result) {
 					if (err) return callback(err);
 
 					if (!result.email) {
-						callback(new Models.TelepatError(Models.TelepatError.errors.InsufficientFacebookPermissions));
+						callback(new Models.TelepatError(Models.TelepatError.errors.InsufficientFacebookPermissions,
+							'email address is missing'));
 					}
 
 					username = result.email;
@@ -264,15 +265,16 @@ router.post('/register-:s', function(req, res, next) {
 	async.waterfall([
 		function(callback) {
 			if (loginProvider == 'facebook') {
-				FB.napi('/me', {access_token: accessToken}, function(err, result) {
+				FB.napi('/me?fields=name,email,id,gender', {access_token: accessToken}, function(err, result) {
 					if (err) return callback(err);
 
-					if (!userProfile.email) {
-						callback(new Models.TelepatError(Models.TelepatError.errors.InsufficientFacebookPermissions));
+					if (!result.email) {
+						callback(new Models.TelepatError(Models.TelepatError.errors.InsufficientFacebookPermissions,
+							['email address is missing']));
 					}
 
 					userProfile = result;
-					userProfile.username = userProfile.email;
+					userProfile.username = result.email;
 
 					callback();
 				});
@@ -289,6 +291,7 @@ router.post('/register-:s', function(req, res, next) {
 
 				twitterClient.get('account/settings', {}, function(err, result) {
 
+					userProfile = {};
 					userProfile.username = result.screen_name;
 
 					callback();
