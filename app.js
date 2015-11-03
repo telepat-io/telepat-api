@@ -111,8 +111,14 @@ if(mainConfiguration.password_salt === undefined || mainConfiguration.password_s
 //app.set('password_salt', mainConfiguration.password_salt);
 
 app.use(function(req, res, next) {
-	if (dbConnected)
+	if (dbConnected) {
+		req._startAt = process.hrtime();
+		res.on('finish', function() {
+			res._startAt = process.hrtime();
+		});
+
 		return next();
+	}
 	res.type('application/json');
 	next(new Models.TelepatError(Models.TelepatError.errors.ServerNotAvailable));
 });
@@ -136,22 +142,24 @@ var linkMiddlewaresAndRoutes = function(callback) {
 		res.send = function (string) {
 			var body = string instanceof Buffer ? string.toString() : string;
 			send.call(this, body);
-			var copyBody = JSON.parse(body);
-			var requestLogMessage = req.method +' '+ req.baseUrl+req.url +' '+res.statusCode;
+			res.on('finish', function() {
+				var copyBody = JSON.parse(body);
+				var requestLogMessage = req.method +' '+ req.baseUrl+req.url +' '+res.statusCode;
 
-			if (res._header && req._startAt) {
-				var diff = process.hrtime(req._startAt);
-				var ms = diff[0] * 1e3 + diff[1] * 1e-6;
+				if (res._header && req._startAt && res._startAt) {
+					var ms = (res._startAt[0] - req._startAt[0]) * 1e3
+						+ (res._startAt[1] - req._startAt[1]) * 1e-6;
 
-				requestLogMessage += ms.toFixed(3) + 'ms';
-			}
+					requestLogMessage += ' ' + ms.toFixed(3) + ' ms';
+				}
 
-			if (res.statusCode >= 400)
-				requestLogMessage += ' (['+copyBody.code+']: '+copyBody.message+')';
+				if (res.statusCode >= 400)
+					requestLogMessage += ' (['+copyBody.code+']: '+copyBody.message+')';
 
-			requestLogMessage += ' ('+req.ip+')';
+				requestLogMessage += ' ('+req.ip+')';
 
-			Models.Application.logger.info(requestLogMessage);
+				Models.Application.logger.info(requestLogMessage);
+			});
 		};
 		next();
 	});
