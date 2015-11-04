@@ -7,7 +7,7 @@ var microtime = require('microtime-nodejs');
 
 router.use(security.applicationIdValidation);
 router.use(security.apiKeyValidation);
-router.use(security.deviceIdValidation);
+router.use(['/subscribe', '/unsubscribe'], security.deviceIdValidation);
 
 router.use(['/subscribe', '/unsubscribe'], security.objectACL('read_acl'));
 router.use(['/create', '/update', '/delete'], security.objectACL('write_acl'));
@@ -324,7 +324,6 @@ router.post('/unsubscribe', function(req, res, next) {
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
- * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from device/register)
  *
  * @apiParam {String} model The type of object to subscribe to
  * @apiParam {Object} content Content of the object
@@ -350,11 +349,13 @@ router.post('/create', function(req, res, next) {
 	var mdl = req.body.model;
 	var context = req.body.context;
 	var appId = req._telepat.applicationId;
-	var isAdmin = req.user.isAdmin;
+	var isAdmin = req.user && req.user.isAdmin;
 
 	if (!context)
 		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['channel.context']));
 
+	if (req.user)
+		content.user_id = req.user.id;
 	content.type = mdl;
 	content.context_id = context;
 	content.application_id = appId;
@@ -373,7 +374,6 @@ router.post('/create', function(req, res, next) {
 
 	async.series([
 		function(aggCallback) {
-			content.user_id = req.user.id;
 			app.messagingClient.send([JSON.stringify({
 				op: 'add',
 				object: content,
@@ -425,7 +425,6 @@ router.post('/create', function(req, res, next) {
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
- * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from device/register)
  *
  * @apiParam {Number} id ID of the object (optional)
  * @apiParam {Number} context Context of the object
@@ -534,7 +533,6 @@ router.post('/update', function(req, res, next) {
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
- * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from device/register)
  *
  * @apiParam {Number} id ID of the object (optional)
  * @apiParam {Number} context Context of the object
@@ -606,7 +604,6 @@ router.delete('/delete', function(req, res, next) {
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
- * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from device/register)
  *
  * @apiParam {Object} channel The object representing a channel
  * @apiParam {Object} filters Additional filters to the subscription channel
