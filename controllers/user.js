@@ -15,22 +15,29 @@ router.use(security.apiKeyValidation);
 router.use(['/logout', '/me', '/update', '/update_immediate', '/delete'], security.tokenValidation);
 
 /**
- * @api {post} /user/login Login
- * @apiDescription Log in the user through Facebook.
+ * @api {post} /user/login-{s} Login
+ * @apiDescription Log in the user through Facebook or Twitter.
  * @apiName UserLogin
  * @apiGroup User
- * @apiVersion 0.2.6
+ * @apiVersion 0.2.7
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
  * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from device/register)
  *
+ * @apiParam {String} s GET param for the login provider
  * @apiParam {String} access_token Facebook access token.
  *
- * @apiExample {json} Client Request
+ * @apiExample {json} Facebook login
  * 	{
  * 		"access_token": "fb access token"
+ * 	}
+ *
+ * 	@apiExample {json} Twitter login
+ * 	{
+ * 		"oauth_token": "oauth token",
+ * 		"oauth_token_secret": "oauth token secret"
  * 	}
  *
  * 	@apiSuccessExample {json} Success Response
@@ -40,14 +47,12 @@ router.use(['/logout', '/me', '/update', '/update_immediate', '/delete'], securi
  * 			"token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImdhYmlAYXBwc2NlbmQuY29tIiwiaXNBZG1pbiI6dHJ1ZSwi
  * 			aWF0IjoxNDMyOTA2ODQwLCJleHAiOjE0MzI5MTA0NDB9.knhPevsK4cWewnx0LpSLrMg3Tk_OpchKu6it7FK9C2Q"
  * 			"user": {
- * 				 "id": 31,
+ * 				"id": 31,
  *				"type": "user",
- * 				"email": "abcd@appscend.com",
- * 				"fid": "facebook_id",
+ * 				"username": "abcd@appscend.com",
  * 				"devices": [
  *					"466fa519-acb4-424b-8736-fc6f35d6b6cc"
  *				],
- *				"friends": [],
  *				"password": "acb8a9cbb479b6079f59eabbb50780087859aba2e8c0c397097007444bba07c0"
  *			}
  * 		}
@@ -188,34 +193,41 @@ router.post('/login-:s', function(req, res, next) {
 });
 
 /**
- * @api {post} /user/register Register
+ * @api {post} /user/register-{s} Register
  * @apiDescription Registers a new user using a Facebook token or directly with an email and password. User is not created
  * immediately.
  * @apiName UserRegister
  * @apiGroup User
- * @apiVersion 0.2.6
+ * @apiVersion 0.2.7
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
  * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from device/register)
  *
+ * @apiParam {String} s GET param for the login provider (can be "username" for registering without a 3rd party)
  * @apiParam {String} access_token Facebook access token.
+ *
+ * @apiExample {json} Username
+ *
+ * {
+ * 		"username": "example@appscend.com",
+ * 		"password": "secure_password1337",
+ * 		"name": "John Smith"
+ * }
  *
  * @apiExample {json} Facebook Request
  * 	{
  * 		"access_token": "fb access token"
  * 	}
  *
- * @apiExample {json} Client Request (with password)
+ * @apiExample {json} Twitter request
+ * 	{
+ * 		"oauth_token": "oauth token",
+ * 		"oauth_token_secret": "oauth token secret"
+ * 	}
  *
- * {
- * 		"email": "example@appscend.com",
- * 		"password": "secure_password1337",
- * 		"name": "John Smith"
- * }
- *
- * 	@apiSuccessExample {json} Success Response
+ * @apiSuccessExample {json} Success Response
  * 	{
  * 		"status": 202,
  * 		"content": "User created"
@@ -382,7 +394,7 @@ router.post('/register-:s', function(req, res, next) {
  * @apiDescription Info about logged user
  * @apiName UserMe
  * @apiGroup User
- * @apiVersion 0.2.6
+ * @apiVersion 0.2.7
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint.
@@ -399,12 +411,10 @@ router.post('/register-:s', function(req, res, next) {
  * 		"content": {
  *			"id": 31,
  *			"type": "user",
- * 			"email": "abcd@appscend.com",
- * 			"fid": "",
+ * 			"username": "abcd@appscend.com",
  * 			"devices": [
  *				"466fa519-acb4-424b-8736-fc6f35d6b6cc"
- *			],
- *			"friends": []
+ *			]
  * 		}
  * 	}
  *
@@ -427,7 +437,7 @@ router.get('/me', function(req, res, next) {
  * @apiDescription Logs in the user with a password
  * @apiName UserLoginPassword
  * @apiGroup User
- * @apiVersion 0.2.6
+ * @apiVersion 0.2.7
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
@@ -435,11 +445,11 @@ router.get('/me', function(req, res, next) {
  * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from device/register)
  *
  * @apiParam {String} password The password
- * @apiParam {String} email The email
+ * @apiParam {String} username Username
  *
  * @apiExample {json} Client Request
  * 	{
- * 		"email": "user@example.com",
+ * 		"username": "user@example.com",
  * 		"password": "magic-password1337"
  * 	}
  *
@@ -451,12 +461,10 @@ router.get('/me', function(req, res, next) {
  * 			"user": {
  * 				"id": 31,
  *				"type": "user",
- * 				"email": "abcd@appscend.com",
- * 				"fid": "",
+ * 				"username": "abcd@appscend.com",
  * 				"devices": [
  *					"466fa519-acb4-424b-8736-fc6f35d6b6cc"
  *				],
- *				"friends": [],
  *				"password": "acb8a9cbb479b6079f59eabbb50780087859aba2e8c0c397097007444bba07c0"
  * 			}
  * 		}
@@ -539,7 +547,7 @@ router.post('/login_password', function(req, res, next) {
  * @apiDescription Logs out the user removing the device from his array of devices.
  * @apiName UserLogout
  * @apiGroup User
- * @apiVersion 0.2.6
+ * @apiVersion 0.2.7
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
@@ -592,7 +600,7 @@ router.get('/logout', function(req, res, next) {
  * may not be already expired).
  * @apiName RefreshToken
  * @apiGroup User
- * @apiVersion 0.2.6
+ * @apiVersion 0.2.7
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint.
@@ -645,7 +653,7 @@ router.get('/refresh_token', function(req, res, next) {
  * @apiDescription Updates the user information. This operation is not immediate.
  * @apiName UserUpdate
  * @apiGroup User
- * @apiVersion 0.2.6
+ * @apiVersion 0.2.7
  *
  * @apiParam {Object[]} patches Array of patches that describe the modifications
  *
@@ -766,15 +774,12 @@ router.post('/update_immediate', function(req, res, next) {
  * @apiDescription Deletes a user
  * @apiName UserDelete
  * @apiGroup User
- * @apiVersion 0.2.6
+ * @apiVersion 0.2.7
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
- *
- * @apiParam {number} id ID of the user
- * @apiParam {string} email Email of the user
  *
  * @apiSuccessExample {json} Success Response
  * 	{

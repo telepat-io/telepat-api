@@ -1,7 +1,6 @@
 var express = require('express');
 var router = express.Router();
 var Models = require('telepat-models');
-var sizeof = require('object-sizeof');
 var security = require('./security');
 var microtime = require('microtime-nodejs');
 
@@ -30,7 +29,7 @@ var validateContext = function(appId, context, callback) {
  * Subsequent subscription on the same channel and filter will have no effect but will return the objects.
  * @apiName ObjectSubscribe
  * @apiGroup Object
- * @apiVersion 0.2.6
+ * @apiVersion 0.2.7
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization
@@ -211,7 +210,7 @@ router.post('/subscribe', function(req, res, next) {
  * @apiDescription Unsubscribe to an object or a collection of objects (by a filter)
  * @apiName ObjectUnsubscribe
  * @apiGroup Object
- * @apiVersion 0.2.6
+ * @apiVersion 0.2.7
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization
@@ -316,7 +315,7 @@ router.post('/unsubscribe', function(req, res, next) {
  * @apiDescription Creates a new object. The object is not immediately created.
  * @apiName ObjectCreate
  * @apiGroup Object
- * @apiVersion 0.2.6
+ * @apiVersion 0.2.7
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization
@@ -417,7 +416,7 @@ router.post('/create', function(req, res, next) {
  * @apiDescription Updates an existing object. The object is not updated immediately.
  * @apiName ObjectUpdate
  * @apiGroup Object
- * @apiVersion 0.2.6
+ * @apiVersion 0.2.7
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization
@@ -525,7 +524,7 @@ router.post('/update', function(req, res, next) {
  * @apiDescription Deletes an object. The object is not immediately deleted.
  * @apiName ObjectDelete
  * @apiGroup Object
- * @apiVersion 0.2.6
+ * @apiVersion 0.2.7
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization
@@ -596,7 +595,7 @@ router.delete('/delete', function(req, res, next) {
  * @apiDescription Gets the object count of a certain filter/subscription
  * @apiName ObjectCount
  * @apiGroup Object
- * @apiVersion 0.2.6
+ * @apiVersion 0.2.7
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization

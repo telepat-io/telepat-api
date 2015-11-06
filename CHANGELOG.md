@@ -1,3 +1,15 @@
+# 0.2.7
+
+* Added support for loging/registering with Facebook. Register/login endpoints have changed:
+	* `/user/login` is now `/user/login-facebook` and `/user/login-twitter`
+	* `/user/register` is now `/user/register-facebook`, `/user/register-twitter` and `/user/register-username`
+* Env variables related to logger and login providers are optional
+* Added **instant** flag to admin context/user operation messages
+* Logged requests now show request duration in milliseconds
+* Fixed [#7](https://github.com/telepat-io/telepat-api/issues/7)
+* `/object/create|delete|update|count` no longer require device ID
+* `/object/create` bugfix when user is not logged in
+
 # 0.2.6
 
 * Changed all methods that delete resources to use DELETE HTTP method
