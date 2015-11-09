@@ -1509,7 +1509,8 @@ it('4.39 should return an error response to indicate that a object has NOT been 
 		});
 });
 
-it('4.40 should return a success response to indicate that a object has NOT been subscribed because of missing context', function(done) {
+it('4.40 should return a success response to indicate that a object has NOT been subscribed because of missing ' +
+	'context (invalid context)', function(done) {
 
 	this.timeout(100*DELAY);
 
@@ -1529,7 +1530,7 @@ it('4.40 should return a success response to indicate that a object has NOT been
 		.send(subclientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('004');
+			res.body.code.should.be.equal('027');
 			res.statusCode.should.be.equal(400);
 			done();
 		});
@@ -1827,14 +1828,14 @@ it('4.49 should return a success response to indicate that a object has NOT been
 		});
 });
 
-it('4.50 should return a success response to indicate that a object has NOT been unsubscribed because of missing context', function(done) {
+it('4.50 should return a success response to indicate that a object has NOT been unsubscribed because of missing ' +
+	'context (invalid channel)', function(done) {
 
 	this.timeout(100*DELAY);
 
 	var subclientrequest = {
 		channel: {
-			model: "comments",
-			id : "66"
+			model: "comments"
 		}
 	};
 
@@ -1847,8 +1848,8 @@ it('4.50 should return a success response to indicate that a object has NOT been
 		.send(subclientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('004');
 			res.statusCode.should.be.equal(400);
+			res.body.code.should.be.equal('027');
 			done();
 		});
 });

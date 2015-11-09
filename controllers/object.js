@@ -114,11 +114,6 @@ router.post('/subscribe', function(req, res, next) {
 		deviceId = req._telepat.device_id,
 		appId = req._telepat.applicationId;
 
-	if (['user', 'context'].indexOf(mdl) === -1) {
-		if (!context)
-			return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['channel.context']));
-	}
-
 	var channelObject = new Models.Channel(appId);
 
 	if (id) {
@@ -140,7 +135,7 @@ router.post('/subscribe', function(req, res, next) {
 	}
 
 	if (!channelObject.isValid()) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidChannel));
+		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidChannel, [channelObject.errorMessage]));
 	}
 
 	var objects = [];
@@ -148,7 +143,10 @@ router.post('/subscribe', function(req, res, next) {
 	async.series([
 		//verify if context belongs to app
 		function(callback) {
-			validateContext(appId, context, callback);
+			if (context)
+				validateContext(appId, context, callback);
+			else
+				callback();
 		},
 		function(callback) {
 			//only add subscription on initial /subscribe
@@ -248,11 +246,6 @@ router.post('/unsubscribe', function(req, res, next) {
 	deviceId = req._telepat.device_id,
 	appId = req._telepat.applicationId;
 
-	if (['user', 'context'].indexOf(mdl) === -1) {
-		if (!context)
-			return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['channel.context']));
-	}
-
 	var channelObject = new Models.Channel(appId);
 
 	if (id) {
@@ -274,13 +267,16 @@ router.post('/unsubscribe', function(req, res, next) {
 	}
 
 	if (!channelObject.isValid()) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidChannel));
+		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidChannel, [channelObject.errorMessage]));
 	}
 
 	async.series([
 		//verify if context belongs to app
 		function(callback) {
-			validateContext(appId, context, callback);
+			if (context)
+				validateContext(appId, context, callback);
+			else
+				callback();
 		},
 		function(callback) {
 			Models.Subscription.remove(appId, deviceId, channelObject, callback);

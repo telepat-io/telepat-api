@@ -153,8 +153,11 @@ var linkMiddlewaresAndRoutes = function(callback) {
 					requestLogMessage += ' ' + ms.toFixed(3) + ' ms';
 				}
 
-				if (res.statusCode >= 400)
+				if (res.statusCode >= 400)	{
 					requestLogMessage += ' (['+copyBody.code+']: '+copyBody.message+')';
+					if (res.statusCode >= 500 && res._telepatError)
+						requestLogMessage += "\n"+res._telepatError.stack;
+				}
 
 				requestLogMessage += ' ('+req.ip+')';
 
@@ -192,10 +195,7 @@ var linkErrorHandlingMiddlewares = function(callback) {
 		responseBody.code = err.code;
 		responseBody.message = err.message;
 		responseBody.status = err.status;
-
-		if (err.stack && app.get('env') === 'development')
-			responseBody.stack = err.stack;
-
+		res._telepatError = err;
 		res.json(responseBody);
 	});
 	callback();
