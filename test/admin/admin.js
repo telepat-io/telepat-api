@@ -258,7 +258,6 @@ describe('1.1.Admin', function() {
 
 				res.statusCode.should.be.equal(200);
 				res.body.content.email.should.be.equal(admin.email);
-				res.body.content.isAdmin.should.be.equal(true);
 				done();
 			});
 	});

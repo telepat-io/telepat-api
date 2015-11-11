@@ -148,52 +148,7 @@ it('2.3 should return an error response to indicate context NOT successfully ret
 		});
 });
 
-it('2.4 should return an error response to indicate context NOT successfully retrieved because of missing authorization', function(done) {
-
-	this.timeout(100*DELAY);
-
-	var clientrequest = {
-		id: contextID
-	};
-
-	request(url)
-		.post('/context')
-		.set('X-BLGREQ-SIGN', appIDsha256 )
-		.set('X-BLGREQ-APPID', appID )
-		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
-		.send(clientrequest)
-		.end(function(err, res) {
-
-			res.statusCode.should.be.equal(401);
-			res.body.code.should.be.equal('013');
-			done();
-		});
-});
-
-it('2.5 should return an error response to indicate context NOT successfully retrieved because of bad authorization', function(done) {
-
-	this.timeout(100*DELAY);
-
-	var clientrequest = {
-		id: contextID
-	};
-
-	request(url)
-		.post('/context')
-		.set('X-BLGREQ-SIGN', appIDsha256 )
-		.set('X-BLGREQ-APPID', appID )
-		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
-		.set('Authorization', authValue + '66')
-		.send(clientrequest)
-		.end(function(err, res) {
-
-			res.statusCode.should.be.equal(400);
-			res.body.code.should.be.equal('040');
-			done();
-		});
-});
-
-it('2.6 should return a success response to indicate all contexts successfully retrieved', function(done) {
+it('2.4 should return a success response to indicate all contexts successfully retrieved', function(done) {
 
 	this.timeout(100*DELAY);
 

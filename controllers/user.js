@@ -123,6 +123,9 @@ router.post('/login-:s', function(req, res, next) {
 				var twitterClient = new Twitter(options);
 
 				twitterClient.get('account/settings', {}, function(err, result) {
+					if (err)
+						return callback(err);
+
 					username = result.screen_name;
 					socialProfile = {screen_name: result.screen_name};
 

@@ -156,8 +156,17 @@ router.use('/me', security.tokenValidation);
  * 		}
  * 	}
  */
-router.get('/me', function (req, res) {
-	res.status(200).json({status: 200, content: req.user});
+router.get('/me', function (req, res, next) {
+	Models.Admin({id: req.user.id}, function(err, result) {
+		if (err && err.status == 404) {
+			return next(new Models.TelepatError(Models.TelepatError.errors.AdminNotFound));
+		}
+		else if (err)
+			next(err);
+		else
+			delete result.password;
+		res.status(200).json({status: 200, content: result});
+	});
 });
 
 router.use('/update', security.tokenValidation);
