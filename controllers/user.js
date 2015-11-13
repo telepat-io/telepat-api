@@ -92,7 +92,8 @@ router.post('/login-:s', function(req, res, next) {
 		if (!req.body.access_token)
 			return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['access_token']));
 		if (!app.telepatConfig.login_providers || !app.telepatConfig.login_providers.facebook)
-			return next(new Models.TelepatError(Models.TelepatError.errors.LoginProviderNotConfigured, ['facebook']));
+			return next(new Models.TelepatError(Models.TelepatError.errors.ServerNotConfigured,
+				['facebook login provider']));
 		else
 			FB.options(app.telepatConfig.login_providers.facebook);
 	} else if (loginProvider == 'twitter') {
@@ -101,7 +102,8 @@ router.post('/login-:s', function(req, res, next) {
 		if (!req.body.oauth_token_secret)
 			return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['oauth_token_secret']));
 		if (!app.telepatConfig.login_providers || !app.telepatConfig.login_providers.twitter)
-			return next(new Models.TelepatError(Models.TelepatError.errors.LoginProviderNotConfigured, ['twitter']));
+			return next(new Models.TelepatError(Models.TelepatError.errors.ServerNotConfigured,
+				['twitter login provider']));
 	} else {
 		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidLoginProvider, ['facebook, twitter']));
 	}
@@ -271,7 +273,8 @@ router.post('/register-:s', function(req, res, next) {
 		if (!req.body.access_token)
 			return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['access_token']));
 		if (!app.telepatConfig.login_providers || !app.telepatConfig.login_providers.facebook)
-			return next(new Models.TelepatError(Models.TelepatError.errors.LoginProviderNotConfigured, ['facebook']));
+			return next(new Models.TelepatError(Models.TelepatError.errors.ServerNotConfigured,
+				['facebook login handler']));
 		else
 			FB.options(app.telepatConfig.login_providers.facebook);
 	} else if (loginProvider == 'twitter') {
@@ -280,7 +283,8 @@ router.post('/register-:s', function(req, res, next) {
 		if (!req.body.oauth_token_secret)
 			return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['oauth_token_secret']));
 		if (!app.telepatConfig.login_providers || !app.telepatConfig.login_providers.twitter)
-			return next(new Models.TelepatError(Models.TelepatError.errors.LoginProviderNotConfigured, ['twitter']));
+			return next(new Models.TelepatError(Models.TelepatError.errors.ServerNotConfigured,
+				['twitter login provider']));
 	} else if (loginProvider == 'username') {
 		if (!req.body.username)
 			return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['username']));
@@ -394,30 +398,39 @@ router.post('/register-:s', function(req, res, next) {
 				delete userProfile.id;
 			}
 
-			if (requiresConfirmation && loginProvider == 'username' && Models.Application.loadedAppModels[appId].from_email) {
-				var mandrillClient = new mandrill.Mandrill(app.telepatConfig.mandrill.api_key);
+			if (requiresConfirmation &&
+				loginProvider == 'username' &&
+				Models.Application.loadedAppModels[appId].from_email) {
 
-				userProfile.confirmed = false;
-				userProfile.confirmationHash = crypto.createHash('md5').update(guid.v4()).digest('hex').toLowerCase();
-				var url = 'http://'+req.headers.host + '/user/confirm?username='+
-					encodeURIComponent(userProfile.username)+'&hash='+userProfile.confirmationHash+'&app_id='+appId;
-				var message = {
-					html: 'In order to be able to use and log in to the "'+Models.Application.loadedAppModels[appId].name+
+				if (!app.telepatConfig.mandrill || !app.telepatConfig.mandrill.api_key) {
+					Models.Application.logger.warning('Mandrill API key is missing, user email address will be ' +
+						'automatically confirmed');
+					userProfile.confirmed = true;
+				} else {
+					var mandrillClient = new mandrill.Mandrill(app.telepatConfig.mandrill.api_key);
+
+					userProfile.confirmed = false;
+					userProfile.confirmationHash = crypto.createHash('md5').update(guid.v4()).digest('hex').toLowerCase();
+					var url = 'http://'+req.headers.host + '/user/confirm?username='+
+						encodeURIComponent(userProfile.username)+'&hash='+userProfile.confirmationHash+'&app_id='+appId;
+					var message = {
+						html: 'In order to be able to use and log in to the "'+Models.Application.loadedAppModels[appId].name+
 						'" app click this link: <a href="'+url+'">Confirm</a>',
-					subject: 'Account confirmation for "'+Models.Application.loadedAppModels[appId].name+'"',
-					from_email: Models.Application.loadedAppModels[appId].from_email,
-					from_name: Models.Application.loadedAppModels[appId].name,
-					to: [
-						{
-							email: userProfile.email,
-							type: 'to'
-						}
-					]
-				};
-				mandrillClient.messages.send({message: message, async: "async"}, function() {}, function(err) {
-					Models.Application.logger.warning('Unable to send confirmation email: ' + err.name + ' - '
-						+ err.message);
-				});
+						subject: 'Account confirmation for "'+Models.Application.loadedAppModels[appId].name+'"',
+						from_email: Models.Application.loadedAppModels[appId].from_email,
+						from_name: Models.Application.loadedAppModels[appId].name,
+						to: [
+							{
+								email: userProfile.email,
+								type: 'to'
+							}
+						]
+					};
+					mandrillClient.messages.send({message: message, async: "async"}, function() {}, function(err) {
+						Models.Application.logger.warning('Unable to send confirmation email: ' + err.name + ' - '
+							+ err.message);
+					});
+				}
 			}
 
 			app.messagingClient.send([JSON.stringify({
@@ -902,6 +915,10 @@ router.post('/request_password_reset', function(req, res, next) {
 	var link = null;
 	var token = crypto.createHash('md5').update(guid.v4()).digest('hex').toLowerCase();
 	var user = null;
+
+	if (!app.telepatConfig.mandrill || !app.telepatConfig.mandrill.api_key) {
+		return next(new Models.TelepatError(Models.TelepatError.errors.ServerNotConfigured, ['Mandrill API key']));
+	}
 
 	if (type == 'browser') {
 		link = app.telepatConfig.password_reset.browser_link;
