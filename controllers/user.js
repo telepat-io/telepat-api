@@ -399,8 +399,8 @@ router.post('/register-:s', function(req, res, next) {
 
 				userProfile.confirmed = false;
 				userProfile.confirmationHash = crypto.createHash('md5').update(guid.v4()).digest('hex').toLowerCase();
-				var url = 'http://'+req.headers.host + '/user/confirm?username='+userProfile.username+'&hash='+
-					userProfile.confirmationHash+'&app_id='+appId;
+				var url = 'http://'+req.headers.host + '/user/confirm?username='+
+					encodeURIComponent(userProfile.username)+'&hash='+userProfile.confirmationHash+'&app_id='+appId;
 				var message = {
 					html: 'In order to be able to use and log in to the "'+Models.Application.loadedAppModels[appId].name+
 						'" app click this link: <a href="'+url+'">Confirm</a>',
