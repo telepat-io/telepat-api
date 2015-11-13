@@ -911,7 +911,7 @@ router.delete('/delete', function(req, res, next) {
 router.post('/request_password_reset', function(req, res, next) {
 	var type = req.body.type; // either 'browser' or 'app'
 	var appId = req._telepat.applicationId;
-	var username = req.username;
+	var username = req.body.username;
 	var link = null;
 	var token = crypto.createHash('md5').update(guid.v4()).digest('hex').toLowerCase();
 	var user = null;
