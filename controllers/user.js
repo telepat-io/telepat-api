@@ -161,6 +161,7 @@ router.post('/login-:s', function(req, res, next) {
 				else if (err)
 					callback(err);
 				else {
+					userProfile = result;
 					callback();
 				}
 			});

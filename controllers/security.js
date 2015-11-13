@@ -118,28 +118,30 @@ security.adminAppValidation = function (req, res, next) {
 
 security.objectACL = function (accessControl) {
 	return function(req, res, next) {
-		if (!req.headers.authorization)
+		var mdl = req.body.model || req.body.channel.model;
+
+		if (['user', 'context', 'application'].indexOf(mdl) !== -1)
+			return next();
+
+		if (!Models.Application.loadedAppModels[req._telepat.applicationId].schema) {
+			return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationHasNoSchema));
+		}
+
+		if (!Models.Application.loadedAppModels[req._telepat.applicationId].schema[mdl]) {
+			return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationSchemaModelNotFound,
+				[req._telepat.applicationId, mdl]));
+		}
+
+		var acl = Models.Application.loadedAppModels[req._telepat.applicationId].schema[mdl][accessControl];
+
+		if (!req.headers.authorization && !(acl & ACL_UNAUTHENTICATED))
 			return next(new Models.TelepatError(Models.TelepatError.errors.AuthorizationMissing));
 		if (!req.body || !Object.getOwnPropertyNames(req.body).length) {
 			return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
 		} else if (req.body.model || (req.body.channel && req.body.channel.model)) {
-			var mdl = req.body.model || req.body.channel.model;
-
-			if (['user', 'context', 'application'].indexOf(mdl) !== -1)
-				return next();
-
-			if (!Models.Application.loadedAppModels[req._telepat.applicationId].schema) {
-				return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationHasNoSchema));
-			}
-
-			if (!Models.Application.loadedAppModels[req._telepat.applicationId].schema[mdl]) {
-				return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationSchemaModelNotFound,
-					[req._telepat.applicationId, mdl]));
-			}
-
-			var acl = Models.Application.loadedAppModels[req._telepat.applicationId].schema[mdl][accessControl];
-
-			if (acl & ACL_AUTHENTICATED || acl & ACL_ADMIN) {
+			if (acl & ACL_UNAUTHENTICATED) {
+				next();
+			} else 	if (acl & ACL_AUTHENTICATED || acl & ACL_ADMIN) {
 				var authHeaderParts = req.headers.authorization.split(' ');
 				var authToken = authHeaderParts[1];
 
@@ -160,9 +162,7 @@ security.objectACL = function (accessControl) {
 						['authorization header field is not formed well']));
 				}
 			}
-			else if (acl & ACL_UNAUTHENTICATED) {
-				next();
-			} else {
+			else {
 				return next(new Models.TelepatError(Models.TelepatError.errors.OperationNotAllowed));
 			}
 		} else {
