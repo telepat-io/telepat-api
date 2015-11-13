@@ -31,5 +31,8 @@
 	  "consumer_key": "",
 	  "consumer_secret": ""
 	}
+  },
+  "mandrill": {
+	"api_key": ""
   }
 }

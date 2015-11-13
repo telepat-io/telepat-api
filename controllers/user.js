@@ -7,10 +7,29 @@ var Models = require('telepat-models');
 var security = require('./security');
 var jwt = require('jsonwebtoken');
 var microtime = require('microtime-nodejs');
+var crypto = require('crypto');
+var guid = require('uuid');
+var mandrill = require('mandrill-api');
 
-router.use(security.deviceIdValidation);
-router.use(security.applicationIdValidation);
-router.use(security.apiKeyValidation);
+var unless = function(paths, middleware) {
+	return function(req, res, next) {
+		var excluded = false;
+		for (var i=0; i<paths.length; i++) {
+			if (paths[i] === req.path) {
+				excluded = true;
+			}
+		}
+		if (excluded) {
+			return next();
+		} else {
+			return middleware(req, res, next);
+		}
+	};
+};
+
+router.use(unless(['/confirm', '/request_password_reset'], security.deviceIdValidation));
+router.use(unless(['/confirm'], security.applicationIdValidation));
+router.use(unless(['/confirm'], security.apiKeyValidation));
 
 router.use(['/logout', '/me', '/update', '/update_immediate', '/delete'], security.tokenValidation);
 
@@ -142,7 +161,6 @@ router.post('/login-:s', function(req, res, next) {
 				else if (err)
 					callback(err);
 				else {
-					userProfile = result;
 					callback();
 				}
 			});
@@ -276,6 +294,11 @@ router.post('/register-:s', function(req, res, next) {
 	var fbFriends = [];
 	var deviceId = req._telepat.device_id;
 	var appId = req._telepat.applicationId;
+	var requiresConfirmation = Models.Application.loadedAppModels[appId].email_confirmation;
+
+	if (requiresConfirmation && !req.body.email) {
+		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidLoginProvider, ['email']));
+	}
 
 	async.waterfall([
 		function(callback) {
@@ -370,6 +393,32 @@ router.post('/register-:s', function(req, res, next) {
 				delete userProfile.id;
 			}
 
+			if (requiresConfirmation && loginProvider == 'username' && Models.Application.loadedAppModels[appId].from_email) {
+				var mandrillClient = new mandrill.Mandrill(app.telepatConfig.mandrill.api_key);
+
+				userProfile.confirmed = false;
+				userProfile.confirmationHash = crypto.createHash('md5').update(guid.v4()).digest('hex').toLowerCase();
+				var url = 'http://'+req.headers.host + '/user/confirm?username='+userProfile.username+'&hash='+
+					userProfile.confirmationHash+'&app_id='+appId;
+				var message = {
+					html: 'In order to be able to use and log in to the "'+Models.Application.loadedAppModels[appId].name+
+						'" app copy & pase this URL in your browser: <a href="'+url+'">Confirm</a>',
+					subject: 'Account confirmation for "'+Models.Application.loadedAppModels[appId].name+'"',
+					from_email: Models.Application.loadedAppModels[appId].from_email,
+					from_name: Models.Application.loadedAppModels[appId].name,
+					to: [
+						{
+							email: userProfile.email,
+							type: 'to'
+						}
+					]
+				};
+				mandrillClient.messages.send({message: message, async: "async"}, function() {}, function(err) {
+					Models.Application.logger.warning('Unable to send confirmation email: ' + err.name + ' - '
+						+ err.message);
+				});
+			}
+
 			app.messagingClient.send([JSON.stringify({
 				op: 'add',
 				object: userProfile,
@@ -389,6 +438,39 @@ router.post('/register-:s', function(req, res, next) {
 		if (err) return next(err);
 
 		res.status(202).json({status: 202, content: 'User created'});
+	});
+});
+
+router.get('/confirm', function(req, res, next) {
+	var username = req.query.username;
+	var hash = req.query.hash;
+	var appId = req.query.app_id;
+	var user = null;
+
+	async.series([
+		function(callback) {
+			Models.User({username: username}, appId, function(err, result) {
+				if (err) return callback(err);
+
+				user = result;
+				callback();
+			});
+		},
+		function(callback) {
+			if (hash != user.confirmationHash) {
+				return callback(new Models.TelepatError(Models.TelepatError.errors.ClientBadRequest, ['invalid hash']));
+			}
+
+			var patches = [];
+			patches.push(Models.Delta.formPatch(user, 'replace', {confirmed: true}));
+
+			Models.User.update(user.username, appId, patches, callback);
+		}
+	], function(err) {
+		if (err)
+			return next(err);
+
+		res.status(200).json({status: 200, content: 'Account confirmed'});
 	});
 });
 
@@ -488,6 +570,7 @@ router.post('/login_password', function(req, res, next) {
 	var password = req.body.password.toString();
 	var deviceId = req._telepat.device_id;
 	var appId = req._telepat.applicationId;
+	var requiresConfirmation = Models.Application.loadedAppModels[appId].email_confirmation;
 
 	var hashedPassword = null;
 
@@ -501,8 +584,12 @@ router.post('/login_password', function(req, res, next) {
 				else if (err)
 					callback(err);
 				else {
-					userProfile = result;
-					callback();
+					if (!requiresConfirmation || result.confirmed) {
+						userProfile = result;
+						callback();
+					} else {
+						return callback(new Models.TelepatError(Models.TelepatError.errors.UnconfirmedAccount));
+					}
 				}
 			});
 		},
@@ -805,6 +892,110 @@ router.delete('/delete', function(req, res, next) {
 
 		res.status(202).json({status: 202, content: "User deleted"});
 	});
+});
+
+router.post('/request_password_reset', function(req, res, next) {
+	var type = req.body.type; // either 'browser' or 'app'
+	var appId = req._telepat.applicationId;
+	var username = req.username;
+	var link = null;
+	var token = crypto.createHash('md5').update(guid.v4()).digest('hex').toLowerCase();
+	var user = null;
+
+	if (type == 'browser') {
+		link = app.telepatConfig.password_reset.browser_link;
+	} else if (type == 'app') {
+		link = app.telepatConfig.password_reset.app_link;
+	} else {
+		return next(new Models.TelepatError(Models.TelepatError.errors.ClientBadRequest, ['invalid type']));
+	}
+
+	async.series([
+		function(callback) {
+			Models.User({username: username}, appId, function(err, result) {
+				if (err) return callback(err);
+
+				if (!result.email)
+					callback(new Models.TelepatError(Models.TelepatError.errors.ClientBadRequest,
+						['user has no email address']));
+
+				user = result;
+				callback();
+			})
+		},
+		function(callback) {
+			var mandrillClient = new mandrill.Mandrill(app.telepatConfig.mandrill.api_key);
+
+			var message = {
+				html: 'Password reset request from the "'+Models.Application.loadedAppModels[appId].name+
+				'" app. Click this URL to reset password: <a href="'+link+'?token='+token+'&user_id='+user.id+'">Reset</a>',
+				subject: 'Reset account password for "'+username+'"',
+				from_email: Models.Application.loadedAppModels[appId].from_email,
+				from_name: Models.Application.loadedAppModels[appId].name,
+				to: [
+					{
+						email: user.email,
+						type: 'to'
+					}
+				]
+			};
+			mandrillClient.messages.send({message: message, async: "async"}, function() {}, function(err) {
+				Models.Application.logger.warning('Unable to send confirmation email: ' + err.name + ' - '
+					+ err.message);
+			});
+
+			var patches = [];
+			patches.push(Models.Delta.formPatch(user, 'replace', {password_reset_token: token}));
+
+			Models.User.update(username, appId, patches, callback);
+		}
+	], function(err) {
+		if (err)
+			return next(err);
+		res.status(200).json({status: 200, content: "Password reset email sent"});
+	});
+});
+
+router.post('/password_reset', function(req, res, next) {
+	var token = req.body.token;
+	var userId = req.body.username;
+	var newPassword = req.body.password;
+	var appId = req._telepat.applicationId;
+	var user = null;
+
+	async.series([
+		function(callback) {
+			Models.User({id: userId}, appId, function(err, result) {
+				if (err) return callback(err);
+
+				if (result.password_reset_token == null ||
+					result.password_reset_token == undefined ||
+					result.password_reset_token != token) {
+					callback(new Models.TelepatError(Models.TelepatError.errors.ClientBadRequest,
+						['invalid token']));
+				}
+
+				user = result;
+				callback();
+			})
+		},
+		function(callback) {
+			security.encryptPassword(newPassword, function(err, hashedPassword) {
+				if (err) return callback(err);
+
+				var patches = [];
+				patches.push(Models.Delta.formPatch(user, 'replace', {password: hashedPassword}));
+				patches.push(Models.Delta.formPatch(user, 'replace', {password_reset_token: null}));
+
+				Models.User.update(user.username, appId, patches, callback);
+			});
+		}
+	], function(err) {
+		if (err)
+			return next(err);
+
+		res.status(200).json({status: 200, content: newPassword});
+	})
 });
 
 module.exports = router;
