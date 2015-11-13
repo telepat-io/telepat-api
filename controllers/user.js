@@ -402,7 +402,7 @@ router.post('/register-:s', function(req, res, next) {
 					userProfile.confirmationHash+'&app_id='+appId;
 				var message = {
 					html: 'In order to be able to use and log in to the "'+Models.Application.loadedAppModels[appId].name+
-						'" app copy & pase this URL in your browser: <a href="'+url+'">Confirm</a>',
+						'" app click this link: <a href="'+url+'">Confirm</a>',
 					subject: 'Account confirmation for "'+Models.Application.loadedAppModels[appId].name+'"',
 					from_email: Models.Application.loadedAppModels[appId].from_email,
 					from_name: Models.Application.loadedAppModels[appId].name,
