@@ -993,7 +993,7 @@ router.post('/password_reset', function(req, res, next) {
 				if (result.password_reset_token == null ||
 					result.password_reset_token == undefined ||
 					result.password_reset_token != token) {
-					callback(new Models.TelepatError(Models.TelepatError.errors.ClientBadRequest,
+					return callback(new Models.TelepatError(Models.TelepatError.errors.ClientBadRequest,
 						['invalid token']));
 				}
 
