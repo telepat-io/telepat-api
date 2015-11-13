@@ -934,7 +934,7 @@ router.post('/request_password_reset', function(req, res, next) {
 				if (err) return callback(err);
 
 				if (!result.email)
-					callback(new Models.TelepatError(Models.TelepatError.errors.ClientBadRequest,
+					return callback(new Models.TelepatError(Models.TelepatError.errors.ClientBadRequest,
 						['user has no email address']));
 
 				user = result;
