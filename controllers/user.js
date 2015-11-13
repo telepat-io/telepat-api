@@ -921,9 +921,9 @@ router.post('/request_password_reset', function(req, res, next) {
 	}
 
 	if (type == 'browser') {
-		link = app.telepatConfig.password_reset.browser_link;
+		link = Models.Application.loadedAppModels[appId].password_reset.browser_link;
 	} else if (type == 'app') {
-		link = app.telepatConfig.password_reset.app_link;
+		link = Models.Application.loadedAppModels[appId].password_reset.app_link;
 	} else {
 		return next(new Models.TelepatError(Models.TelepatError.errors.ClientBadRequest, ['invalid type']));
 	}
@@ -944,9 +944,13 @@ router.post('/request_password_reset', function(req, res, next) {
 		function(callback) {
 			var mandrillClient = new mandrill.Mandrill(app.telepatConfig.mandrill.api_key);
 
+			link += '?token='+token+'&user_id='+user.id;
+
+			var redirectUrl = app.telepatConfig.redirect_url+'?url='+encodeURIComponent(link);
+
 			var message = {
 				html: 'Password reset request from the "'+Models.Application.loadedAppModels[appId].name+
-				'" app. Click this URL to reset password: <a href="'+link+'?token='+token+'&user_id='+user.id+'">Reset</a>',
+				'" app. Click this URL to reset password: <a href="'+redirectUrl+'">Reset</a>',
 				subject: 'Reset account password for "'+username+'"',
 				from_email: Models.Application.loadedAppModels[appId].from_email,
 				from_name: Models.Application.loadedAppModels[appId].name,
