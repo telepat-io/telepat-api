@@ -298,7 +298,7 @@ router.post('/register-:s', function(req, res, next) {
 	var requiresConfirmation = Models.Application.loadedAppModels[appId].email_confirmation;
 
 	if (requiresConfirmation && !req.body.email) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidLoginProvider, ['email']));
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['email']));
 	}
 
 	async.waterfall([
@@ -959,7 +959,7 @@ router.post('/request_password_reset', function(req, res, next) {
 
 router.post('/password_reset', function(req, res, next) {
 	var token = req.body.token;
-	var userId = req.body.username;
+	var userId = req.body.user_id;
 	var newPassword = req.body.password;
 	var appId = req._telepat.applicationId;
 	var user = null;
