@@ -301,7 +301,7 @@ router.post('/register-:s', function(req, res, next) {
 	var appId = req._telepat.applicationId;
 	var requiresConfirmation = Models.Application.loadedAppModels[appId].email_confirmation;
 
-	if (requiresConfirmation && !req.body.email) {
+	if (loginProvider == 'username' && requiresConfirmation && !req.body.email) {
 		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['email']));
 	}
 
