@@ -214,11 +214,25 @@ router.post('/update', function (req, res, next) {
 		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidFieldValue,
 			['"patches" array is empty']));
 	} else {
-		async.each(req.body.patches, function(patch, c) {
-			if (patch.path.split('/')[1] != req.user.id)
+		var i = 0;
+		async.eachSeries(req.body.patches, function(patch, c) {
+			if (req.body.patches[i].path.split('/')[1] != req.user.id) {
 				c(new Models.TelepatError(Models.TelepatError.errors.InvalidAdmin));
-			else
-				c();
+			}
+			else {
+				if (req.body.patches[i].path.split('/')[2] == 'password') {
+					security.encryptPassword(req.body.patches[i].value.toString(), function(err, hash) {
+						if (err) return c(err);
+
+						req.body.patches[i].value = hash;
+						i++;
+						c();
+					});
+				} else {
+					i++;
+					c();
+				}
+			}
 		}, function(err) {
 			if (err) {
 				next(err);
