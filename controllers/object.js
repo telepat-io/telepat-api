@@ -632,7 +632,7 @@ router.post('/count', function(req, res, next) {
 	Models.Model.modelCountByChannel(channelObject, function(err, result) {
 		if (err) return next(err);
 
-		res.status(200).json({status: 200, content: result});
+		res.status(200).json({status: 200, content: {count: result}});
 	});
 });
 
