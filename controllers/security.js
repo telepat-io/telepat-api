@@ -139,7 +139,7 @@ security.objectACL = function (accessControl) {
 		if (!req.body || !Object.getOwnPropertyNames(req.body).length) {
 			return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
 		} else if (req.body.model || (req.body.channel && req.body.channel.model)) {
-			if (acl & ACL_UNAUTHENTICATED) {
+			if (!req.headers.authorization && acl & ACL_UNAUTHENTICATED) {
 				next();
 			} else 	if (acl & ACL_AUTHENTICATED || acl & ACL_ADMIN) {
 				var authHeaderParts = req.headers.authorization.split(' ');
