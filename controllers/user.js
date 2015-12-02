@@ -924,6 +924,9 @@ router.post('/request_password_reset', function(req, res, next) {
 		link = Models.Application.loadedAppModels[appId].password_reset.browser_link;
 	} else if (type == 'app') {
 		link = Models.Application.loadedAppModels[appId].password_reset.app_link;
+	} 
+	else if (type == 'android') {
+		link = Models.Application.loadedAppModels[appId].password_reset.android_app_link;
 	} else {
 		return next(new Models.TelepatError(Models.TelepatError.errors.ClientBadRequest, ['invalid type']));
 	}
@@ -959,7 +962,9 @@ router.post('/request_password_reset', function(req, res, next) {
 						email: user.email,
 						type: 'to'
 					}
-				]
+				],
+				track_clicks: false,
+				track_opens: false
 			};
 			mandrillClient.messages.send({message: message, async: "async"}, function() {}, function(err) {
 				Models.Application.logger.warning('Unable to send confirmation email: ' + err.name + ' - '
