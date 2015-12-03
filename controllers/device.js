@@ -109,7 +109,14 @@ router.post('/register', function(req, res, next) {
 						next(err);
 					});
 				} else {
-					return res.status(200).json({status: 200, content: {identifier: result}});
+					Models.Subscription.updateDevice(req._telepat.applicationId, result, req.body, function(err, result) {
+						if (err && err.status == 404) {
+							return next(new Models.TelepatError(Models.TelepatError.errors.DeviceNotFound));
+						} else if (err)
+							return next(err);
+
+						return res.status(200).json({status: 200, content: {identifier: result}});
+					});
 				}
 
 			});
