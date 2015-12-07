@@ -104,6 +104,7 @@ var validateContext = function(appId, context, callback) {
 router.post('/subscribe', function(req, res, next) {
 	var page = req.body.page ? req.body.page : 1;
 	var channel = req.body.channel;
+	var sort = req.body.sort;
 
 	var id = channel.id,
 		context = channel.context,
@@ -169,7 +170,7 @@ router.post('/subscribe', function(req, res, next) {
 					callback();
 				});
 			} else {
-				Models.Model.search(channelObject, page, function(err, results) {
+				Models.Model.search(channelObject, sort, page, function(err, results) {
 					if (err) return callback(err);
 
 					if (Array.isArray(results))
