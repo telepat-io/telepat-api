@@ -607,6 +607,7 @@ router.delete('/delete', function(req, res, next) {
 router.post('/count', function(req, res, next) {
 	var appId = req._telepat.applicationId,
 		channel = req.body.channel;
+	var aggregation = req.body.aggregation;
 
 	var channelObject = new Models.Channel(appId);
 
@@ -629,10 +630,10 @@ router.post('/count', function(req, res, next) {
 		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidChannel));
 	}
 
-	Models.Model.modelCountByChannel(channelObject, function(err, result) {
+	Models.Model.modelCountByChannel(channelObject, aggregation, function(err, result) {
 		if (err) return next(err);
 
-		res.status(200).json({status: 200, content: {count: result}});
+		res.status(200).json({status: 200, content: result});
 	});
 });
 
