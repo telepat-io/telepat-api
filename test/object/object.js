@@ -1267,7 +1267,7 @@ it('4.34 should return an error response to indicate that a object has NOT been 
 		.end(function(err, res) {
 
 			res.body.code.should.be.equal('026');
-			res.statusCode.should.be.equal(500);
+			res.statusCode.should.be.equal(403);
 			done();
 		});
 });

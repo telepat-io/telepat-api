@@ -15,7 +15,7 @@ router.use('/all',
  * @apiDescription Gets the model schema for an application
  * @apiName AdminGetSchemas
  * @apiGroup Admin
- * @apiVersion 0.2.7
+ * @apiVersion 0.2.8
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization
@@ -65,7 +65,7 @@ router.use('/update',
  * @apiDescription Updates the model schema
  * @apiName AdminUpdateSchema
  * @apiGroup Admin
- * @apiVersion 0.2.7
+ * @apiVersion 0.2.8
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization
@@ -109,7 +109,7 @@ router.use('/remove_model',
  * @apiDescription Removes a model from the application (all items of this type will be deleted)
  * @apiName AdminRemoveAppModel
  * @apiGroup Admin
- * @apiVersion 0.2.7
+ * @apiVersion 0.2.8
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization

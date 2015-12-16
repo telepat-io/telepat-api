@@ -27,7 +27,7 @@ router.use('/contexts',
  * @apiDescription Get all contexts
  * @apiName AdminGetContexts
  * @apiGroup Admin
- * @apiVersion 0.2.7
+ * @apiVersion 0.2.8
  * @deprecated
  *
  * @apiHeader {String} Content-type application/json
@@ -70,7 +70,7 @@ router.use('/schemas',
  * @apiDescription Gets the model schema for an application
  * @apiName AdminGetSchemas
  * @apiGroup Admin
- * @apiVersion 0.2.7
+ * @apiVersion 0.2.8
  * @deprecated
  *
  * @apiHeader {String} Content-type application/json
@@ -120,7 +120,7 @@ router.use('/users',
  * @apiDescription Gets all users of the application
  * @apiName AdminGetUsers
  * @apiGroup Admin
- * @apiVersion 0.2.7
+ * @apiVersion 0.2.8
  * @deprecated
  *
  * @apiHeader {String} Content-type application/json

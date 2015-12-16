@@ -20,7 +20,7 @@
     "microtime-nodejs": "1.0.0",
     "object-sizeof": "1.0.6",
     "redis": "0.12.1",
-	"telepat-models": "telepat-io/telepat-models#feature/email-confirm",
+	"telepat-models": "0.2.8",
     "twitter": "1.2.5",
     "uuid": "2.0.1"
   },

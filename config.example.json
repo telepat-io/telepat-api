@@ -34,5 +34,6 @@
   },
   "mandrill": {
 	"api_key": ""
-  }
+  },
+  "redirect_url": "http://www.example.com/redirect-me"
 }

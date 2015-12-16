@@ -38,7 +38,7 @@ router.use(['/logout', '/me', '/update', '/update_immediate', '/delete'], securi
  * @apiDescription Log in the user through Facebook or Twitter.
  * @apiName UserLogin
  * @apiGroup User
- * @apiVersion 0.2.7
+ * @apiVersion 0.2.8
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
@@ -222,7 +222,7 @@ router.post('/login-:s', function(req, res, next) {
  * immediately.
  * @apiName UserRegister
  * @apiGroup User
- * @apiVersion 0.2.7
+ * @apiVersion 0.2.8
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
@@ -493,7 +493,7 @@ router.get('/confirm', function(req, res, next) {
  * @apiDescription Info about logged user
  * @apiName UserMe
  * @apiGroup User
- * @apiVersion 0.2.7
+ * @apiVersion 0.2.8
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint.
@@ -536,7 +536,7 @@ router.get('/me', function(req, res, next) {
  * @apiDescription Logs in the user with a password
  * @apiName UserLoginPassword
  * @apiGroup User
- * @apiVersion 0.2.7
+ * @apiVersion 0.2.8
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
@@ -651,7 +651,7 @@ router.post('/login_password', function(req, res, next) {
  * @apiDescription Logs out the user removing the device from his array of devices.
  * @apiName UserLogout
  * @apiGroup User
- * @apiVersion 0.2.7
+ * @apiVersion 0.2.8
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
@@ -704,7 +704,7 @@ router.get('/logout', function(req, res, next) {
  * may not be already expired).
  * @apiName RefreshToken
  * @apiGroup User
- * @apiVersion 0.2.7
+ * @apiVersion 0.2.8
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint.
@@ -757,7 +757,7 @@ router.get('/refresh_token', function(req, res, next) {
  * @apiDescription Updates the user information. This operation is not immediate.
  * @apiName UserUpdate
  * @apiGroup User
- * @apiVersion 0.2.7
+ * @apiVersion 0.2.8
  *
  * @apiParam {Object[]} patches Array of patches that describe the modifications
  *
@@ -878,7 +878,7 @@ router.post('/update_immediate', function(req, res, next) {
  * @apiDescription Deletes a user
  * @apiName UserDelete
  * @apiGroup User
- * @apiVersion 0.2.7
+ * @apiVersion 0.2.8
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
@@ -908,6 +908,30 @@ router.delete('/delete', function(req, res, next) {
 	});
 });
 
+/**
+ * @api {delete} /user/request_password_reset Request Password Reset
+ * @apiDescription Requests a password reset for the user, an email is sent to its email address
+ * @apiName UserRequestPasswordReset
+ * @apiGroup User
+ * @apiVersion 0.2.8
+ *
+ * @apiHeader {String} Content-type application/json
+ * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
+ * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
+ *
+ * @apiExample {json} Client Request
+ * 	{
+ * 		"type": "app",
+ * 		"username": "email@example.com"
+ * 	}
+ *
+ * @apiSuccessExample {json} Success Response
+ * 	{
+ * 		"status": 200,
+ * 		"content": "Password reset email sent"
+ * 	}
+ *
+ */
 router.post('/request_password_reset', function(req, res, next) {
 	var type = req.body.type; // either 'browser' or 'app'
 	var appId = req._telepat.applicationId;
@@ -924,7 +948,7 @@ router.post('/request_password_reset', function(req, res, next) {
 		link = Models.Application.loadedAppModels[appId].password_reset.browser_link;
 	} else if (type == 'app') {
 		link = Models.Application.loadedAppModels[appId].password_reset.app_link;
-	} 
+	}
 	else if (type == 'android') {
 		link = Models.Application.loadedAppModels[appId].password_reset.android_app_link;
 	} else {
@@ -983,6 +1007,31 @@ router.post('/request_password_reset', function(req, res, next) {
 	});
 });
 
+/**
+ * @api {delete} /user/password_reset Password Reset
+ * @apiDescription Resets the password of the user based on a token
+ * @apiName UserPasswordReset
+ * @apiGroup User
+ * @apiVersion 0.2.8
+ *
+ * @apiHeader {String} Content-type application/json
+ * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
+ * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
+ *
+ * @apiExample {json} Client Request
+ * 	{
+ * 		"token": "password_reset_token",
+ * 		"user_id": "user_id",
+ * 		"password": "new passowrd"
+ * 	}
+ *
+ * @apiSuccessExample {json} Success Response
+ * 	{
+ * 		"status": 200,
+ * 		"content": "new passowrd"
+ * 	}
+ *
+ */
 router.post('/password_reset', function(req, res, next) {
 	var token = req.body.token;
 	var userId = req.body.user_id;
