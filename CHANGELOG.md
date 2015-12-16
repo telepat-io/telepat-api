@@ -1,3 +1,15 @@
+# 0.2.8
+
+* Context ID is not necessary when subscribing to channels which refer to an object id
+* Added stack trace to logger when API has an >= 500 error
+* `/context/*` routes no longer requier authentication or device ID
+* Implemented email confirmation and password reset features
+* `/admin/update` should now be able to correctly update its password
+* `/object/count` returns the response in an object
+* Bugfix: `/device/register` device is updated accordingly when supplying an existent UDID in the info
+* `/object/count` Added aggregation support
+* `/object/subscribe` Added support for sorting results
+
 # 0.2.7
 
 * Added support for loging/registering with Facebook. Register/login endpoints have changed:

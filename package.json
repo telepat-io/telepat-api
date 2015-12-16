@@ -1,6 +1,6 @@
 {
   "name": "telepat-api",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "scripts": {
     "start": "./bin/www",
     "test": "istanbul cover _mocha -- test/api.js -R spec"
