@@ -350,7 +350,7 @@ it('4.2 should return an error (401) response to indicate that only authenticate
 	this.timeout(100*DELAY);
 
 	var clientrequest = {
-		model: "something",
+		model: "things",
 		context: contextID,
 		content: {
 		}
@@ -1266,7 +1266,7 @@ it('4.34 should return an error response to indicate that a object has NOT been 
 		.send(subclientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('002');
+			res.body.code.should.be.equal('026');
 			res.statusCode.should.be.equal(500);
 			done();
 		});
