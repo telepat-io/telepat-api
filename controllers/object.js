@@ -358,14 +358,29 @@ router.post('/create', function(req, res, next) {
 
 	if (Models.Application.loadedAppModels[appId].schema[mdl].belongsTo &&
 				Models.Application.loadedAppModels[appId].schema[mdl].belongsTo.length) {
-		var parentModel = Models.Application.loadedAppModels[appId].schema[mdl].belongsTo[0].parentModel;
-		if (!content[parentModel+'_id']) {
-			return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, [parentModel+'_id']));
-		} else if (Models.Application.loadedAppModels[appId].schema[mdl].belongsTo[0].relationType == 'hasSome' &&
-			content[Models.Application.loadedAppModels[appId].schema[parentModel].hasSome_property+'_index'] === undefined) {
-			return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField,
-				[Models.Application.loadedAppModels[appId].schema[parentModel].hasSome_property+'_index']));
+
+		var parentValidation = false;
+
+		for (var parent in Models.Application.loadedAppModels[appId].schema[mdl].belongsTo) {
+			var parentModel = Models.Application.loadedAppModels[appId].schema[mdl].belongsTo[parent].parentModel;
+
+			if (content[parentModel+'_id']) {
+				parentValidation = true;
+
+				if (Models.Application.loadedAppModels[appId].schema[mdl].belongsTo[0].relationType == 'hasSome' &&
+					content[Models.Application.loadedAppModels[appId].schema[parentModel].hasSome_property+'_index'] === undefined ||
+					content[Models.Application.loadedAppModels[appId].schema[parentModel].hasSome_property+'_index'] === null) {
+					return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField,
+						[Models.Application.loadedAppModels[appId].schema[parentModel].hasSome_property+'_index']));
+				}
+
+				break;
+			}
 		}
+
+		if (!parentValidation)
+			return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['a field with the parent ID is missing']));
+
 	}
 
 	async.series([
@@ -378,7 +393,7 @@ router.post('/create', function(req, res, next) {
 				context: context
 			})], 'aggregation', function(err) {
 				if (err){
-					err = new Models.TelepatError(Models.TelepatError.errors.ServerFailure, [err.message]);
+					err = new Models.TelepatError(Models.TelepatError.errors.ServerFailure, [err]);
 				}
 				aggCallback(err);
 			});
