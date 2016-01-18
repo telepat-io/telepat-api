@@ -131,7 +131,7 @@ router.post('/register', function(req, res, next) {
 
 		Models.Subscription.updateDevice(req._telepat.applicationId, req._telepat.device_id, req.body, function(err, result) {
 			if (err && err.status == 404) {
-				return next(new Models.TelepatError(Models.TelepatError.errors.DeviceNotFound));
+				return next(new Models.TelepatError(Models.TelepatError.errors.DeviceNotFound, [result]));
 			} else if (err)
 				return next(err);
 
