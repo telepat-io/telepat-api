@@ -99,7 +99,7 @@ router.post('/register', function(req, res, next) {
 			Models.Subscription.findDeviceByUdid(req._telepat.applicationId, udid, function(err, result) {
 				if (err) return next(err);
 
-				if (result === null) {
+				if (!result) {
 					req.body.id = uuid.v4();
 					Models.Subscription.addDevice(req.body, function(err) {
 						if (!err) {
