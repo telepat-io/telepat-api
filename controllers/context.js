@@ -8,7 +8,7 @@ router.use(security.applicationIdValidation);
 router.use(security.apiKeyValidation);
 
 /**
- * @api {get} /context/all GetContexts
+ * @api {post} /context/all GetContexts
  * @apiDescription Get all contexts
  * @apiName GetContexts
  * @apiGroup Context
@@ -17,6 +17,15 @@ router.use(security.apiKeyValidation);
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
+ *
+ * @apiParam {Number} offset (optional) Starting offset (default: 0)
+ * @apiParam {Number} limit (optional) Number of objects to return (default: depends on API configuration)
+ *
+ * @apiExample {json} Client Request
+ * 	{
+ * 		"offset": 0,
+ * 		"limit": 64
+ * 	}
  *
  * @apiSuccessExample {json} Success Response
  * 	{
@@ -34,10 +43,12 @@ router.use(security.apiKeyValidation);
  * 	}
  *
  */
-router.get('/all', function (req, res, next) {
+router.post('/all', function (req, res, next) {
 	var appId = req._telepat.applicationId;
+	var offset = req.body.offset;
+	var limit = req.body.limit;
 
-	Models.Context.getAll(appId, function (err, res1) {
+	Models.Context.getAll(appId, offset, limit, function (err, res1) {
 		if (err)
 			next(err);
 		else {

@@ -24,11 +24,14 @@ router.use('/all',
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  *
- * @apiExample {json} Client Request
+ * @apiParam {Number} offset (optional) Starting offset (default: 0)
+ * @apiParam {Number} limit (optional) Number of objects to return (default: depends on API configuration)
  *
- * {
- * 		"page": 1
- * }
+ * @apiExample {json} Client Request
+ * 	{
+ * 		"offset": 0,
+ * 		"limit": 64
+ * 	}
  *
  * 	@apiSuccessExample {json} Success Response
  * 	{
@@ -43,9 +46,10 @@ router.use('/all',
 
 router.post('/all', function(req, res, next) {
 	var appId = req._telepat.applicationId;
-	var page = req.body.page ? req.body.page : 1;
+	var offset = req.body.offset;
+	var limit = req.body.limit;
 
-	Models.User.getAll(appId, page, function(err, results) {
+	Models.User.getAll(appId, offset, limit, function(err, results) {
 		if (err) return next(err);
 
 		results.forEach(function(item, index, originalArray) {

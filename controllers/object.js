@@ -41,6 +41,9 @@ var validateContext = function(appId, context, callback) {
  *
  * @apiParam {Object} channel Object representing the channel
  * @apiParam {Object} filters Object representing channel filters
+ * @apiParam {Object} sort Object representing the sort order by a field
+ * @apiParam {Number} offset (optional) Starting offset (default: 0)
+ * @apiParam {Number} limit (optional) Number of objects to return (default: depends on API configuration)
  *
  * @apiExample {json} Client Request
  * {
@@ -55,37 +58,42 @@ var validateContext = function(appId, context, callback) {
  *			"user": 2
  * 		},
  *		"filters": {
-*			"or": [
-*				{
-*					"and": [
-*						{
-*						  "is": {
-*							"gender": "male",
-*							"age": 23
-*						  }
-*						},
-*						{
-*						  "range": {
-*							"experience": {
-*							  "gte": 1,
-*							  "lte": 6
-*							}
-*						  }
-*						}
-*					  ]
-*					},
-*					{
-*					  "and": [
-*						{
-*						  "like": {
-*							"image_url": "png",
-*							"website": "png"
-*						  }
-*						}
-*					  ]
-*					}
-*				  ]
- *		}
+ *			"or": [
+ *				{
+ *					"and": [
+ *						{
+ *						  "is": {
+ *							"gender": "male",
+ *							"age": 23
+ *						  }
+ *						},
+ *						{
+ *						  "range": {
+ *							"experience": {
+ *							  "gte": 1,
+ *							  "lte": 6
+ *							}
+ *						  }
+ *						}
+ *					  ]
+ *					},
+ *					{
+ *					  "and": [
+ *						{
+ *						  "like": {
+ *							"image_url": "png",
+ *							"website": "png"
+ *						  }
+ *						}
+ *					  ]
+ *					}
+ *				  ]
+ *		},
+ *		"sort": {
+ *			"points": "desc"
+ *		},
+ *		"offset": 0,
+ *		"limit": 64
  * }
  *
  *	@apiSuccessExample {json} Success Response
@@ -102,7 +110,8 @@ var validateContext = function(appId, context, callback) {
  *
  */
 router.post('/subscribe', function(req, res, next) {
-	var page = req.body.page ? req.body.page : 1;
+	var offset = req.body.offset;
+	var limit = req.body.limit;
 	var channel = req.body.channel;
 	var sort = req.body.sort;
 
@@ -151,7 +160,7 @@ router.post('/subscribe', function(req, res, next) {
 		},
 		function(callback) {
 			//only add subscription on initial /subscribe
-			if (page && page > 1)
+			if (offset && offset > 0)
 				return callback();
 			Models.Subscription.add(appId, deviceId, channelObject,  function(err) {
 				if (err && err.status === 409)
@@ -170,7 +179,7 @@ router.post('/subscribe', function(req, res, next) {
 					callback();
 				});
 			} else {
-				Models.Model.search(channelObject, sort, page, function(err, results) {
+				Models.Model.search(channelObject, sort, offset, limit, function(err, results) {
 					if (err) return callback(err);
 
 					if (Array.isArray(results))

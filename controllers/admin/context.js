@@ -12,7 +12,7 @@ router.use('/',
 	security.applicationIdValidation,
 	security.adminAppValidation);
 /**
- * @api {get} /admin/context/all GetContexts
+ * @api {post} /admin/context/all GetContexts
  * @apiDescription Get all contexts
  * @apiName AdminGetContexts
  * @apiGroup Admin
@@ -23,6 +23,15 @@ router.use('/',
                        The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
+ *
+ * @apiParam {Number} offset (optional) Starting offset (default: 0)
+ * @apiParam {Number} limit (optional) Number of objects to return (default: depends on API configuration)
+ *
+ * @apiExample {json} Client Request
+ * 	{
+ * 		"offset": 0,
+ * 		"limit": 64
+ * 	}
  *
  * @apiSuccessExample {json} Success Response
  * 	{
@@ -39,10 +48,12 @@ router.use('/',
  * 	}
  *
  */
-router.get('/all', function (req, res, next) {
+router.post('/all', function (req, res, next) {
 	var appId = req._telepat.applicationId;
+	var offset = req.body.offset;
+	var limit = req.body.limit;
 
-	Models.Context.getAll(appId, function (err, res1) {
+	Models.Context.getAll(appId, offset, limit, function (err, res1) {
 		if (err)
 			next(err);
 		else {

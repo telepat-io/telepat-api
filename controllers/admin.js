@@ -23,7 +23,7 @@ router.use('/contexts',
 	security.applicationIdValidation,
 	security.adminAppValidation);
 /**
- * @api {get} /admin/contexts GetContexts
+ * @api {post} /admin/contexts GetContexts
  * @apiDescription Get all contexts
  * @apiName AdminGetContexts
  * @apiGroup Admin
@@ -35,6 +35,15 @@ router.use('/contexts',
                        The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
+ *
+ * @apiParam {Number} offset (optional) Starting offset (default: 0)
+ * @apiParam {Number} limit (optional) Number of objects to return (default: depends on API configuration)
+ *
+ * @apiExample {json} Client Request
+ * 	{
+ * 		"offset": 0,
+ * 		"limit": 64
+ * 	}
  *
  * @apiSuccessExample {json} Success Response
  * 	{
@@ -51,8 +60,11 @@ router.use('/contexts',
  * 	}
  *
  */
-router.get('/contexts', function (req, res, next) {
-	Models.Context.getAll(req._telepat.applicationId, function (err, res1) {
+router.post('/contexts', function (req, res, next) {
+	var offset = req.body.offset;
+	var limit = req.body.limit;
+
+	Models.Context.getAll(req._telepat.applicationId, offset, limit, function (err, res1) {
 		if (err)
 			next(err);
 		else {
@@ -116,7 +128,7 @@ router.use('/users',
 	security.applicationIdValidation,
 	security.adminAppValidation);
 /**
- * @api {get} /admin/users GetAppusers
+ * @api {post} /admin/users GetAppusers
  * @apiDescription Gets all users of the application
  * @apiName AdminGetUsers
  * @apiGroup Admin
@@ -129,6 +141,15 @@ router.use('/users',
                        Should have the format: <i>Bearer $TOKEN</i>
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  *
+ * @apiParam {Number} offset (optional) Starting offset (default: 0)
+ * @apiParam {Number} limit (optional) Number of objects to return (default: depends on API configuration)
+ *
+ * @apiExample {json} Client Request
+ * 	{
+ * 		"offset": 0,
+ * 		"limit": 64
+ * 	}
+ *
  * 	@apiSuccessExample {json} Success Response
  * 	{
  * 		"status": 200,
@@ -140,8 +161,10 @@ router.use('/users',
  */
 
 router.post('/users', function(req, res, next) {
-	var page = req.body.page ? req.body.page : 1;
-	Models.User.getAll(req._telepat.applicationId, page, function(err, results) {
+	var offset = req.body.offset;
+	var limit = req.body.limit;
+
+	Models.User.getAll(req._telepat.applicationId, limit, offset, function(err, results) {
 		if (err) return next(err);
 
 		results.forEach(function(item, index, originalArray) {

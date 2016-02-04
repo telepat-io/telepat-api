@@ -153,13 +153,13 @@ it('2.4 should return a success response to indicate all contexts successfully r
 	this.timeout(100*DELAY);
 
 	request(url)
-		.get('/context/all')
+		.post('/context/all')
 		.set('Content-type','application/json')
 		.set('X-BLGREQ-SIGN', appIDsha256 )
 		.set('X-BLGREQ-APPID', appID )
 		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 		.set('Authorization', authValue )
-		.send()
+		.send({})
 		.end(function(err, res) {
 
 			res.statusCode.should.be.equal(200);

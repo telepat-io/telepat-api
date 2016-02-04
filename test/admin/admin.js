@@ -1441,11 +1441,11 @@ describe('1.3.Context', function() {
 		this.timeout(100*DELAY);
 
 		request(url)
-			.get('/admin/contexts')
+			.post('/admin/contexts')
 			.set('Content-type','application/json')
 			.set('Authorization', authValue)
 			.set('X-BLGREQ-APPID', appID)
-			.send()
+			.send({})
 			.end(function(err, res) {
 
 				res.statusCode.should.be.equal(200);
@@ -1459,11 +1459,11 @@ describe('1.3.Context', function() {
 		this.timeout(100*DELAY);
 
 		request(url)
-			.get('/admin/context/all')
+			.post('/admin/context/all')
 			.set('Content-type','application/json')
 			.set('Authorization', authValue)
 			.set('X-BLGREQ-APPID', appID)
-			.send()
+			.send({})
 			.end(function(err, res) {
 
 				res.statusCode.should.be.equal(200);

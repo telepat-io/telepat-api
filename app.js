@@ -124,7 +124,7 @@ app.use(function(req, res, next) {
 });
 
 var loadApplications = function(callback) {
-	Models.Application.loadAllApplications(function(err) {
+	Models.Application.loadAllApplications(null, null, function(err) {
 		if (err) {
 			Models.Application.logger.emergency('Fatal error: in retrieving all aplications', err);
 			process.exit(-1);
