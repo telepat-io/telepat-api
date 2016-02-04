@@ -211,6 +211,7 @@ router.post('/login-:s', function(req, res, next) {
 		else {
 			var token = jwt.sign({username: username, id: userProfile.id}, security.authSecret,
 				{ expiresInMinutes: 60 });
+			delete userProfile.password;
 			res.json({status: 200, content: {token: token, user: userProfile}});
 		}
 	});

@@ -185,8 +185,15 @@ router.post('/subscribe', function(req, res, next) {
 				Models.Model.search(channelObject, sort, offset, limit, function(err, results) {
 					if (err) return callback(err);
 
-					if (Array.isArray(results))
+					if (Array.isArray(results))	{
+						if (mdl == 'user') {
+							results = results.map(function(userResult) {
+								delete userResult.password;
+								return userResult;
+							});
+						}
 						objects = objects.concat(results);
+					}
 
 					callback();
 				});

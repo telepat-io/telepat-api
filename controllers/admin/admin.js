@@ -60,6 +60,7 @@ router.post('/login', function (req, res, next) {
 				}
 
 				if (hashedPassword === admin.password) {
+					delete admin.password;
 					res.status(200)
 						.json({status: 200, content: {
 								user: admin,
