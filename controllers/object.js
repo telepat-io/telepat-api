@@ -44,6 +44,8 @@ var validateContext = function(appId, context, callback) {
  * @apiParam {Object} sort Object representing the sort order by a field
  * @apiParam {Number} offset (optional) Starting offset (default: 0)
  * @apiParam {Number} limit (optional) Number of objects to return (default: depends on API configuration)
+ * @apiParam {Boolean} no_subscribe (optional) If set to truethful value the device will not be subscribed, only objects
+ * will be returned.
  *
  * @apiExample {json} Client Request
  * {
@@ -114,6 +116,7 @@ router.post('/subscribe', function(req, res, next) {
 	var limit = req.body.limit;
 	var channel = req.body.channel;
 	var sort = req.body.sort;
+	var noSubscribe = req.body.no_subscribe;
 
 	var id = channel.id,
 		context = channel.context,
@@ -160,7 +163,7 @@ router.post('/subscribe', function(req, res, next) {
 		},
 		function(callback) {
 			//only add subscription on initial /subscribe
-			if (offset && offset > 0)
+			if ((offset && offset > 0) || noSubscribe)
 				return callback();
 			Models.Subscription.add(appId, deviceId, channelObject,  function(err) {
 				if (err && err.status === 409)
