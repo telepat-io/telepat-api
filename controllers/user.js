@@ -27,11 +27,12 @@ var unless = function(paths, middleware) {
 	};
 };
 
-router.use(unless(['/confirm', '/request_password_reset'], security.deviceIdValidation));
-router.use(unless(['/confirm'], security.applicationIdValidation));
-router.use(unless(['/confirm'], security.apiKeyValidation));
+router.use(unless(['/confirm', '/request_password_reset', '/metadata', '/update_metadata'], security.deviceIdValidation));
+router.use(unless(['/confirm', '/metadata', '/update_metadata'], security.applicationIdValidation));
+router.use(unless(['/confirm', '/metadata', '/update_metadata'], security.apiKeyValidation));
 
-router.use(['/logout', '/me', '/update', '/update_immediate', '/delete'], security.tokenValidation);
+router.use(['/logout', '/me', '/update', '/update_immediate', '/delete', '/metadata', '/update_metadata'],
+	security.tokenValidation);
 
 /**
  * @api {post} /user/login-{s} Login
@@ -1073,6 +1074,86 @@ router.post('/password_reset', function(req, res, next) {
 
 		res.status(200).json({status: 200, content: newPassword});
 	})
+});
+
+/**
+ * @api {get} /user/metadata Get Metadata
+ * @apiDescription Gets user metadata (private info)
+ * @apiName UserGetMetadata
+ * @apiGroup User
+ * @apiVersion 0.2.8
+ *
+ * @apiHeader {String} Content-type application/json
+ * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
+ *
+ * @apiSuccessExample {json} Success Response
+ * 	{
+ * 		"status": 200,
+ * 		"content": {
+ *			"id": "9fa7751a-d733-404a-a269-c8b64817dfd5",
+ *   		"user_id": "15f76424-d4bd-48d4-b812-c4ebc09782f1",
+ *   		"points": 100,
+ *		}
+ * 	}
+ *
+ */
+router.get('/metadata', function(req, res, next) {
+	var userId = req.user.id;
+
+	Models.User.getMetadata(userId, function(err, result) {
+		if (err) return next(err);
+
+		res.status(200).json({status: 200, content: result});
+	});
+});
+
+/**
+ * @api {post} /user/update_metadata Update Metadata
+ * @apiDescription Updates user metadata
+ * @apiName UserUpdateMetadata
+ * @apiGroup User
+ * @apiVersion 0.2.8
+ *
+ * @apiHeader {String} Content-type application/json
+ * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
+ *
+ * @apiParam {Object[]} patches Array of patches that describe the modifications
+ *
+ * @apiExample {json} Client Request
+ * 	{
+ * 		"patches": [
+ * 			{
+ * 				"op": "replace",
+ * 				"path": "user_metadata/metadata_id/field_name",
+ * 				"value": "new value
+ * 			}
+ * 		]
+ * 	}
+ *
+ *
+ * @apiSuccessExample {json} Success Response
+ * 	{
+ * 		"status": 200,
+ * 		"content": "Metadata updated successfully"
+ * 	}
+ *
+ * 	@apiError [042]400 InvalidPatch Invalid patch supplied
+ *
+ */
+router.post('/update_metadata', function(req, res, next) {
+	var userId = req.user.id;
+	var patches = req.body.patches;
+
+	if (!Array.isArray(patches) || patches.length == 0) {
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField,
+			['patches must be a non-empty array']));
+	}
+
+	Models.User.updateMetadata(userId, patches, function(err) {
+		if (err) return next(err);
+
+		res.status(200).json({status: 200, content: "Metadata updated successfully"});
+	});
 });
 
 module.exports = router;
