@@ -1,7 +1,12 @@
 {
   "main_database": "ElasticSearch",
   "message_queue": "kafka",
-  "logger": "console_logger",
+  "logger": {
+	"type": "Console",
+	"settings": {
+	  "level": "info"
+	}
+  },
   "ElasticSearch": {
 	"hosts": ["hostname:9200"],
 	"index": "default"

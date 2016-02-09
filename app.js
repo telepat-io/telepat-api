@@ -85,10 +85,15 @@ if (validEnvVariables) {
 
 app.telepatConfig = mainConfiguration;
 
-if (Models[mainConfiguration.logger]) {
-	Models.Application.logger = new Models[mainConfiguration.logger]('TelepatAPI', mainConfiguration[mainConfiguration.logger]);
+if (mainConfiguration.logger) {
+	mainConfiguration.logger.name = 'telepat-api:'+(process.env.PORT || 3000);
+	Models.Application.logger = new Models.TelepatLogger(mainConfiguration.logger);
 } else {
-	Models.Application.logger = new Models['console_logger']('TelepatAPI');
+	Models.Application.logger = new Models.TelepatLogger({
+		type: 'Console',
+		name: 'telepat-api:'+(process.env.PORT || 3000),
+		settings: {level: 'info'}
+	});
 }
 
 app.getFailedRequestMessage = function(req, res, err) {
