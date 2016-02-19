@@ -29,8 +29,10 @@ var envVariables = {
 	TP_MSG_QUE: process.env.TP_MSG_QUE,
 	TP_REDIS_HOST: process.env.TP_REDIS_HOST,
 	TP_REDIS_PORT: process.env.TP_REDIS_PORT,
+	TP_REDISCACHE_HOST: process.env.TP_REDISCACHE_HOST || process.env.TP_REDIS_HOST ,
+	TP_REDISCACHE_PORT: process.env.TP_REDISCACHE_PORT || process.env.TP_REDIS_PORT,
 	TP_MAIN_DB: process.env.TP_MAIN_DB,
-	TP_PW_SALT: process.env.TP_PW_SALT,
+	TP_PW_SALT: process.env.TP_PW_SALT
 };
 
 var validEnvVariables = true;
@@ -42,6 +44,10 @@ var mainConfiguration = {
 	redis: {
 		host: envVariables.TP_REDIS_HOST,
 		port: envVariables.TP_REDIS_PORT
+	},
+	redisCache: {
+		host: envVariables.TP_REDISCACHE_HOST,
+		port: envVariables.TP_REDISCACHE_PORT
 	},
 	password_salt: envVariables.TP_PW_SALT,
 	login_providers: {
@@ -233,6 +239,20 @@ async.waterfall([
 		});
 		Models.Application.redisClient.on('ready', function() {
 			Models.Application.logger.info('Client connected to Redis.');
+			callback();
+		});
+	},
+	function(callback) {
+		if (Models.Application.redisCacheClient)
+			Models.Application.redisCacheClient = null;
+
+		Models.Application.redisCacheClient = redis.createClient(mainConfiguration.redisCache.port, mainConfiguration.redisCache.host);
+		Models.Application.redisCacheClient.on('error', function(err) {
+			Models.Application.logger.error('Failed connecting to Redis Cache "'+mainConfiguration.redisCache.host+'": '+
+				err.message+'. Retrying...');
+		});
+		Models.Application.redisCacheClient.on('ready', function() {
+			Models.Application.logger.info('Client connected to Redis Cache.');
 			callback();
 		});
 	},

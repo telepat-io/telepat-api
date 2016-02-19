@@ -15,8 +15,12 @@
 	"host": "10.0.0.1",
 	"port": 6379
   },
-  "kafka": {
+  "redisCache": {
 	"host": "10.0.0.2",
+	"port": 6379
+  },
+  "kafka": {
+	"host": "10.0.0.3",
 	"port": 2181
   },
   "amqp": {
@@ -24,7 +28,6 @@
 	"user": "telepat",
 	"password": "password"
   },
-  "syslog_logger": ["LOG_NDELAY", "LOG_PID"],
   "password_salt": "$2a$10$N9qo8uLOickgx2ZMRZoMye",
   "login_providers": {
 	"facebook": {
