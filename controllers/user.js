@@ -35,6 +35,121 @@ router.use(['/logout', '/me', '/update', '/update_immediate', '/delete', '/metad
 	security.tokenValidation);
 
 /**
+ * @api {post} /user/login-password Password login
+ * @apiDescription Logs in the user with a password
+ * @apiName UserLoginPassword
+ * @apiGroup User
+ * @apiVersion 0.2.8
+ *
+ * @apiHeader {String} Content-type application/json
+ * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
+ * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
+ * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from device/register)
+ *
+ * @apiParam {String} password The password
+ * @apiParam {String} username Username
+ *
+ * @apiExample {json} Client Request
+ * 	{
+ * 		"username": "user@example.com",
+ * 		"password": "magic-password1337"
+ * 	}
+ *
+ * 	@apiSuccessExample {json} Success Response
+ * 	{
+ * 		"content": {
+ * 			"token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImdhYmlAYXBwc2NlbmQuY29tIiwiaXNBZG1pbiI6dHJ1ZSwi
+ * 			aWF0IjoxNDMyOTA2ODQwLCJleHAiOjE0MzI5MTA0NDB9.knhPevsK4cWewnx0LpSLrMg3Tk_OpchKu6it7FK9C2Q"
+ * 			"user": {
+ * 				"id": 31,
+ *				"type": "user",
+ * 				"username": "abcd@appscend.com",
+ * 				"devices": [
+ *					"466fa519-acb4-424b-8736-fc6f35d6b6cc"
+ *				],
+ *				"password": "acb8a9cbb479b6079f59eabbb50780087859aba2e8c0c397097007444bba07c0"
+ * 			}
+ * 		}
+ * 	}
+ *
+ * 	@apiError 401 [031]UserBadLogin User email and password did not match
+ *
+ */
+router.post(['/login-password', '/login_password'], function(req, res, next) {
+	if (!req.body.username)
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['username']));
+
+	if (!req.body.password)
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['password']));
+
+	var userProfile = null;
+	var username = req.body.username;
+	var password = req.body.password.toString();
+	var deviceId = req._telepat.device_id;
+	var appId = req._telepat.applicationId;
+	var requiresConfirmation = Models.Application.loadedAppModels[appId].email_confirmation;
+
+	var hashedPassword = null;
+
+	async.series([
+		function(callback) {
+			//try and get user profile from DB
+			Models.User({username: username}, appId, function(err, result) {
+				if (err && err.status == 404) {
+					callback(new Models.TelepatError(Models.TelepatError.errors.UserNotFound));
+				}
+				else if (err)
+					callback(err);
+				else {
+					if (!requiresConfirmation || result.confirmed) {
+						userProfile = result;
+						callback();
+					} else {
+						return callback(new Models.TelepatError(Models.TelepatError.errors.UnconfirmedAccount));
+					}
+				}
+			});
+		},
+		function(callback) {
+			var patches = [];
+			patches.push(Models.Delta.formPatch(userProfile, 'append', {devices: deviceId}));
+
+			if (userProfile.devices) {
+				var idx = userProfile.devices.indexOf(deviceId);
+				if (idx === -1) {
+					Models.User.update(userProfile.username, appId, patches, callback);
+				} else
+					callback();
+			} else {
+				Models.User.update(userProfile.username, appId, patches, callback);
+			}
+		},
+		function(callback) {
+			security.encryptPassword(req.body.password, function(err, hash) {
+				if (err)
+					return callback(err);
+
+				hashedPassword = hash;
+
+				callback();
+			});
+		}
+	], function(err) {
+		if (err)
+			return next(err);
+
+		if (hashedPassword != userProfile.password) {
+			return next(new Models.TelepatError(Models.TelepatError.errors.UserBadLogin));
+		}
+
+		delete userProfile.password;
+
+		var token = jwt.sign({username: username, id: userProfile.id}, security.authSecret, { expiresInMinutes: 60 });
+		res.status(200).json({status: 200, content: {user: userProfile, token: token }});
+	});
+});
+
+/**
  * @api {post} /user/login-{s} Login
  * @apiDescription Log in the user through Facebook or Twitter.
  * @apiName UserLogin
@@ -530,121 +645,6 @@ router.get('/me', function(req, res, next) {
 		else
 			delete result.password;
 			res.status(200).json({status: 200, content: result});
-	});
-});
-
-/**
- * @api {post} /user/login_password Password login
- * @apiDescription Logs in the user with a password
- * @apiName UserLoginPassword
- * @apiGroup User
- * @apiVersion 0.2.8
- *
- * @apiHeader {String} Content-type application/json
- * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
- * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
- * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from device/register)
- *
- * @apiParam {String} password The password
- * @apiParam {String} username Username
- *
- * @apiExample {json} Client Request
- * 	{
- * 		"username": "user@example.com",
- * 		"password": "magic-password1337"
- * 	}
- *
- * 	@apiSuccessExample {json} Success Response
- * 	{
- * 		"content": {
- * 			"token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImdhYmlAYXBwc2NlbmQuY29tIiwiaXNBZG1pbiI6dHJ1ZSwi
- * 			aWF0IjoxNDMyOTA2ODQwLCJleHAiOjE0MzI5MTA0NDB9.knhPevsK4cWewnx0LpSLrMg3Tk_OpchKu6it7FK9C2Q"
- * 			"user": {
- * 				"id": 31,
- *				"type": "user",
- * 				"username": "abcd@appscend.com",
- * 				"devices": [
- *					"466fa519-acb4-424b-8736-fc6f35d6b6cc"
- *				],
- *				"password": "acb8a9cbb479b6079f59eabbb50780087859aba2e8c0c397097007444bba07c0"
- * 			}
- * 		}
- * 	}
- *
- * 	@apiError 401 [031]UserBadLogin User email and password did not match
- *
- */
-router.post('/login_password', function(req, res, next) {
-	if (!req.body.username)
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['username']));
-
-	if (!req.body.password)
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['password']));
-
-	var userProfile = null;
-	var username = req.body.username;
-	var password = req.body.password.toString();
-	var deviceId = req._telepat.device_id;
-	var appId = req._telepat.applicationId;
-	var requiresConfirmation = Models.Application.loadedAppModels[appId].email_confirmation;
-
-	var hashedPassword = null;
-
-	async.series([
-		function(callback) {
-			//try and get user profile from DB
-			Models.User({username: username}, appId, function(err, result) {
-				if (err && err.status == 404) {
-					callback(new Models.TelepatError(Models.TelepatError.errors.UserNotFound));
-				}
-				else if (err)
-					callback(err);
-				else {
-					if (!requiresConfirmation || result.confirmed) {
-						userProfile = result;
-						callback();
-					} else {
-						return callback(new Models.TelepatError(Models.TelepatError.errors.UnconfirmedAccount));
-					}
-				}
-			});
-		},
-		function(callback) {
-			var patches = [];
-			patches.push(Models.Delta.formPatch(userProfile, 'append', {devices: deviceId}));
-
-			if (userProfile.devices) {
-				var idx = userProfile.devices.indexOf(deviceId);
-				if (idx === -1) {
-					Models.User.update(userProfile.username, appId, patches, callback);
-				} else
-					callback();
-			} else {
-				Models.User.update(userProfile.username, appId, patches, callback);
-			}
-		},
-		function(callback) {
-			security.encryptPassword(req.body.password, function(err, hash) {
-				if (err)
-					return callback(err);
-
-				hashedPassword = hash;
-
-				callback();
-			});
-		}
-	], function(err) {
-		if (err)
-			return next(err);
-
-		if (hashedPassword != userProfile.password) {
-			return next(new Models.TelepatError(Models.TelepatError.errors.UserBadLogin));
-		}
-
-		delete userProfile.password;
-
-		var token = jwt.sign({username: username, id: userProfile.id}, security.authSecret, { expiresInMinutes: 60 });
-		res.status(200).json({status: 200, content: {user: userProfile, token: token }});
 	});
 });
 
