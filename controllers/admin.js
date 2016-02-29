@@ -22,6 +22,20 @@ router.use('/contexts',
 	security.tokenValidation,
 	security.applicationIdValidation,
 	security.adminAppValidation);
+
+var getContexts = function (req, res, next) {
+	var offset = req.body ? req.body.offset : undefined;
+	var limit = req.body ? req.body.limit : undefined;
+
+	Models.Context.getAll(req._telepat.applicationId, offset, limit, function (err, res1) {
+		if (err)
+			next(err);
+		else {
+			res.status(200).json({status: 200, content: res1});
+		}
+	});
+};
+
 /**
  * @api {post} /admin/contexts GetContexts
  * @apiDescription Get all contexts
@@ -60,18 +74,38 @@ router.use('/contexts',
  * 	}
  *
  */
-router.post('/contexts', function (req, res, next) {
-	var offset = req.body.offset;
-	var limit = req.body.limit;
+router.post('/contexts', getContexts);
 
-	Models.Context.getAll(req._telepat.applicationId, offset, limit, function (err, res1) {
-		if (err)
-			next(err);
-		else {
-			res.status(200).json({status: 200, content: res1});
-		}
-	});
-});
+/**
+ * @api {get} /admin/contexts GetContexts (Deprecated)
+ * @apiDescription Get all contexts. This is deprecated as it doesn't offer any limit/offset params.
+ * @apiName AdminGetContextsDeprecated
+ * @apiGroup Admin
+ * @apiVersion 0.2.8
+ * @deprecated
+ *
+ * @apiHeader {String} Content-type application/json
+ * @apiHeader {String} Authorization
+ The authorization token obtained in the login endpoint.
+ Should have the format: <i>Bearer $TOKEN</i>
+ * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
+ *
+ * @apiSuccessExample {json} Success Response
+ * 	{
+ * 		"status": 200,
+ * 		"content": [{
+ * 			"name": "Episode 1",
+ * 			"state": 0,
+ * 			"meta": {},
+ * 			"type": "context",
+ * 			"application_id": "20"
+ * 		},
+ * 		...
+ * 		]
+ * 	}
+ *
+ */
+router.get('/contexts', getContexts);
 
 router.use('/schemas',
 	security.tokenValidation,

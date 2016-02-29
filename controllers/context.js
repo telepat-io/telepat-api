@@ -7,6 +7,20 @@ var security = require('./security');
 router.use(security.applicationIdValidation);
 router.use(security.apiKeyValidation);
 
+var contextGetAll = function (req, res, next) {
+	var appId = req._telepat.applicationId;
+	var offset = req.body.offset;
+	var limit = req.body.limit;
+
+	Models.Context.getAll(appId, offset, limit, function (err, res1) {
+		if (err)
+			next(err);
+		else {
+			res.status(200).json({status: 200, content: res1});
+		}
+	});
+};
+
 /**
  * @api {post} /context/all GetContexts
  * @apiDescription Get all contexts
@@ -43,19 +57,36 @@ router.use(security.apiKeyValidation);
  * 	}
  *
  */
-router.post('/all', function (req, res, next) {
-	var appId = req._telepat.applicationId;
-	var offset = req.body.offset;
-	var limit = req.body.limit;
+router.post('/all', contextGetAll);
 
-	Models.Context.getAll(appId, offset, limit, function (err, res1) {
-		if (err)
-			next(err);
-		else {
-			res.status(200).json({status: 200, content: res1});
-		}
-	});
-});
+/**
+ * @api {get} /context/all GetContexts (Deprecated)
+ * @apiDescription Get all contexts. This is deprecated as it doesn't offer any limit/offset params.
+ * @apiName GetContextsDeprecated
+ * @apiGroup Context
+ * @apiVersion 0.2.8
+ *
+ * @apiHeader {String} Content-type application/json
+ * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
+ * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
+ *
+ * @apiSuccessExample {json} Success Response
+ * 	{
+ * 		"status": 200,
+ * 		"content": [
+ * 			{
+ * 				"name": "Episode 1",
+ * 				"state": 0,
+ * 				"meta": {},
+ * 				"type": "context",
+ * 				"application_id": "20"
+ * 			},
+ * 			...
+ * 		]
+ * 	}
+ *
+ */
+router.get('/all', contextGetAll);
 
 /**
  * @api {post} /context GetContext
