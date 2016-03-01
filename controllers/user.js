@@ -465,6 +465,33 @@ router.post('/register-:s', function(req, res, next) {
 	});
 });
 
+/**
+ * @api {get} /user/confirm ConfirmEmailAddress
+ * @apiDescription Confirms the email address for the user
+ * @apiName ConfirmEmailAddress
+ * @apiGroup User
+ * @apiVersion 0.2.8
+ *
+ * @apiHeader {String} Content-type application/json
+ *
+ * @apiParam {String} username The username
+ * @apiParam {String} hash The confirmation hash
+ * @apiParam {String} app_id The application ID
+ * @apiParam {String} callbackUrl The app deeplink url to redirect the user to
+ *
+ * 	@apiSuccessExample {json} Success Response
+ * 	{
+ * 		"content": {
+ *			"id": 31,
+ *			"type": "user",
+ * 			"username": "abcd@appscend.com",
+ * 			"devices": [
+ *				"466fa519-acb4-424b-8736-fc6f35d6b6cc"
+ *			]
+ * 		}
+ * 	}
+ *
+ */
 router.get('/confirm', function(req, res, next) {
 	var username = req.query.username;
 	var hash = req.query.hash;
@@ -935,9 +962,12 @@ router.delete('/delete', function(req, res, next) {
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
  *
+ * @apiParam {string} link An application deep link to redirect the user when clicking the link in the email sent
+ * @apiParam {string} username The username which password we want to reset
+ *
  * @apiExample {json} Client Request
  * 	{
- * 		"type": "app",
+ * 		"link": "app://callback-url",
  * 		"username": "email@example.com"
  * 	}
  *
@@ -1021,6 +1051,10 @@ router.post('/request_password_reset', function(req, res, next) {
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
+ *
+ * @apiParam {String} token The token received from the query params in the app deeplink callback url
+ * @apiParam {String} user_id The user_id received from the query params in the app deeplink callback url
+ * @apiParam {String} password The new password
  *
  * @apiExample {json} Client Request
  * 	{
