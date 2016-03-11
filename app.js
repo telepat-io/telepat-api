@@ -40,7 +40,12 @@ var validEnvVariables = true;
 var mainConfiguration = {
 	main_database: envVariables.TP_MAIN_DB,
 	message_queue: envVariables.TP_MSG_QUE,
-	logger: process.env.TP_LOGGER,
+	logger: {
+		type: process.env.TP_LOGGER,
+		settings: {
+			level: process.env.TP_LOG_LEVEL
+		}
+	},
 	redis: {
 		host: envVariables.TP_REDIS_HOST,
 		port: envVariables.TP_REDIS_PORT

@@ -431,19 +431,19 @@ describe('1.1.Admin', function() {
 
 				request(url)
 					.post('/admin/add')
-					.send(admin)
+					.send({email: admin.email, password: adminPassword})
 					.end(function(err, res) {
 
 						res.statusCode.should.be.equal(200);
 
 						request(url)
 							.post('/admin/login')
-							.send(admin)
+							.send({email: admin.email, password: adminPassword})
 							.end(function(err, res) {
 
+								res.statusCode.should.be.equal(200);
 								authValue = 'Bearer ' + res.body.content.token;
 								adminAuth = authValue;
-								res.statusCode.should.be.equal(200);
 								done();
 							});
 					});

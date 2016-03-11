@@ -577,8 +577,8 @@ it('4.10 should return an error response to indicate that object has NOT been cr
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('002');
-			res.statusCode.should.be.equal(500);
+			res.body.code.should.be.equal('004');
+			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
@@ -1110,7 +1110,8 @@ it('4.30 should return a success response to indicate that a object has been sub
 	this.timeout(100*DELAY);
 
 	var subclientrequest = {
-		page: 2,
+		offset: 0,
+		limit: 10,
 		channel: {
 			context: contextID,
 			model: "comments"

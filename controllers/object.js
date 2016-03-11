@@ -367,7 +367,9 @@ router.post('/create', function(req, res, next) {
 	var isAdmin = req.user && req.user.isAdmin;
 
 	if (!context)
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['channel.context']));
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['context']));
+	if (!content)
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['content']));
 
 	if (req.user)
 		content.user_id = req.user.id;
