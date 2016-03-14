@@ -35,7 +35,8 @@ before_script:
   - 'echo "script.disable_dynamic: false" | sudo tee -a /etc/elasticsearch/elasticsearch.yml'
   - 'echo "script.groovy.sandbox.enable: true" | sudo tee -a /etc/elasticsearch/elasticsearch.yml'
 after_script:
-    - codeclimate-test-reporter < coverage/lcov.info
+  - codeclimate-test-reporter < coverage/lcov.info
+  - bash .travis/after.sh
 node_js:
   - "0.10"
   - "0.12"

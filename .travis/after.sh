@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+cat telepat-worker/aggregation.out
+cat telepat-worker/aggregation.err
+cat telepat-worker/write.out
+cat telepat-worker/write.err
+cat telepat-worker/update_friends.out
+cat telepat-worker/update_friends.err
+cat telepat-worker/android.out
+cat telepat-worker/android.err
+cat telepat-worker/ios.out
+cat telepat-worker/ios.err
+exit 0
