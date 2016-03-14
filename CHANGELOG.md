@@ -1,3 +1,7 @@
+# 0.3.0
+
+* 
+
 # 0.2.8
 
 * Context ID is not necessary when subscribing to channels which refer to an object id

@@ -28,6 +28,7 @@ before_install:
   - npm install -g telepat-cli
   - npm install -g forever
   - npm install -g codeclimate-test-reporter
+  - sleep 5
 before_script:
   - telepat configure elasticsearch
   - bash .travis/start.sh

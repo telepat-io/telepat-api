@@ -41,7 +41,7 @@ var getContexts = function (req, res, next) {
  * @apiDescription Get all contexts
  * @apiName AdminGetContexts
  * @apiGroup Admin
- * @apiVersion 0.2.8
+ * @apiVersion 0.3.0
  * @deprecated
  *
  * @apiHeader {String} Content-type application/json
@@ -81,7 +81,7 @@ router.post('/contexts', getContexts);
  * @apiDescription Get all contexts. This is deprecated as it doesn't offer any limit/offset params.
  * @apiName AdminGetContextsDeprecated
  * @apiGroup Admin
- * @apiVersion 0.2.8
+ * @apiVersion 0.3.0
  * @deprecated
  *
  * @apiHeader {String} Content-type application/json
@@ -116,7 +116,7 @@ router.use('/schemas',
  * @apiDescription Gets the model schema for an application
  * @apiName AdminGetSchemas
  * @apiGroup Admin
- * @apiVersion 0.2.8
+ * @apiVersion 0.3.0
  * @deprecated
  *
  * @apiHeader {String} Content-type application/json
@@ -166,7 +166,7 @@ router.use('/users',
  * @apiDescription Gets all users of the application
  * @apiName AdminGetUsers
  * @apiGroup Admin
- * @apiVersion 0.2.8
+ * @apiVersion 0.3.0
  * @deprecated
  *
  * @apiHeader {String} Content-type application/json

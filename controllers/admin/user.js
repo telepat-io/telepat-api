@@ -16,7 +16,7 @@ router.use('/all',
  * @apiDescription Gets all users of the application
  * @apiName AdminGetUsers
  * @apiGroup Admin
- * @apiVersion 0.2.8
+ * @apiVersion 0.3.0
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization
@@ -69,7 +69,7 @@ router.use('/update',
  * @apiDescription Updates an user from an application
  * @apiName AdminUpdateUser
  * @apiGroup Admin
- * @apiVersion 0.2.8
+ * @apiVersion 0.3.0
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization
@@ -181,7 +181,7 @@ router.use('/delete',
  * @apiDescription Deletes an user from an application
  * @apiName AdminDeleteUser
  * @apiGroup Admin
- * @apiVersion 0.2.8
+ * @apiVersion 0.3.0
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization
