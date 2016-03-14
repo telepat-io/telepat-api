@@ -6,7 +6,7 @@ define({ "api": [
     "description": "<p>Creates a new admin</p>",
     "name": "AdminAdd",
     "group": "Admin",
-    "version": "0.2.8",
+    "version": "0.3.0",
     "header": {
       "fields": {
         "Header": [
@@ -83,7 +83,7 @@ define({ "api": [
     "description": "<p>Creates a application for the admin. The request body should contain the application itself.</p>",
     "name": "AdminAppAdd",
     "group": "Admin",
-    "version": "0.2.8",
+    "version": "0.3.0",
     "header": {
       "fields": {
         "Header": [
@@ -130,7 +130,7 @@ define({ "api": [
     "description": "<p>Removes an application from the admin.</p>",
     "name": "AdminAppRemove",
     "group": "Admin",
-    "version": "0.2.8",
+    "version": "0.3.0",
     "header": {
       "fields": {
         "Header": [
@@ -196,7 +196,7 @@ define({ "api": [
     "description": "<p>Updates an app</p>",
     "name": "AdminAppUpdate",
     "group": "Admin",
-    "version": "0.2.8",
+    "version": "0.3.0",
     "header": {
       "fields": {
         "Header": [
@@ -282,7 +282,7 @@ define({ "api": [
     "description": "<p>Lists the application for the current admin</p>",
     "name": "AdminApps",
     "group": "Admin",
-    "version": "0.2.8",
+    "version": "0.3.0",
     "header": {
       "fields": {
         "Header": [
@@ -322,7 +322,7 @@ define({ "api": [
     "description": "<p>Authenticates an admin and returns the authorization token</p>",
     "name": "AdminAuthenticate",
     "group": "Admin",
-    "version": "0.2.8",
+    "version": "0.3.0",
     "header": {
       "fields": {
         "Header": [
@@ -401,7 +401,7 @@ define({ "api": [
     "description": "<p>Authorizes an admin to an application</p>",
     "name": "AdminAuthorize",
     "group": "Admin",
-    "version": "0.2.8",
+    "version": "0.3.0",
     "header": {
       "fields": {
         "Header": [
@@ -501,7 +501,7 @@ define({ "api": [
     "description": "<p>Creates a new context</p>",
     "name": "AdminCreateContext",
     "group": "Admin",
-    "version": "0.2.8",
+    "version": "0.3.0",
     "header": {
       "fields": {
         "Header": [
@@ -568,7 +568,7 @@ define({ "api": [
     "description": "<p>Deauthorizes an admin from an application</p>",
     "name": "AdminDeauthorize",
     "group": "Admin",
-    "version": "0.2.8",
+    "version": "0.3.0",
     "header": {
       "fields": {
         "Header": [
@@ -674,7 +674,7 @@ define({ "api": [
     "description": "<p>Deletes the currently logged admin.</p>",
     "name": "AdminDelete",
     "group": "Admin",
-    "version": "0.2.8",
+    "version": "0.3.0",
     "header": {
       "fields": {
         "Header": [
@@ -705,7 +705,7 @@ define({ "api": [
     "description": "<p>Deletes an user from an application</p>",
     "name": "AdminDeleteUser",
     "group": "Admin",
-    "version": "0.2.8",
+    "version": "0.3.0",
     "header": {
       "fields": {
         "Header": [
@@ -784,7 +784,7 @@ define({ "api": [
     "description": "<p>Retrieves a context</p>",
     "name": "AdminGetContext",
     "group": "Admin",
-    "version": "0.2.8",
+    "version": "0.3.0",
     "header": {
       "fields": {
         "Header": [
@@ -864,60 +864,13 @@ define({ "api": [
     "groupTitle": "Admin"
   },
   {
-    "type": "get",
-    "url": "/admin/contexts",
-    "title": "GetContexts",
-    "description": "<p>Get all contexts</p>",
-    "name": "AdminGetContexts",
-    "group": "Admin",
-    "version": "0.2.8",
-    "header": {
-      "fields": {
-        "Header": [
-          {
-            "group": "Header",
-            "type": "String",
-            "optional": false,
-            "field": "Content-type",
-            "description": "<p>application/json</p>"
-          },
-          {
-            "group": "Header",
-            "type": "String",
-            "optional": false,
-            "field": "Authorization",
-            "description": "<p>The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i></p>"
-          },
-          {
-            "group": "Header",
-            "type": "String",
-            "optional": false,
-            "field": "X-BLGREQ-APPID",
-            "description": "<p>Custom header which contains the application ID</p>"
-          }
-        ]
-      }
-    },
-    "success": {
-      "examples": [
-        {
-          "title": "Success Response",
-          "content": "{\n\t\"status\": 200,\n\t\"content\": [{\n\t\t\"name\": \"Episode 1\",\n\t\t\"state\": 0,\n\t\t\"meta\": {},\n\t\t\"type\": \"context\",\n\t\t\"application_id\": \"20\"\n\t},\n\t...\n\t]\n}",
-          "type": "json"
-        }
-      ]
-    },
-    "filename": "./controllers/admin.js",
-    "groupTitle": "Admin"
-  },
-  {
-    "type": "get",
+    "type": "post",
     "url": "/admin/context/all",
     "title": "GetContexts",
     "description": "<p>Get all contexts</p>",
     "name": "AdminGetContexts",
     "group": "Admin",
-    "version": "0.2.8",
+    "version": "0.3.0",
     "header": {
       "fields": {
         "Header": [
@@ -945,6 +898,33 @@ define({ "api": [
         ]
       }
     },
+    "parameter": {
+      "fields": {
+        "Parameter": [
+          {
+            "group": "Parameter",
+            "type": "Number",
+            "optional": false,
+            "field": "offset",
+            "description": "<p>(optional) Starting offset (default: 0)</p>"
+          },
+          {
+            "group": "Parameter",
+            "type": "Number",
+            "optional": false,
+            "field": "limit",
+            "description": "<p>(optional) Number of objects to return (default: depends on API configuration)</p>"
+          }
+        ]
+      }
+    },
+    "examples": [
+      {
+        "title": "Client Request",
+        "content": "{\n\t\"offset\": 0,\n\t\"limit\": 64\n}",
+        "type": "json"
+      }
+    ],
     "success": {
       "examples": [
         {
@@ -964,7 +944,7 @@ define({ "api": [
     "description": "<p>Gets the model schema for an application</p>",
     "name": "AdminGetSchemas",
     "group": "Admin",
-    "version": "0.2.8",
+    "version": "0.3.0",
     "header": {
       "fields": {
         "Header": [
@@ -1011,7 +991,7 @@ define({ "api": [
     "description": "<p>Gets the model schema for an application</p>",
     "name": "AdminGetSchemas",
     "group": "Admin",
-    "version": "0.2.8",
+    "version": "0.3.0",
     "header": {
       "fields": {
         "Header": [
@@ -1052,13 +1032,13 @@ define({ "api": [
     "groupTitle": "Admin"
   },
   {
-    "type": "get",
-    "url": "/admin/users",
-    "title": "GetAppusers",
+    "type": "post",
+    "url": "/admin/user/all",
+    "title": "GetAppUsers",
     "description": "<p>Gets all users of the application</p>",
     "name": "AdminGetUsers",
     "group": "Admin",
-    "version": "0.2.8",
+    "version": "0.3.0",
     "header": {
       "fields": {
         "Header": [
@@ -1086,49 +1066,22 @@ define({ "api": [
         ]
       }
     },
-    "success": {
-      "examples": [
-        {
-          "title": "Success Response",
-          "content": "{\n\t\"status\": 200,\n\t\"content\" : [\n\t\t{//user props}, ...\n\t]\n}",
-          "type": "json"
-        }
-      ]
-    },
-    "filename": "./controllers/admin.js",
-    "groupTitle": "Admin"
-  },
-  {
-    "type": "post",
-    "url": "/admin/user/all",
-    "title": "GetAppUsers",
-    "description": "<p>Gets all users of the application</p>",
-    "name": "AdminGetUsers",
-    "group": "Admin",
-    "version": "0.2.8",
-    "header": {
+    "parameter": {
       "fields": {
-        "Header": [
+        "Parameter": [
           {
-            "group": "Header",
-            "type": "String",
+            "group": "Parameter",
+            "type": "Number",
             "optional": false,
-            "field": "Content-type",
-            "description": "<p>application/json</p>"
+            "field": "offset",
+            "description": "<p>(optional) Starting offset (default: 0)</p>"
           },
           {
-            "group": "Header",
-            "type": "String",
+            "group": "Parameter",
+            "type": "Number",
             "optional": false,
-            "field": "Authorization",
-            "description": "<p>The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i></p>"
-          },
-          {
-            "group": "Header",
-            "type": "String",
-            "optional": false,
-            "field": "X-BLGREQ-APPID",
-            "description": "<p>Custom header which contains the application ID</p>"
+            "field": "limit",
+            "description": "<p>(optional) Number of objects to return (default: depends on API configuration)</p>"
           }
         ]
       }
@@ -1136,7 +1089,7 @@ define({ "api": [
     "examples": [
       {
         "title": "Client Request",
-        "content": "\n{\n\t\t\"page\": 1\n}",
+        "content": "{\n\t\"offset\": 0,\n\t\"limit\": 64\n}",
         "type": "json"
       }
     ],
@@ -1171,7 +1124,7 @@ define({ "api": [
     "description": "<p>Gets information about the logged admin</p>",
     "name": "AdminMe",
     "group": "Admin",
-    "version": "0.2.8",
+    "version": "0.3.0",
     "header": {
       "fields": {
         "Header": [
@@ -1211,7 +1164,7 @@ define({ "api": [
     "description": "<p>Removes a model from the application (all items of this type will be deleted)</p>",
     "name": "AdminRemoveAppModel",
     "group": "Admin",
-    "version": "0.2.8",
+    "version": "0.3.0",
     "header": {
       "fields": {
         "Header": [
@@ -1281,7 +1234,7 @@ define({ "api": [
     "description": "<p>Removes a context and all associated objects</p>",
     "name": "AdminRemoveContext",
     "group": "Admin",
-    "version": "0.2.8",
+    "version": "0.3.0",
     "header": {
       "fields": {
         "Header": [
@@ -1358,7 +1311,7 @@ define({ "api": [
     "description": "<p>Updates the currently logged admin. Every property in the request body is used to update the admin.</p>",
     "name": "AdminUpdate",
     "group": "Admin",
-    "version": "0.2.8",
+    "version": "0.3.0",
     "header": {
       "fields": {
         "Header": [
@@ -1415,7 +1368,7 @@ define({ "api": [
     "description": "<p>Updates the context object</p>",
     "name": "AdminUpdateContext",
     "group": "Admin",
-    "version": "0.2.8",
+    "version": "0.3.0",
     "header": {
       "fields": {
         "Header": [
@@ -1505,7 +1458,7 @@ define({ "api": [
     "description": "<p>Updates the model schema</p>",
     "name": "AdminUpdateSchema",
     "group": "Admin",
-    "version": "0.2.8",
+    "version": "0.3.0",
     "header": {
       "fields": {
         "Header": [
@@ -1575,7 +1528,7 @@ define({ "api": [
     "description": "<p>Updates an user from an application</p>",
     "name": "AdminUpdateUser",
     "group": "Admin",
-    "version": "0.2.8",
+    "version": "0.3.0",
     "header": {
       "fields": {
         "Header": [
@@ -1654,7 +1607,7 @@ define({ "api": [
     "description": "<p>Retrieves a context</p>",
     "name": "GetContext",
     "group": "Context",
-    "version": "0.2.8",
+    "version": "0.3.0",
     "header": {
       "fields": {
         "Header": [
@@ -1734,13 +1687,87 @@ define({ "api": [
     "groupTitle": "Context"
   },
   {
-    "type": "get",
+    "type": "post",
     "url": "/context/all",
     "title": "GetContexts",
     "description": "<p>Get all contexts</p>",
     "name": "GetContexts",
     "group": "Context",
-    "version": "0.2.8",
+    "version": "0.3.0",
+    "header": {
+      "fields": {
+        "Header": [
+          {
+            "group": "Header",
+            "type": "String",
+            "optional": false,
+            "field": "Content-type",
+            "description": "<p>application/json</p>"
+          },
+          {
+            "group": "Header",
+            "type": "String",
+            "optional": false,
+            "field": "X-BLGREQ-APPID",
+            "description": "<p>Custom header which contains the application ID</p>"
+          },
+          {
+            "group": "Header",
+            "type": "String",
+            "optional": false,
+            "field": "X-BLGREQ-SIGN",
+            "description": "<p>Custom header containing the SHA256-ed API key of the application</p>"
+          }
+        ]
+      }
+    },
+    "parameter": {
+      "fields": {
+        "Parameter": [
+          {
+            "group": "Parameter",
+            "type": "Number",
+            "optional": false,
+            "field": "offset",
+            "description": "<p>(optional) Starting offset (default: 0)</p>"
+          },
+          {
+            "group": "Parameter",
+            "type": "Number",
+            "optional": false,
+            "field": "limit",
+            "description": "<p>(optional) Number of objects to return (default: depends on API configuration)</p>"
+          }
+        ]
+      }
+    },
+    "examples": [
+      {
+        "title": "Client Request",
+        "content": "{\n\t\"offset\": 0,\n\t\"limit\": 64\n}",
+        "type": "json"
+      }
+    ],
+    "success": {
+      "examples": [
+        {
+          "title": "Success Response",
+          "content": "{\n\t\"status\": 200,\n\t\"content\": [\n\t\t{\n\t\t\t\"name\": \"Episode 1\",\n\t\t\t\"state\": 0,\n\t\t\t\"meta\": {},\n\t\t\t\"type\": \"context\",\n\t\t\t\"application_id\": \"20\"\n\t\t},\n\t\t...\n\t]\n}",
+          "type": "json"
+        }
+      ]
+    },
+    "filename": "./controllers/context.js",
+    "groupTitle": "Context"
+  },
+  {
+    "type": "get",
+    "url": "/context/all",
+    "title": "GetContexts (Deprecated)",
+    "description": "<p>Get all contexts. This is deprecated as it doesn't offer any limit/offset params.</p>",
+    "name": "GetContextsDeprecated",
+    "group": "Context",
+    "version": "0.3.0",
     "header": {
       "fields": {
         "Header": [
@@ -1787,7 +1814,7 @@ define({ "api": [
     "description": "<p>Registers a new device or updates an already existing one. If device UDID is supplied in info it will try to search for a device with this UDID and return the device ID.</p>",
     "name": "DeviceRegister",
     "group": "Device",
-    "version": "0.2.8",
+    "version": "0.3.0",
     "header": {
       "fields": {
         "Header": [
@@ -1876,7 +1903,7 @@ define({ "api": [
     "description": "<p>Gets the object count of a certain filter/subscription</p>",
     "name": "ObjectCount",
     "group": "Object",
-    "version": "0.2.8",
+    "version": "0.3.0",
     "header": {
       "fields": {
         "Header": [
@@ -1941,7 +1968,7 @@ define({ "api": [
     "description": "<p>Creates a new object. The object is not immediately created.</p>",
     "name": "ObjectCreate",
     "group": "Object",
-    "version": "0.2.8",
+    "version": "0.3.0",
     "header": {
       "fields": {
         "Header": [
@@ -2022,7 +2049,7 @@ define({ "api": [
     "description": "<p>Deletes an object. The object is not immediately deleted.</p>",
     "name": "ObjectDelete",
     "group": "Object",
-    "version": "0.2.8",
+    "version": "0.3.0",
     "header": {
       "fields": {
         "Header": [
@@ -2110,7 +2137,7 @@ define({ "api": [
     "description": "<p>Subscribe to an object or a collection of objects (by a filter). Returns a the resulting object(s). Subsequent subscription on the same channel and filter will have no effect but will return the objects.</p>",
     "name": "ObjectSubscribe",
     "group": "Object",
-    "version": "0.2.8",
+    "version": "0.3.0",
     "header": {
       "fields": {
         "Header": [
@@ -2168,6 +2195,34 @@ define({ "api": [
             "optional": false,
             "field": "filters",
             "description": "<p>Object representing channel filters</p>"
+          },
+          {
+            "group": "Parameter",
+            "type": "Object",
+            "optional": false,
+            "field": "sort",
+            "description": "<p>Object representing the sort order by a field</p>"
+          },
+          {
+            "group": "Parameter",
+            "type": "Number",
+            "optional": false,
+            "field": "offset",
+            "description": "<p>(optional) Starting offset (default: 0)</p>"
+          },
+          {
+            "group": "Parameter",
+            "type": "Number",
+            "optional": false,
+            "field": "limit",
+            "description": "<p>(optional) Number of objects to return (default: depends on API configuration)</p>"
+          },
+          {
+            "group": "Parameter",
+            "type": "Boolean",
+            "optional": false,
+            "field": "no_subscribe",
+            "description": "<p>(optional) If set to truethful value the device will not be subscribed, only objects will be returned.</p>"
           }
         ]
       }
@@ -2175,7 +2230,7 @@ define({ "api": [
     "examples": [
       {
         "title": "Client Request",
-        "content": "{\n\t\t\"channel\": {\n\t\t\t\"id\": 1,\n\t\t\t\"context\": 1,\n\t\t\t\"model\": \"comment\",\n\t\t\t\"parent\": {\n\t\t\t\t\"id\": 1,\n\t\t\t\t\"model\": \"event\"\n\t\t\t},\n\t\t\t\"user\": 2\n\t\t},\n\t\t\"filters\": {\n\t\t\t\"or\": [\n\t\t\t\t{\n\t\t\t\t\t\"and\": [\n\t\t\t\t\t\t{\n\t\t\t\t\t\t  \"is\": {\n\t\t\t\t\t\t\t\"gender\": \"male\",\n\t\t\t\t\t\t\t\"age\": 23\n\t\t\t\t\t\t  }\n\t\t\t\t\t\t},\n\t\t\t\t\t\t{\n\t\t\t\t\t\t  \"range\": {\n\t\t\t\t\t\t\t\"experience\": {\n\t\t\t\t\t\t\t  \"gte\": 1,\n\t\t\t\t\t\t\t  \"lte\": 6\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t  }\n\t\t\t\t\t\t}\n\t\t\t\t\t  ]\n\t\t\t\t\t},\n\t\t\t\t\t{\n\t\t\t\t\t  \"and\": [\n\t\t\t\t\t\t{\n\t\t\t\t\t\t  \"like\": {\n\t\t\t\t\t\t\t\"image_url\": \"png\",\n\t\t\t\t\t\t\t\"website\": \"png\"\n\t\t\t\t\t\t  }\n\t\t\t\t\t\t}\n\t\t\t\t\t  ]\n\t\t\t\t\t}\n\t\t\t\t  ]\n\t\t}\n}",
+        "content": "{\n\t\t\"channel\": {\n\t\t\t\"id\": 1,\n\t\t\t\"context\": 1,\n\t\t\t\"model\": \"comment\",\n\t\t\t\"parent\": {\n\t\t\t\t\"id\": 1,\n\t\t\t\t\"model\": \"event\"\n\t\t\t},\n\t\t\t\"user\": 2\n\t\t},\n\t\t\"filters\": {\n\t\t\t\"or\": [\n\t\t\t\t{\n\t\t\t\t\t\"and\": [\n\t\t\t\t\t\t{\n\t\t\t\t\t\t  \"is\": {\n\t\t\t\t\t\t\t\"gender\": \"male\",\n\t\t\t\t\t\t\t\"age\": 23\n\t\t\t\t\t\t  }\n\t\t\t\t\t\t},\n\t\t\t\t\t\t{\n\t\t\t\t\t\t  \"range\": {\n\t\t\t\t\t\t\t\"experience\": {\n\t\t\t\t\t\t\t  \"gte\": 1,\n\t\t\t\t\t\t\t  \"lte\": 6\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t  }\n\t\t\t\t\t\t}\n\t\t\t\t\t  ]\n\t\t\t\t\t},\n\t\t\t\t\t{\n\t\t\t\t\t  \"and\": [\n\t\t\t\t\t\t{\n\t\t\t\t\t\t  \"like\": {\n\t\t\t\t\t\t\t\"image_url\": \"png\",\n\t\t\t\t\t\t\t\"website\": \"png\"\n\t\t\t\t\t\t  }\n\t\t\t\t\t\t}\n\t\t\t\t\t  ]\n\t\t\t\t\t}\n\t\t\t\t  ]\n\t\t},\n\t\t\"sort\": {\n\t\t\t\"points\": \"desc\"\n\t\t},\n\t\t\"offset\": 0,\n\t\t\"limit\": 64\n}",
         "type": "json"
       }
     ],
@@ -2210,7 +2265,7 @@ define({ "api": [
     "description": "<p>Unsubscribe to an object or a collection of objects (by a filter)</p>",
     "name": "ObjectUnsubscribe",
     "group": "Object",
-    "version": "0.2.8",
+    "version": "0.3.0",
     "header": {
       "fields": {
         "Header": [
@@ -2310,7 +2365,7 @@ define({ "api": [
     "description": "<p>Updates an existing object. The object is not updated immediately.</p>",
     "name": "ObjectUpdate",
     "group": "Object",
-    "version": "0.2.8",
+    "version": "0.3.0",
     "header": {
       "fields": {
         "Header": [
@@ -2405,7 +2460,7 @@ define({ "api": [
     "description": "<p>Sends a new authentication token to the user. The old token must be provide (and it may or not may not be already expired).</p>",
     "name": "RefreshToken",
     "group": "User",
-    "version": "0.2.8",
+    "version": "0.3.0",
     "header": {
       "fields": {
         "Header": [
@@ -2478,7 +2533,7 @@ define({ "api": [
     "description": "<p>Deletes a user</p>",
     "name": "UserDelete",
     "group": "User",
-    "version": "0.2.8",
+    "version": "0.3.0",
     "header": {
       "fields": {
         "Header": [
@@ -2526,13 +2581,53 @@ define({ "api": [
     "groupTitle": "User"
   },
   {
+    "type": "get",
+    "url": "/user/metadata",
+    "title": "Get Metadata",
+    "description": "<p>Gets user metadata (private info)</p>",
+    "name": "UserGetMetadata",
+    "group": "User",
+    "version": "0.3.0",
+    "header": {
+      "fields": {
+        "Header": [
+          {
+            "group": "Header",
+            "type": "String",
+            "optional": false,
+            "field": "Content-type",
+            "description": "<p>application/json</p>"
+          },
+          {
+            "group": "Header",
+            "type": "String",
+            "optional": false,
+            "field": "Authorization",
+            "description": "<p>The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i></p>"
+          }
+        ]
+      }
+    },
+    "success": {
+      "examples": [
+        {
+          "title": "Success Response",
+          "content": "\t{\n\t\t\"status\": 200,\n\t\t\"content\": {\n\t\t\t\"id\": \"9fa7751a-d733-404a-a269-c8b64817dfd5\",\n  \t\t\"user_id\": \"15f76424-d4bd-48d4-b812-c4ebc09782f1\",\n  \t\t\"points\": 100,\n\t\t}\n\t}",
+          "type": "json"
+        }
+      ]
+    },
+    "filename": "./controllers/user.js",
+    "groupTitle": "User"
+  },
+  {
     "type": "post",
     "url": "/user/login-{s}",
     "title": "Login",
     "description": "<p>Log in the user through Facebook or Twitter.</p>",
     "name": "UserLogin",
     "group": "User",
-    "version": "0.2.8",
+    "version": "0.3.0",
     "header": {
       "fields": {
         "Header": [
@@ -2631,12 +2726,12 @@ define({ "api": [
   },
   {
     "type": "post",
-    "url": "/user/login_password",
+    "url": "/user/login-password",
     "title": "Password login",
     "description": "<p>Logs in the user with a password</p>",
     "name": "UserLoginPassword",
     "group": "User",
-    "version": "0.2.8",
+    "version": "0.3.0",
     "header": {
       "fields": {
         "Header": [
@@ -2729,7 +2824,7 @@ define({ "api": [
     "description": "<p>Logs out the user removing the device from his array of devices.</p>",
     "name": "UserLogout",
     "group": "User",
-    "version": "0.2.8",
+    "version": "0.3.0",
     "header": {
       "fields": {
         "Header": [
@@ -2783,7 +2878,7 @@ define({ "api": [
     "description": "<p>Info about logged user</p>",
     "name": "UserMe",
     "group": "User",
-    "version": "0.2.8",
+    "version": "0.3.0",
     "header": {
       "fields": {
         "Header": [
@@ -2864,7 +2959,7 @@ define({ "api": [
     "description": "<p>Resets the password of the user based on a token</p>",
     "name": "UserPasswordReset",
     "group": "User",
-    "version": "0.2.8",
+    "version": "0.3.0",
     "header": {
       "fields": {
         "Header": [
@@ -2918,7 +3013,7 @@ define({ "api": [
     "description": "<p>Registers a new user using a Facebook token or directly with an email and password. User is not created immediately.</p>",
     "name": "UserRegister",
     "group": "User",
-    "version": "0.2.8",
+    "version": "0.3.0",
     "header": {
       "fields": {
         "Header": [
@@ -3027,7 +3122,7 @@ define({ "api": [
     "description": "<p>Requests a password reset for the user, an email is sent to its email address</p>",
     "name": "UserRequestPasswordReset",
     "group": "User",
-    "version": "0.2.8",
+    "version": "0.3.0",
     "header": {
       "fields": {
         "Header": [
@@ -3081,7 +3176,7 @@ define({ "api": [
     "description": "<p>Updates the user information. This operation is not immediate.</p>",
     "name": "UserUpdate",
     "group": "User",
-    "version": "0.2.8",
+    "version": "0.3.0",
     "parameter": {
       "fields": {
         "Parameter": [
@@ -3107,6 +3202,78 @@ define({ "api": [
         {
           "title": "Success Response",
           "content": "{\n\t\"status\": 202,\n\t\"content\": \"User updated\"\n}",
+          "type": "json"
+        }
+      ]
+    },
+    "error": {
+      "fields": {
+        "Error 4xx": [
+          {
+            "group": "Error 4xx",
+            "optional": true,
+            "field": "042",
+            "description": "<p>400 InvalidPatch Invalid patch supplied</p>"
+          }
+        ]
+      }
+    },
+    "filename": "./controllers/user.js",
+    "groupTitle": "User"
+  },
+  {
+    "type": "post",
+    "url": "/user/update_metadata",
+    "title": "Update Metadata",
+    "description": "<p>Updates user metadata</p>",
+    "name": "UserUpdateMetadata",
+    "group": "User",
+    "version": "0.3.0",
+    "header": {
+      "fields": {
+        "Header": [
+          {
+            "group": "Header",
+            "type": "String",
+            "optional": false,
+            "field": "Content-type",
+            "description": "<p>application/json</p>"
+          },
+          {
+            "group": "Header",
+            "type": "String",
+            "optional": false,
+            "field": "Authorization",
+            "description": "<p>The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i></p>"
+          }
+        ]
+      }
+    },
+    "parameter": {
+      "fields": {
+        "Parameter": [
+          {
+            "group": "Parameter",
+            "type": "Object[]",
+            "optional": false,
+            "field": "patches",
+            "description": "<p>Array of patches that describe the modifications</p>"
+          }
+        ]
+      }
+    },
+    "examples": [
+      {
+        "title": "Client Request",
+        "content": "{\n\t\"patches\": [\n\t\t{\n\t\t\t\"op\": \"replace\",\n\t\t\t\"path\": \"user_metadata/metadata_id/field_name\",\n\t\t\t\"value\": \"new value\n\t\t}\n\t]\n}",
+        "type": "json"
+      }
+    ],
+    "success": {
+      "examples": [
+        {
+          "title": "Success Response",
+          "content": "{\n\t\"status\": 200,\n\t\"content\": \"Metadata updated successfully\"\n}",
           "type": "json"
         }
       ]
