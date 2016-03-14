@@ -939,53 +939,6 @@ define({ "api": [
   },
   {
     "type": "post",
-    "url": "/admin/schemas",
-    "title": "GetSchemas",
-    "description": "<p>Gets the model schema for an application</p>",
-    "name": "AdminGetSchemas",
-    "group": "Admin",
-    "version": "0.3.0",
-    "header": {
-      "fields": {
-        "Header": [
-          {
-            "group": "Header",
-            "type": "String",
-            "optional": false,
-            "field": "Content-type",
-            "description": "<p>application/json</p>"
-          },
-          {
-            "group": "Header",
-            "type": "String",
-            "optional": false,
-            "field": "Authorization",
-            "description": "<p>The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i></p>"
-          },
-          {
-            "group": "Header",
-            "type": "String",
-            "optional": false,
-            "field": "X-BLGREQ-APPID",
-            "description": "<p>Custom header which contains the application ID</p>"
-          }
-        ]
-      }
-    },
-    "success": {
-      "examples": [
-        {
-          "title": "Success Response",
-          "content": "\t{\n\t\t\"status\": 200,\n\t\t\"content\" :{\n\t\t\t\"answer\": {\n  \t\t\t\"properties\": {},\n  \t\t\t\"belongsTo\": [\n    \t\t\t\t{\n      \t\t\t\t\"parentModel\": \"event\",\n      \t\t\t\t\"relationType\": \"hasSome\"\n    \t\t\t\t}\n  \t\t\t],\n  \t\t\t\"read_acl\": 6,\n  \t\t\t\"write_acl\": 6,\n  \t\t\t\"meta_read_acl\": 6\n\t\t\t},\n\t\t...\n\t\t}\n\t}",
-          "type": "json"
-        }
-      ]
-    },
-    "filename": "./controllers/admin.js",
-    "groupTitle": "Admin"
-  },
-  {
-    "type": "post",
     "url": "/admin/schema/all",
     "title": "GetSchemas",
     "description": "<p>Gets the model schema for an application</p>",
