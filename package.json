@@ -1,6 +1,6 @@
 {
   "name": "telepat-api",
-  "version": "0.2.8",
+  "version": "0.3.0",
   "scripts": {
     "start": "./bin/www",
     "test": "istanbul cover _mocha -- test/api.js -R spec"
@@ -20,7 +20,7 @@
     "microtime-nodejs": "1.0.0",
     "object-sizeof": "1.0.9",
     "redis": "2.4.2",
-	"telepat-models": "telepat-io/telepat-models#develop",
+	"telepat-models": "0.3.0",
     "twitter": "1.2.5",
     "uuid": "2.0.1"
   },

@@ -36,116 +36,18 @@ var getContexts = function (req, res, next) {
 	});
 };
 
-/**
- * @api {post} /admin/contexts GetContexts
- * @apiDescription Get all contexts
- * @apiName AdminGetContexts
- * @apiGroup Admin
- * @apiVersion 0.3.0
- * @deprecated
- *
- * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization
-                       The authorization token obtained in the login endpoint.
-                       Should have the format: <i>Bearer $TOKEN</i>
- * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
- *
- * @apiParam {Number} offset (optional) Starting offset (default: 0)
- * @apiParam {Number} limit (optional) Number of objects to return (default: depends on API configuration)
- *
- * @apiExample {json} Client Request
- * 	{
- * 		"offset": 0,
- * 		"limit": 64
- * 	}
- *
- * @apiSuccessExample {json} Success Response
- * 	{
- * 		"status": 200,
- * 		"content": [{
- * 			"name": "Episode 1",
- * 			"state": 0,
- * 			"meta": {},
- * 			"type": "context",
- * 			"application_id": "20"
- * 		},
- * 		...
- * 		]
- * 	}
- *
- */
+/** @depreacted Use /admin/context/all instead**/
 router.post('/contexts', getContexts);
 
-/**
- * @api {get} /admin/contexts GetContexts (Deprecated)
- * @apiDescription Get all contexts. This is deprecated as it doesn't offer any limit/offset params.
- * @apiName AdminGetContextsDeprecated
- * @apiGroup Admin
- * @apiVersion 0.3.0
- * @deprecated
- *
- * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization
- The authorization token obtained in the login endpoint.
- Should have the format: <i>Bearer $TOKEN</i>
- * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
- *
- * @apiSuccessExample {json} Success Response
- * 	{
- * 		"status": 200,
- * 		"content": [{
- * 			"name": "Episode 1",
- * 			"state": 0,
- * 			"meta": {},
- * 			"type": "context",
- * 			"application_id": "20"
- * 		},
- * 		...
- * 		]
- * 	}
- *
- */
+/** @deprecated Use /admin/context/all instead**/
 router.get('/contexts', getContexts);
 
 router.use('/schemas',
 	security.tokenValidation,
 	security.applicationIdValidation,
 	security.adminAppValidation);
-/**
- * @api {post} /admin/schemas GetSchemas
- * @apiDescription Gets the model schema for an application
- * @apiName AdminGetSchemas
- * @apiGroup Admin
- * @apiVersion 0.3.0
- * @deprecated
- *
- * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization
-                       The authorization token obtained in the login endpoint.
-                       Should have the format: <i>Bearer $TOKEN</i>
- * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
- *
- * 	@apiSuccessExample {json} Success Response
- * 	{
- * 		"status": 200,
- * 		"content" :{
- * 			"answer": {
- *   			"properties": {},
- *   			"belongsTo": [
- *     				{
- *       				"parentModel": "event",
- *       				"relationType": "hasSome"
- *     				}
- *   			],
- *   			"read_acl": 6,
- *   			"write_acl": 6,
- *   			"meta_read_acl": 6
- * 			},
- * 		...
- * 		}
- * 	}
- *
- */
+
+/** @deprecated: use /admin/schema/all instead **/
 router.get('/schemas', function(req, res, next) {
 	Models.Application.getAppSchema(req._telepat.applicationId, function(err, result) {
 		if (err){
@@ -161,39 +63,8 @@ router.use('/users',
 	security.tokenValidation,
 	security.applicationIdValidation,
 	security.adminAppValidation);
-/**
- * @api {post} /admin/users GetAppusers
- * @apiDescription Gets all users of the application
- * @apiName AdminGetUsers
- * @apiGroup Admin
- * @apiVersion 0.3.0
- * @deprecated
- *
- * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization
-                       The authorization token obtained in the login endpoint.
-                       Should have the format: <i>Bearer $TOKEN</i>
- * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
- *
- * @apiParam {Number} offset (optional) Starting offset (default: 0)
- * @apiParam {Number} limit (optional) Number of objects to return (default: depends on API configuration)
- *
- * @apiExample {json} Client Request
- * 	{
- * 		"offset": 0,
- * 		"limit": 64
- * 	}
- *
- * 	@apiSuccessExample {json} Success Response
- * 	{
- * 		"status": 200,
- * 		"content" : [
- * 			{//user props}, ...
- * 		]
- * 	}
- *
- */
 
+/** Deprecated **/
 router.post('/users', function(req, res, next) {
 	var offset = req.body.offset;
 	var limit = req.body.limit;

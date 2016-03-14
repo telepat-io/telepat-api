@@ -65,34 +65,7 @@ var getAllContexts = function (req, res, next) {
  */
 router.post('/all', getAllContexts);
 
-/**
- * @api {get} /admin/context/all GetContexts (Deprecated)
- * @apiDescription Get all contexts. This is deprecated as it doesn't offer any limit/offset params.
- * @apiName AdminGetContextsDeprecated
- * @apiGroup Admin
- * @apiVersion 0.3.0
- *
- * @apiHeader {String} Content-type application/json
- * @apiHeader {String} Authorization
- The authorization token obtained in the login endpoint.
- Should have the format: <i>Bearer $TOKEN</i>
- * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
- *
- * @apiSuccessExample {json} Success Response
- * 	{
- * 		"status": 200,
- * 		"content": [{
- * 			"name": "Episode 1",
- * 			"state": 0,
- * 			"meta": {},
- * 			"type": "context",
- * 			"application_id": "20"
- * 		},
- * 		...
- * 		]
- * 	}
- *
- */
+/** @deprecated: Use the post version of this endpoint **/
 router.get('/all', getAllContexts);
 
 /**
