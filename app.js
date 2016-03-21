@@ -1,5 +1,8 @@
 var express = require('express');
 var bodyParser = require('body-parser');
+var http = require('http');
+var https = require('https');
+var urlParser = require('url');
 colors = require('colors');
 
 async = require('async');
@@ -159,7 +162,6 @@ var linkMiddlewaresAndRoutes = function(callback) {
 			var body = string instanceof Buffer ? string.toString() : string;
 			send.call(this, body);
 			res.on('finish', function() {
-				var copyBody = JSON.parse(body);
 				var requestLogMessage = req.method +' '+ req.baseUrl+req.url +' '+res.statusCode;
 
 				if (res._header && req._startAt && res._startAt) {
@@ -169,11 +171,15 @@ var linkMiddlewaresAndRoutes = function(callback) {
 					requestLogMessage += ' ' + ms.toFixed(3) + ' ms';
 				}
 
-				if (res.statusCode >= 400)	{
-					requestLogMessage += ' (['+copyBody.code+']: '+copyBody.message+')';
-					if (res.statusCode >= 500 && res._telepatError)
-						requestLogMessage += "\n"+res._telepatError.stack;
-				}
+				try {
+					var copyBody = JSON.parse(body);
+
+					if (res.statusCode >= 400)	{
+						requestLogMessage += ' (['+copyBody.code+']: '+copyBody.message+')';
+						if (res.statusCode >= 500 && res._telepatError)
+							requestLogMessage += "\n"+res._telepatError.stack;
+					}
+				} catch (e) {}
 
 				requestLogMessage += ' ('+req.ip+')';
 
@@ -184,7 +190,105 @@ var linkMiddlewaresAndRoutes = function(callback) {
 	});
 	app.use(security.corsValidation);
 	app.use(security.contentTypeValidation);
-	/*Automatically parses request body from json string to object*/
+
+	app.use('/proxy', security.applicationIdValidation);
+	app.use('/proxy', security.apiKeyValidation);
+
+	/**
+	 * @api {post} /proxy Proxy
+	 * @apiDescription Proxies a request to a specified URL
+	 * @apiName Proxy
+	 * @apiGroup Context
+	 * @apiVersion 0.3.0
+	 *
+	 * @apiHeader {String} Content-type application/json
+	 * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
+	 * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
+	 *
+	 * @apiParam {string} method HTTP method (<b>GET</b>, <b>POST</b>, <b>PUT</b>, <b>DELETE</b>)
+	 * @apiParam {string} url The URL where the request is made
+	 * @apiParam {Object} headers A hashmap with  the headers of the request
+	 * @apiParam {string} queryString A string represing a http query string
+	 * @apiParam {string} body A string representing the request body
+	 *
+	 * @apiExample {json} Client Request
+	 * 	{
+ 	 * 		"method": "GET",
+ 	 * 		"url": "http://www.example.com/",
+ 	 * 		"headers": {
+ 	 *			"accept": "text/html,application/xhtml+xml,application/xml;",
+	 *			"accept-language": "en-US,en;q=0.8,ro;q=0.6",
+	 *			"cache-control": "max-age=0",
+	 *			"if-modified-since": "Fri, 18 Mar 2016 17:14:57 GMT",
+	 *			"upgrade-insecure-requests": "1",
+	 *			"user-agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.87 Safari/537.36"
+ 	 * 		}
+ 	 * 	}
+	 *
+	 *
+	 */
+	app.post('/proxy', function(req, res, next) {
+		var method = req.body.method ? req.body.method.toUpperCase() : null;
+		var url = req.body.url;
+		var headers = req.body.headers;
+		var queryString = req.body.queryString;
+		var requestBody = req.body.body;
+
+		if (['POST', 'GET', 'PUT', 'DELETE'].indexOf(method) === -1)
+			return next(new Models.TelepatError(Models.TelepatError.errors.InvalidFieldValue,
+				['method must be one of '+['POST', 'GET', 'PUT', 'DELETE'].join(' ')]));
+		if (!url)
+			return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['url']));
+		if (!headers || typeof headers != 'object')
+			return next(new Models.TelepatError(Models.TelepatError.errors.InvalidFieldValue,
+				['headers must be object (or is missing)']));
+
+		var parsedUrl = urlParser.parse(url);
+		var urlProtocol = parsedUrl['protocol'];
+		var requestObject = {
+			host: parsedUrl['hostname'],
+			port: parsedUrl['port'],
+			path: parsedUrl['pathname'],
+			method: method,
+			headers: headers
+		};
+		var request = null;
+
+		var responseCallback = function(response) {
+			//response.setEncoding('utf8');
+			var data = new Buffer('');
+
+			response.on('data', function(payload) {
+				if (payload instanceof Buffer)
+					data = Buffer.concat([data, payload]);
+			});
+
+			response.on('end', function() {
+				res.status(response.statusCode);
+				res.set(response.headers);
+				res.send(data);
+			});
+		};
+
+		if (queryString)
+			requestObject.path += '?'+queryString;
+
+		if (urlProtocol == 'http:') {
+			request = http.request(requestObject, responseCallback);
+		} else if (urlProtocol == 'https:') {
+			request = https.request(requestObject, responseCallback);
+		}
+
+		if (method == 'POST' && requestBody)
+			request.write(requestBody.toString());
+
+		request.on('error', function(e) {
+			next(new Models.TelepatError(Models.TelepatError.errors.UnspecifiedError, [e.message]));
+		});
+
+		request.end();
+	});
+
 	app.use('/admin', adminRoute);
 	app.use('/object', objectRoute);
 	app.use('/user', userRoute);
