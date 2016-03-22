@@ -76,7 +76,7 @@ for(var varName in envVariables) {
 			if (e.code === 'MODULE_NOT_FOUND') {
 				console.log('Fatal error:'.red+' configuration file is missing or not accessible. ' +
 					'Please add a configuration file from the example.');
-				process.exit(-1);
+				process.exit(1);
 			} else
 				throw e;
 		}
@@ -88,6 +88,11 @@ for(var varName in envVariables) {
 
 var messagingClient = mainConfiguration.message_queue;
 var mainDatabase = mainConfiguration.main_database;
+
+if (!Models[mainDatabase]) {
+	Models.Application.logger.emergency('Unable to load "'+mainDatabase+'" main database: not found. Aborting...');
+	process.exit(2);
+}
 
 if (validEnvVariables) {
 	//is null just so the adapter constructor will try to check envVariables
@@ -111,18 +116,13 @@ app.getFailedRequestMessage = function(req, res, err) {
 	return req.method +' '+ req.baseUrl+req.url +' '+res.statusCode+' ('+err.toString()+')';
 };
 
-if (!Models[mainDatabase]) {
-	Models.Application.logger.emergency('Unable to load "'+mainDatabase+'" main database: not found. Aborting...');
-	process.exit(-1);
-}
-
 Models.Application.datasource = new Models.Datasource();
 Models.Application.datasource.setMainDatabase(new Models[mainDatabase](mainConfiguration[mainDatabase]));
 
 if(mainConfiguration.password_salt === undefined || mainConfiguration.password_salt === ""
 	|| mainConfiguration.password_salt === null) {
 	Models.Application.logger.emergency('Please add salt configuration via TP_PW_SALT or config.json');
-	process.exit(-1);
+	process.exit(3);
 }
 //app.set('password_salt', mainConfiguration.password_salt);
 
@@ -267,7 +267,7 @@ async.waterfall([
 		if (!Models[messagingClient]) {
 			Models.Application.logger.error('Unable to load "'+messagingClient+'" messaging queue: not found. ' +
 			'Aborting...');
-			process.exit(-1);
+			process.exit(5);
 		}
 
 		clientConfiguration = clientConfiguration || {broadcast: false};
