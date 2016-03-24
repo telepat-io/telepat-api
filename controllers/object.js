@@ -360,11 +360,11 @@ router.post('/unsubscribe', function(req, res, next) {
  *
  */
 router.post('/create', function(req, res, next) {
+	var modifiedMicrotime = microtime.now();
 	var content = req.body.content;
 	var mdl = req.body.model;
 	var context = req.body.context;
 	var appId = req._telepat.applicationId;
-	var isAdmin = req.user && req.user.isAdmin;
 
 	if (!context)
 		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['context']));
@@ -407,11 +407,10 @@ router.post('/create', function(req, res, next) {
 	async.series([
 		function(aggCallback) {
 			app.messagingClient.send([JSON.stringify({
-				op: 'add',
+				op: 'create',
 				object: content,
-				applicationId: appId,
-				isAdmin: isAdmin,
-				context: context
+				application_id: appId,
+				timestamp: modifiedMicrotime
 			})], 'aggregation', function(err) {
 				if (err){
 					err = new Models.TelepatError(Models.TelepatError.errors.ServerFailure, [err]);
@@ -486,17 +485,8 @@ router.post('/create', function(req, res, next) {
  */
 router.post('/update', function(req, res, next) {
 	var modifiedMicrotime = microtime.now();
-	var context = req.body.context;
 	var patch = req.body.patches;
-	var id = req.body.id;
-	var mdl = req.body.model;
 	var appId = req._telepat.applicationId;
-
-	if (!id)
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['id']));
-
-	if (!context)
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['context']));
 
 	if (!Array.isArray(req.body.patches)) {
 		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidFieldValue,
@@ -508,22 +498,17 @@ router.post('/update', function(req, res, next) {
 
 	async.series([
 		function(aggCallback) {
-			async.each(patch, function(p ,c) {
-				app.messagingClient.send([JSON.stringify({
-					op: 'update',
-					id: id,
-					context: context,
-					object: p,
-					type: mdl,
-					applicationId: appId,
-					ts: modifiedMicrotime
-				})], 'aggregation', function(err) {
-					if (err){
-						err = new Models.TelepatError(Models.TelepatError.errors.ServerFailure, [err.message]);
-					}
-					c(err);
-				});
-			}, aggCallback);
+			app.messagingClient.send([JSON.stringify({
+				op: 'update',
+				patches: patch,
+				application_id: appId,
+				timestamp: modifiedMicrotime
+			})], 'aggregation', function(err) {
+				if (err){
+					err = new Models.TelepatError(Models.TelepatError.errors.ServerFailure, [err.message]);
+				}
+				aggCallback(err);
+			});
 		}/*,
 		function(track_callback) {
 			app.kafkaProducer.send([{
@@ -585,6 +570,7 @@ router.post('/update', function(req, res, next) {
  *
  */
 router.delete('/delete', function(req, res, next) {
+	var modifiedMicrotime = microtime.now();
 	var id = req.body.id;
 	var context = req.body.context;
 	var mdl = req.body.model;
@@ -600,9 +586,12 @@ router.delete('/delete', function(req, res, next) {
 		function(aggCallback) {
 			app.messagingClient.send([JSON.stringify({
 				op: 'delete',
-				object: {path: mdl+'/'+id},
-				context: context,
-				applicationId: appId
+				object: {
+					model: mdl,
+					id: id
+				},
+				application_id: appId,
+				timestamp: modifiedMicrotime
 			})], 'aggregation', aggCallback);
 		}/*,
 		function(track_callback) {
