@@ -271,7 +271,7 @@ var linkMiddlewaresAndRoutes = function(callback) {
 		};
 
 		if (queryString)
-			requestObject.path += '?'+queryString;
+			requestObject.path += queryString;
 
 		if (urlProtocol == 'http:') {
 			request = http.request(requestObject, responseCallback);
