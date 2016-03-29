@@ -237,17 +237,6 @@ router.delete('/remove', function (req, res, next) {
 			Models.Context.delete(req.body.id, function (err1) {
 				if (err1) return next(err1);
 
-				app.messagingClient.send([JSON.stringify({
-					op: 'delete',
-					object: {path: 'context/'+req.body.id},
-					context: context,
-					applicationId: req._telepat.applicationId,
-					isContext: true,
-					instant: true
-				})], 'aggregation', function(err2) {
-					if (err2)
-						Models.Application.logger.warning(app.getFailedRequestMessage(req, res, err2));
-				});
 				res.status(200).json({status: 200, content: 'Context removed'});
 			});
 		}

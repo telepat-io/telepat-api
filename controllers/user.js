@@ -422,6 +422,8 @@ router.post('/register-:s', function(req, res, next) {
 		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['email']));
 	}
 
+	var timestamp = microtime.now();
+
 	async.waterfall([
 		function(callback) {
 			if (loginProvider == 'facebook') {
@@ -550,11 +552,13 @@ router.post('/register-:s', function(req, res, next) {
 				}
 			}
 
+			userProfile.application_id = req._telepat.applicationId;
+
 			app.messagingClient.send([JSON.stringify({
-				op: 'add',
+				op: 'create',
 				object: userProfile,
-				applicationId: req._telepat.applicationId,
-				isUser: true
+				application_id: req._telepat.applicationId,
+				timestamp: timestamp
 			})], 'aggregation', callback);
 		},
 		//add this user to his/her friends array

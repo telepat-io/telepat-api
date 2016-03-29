@@ -404,6 +404,11 @@ router.post('/create', function(req, res, next) {
 
 	}
 
+	var hasSomeProperty = Models.Application.loadedAppModels[appId].schema[mdl].hasSome_property;
+
+	if(hasSomeProperty && !content[hasSomeProperty])
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, [hasSomeProperty]));
+
 	async.series([
 		function(aggCallback) {
 			app.messagingClient.send([JSON.stringify({
@@ -572,15 +577,11 @@ router.post('/update', function(req, res, next) {
 router.delete('/delete', function(req, res, next) {
 	var modifiedMicrotime = microtime.now();
 	var id = req.body.id;
-	var context = req.body.context;
 	var mdl = req.body.model;
 	var appId = req._telepat.applicationId;
 
 	if (!id)
 		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['id']));
-
-	if (!context)
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['context']));
 
 	async.series([
 		function(aggCallback) {
