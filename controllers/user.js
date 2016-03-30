@@ -425,7 +425,7 @@ router.post('/register-:s', function(req, res, next) {
 	async.waterfall([
 		function(callback) {
 			if (loginProvider == 'facebook') {
-				FB.napi('/me?fields=name,email,id,gender', {access_token: accessToken}, function(err, result) {
+				FB.napi('/me?fields=name,email,id,gender,picture', {access_token: accessToken}, function(err, result) {
 					if (err) return callback(err);
 
 					if (!result.email) {
@@ -433,7 +433,11 @@ router.post('/register-:s', function(req, res, next) {
 							['email address is missing']));
 					}
 
+					var picture = result.picture.data.url;
+					delete result.picture;
+
 					userProfile = result;
+					userProfile.picture = picture;
 					userProfile.username = result.email;
 
 					callback();
