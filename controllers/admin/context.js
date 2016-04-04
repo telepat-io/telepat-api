@@ -169,18 +169,25 @@ router.post('/add', function (req, res, next) {
 		return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
 
 	var newContext = req.body;
+	var appId = req._telepat.applicationId;
+	var modifiedMicrotime = microtime.now();
 	newContext['application_id'] = req._telepat.applicationId;
+
 	Models.Context.create(newContext, function (err, res1) {
 		if (err)
 			next(err);
 		else {
-			app.messagingClient.send([JSON.stringify({
-				op: 'add',
+			var delta = new Models.Delta({
+				op: 'create',
 				object: res1,
-				applicationId: req._telepat.applicationId,
-				isContext: true,
-				instant: true
-			})], 'aggregation', function(err) {
+				application_id: appId,
+				timestamp: modifiedMicrotime
+			}, ['blg:'+appId+':context:'+res1.id]);
+
+			app.messagingClient.send([JSON.stringify({
+				deltas: [delta.toObject()],
+				_broadcast: true
+			})], 'transport_manager', function(err) {
 				if (err)
 					Models.Application.logger.warning(app.getFailedRequestMessage(req, res, err));
 			});
@@ -228,6 +235,9 @@ router.delete('/remove', function (req, res, next) {
 		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['id']));
 	}
 
+	var appId = req._telepat.applicationId;
+	var modifiedMicrotime = microtime.now();
+
 	Models.Context(req.body.id, function(err, context) {
 		if (err && err.status == 404)
 			next(new Models.TelepatError(Models.TelepatError.errors.ContextNotFound));
@@ -236,6 +246,18 @@ router.delete('/remove', function (req, res, next) {
 		else {
 			Models.Context.delete(req.body.id, function (err1) {
 				if (err1) return next(err1);
+
+				var delta = new Models.Delta({
+					op: 'delete',
+					object: {id: req.body.id, model: 'context'},
+					application_id: appId,
+					timestamp: modifiedMicrotime
+				}, ['blg:'+appId+':context:'+req.body.id]);
+
+				app.messagingClient.send([JSON.stringify({
+					_broadcast: true,
+					deltas: [delta.toObject()]
+				})], 'transport_manager');
 
 				res.status(200).json({status: 200, content: 'Context removed'});
 			});
@@ -298,35 +320,50 @@ router.post('/update', function (req, res, next) {
 	} else if (!req.body.id) {
 		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['id']));
 	} else {
-		async.waterfall([
+		var context = null;
+		async.series([
 			function(callback) {
-				Models.Context(req.body.id, callback);
+				Models.Context(req.body.id, function(err, result) {
+					if (err) return callback(err);
+					context = result;
+					callback();
+				});
 			},
-			function(context, callback) {
+			function(callback) {
 				if (Models.Application.loadedAppModels[context.application_id].admins.indexOf(req.user.id) === -1) {
 					callback(new Models.TelepatError(Models.TelepatError.errors.ContextNotAllowed));
 				} else {
 					Models.Context.update(req.body.patches, callback);
 				}
 			}
-		], function (err, result) {
+		], function (err) {
 			if (err && err.status == 404)
 				next(new Models.TelepatError(Models.TelepatError.errors.ContextNotFound));
 			else {
 				var modifiedMicrotime = microtime.now();
+				var patchesToSend = [];
+				var appId = req._telepat.applicationId;
+
 				async.each(req.body.patches, function(patch, c) {
-					app.messagingClient.send([JSON.stringify({
+					var delta = new Models.Delta({
 						op: 'update',
-						object: patch,
-						applicationId: req._telepat.applicationId,
-						isContext: true,
-						ts: modifiedMicrotime,
-						instant: true
-					})], 'aggregation', function(err) {
+						patch: patch,
+						application_id: appId,
+						timestamp: modifiedMicrotime
+					}, ['blg:'+appId+':context:'+req.body.id]);
+
+					console.log(appId);
+
+					patchesToSend.push(delta);
+					c();
+				}, function() {
+					app.messagingClient.send([JSON.stringify({
+						deltas: patchesToSend,
+						_broadcast: true
+					})], 'transport_manager', function(err) {
 						if (err)
 							Models.Application.logger.warning(app.getFailedRequestMessage(req, res, err));
 					});
-					c();
 				});
 				res.status(200).json({status: 200, content: 'Context updated'});
 			}
