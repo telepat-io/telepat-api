@@ -883,68 +883,6 @@ it('4.21 should return a success response to indicate that a object has NOT been
 		});
 });
 
-it('4.22 should return an error response to indicate that a object has NOT been updated because of missing id', function(done) {
-
-	this.timeout(100*DELAY);
-
-	var clientrequest = {
-		model: "comments",
-		context: contextID,
-		patches: [
-			{
-				op: "replace",
-				path: "comments/1/text",
-				value: "some edited text"
-			}
-		],
-	};
-
-	request(url)
-		.post('/object/update')
-		.set('X-BLGREQ-SIGN', appIDsha256)
-		.set('X-BLGREQ-UDID', deviceIdentification)
-		.set('X-BLGREQ-APPID',appID)
-		.set('Authorization', userAuthValue )
-		.send(clientrequest)
-		.end(function(err, res) {
-
-			res.body.code.should.be.equal('004');
-			res.statusCode.should.be.equal(400);
-			done();
-		});
-});
-
-it('4.23 should return a success response to indicate that a object has NOT been updated because of missing context ', function(done) {
-
-	this.timeout(100*DELAY);
-
-	var clientrequest = {
-		model: "comments",
-		id: 1,
-		patches: [
-			{
-				op: "replace",
-				path: "comments/1/text",
-				value: "some edited text"
-			}
-		]
-	};
-
-	request(url)
-		.post('/object/update')
-		.set('X-BLGREQ-SIGN', appIDsha256)
-		.set('X-BLGREQ-UDID', deviceIdentification)
-		.set('X-BLGREQ-APPID',appID)
-		.set('Authorization', userAuthValue )
-		.send(clientrequest)
-		.end(function(err, res) {
-
-			res.body.code.should.be.equal('004');
-			res.statusCode.should.be.equal(400);
-			done();
-		});
-});
-
 it('4.24 should return an error response to indicate that a object has NOT been updated because of model not found ', function(done) {
 
 	this.timeout(100*DELAY);
@@ -1154,8 +1092,8 @@ it('4.31 should return a success response to indicate that a object has NOT been
 		.send(subclientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('026');
 			res.statusCode.should.be.equal(403);
+			res.body.code.should.be.equal('026');
 			done();
 		});
 });
@@ -1181,72 +1119,13 @@ it('4.32 should return an error response to indicate that a object has NOT been 
 		.send(subclientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('014');
 			res.statusCode.should.be.equal(401);
+			res.body.code.should.be.equal('014');
 			done();
 		});
 });
 
-it('4.33 should return an error response to indicate that a object has been NOT subscribed because of filters', function(done) {
-
-	this.timeout(100*DELAY);
-
-	var subclientrequest = {
-		channel: {
-			context: contextID,
-			model: "events"
-		},
-		filters: {
-			or: [
-				{
-					and: [
-						{
-							is: {
-								gender: "male",
-								age: 23
-							}
-						},
-						{
-							range: {
-								experience: {
-									gte: 1,
-									lte: 6
-								}
-							}
-						}
-					]
-				},
-				{
-					and: [
-						{
-							like: {
-								image_url: "png",
-								website: "png"
-							}
-						}
-					]
-				}
-			]
-		}
-	};
-
-	request(url)
-		.post('/object/subscribe')
-		.set('Content-type','application/json')
-		.set('X-BLGREQ-SIGN', appIDsha256)
-		.set('X-BLGREQ-UDID', deviceIdentification)
-		.set('X-BLGREQ-APPID',appID)
-		.set('Authorization', userAuthValue )
-		.send(subclientrequest)
-		.end(function(err, res) {
-
-			res.statusCode.should.be.equal(500);
-			res.body.code.should.be.equal('002');
-			done();
-		});
-});
-
-it('4.34 should return an error response to indicate that a object has NOT been subscribed because of invalid context', function(done) {
+it('4.34 should return an error response to indicate that a object has NOT been subscribed because of missing context', function(done) {
 
 	this.timeout(100*DELAY);
 
@@ -1267,8 +1146,8 @@ it('4.34 should return an error response to indicate that a object has NOT been 
 		.send(subclientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('026');
-			res.statusCode.should.be.equal(403);
+			res.statusCode.should.be.equal(404);
+			res.body.code.should.be.equal('020');
 			done();
 		});
 });
@@ -1424,8 +1303,8 @@ it('4.36 should return an error response to indicate that a object has NOT been 
 						.send(subclientrequest)
 						.end(function (err, res) {
 
-							res.body.code.should.be.equal('026');
 							res.statusCode.should.be.equal(403);
+							res.body.code.should.be.equal('026');
 							done();
 						});
 				});
@@ -2001,31 +1880,6 @@ it('4.56 should return an error response to indicate that the object was not del
 
 			res.body.code.should.be.equal('013');
 			res.statusCode.should.be.equal(401);
-			done();
-		});
-});
-
-it('4.57 should return an error response to indicate that the object was not deleted because of missing context', function(done) {
-
-	this.timeout(100*DELAY);
-
-	var clientrequest = {
-		model: "comments",
-		id: 1,
-		content: {}
-	};
-
-	request(url)
-		.delete('/object/delete')
-		.set('X-BLGREQ-SIGN', appIDsha256)
-		.set('X-BLGREQ-UDID', deviceIdentification)
-		.set('X-BLGREQ-APPID',appID)
-		.set('Authorization', userAuthValue )
-		.send(clientrequest)
-		.end(function(err, res) {
-
-			res.body.code.should.be.equal('004');
-			res.statusCode.should.be.equal(400);
 			done();
 		});
 });

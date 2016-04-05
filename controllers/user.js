@@ -304,7 +304,7 @@ router.post('/login-:s', function(req, res, next) {
 					patches.push(Models.Delta.formPatch(userProfile, 'replace', {gender: socialProfile.gender}));
 			}
 
-			Models.User.update(username, appId, patches, callback);
+			Models.User.update(patches, callback);
 
 			//user first logged in with password then with fb
 			/*if (!userProfile.fid) {
@@ -685,10 +685,10 @@ router.get('/logout', function(req, res, next) {
 				if (idx >= 0)
 					user.devices.splice(idx, 1);
 
-				Models.User.update(username, appID, [
+				Models.User.update([
 		      {
 		        "op": "replace",
-		        "path": "user/"+username+"/devices",
+		        "path": "user/"+req.user.id+"/devices",
 		        "value": user.devices
 		      }
 		    ], callback);
@@ -696,7 +696,7 @@ router.get('/logout', function(req, res, next) {
 				callback();
 			}
 		}
-	], function(err, result) {
+	], function(err) {
 		if (err) return next(err);
 
 		res.status(200).json({status: 200, content: "Logged out of device"});
@@ -830,11 +830,9 @@ router.post('/update', function(req, res, next) {
 
 			app.messagingClient.send([JSON.stringify({
 				op: 'update',
-				object: patch,
-				id: id,
+				patch: patch,
 				applicationId: req._telepat.applicationId,
-				isUser: true,
-				ts: modifiedMicrotime
+				timestamp: modifiedMicrotime
 			})], 'aggregation', c);
 		}, function(err) {
 			if (err) return next(err);
@@ -869,7 +867,7 @@ router.post('/update_immediate', function(req, res, next) {
 				patches.push(Models.Delta.formPatch(req.user, 'replace', property));
 				c();
 			}, function() {
-				Models.User.update(req.user.username, appId, patches, callback);
+				Models.User.update(patches, callback);
 			});
 		}
 	], function(err) {
@@ -900,13 +898,13 @@ router.post('/update_immediate', function(req, res, next) {
  */
 router.delete('/delete', function(req, res, next) {
 	var id = req.user.id;
-	var username = req.user.username;
+	var timestamp = microtime.now();
 
 	app.messagingClient.send([JSON.stringify({
 		op: 'delete',
-		object: {path: 'user/'+id, username: username},
-		applicationId: req._telepat.applicationId,
-		isUser: true
+		object: {id: id, model: 'user'},
+		application_id: req._telepat.applicationId,
+		timestamp: timestamp
 	})], 'aggregation', function(err) {
 		if (err) return next(err);
 
@@ -1004,7 +1002,7 @@ router.post('/request_password_reset', function(req, res, next) {
 			var patches = [];
 			patches.push(Models.Delta.formPatch(user, 'replace', {password_reset_token: token}));
 
-			Models.User.update(username, appId, patches, callback);
+			Models.User.update(patches, callback);
 		}
 	], function(err) {
 		if (err)

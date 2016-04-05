@@ -143,7 +143,6 @@ router.delete('/remove_model', function(req, res, next) {
 		if (err){
 			next(err);
 		} else {
-			delete Models.Application.loadedAppModels[appId].schema[modelName];
 			res.status(200).json({status: 200, content: 'Schema updated'});
 		}
 	});

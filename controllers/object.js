@@ -174,7 +174,7 @@ router.post('/subscribe', function(req, res, next) {
 		},
 		function(callback) {
 			if (id) {
-				Models.Model(mdl, appId, context, id, function(err, results) {
+				Models.Model(id, function(err, results) {
 					if (err) return callback(err);
 
 					objects.push(results);

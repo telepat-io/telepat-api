@@ -115,6 +115,17 @@ router.post('/add', function (req, res, next) {
 
 	async.waterfall([
 		function(callback) {
+			Models.Admin({email: req.body.email}, function(err, result) {
+				if (err && err.status == 404)
+					callback();
+				else if (err)
+					callback(err);
+				else if(result) {
+					callback(new Models.TelepatError(Models.TelepatError.errors.AdminAlreadyExists));
+				}
+			});
+		},
+		function(callback) {
 			security.encryptPassword(req.body.password.toString(), callback);
 		},
 		function(hashedPassword) {
@@ -161,9 +172,8 @@ router.get('/me', function (req, res, next) {
 	Models.Admin({id: req.user.id}, function(err, result) {
 		if (err && err.status == 404) {
 			return next(new Models.TelepatError(Models.TelepatError.errors.AdminNotFound));
-		}
-		else if (err)
-			next(err);
+		} else if (err)
+			return next(err);
 		else
 			delete result.password;
 		res.status(200).json({status: 200, content: result});

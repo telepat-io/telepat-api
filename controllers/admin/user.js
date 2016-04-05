@@ -1,6 +1,7 @@
 /* jshint maxlen: 120 */
 
 var express = require('express');
+var async = require('async');
 var router = express.Router();
 
 var security = require('../security');
@@ -108,20 +109,15 @@ router.post('/update', function(req, res, next) {
 	} else if (req.body.patches.length == 0) {
 		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidFieldValue,
 			['"patches" array is empty']));
-	} else if (!req.body.username) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['username']));
 	}
 
 	var patches = req.body.patches;
 	var timestamp = microtime.now();
-	var userId = null;
 
 	async.series([
 		function(callback) {
 			var i = 0;
 			async.each(patches, function(patch, c) {
-				patches[i].username = req.body.username;
-				patches[i].ts = timestamp;
 				if (patches[i].path.split('/')[2] == 'password') {
 					security.encryptPassword(patches[i].value, function(err, hash) {
 						if (err) return c(err);
@@ -136,28 +132,23 @@ router.post('/update', function(req, res, next) {
 			}, callback);
 		},
 		function(callback) {
-			Models.User.update(req.body.username, req._telepat.applicationId, patches, function(err, result) {
+			Models.User.update(patches, function(err) {
 				if (err && err.status == 404) {
 					callback(new Models.TelepatError(Models.TelepatError.errors.UserNotFound));
 				} else if (err)
 					return callback(err);
-				else {
-					userId = result.id;
+				else
 					callback();
-				}
-
 			});
 		},
 		function(callback) {
 			async.each(patches, function(patch, c) {
 				app.messagingClient.send([JSON.stringify({
 					op: 'update',
-					object: patch,
-					id: userId,
+					patch: patch,
 					applicationId: req._telepat.applicationId,
-					isUser: true,
 					instant: true,
-					ts: timestamp
+					timestamp: timestamp
 				})], 'aggregation', function(err) {
 					if (err)
 						Models.Application.logger.warning('Could not send message to aggregation workers: '+err.message);
@@ -211,55 +202,28 @@ router.delete('/delete', function(req, res, next) {
 
 	var appId = req._telepat.applicationId;
 	var username = req.body.username;
-	var objectsToBeDeleted = null;
-	var userObject = null;
+	var user = null;
 
-	async.waterfall([
+	async.series([
 		function(callback) {
-			Models.User({username: username}, appId, callback);
+			Models.User({username: username}, appId, function(err, result) {
+				if (err) return callback(err);
+				user = result;
+				callback();
+			});
 		},
-		function(user, callback) {
-			if (user.application_id != appId) {
-				return callback(new Models.TelepatError(Models.TelepatError.errors.UserNotFound));
-			} else {
-				userObject = user;
-				Models.User.delete(username, appId, function(err, results) {
-					if (err) return callback(err);
-					objectsToBeDeleted = results;
-					callback();
-				});
-			}
+		function(callback) {
+			Models.User.delete(user.id, appId, function(err) {
+				if (err) return callback(err);
+				callback();
+			});
 		}
 	], function(error) {
 		if (error && error.status == 404)
 			return next(new Models.TelepatError(Models.TelepatError.errors.UserNotFound));
 		else if (error) return next(error);
-
-		if (objectsToBeDeleted) {
-			var brokerMessages = [];
-
-			async.each(objectsToBeDeleted, function(item, c) {
-				var context = item.context_id;
-				var mdl = item.type;
-				var id = item.id;
-
-				brokerMessages.push(JSON.stringify({
-					op: 'delete',
-					object: {path: mdl+'/'+id, username: username},
-					context: context,
-					applicationId: appId,
-					instant: true,
-					user: userObject
-				}));
-				c();
-			}, function() {
-				app.messagingClient.send(brokerMessages, 'aggregation', function(err){
-					if (err) return next(err);
-
-					res.status(200).json({status: 200, content: 'User deleted'});
-				});
-			});
-		}
+		else
+			res.status(200).json({status: 200, content: 'User deleted'});
 	});
 });
 

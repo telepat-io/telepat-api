@@ -36,6 +36,7 @@ var authValue2;
 var authValue3;
 
 var userEmail = 'user'+Math.round(Math.random()*1000000)+'@example.com';
+var userId = null;
 
 describe('1.1.Admin', function() {
 
@@ -66,9 +67,8 @@ describe('1.1.Admin', function() {
 			.post('/admin/add')
 			.send(admin)
 			.end(function(err, res) {
-
-				res.body.code.should.be.equal('030');
 				res.statusCode.should.be.equal(409);
+				res.body.code.should.be.equal('030');
 				done();
 			});
 
@@ -1857,29 +1857,40 @@ describe('1.5.User', function() {
 
 		this.timeout(100*DELAY);
 
-		var clientrequest = {
-			username : userEmail,
-			patches: [
-				{
-					op: "replace",
-					path: "user/"+userEmail+"/name",
-					value: "new value"
-				}
-			]
-		};
-
 		request(url)
-			.post('/admin/user/update')
+			.post('/user/login_password')
 			.set('Content-type','application/json')
-			.set('X-BLGREQ-SIGN', appIDsha256)
-			.set('X-BLGREQ-APPID', appID)
-			.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28')
-			.set('Authorization', authValue)
+			.set('X-BLGREQ-SIGN', appIDsha256 )
+			.set('X-BLGREQ-APPID', appID )
+			.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 			.send(clientrequest)
 			.end(function(err, res) {
 
-				res.statusCode.should.be.equal(200);
-				done();
+				userId = res.body.content.user.id;
+
+				var clientrequest = {
+					patches: [
+						{
+							op: "replace",
+							path: "user/"+userId+"/name",
+							value: "new value"
+						}
+					]
+				};
+
+				request(url)
+					.post('/admin/user/update')
+					.set('Content-type','application/json')
+					.set('X-BLGREQ-SIGN', appIDsha256)
+					.set('X-BLGREQ-APPID', appID)
+					.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28')
+					.set('Authorization', authValue)
+					.send(clientrequest)
+					.end(function(err, res) {
+
+						res.statusCode.should.be.equal(200);
+						done();
+					});
 			});
 	});
 
@@ -1887,11 +1898,10 @@ describe('1.5.User', function() {
 		this.timeout(100*DELAY);
 
 		var clientrequest = {
-			"username" : userEmail,
 			"patches": [
 				{
 					"op": "replace",
-					"path": "user/"+userEmail+"/password",
+					"path": "user/"+userId+"/password",
 					"value": "new value"
 				}
 			]
@@ -1932,38 +1942,11 @@ describe('1.5.User', function() {
 			});
 	});
 
-	it('1.5.4 should return an error response to indicate that an user was NOT updated, user username was missing from the request', function(done) {
-
-		this.timeout(100*DELAY);
-
-		var clientrequest = {
-			"user": {
-				"name": "New Name"
-			}
-		};
-
-		request(url)
-			.post('/admin/user/update')
-			.set('Content-type','application/json')
-			.set('X-BLGREQ-SIGN', appIDsha256 )
-			.set('X-BLGREQ-APPID', appID )
-			.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
-			.set('Authorization', authValue )
-			.send(clientrequest)
-			.end(function(err, res) {
-
-				res.body.code.should.be.equal('038');
-				res.statusCode.should.be.equal(400);
-				done();
-			});
-	});
-
 	it('1.5.5 should return an error response to indicate that an user was NOT updated because patches is empty', function(done) {
 
 		this.timeout(100*DELAY);
 
 		var clientrequest = {
-			"username" : userEmail,
 			"patches": []
 		};
 
@@ -2012,53 +1995,6 @@ describe('1.5.User', function() {
 							done();
 						});
 				}, 20*DELAY);
-			});
-	});
-
-	it('1.5.7 should return a success response indicating that a user has NOT been deleted, user does not belong to application', function(done) {
-
-		this.timeout(100*DELAY);
-
-		var userEmail = "user3@example.com";
-		var clientrequest = {
-			username: userEmail,
-		   password: "secure_password1337",
-		   name: "John Smith"
-		};
-
-		request(url)
-			.post('/user/register-username')
-			.set('Content-type','application/json')
-			.set('X-BLGREQ-SIGN', appIDsha256 )
-			.set('X-BLGREQ-APPID', appID )
-			.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
-			.send(clientrequest)
-			.end(function(err, res) {
-
-				var userEmail = "user2@example.com";
-				var clientrequest = {
-					username: userEmail,
-					password: "secure_password1337",
-					name: "John Smith"
-				};
-
-				setTimeout(function() {
-
-					request(url)
-						.delete('/admin/user/delete')
-						.set('Content-type','application/json')
-						.set('X-BLGREQ-SIGN', appIDsha256 )
-						.set('X-BLGREQ-APPID', appID )
-						.set('Authorization', authValue )
-						.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
-						.send(clientrequest)
-						.end(function(err, res) {
-
-							res.body.code.should.be.equal('023');
-							res.statusCode.should.be.equal(404);
-							done();
-						});
-			   }, 20*DELAY);
 			});
 	});
 
@@ -2145,36 +2081,6 @@ describe('1.5.User', function() {
 			});
 	});
 
-	it('1.5.11 should return an error response to indicate that the user username is missing', function(done) {
-
-		this.timeout(100*DELAY);
-
-		var clientrequest = {
-			patches: [
-				{
-					op: "replace",
-					path: "user/"+userEmail+"/name",
-					value: "new value"
-				}
-			]
-		};
-
-		request(url)
-			.post('/admin/user/update')
-			.set('Content-type','application/json')
-			.set('X-BLGREQ-SIGN', appIDsha256 )
-			.set('X-BLGREQ-APPID', appID )
-			.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
-			.set('Authorization', authValue )
-			.send(clientrequest)
-			.end(function(err, res) {
-
-				res.body.code.should.be.equal('004');
-				res.statusCode.should.be.equal(400);
-				done();
-			});
-	});
-
 	it('1.5.12 should return a success response to indicate that an admin list was retrieved', function(done) {
 
 		this.timeout(100*DELAY);
@@ -2199,7 +2105,8 @@ describe('1.5.User', function() {
 		this.timeout(100*DELAY);
 
 		var clientRequest = {
-			page: 2
+			offset: 10,
+			limit: 10
 		};
 
 		request(url)
