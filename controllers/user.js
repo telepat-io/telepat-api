@@ -117,11 +117,11 @@ router.post(['/login-password', '/login_password'], function(req, res, next) {
 			if (userProfile.devices) {
 				var idx = userProfile.devices.indexOf(deviceId);
 				if (idx === -1) {
-					Models.User.update(userProfile.username, appId, patches, callback);
+					Models.User.update(patches, callback);
 				} else
 					callback();
 			} else {
-				Models.User.update(userProfile.username, appId, patches, callback);
+				Models.User.update(patches, callback);
 			}
 		},
 		function(callback) {
@@ -599,7 +599,7 @@ router.get('/confirm', function(req, res, next) {
 			var patches = [];
 			patches.push(Models.Delta.formPatch(user, 'replace', {confirmed: true}));
 
-			Models.User.update(user.username, appId, patches, callback);
+			Models.User.update(patches, callback);
 		}
 	], function(err) {
 		if (err)
@@ -672,7 +672,6 @@ router.get('/me', function(req, res, next) {
  */
 router.get('/logout', function(req, res, next) {
 	var deviceId = req._telepat.device_id;
-	var username = req.user.username;
 	var appID = req._telepat.applicationId;
 
 	async.waterfall([
@@ -844,7 +843,6 @@ router.post('/update', function(req, res, next) {
 
 router.post('/update_immediate', function(req, res, next) {
 	var user = req.body;
-	var appId = req._telepat.applicationId;
 
 	req.user.type = 'user';
 
@@ -1067,7 +1065,7 @@ router.post('/password_reset', function(req, res, next) {
 				patches.push(Models.Delta.formPatch(user, 'replace', {password: hashedPassword}));
 				patches.push(Models.Delta.formPatch(user, 'replace', {password_reset_token: null}));
 
-				Models.User.update(user.username, appId, patches, callback);
+				Models.User.update(patches, callback);
 			});
 		}
 	], function(err) {
