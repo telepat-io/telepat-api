@@ -231,11 +231,11 @@ router.post('/login-:s', function(req, res, next) {
 	var deviceId = req._telepat.device_id;
 	var appId = req._telepat.applicationId;
 
-	async.waterfall([
+	async.series([
 		//Retrieve facebook information
 		function(callback) {
 			if (loginProvider == 'facebook') {
-				FB.napi('/me?fields=name,email,id,gender', {access_token: accessToken}, function(err, result) {
+				FB.napi('/me?fields=name,email,id,gender,picture', {access_token: accessToken}, function(err, result) {
 					if (err) return callback(err);
 
 					if (!result.email) {
@@ -272,20 +272,62 @@ router.post('/login-:s', function(req, res, next) {
 		},
 		function(callback) {
 			//try and get user profile from DB
-			Models.User({username: username}, appId, function(err, result) {
-				if (err && err.status == 404) {
-					callback(new Models.TelepatError(Models.TelepatError.errors.UserNotFound));
-				}
-				else if (err)
-					callback(err);
-				else {
-					userProfile = result;
-					callback();
-				}
-			});
+			if (req.body.username && loginProvider == 'facebook') {
+				async.series([
+					function(callback1) {
+						Models.User({username: username}, appId, function(err, result) {
+							if (err && err.status == 404) {
+								callback1();
+							}
+							else if (err)
+								callback1(err);
+							else {
+								callback1(new Models.TelepatError(Models.TelepatError.errors.UserAlreadyExists));
+							}
+						});
+					},
+					function(callback1) {
+						Models.User({username: req.body.username}, appId, function(err, result) {
+							if (!err) {
+								var patches = [];
+								patches.push(Models.Delta.formPatch(result, 'replace', {username: username}));
+								patches.push(Models.Delta.formPatch(result, 'replace', {picture: socialProfile.picture.data.url}));
+								patches.push(Models.Delta.formPatch(result, 'replace', {fid: socialProfile.id}));
+								patches.push(Models.Delta.formPatch(result, 'replace', {name: socialProfile.name}));
+
+								Models.User.update(result.username, appId, patches, function(err, modifiedUser) {
+									if (err) return callback1(err);
+									userProfile = modifiedUser;
+									callback1();
+								});
+							} else if (err && err.status != 404)
+								callback1(err);
+							else {
+								callback1(new Models.TelepatError(Models.TelepatError.errors.UserNotFound));
+							}
+						});
+					}
+				], callback);
+			} else {
+				Models.User({username: username}, appId, function(err, result) {
+					if (err && err.status == 404) {
+						callback(new Models.TelepatError(Models.TelepatError.errors.UserNotFound));
+					}
+					else if (err)
+						callback(err);
+					else {
+						userProfile = result;
+						callback();
+					}
+				});
+
+			}
 		},
 		//update user with deviceID if it already exists
 		function(callback) {
+			//if linking account with fb, user updating again is not necessary
+			if (req.body.username && loginProvider == 'facebook')
+				return callback();
 			if (userProfile.devices) {
 				var idx = userProfile.devices.indexOf(deviceId);
 				if (idx === -1)
@@ -304,24 +346,10 @@ router.post('/login-:s', function(req, res, next) {
 					patches.push(Models.Delta.formPatch(userProfile, 'replace', {gender: socialProfile.gender}));
 			}
 
-			Models.User.update(username, appId, patches, callback);
-
-			//user first logged in with password then with fb
-			/*if (!userProfile.fid) {
-				var key = 'blg:'+Models.User._model.namespace+':fid:'+fbProfile.id;
-				Models.Application.bucket.insert(key, userProfile.email, function() {
-					userProfile.fid = fbProfile.id;
-					userProfile.name = fbProfile.name;
-					userProfile.gender = fbProfile.gender;
-
-					Models.User.update(userProfile.email, userProfile, callback);
-				});
-			} else {
-				callback(null, true);
-			}*/
+			Models.User.update(userProfile.username, appId, patches, callback);
 		}
 		//final step: send authentification token
-	], function(err, results) {
+	], function(err) {
 		if (err)
 			return next(err);
 		else {
