@@ -307,8 +307,8 @@ router.post('/login-:s', function(req, res, next) {
 					patches.push(Models.Delta.formPatch(userProfile, 'replace', {name: socialProfile.name}));
 				if (userProfile.gender != socialProfile.gender)
 					patches.push(Models.Delta.formPatch(userProfile, 'replace', {gender: socialProfile.gender}));
-				if (userProfile.picture != socialProfile.picture)
-					patches.push(Models.Delta.formPatch(userProfile, 'replace', {picture: socialProfile.picture}));
+				if (userProfile.picture != socialProfile.picture.data.url)
+					patches.push(Models.Delta.formPatch(userProfile, 'replace', {picture: socialProfile.picture.data.url}));
 			} else if (loginProvider == 'twitter') {
 				if (userProfile.name != socialProfile.name)
 					patches.push(Models.Delta.formPatch(userProfile, 'replace', {name: socialProfile.name}));
