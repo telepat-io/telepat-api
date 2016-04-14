@@ -235,7 +235,7 @@ router.post('/login-:s', function(req, res, next) {
 		//Retrieve facebook information
 		function(callback) {
 			if (loginProvider == 'facebook') {
-				FB.napi('/me?fields=name,email,id,gender', {access_token: accessToken}, function(err, result) {
+				FB.napi('/me?fields=name,email,id,gender,picture', {access_token: accessToken}, function(err, result) {
 					if (err) return callback(err);
 
 					if (!result.email) {
@@ -263,10 +263,15 @@ router.post('/login-:s', function(req, res, next) {
 					if (err)
 						return callback(err);
 
-					username = result.screen_name;
-					socialProfile = {screen_name: result.screen_name};
+					twitterClient.get('users/show', {screen_name: result.screen_name}, function(err1, result1) {
+						if (err1)
+							return callback(err1);
 
-					callback();
+						username = result.screen_name;
+						socialProfile = result1;
+
+						callback();
+					});
 				});
 			}
 		},
@@ -302,6 +307,13 @@ router.post('/login-:s', function(req, res, next) {
 					patches.push(Models.Delta.formPatch(userProfile, 'replace', {name: socialProfile.name}));
 				if (userProfile.gender != socialProfile.gender)
 					patches.push(Models.Delta.formPatch(userProfile, 'replace', {gender: socialProfile.gender}));
+				if (userProfile.picture != socialProfile.picture)
+					patches.push(Models.Delta.formPatch(userProfile, 'replace', {picture: socialProfile.picture}));
+			} else if (loginProvider == 'twitter') {
+				if (userProfile.name != socialProfile.name)
+					patches.push(Models.Delta.formPatch(userProfile, 'replace', {name: socialProfile.name}));
+				if (userProfile.picture != socialProfile.profile_image_url_https)
+					patches.push(Models.Delta.formPatch(userProfile, 'replace', {picture: socialProfile.picture}));
 			}
 
 			Models.User.update(username, appId, patches, callback);
@@ -454,11 +466,20 @@ router.post('/register-:s', function(req, res, next) {
 				var twitterClient = new Twitter(options);
 
 				twitterClient.get('account/settings', {}, function(err, result) {
+					if (err)
+						return callback(err);
 
-					userProfile = {};
-					userProfile.username = result.screen_name;
+					twitterClient.get('users/show', {screen_name: result.screen_name}, function(err1, result1) {
+						if (err1)
+							return callback(err1);
 
-					callback();
+						userProfile = {};
+						userProfile.name = result1.screen_name;
+						userProfile.username = result.screen_name;
+						userProfile.picture = result1.profile_image_url_https;
+
+						callback();
+					});
 				});
 			} else {
 				callback();
