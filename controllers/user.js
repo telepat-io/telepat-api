@@ -235,7 +235,7 @@ router.post('/login-:s', function(req, res, next) {
 		//Retrieve facebook information
 		function(callback) {
 			if (loginProvider == 'facebook') {
-				FB.napi('/me?fields=name,email,id,gender', {access_token: accessToken}, function(err, result) {
+				FB.napi('/me?fields=name,email,id,gender,picture', {access_token: accessToken}, function(err, result) {
 					if (err) return callback(err);
 
 					if (!result.email) {
@@ -263,10 +263,15 @@ router.post('/login-:s', function(req, res, next) {
 					if (err)
 						return callback(err);
 
-					username = result.screen_name;
-					socialProfile = {screen_name: result.screen_name};
+					twitterClient.get('users/show', {screen_name: result.screen_name}, function(err1, result1) {
+						if (err1)
+							return callback(err1);
 
-					callback();
+						username = result.screen_name;
+						socialProfile = result1;
+
+						callback();
+					});
 				});
 			}
 		},
@@ -302,6 +307,13 @@ router.post('/login-:s', function(req, res, next) {
 					patches.push(Models.Delta.formPatch(userProfile, 'replace', {name: socialProfile.name}));
 				if (userProfile.gender != socialProfile.gender)
 					patches.push(Models.Delta.formPatch(userProfile, 'replace', {gender: socialProfile.gender}));
+				if (userProfile.picture != socialProfile.picture.data.url)
+					patches.push(Models.Delta.formPatch(userProfile, 'replace', {picture: socialProfile.picture.data.url}));
+			} else if (loginProvider == 'twitter') {
+				if (userProfile.name != socialProfile.name)
+					patches.push(Models.Delta.formPatch(userProfile, 'replace', {name: socialProfile.name}));
+				if (userProfile.picture != socialProfile.profile_image_url_https)
+					patches.push(Models.Delta.formPatch(userProfile, 'replace', {picture: socialProfile.picture}));
 			}
 
 			Models.User.update(patches, callback);
@@ -456,11 +468,20 @@ router.post('/register-:s', function(req, res, next) {
 				var twitterClient = new Twitter(options);
 
 				twitterClient.get('account/settings', {}, function(err, result) {
+					if (err)
+						return callback(err);
 
-					userProfile = {};
-					userProfile.username = result.screen_name;
+					twitterClient.get('users/show', {screen_name: result.screen_name}, function(err1, result1) {
+						if (err1)
+							return callback(err1);
 
-					callback();
+						userProfile = {};
+						userProfile.name = result1.screen_name;
+						userProfile.username = result.screen_name;
+						userProfile.picture = result1.profile_image_url_https;
+
+						callback();
+					});
 				});
 			} else {
 				callback();
@@ -645,6 +666,48 @@ router.get('/confirm', function(req, res, next) {
  */
 router.get('/me', function(req, res, next) {
 	Models.User({id: req.user.id}, req._telepat.applicationId, function(err, result) {
+		if (err && err.status == 404) {
+			return next(new Models.TelepatError(Models.TelepatError.errors.UserNotFound));
+		}
+		else if (err)
+			next(err);
+		else
+			delete result.password;
+			res.status(200).json({status: 200, content: result});
+	});
+});
+
+/**
+ * @api {get} /user/get getUser
+ * @apiDescription Info about an user, based on their ID
+ * @apiName UserGet
+ * @apiGroup User
+ * @apiVersion 0.3.1
+ *
+ * @apiHeader {String} Content-type application/json
+ * @apiHeader {String} Authorization The authorization token obtained in the login endpoint.
+ * Should have the format: <i>Bearer $TOKEN</i>
+ * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
+ * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
+ * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from device/register)
+ *
+ * @apiParam {String} user_id The ID of the desired user
+ *
+ * 	@apiSuccessExample {json} Success Response
+ * 	{
+ * 		"content": {
+ *			"id": 31,
+ *			"type": "user",
+ * 			"username": "abcd@appscend.com",
+ * 			"devices": [
+ *				"466fa519-acb4-424b-8736-fc6f35d6b6cc"
+ *			]
+ * 		}
+ * 	}
+ *
+ */
+router.get('/get', function(req, res, next) {
+	Models.User({id: req.query.user_id}, req._telepat.applicationId, function(err, result) {
 		if (err && err.status == 404) {
 			return next(new Models.TelepatError(Models.TelepatError.errors.UserNotFound));
 		}

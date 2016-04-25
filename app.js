@@ -16,6 +16,7 @@ var objectRoute = require('./controllers/object');
 var userRoute = require('./controllers/user');
 var contextRoute = require('./controllers/context');
 var deviceRoute = require('./controllers/device');
+var tilRoute = require('./controllers/til');
 
 var dbConnected = false;
 app = express();
@@ -355,6 +356,7 @@ var linkMiddlewaresAndRoutes = function(callback) {
 	app.use('/user', userRoute);
 	app.use('/context', contextRoute);
 	app.use('/device', deviceRoute);
+	app.use('/til', tilRoute);
 	callback();
 };
 
