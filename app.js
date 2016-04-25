@@ -3,6 +3,7 @@ var bodyParser = require('body-parser');
 var http = require('http');
 var https = require('https');
 var urlParser = require('url');
+var mandrill = require('mandrill-api');
 colors = require('colors');
 
 async = require('async');
@@ -287,6 +288,66 @@ var linkMiddlewaresAndRoutes = function(callback) {
 		});
 
 		request.end();
+	});
+
+
+	/**
+	 * @api {post} /email Email
+	 * @apiDescription Sends an email address to multiple recipients
+	 * @apiName Email
+	 * @apiGroup Email
+	 * @apiVersion 0.3.0
+	 *
+	 * @apiHeader {String} Content-type application/json
+	 *
+	 * @apiParam {string[]} recipients Array containing the email addresses of the recipients
+	 * @apiParam {string} from Email address of the sender
+	 * @apiParam {string} from_name (Optional) Name of the sender
+	 * @apiParam {string} subject (Optional) Subject line
+	 * @apiParam {string} body Body of the email. Can be plain text or html formatted
+	 *
+	 * @apiExample {json} Client Request
+	 *	{
+	 *		"recipients": ["user@example.com"],
+	 *		"from": "admin@admin.com",
+	 *		"from_name": "Admin",
+	 *		"subject": "Testing",
+	 *		"body": "Email body goes here"
+	 *	}
+	 *
+	 */
+	app.post('/email', function(req, res, next) {
+		var recipients = req.body.recipients,
+			from = req.body.from,
+			from_name = req.body.from_name || null,
+			subject = req.body.subject || '[No subject]',
+			body = req.body.body;
+
+		if (!recipients || !Array.isArray(recipients))
+			return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['recipients']));
+		if (!from)
+			return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['from']));
+		if (!body)
+			return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['body']));
+
+		var mandrillClient = new mandrill.Mandrill(app.telepatConfig.mandrill.api_key);
+
+		recipients = recipients.map(function(r) {
+			return {email: r, type: 'to'};
+		});
+
+		var message = {
+			html: body,
+			subject: subject,
+			from_email: from,
+			from_name: from_name,
+			to: recipients
+		};
+		mandrillClient.messages.send({message: message, async: "async"}, function() {
+			res.status(200).json({status: 200, content: "Email sent successfully"});
+		}, function(err) {
+			res.status(500).json({status: 500, message: "Failed to send email: "+err.message});
+		});
 	});
 
 	app.use('/admin', adminRoute);
