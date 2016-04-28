@@ -1,15 +1,10 @@
 language: node_js
-addons:
-    code_climate:
-        repo_token: 7c04f55c7ed08e2c694492e9b39cd73e5cc9bedce02d0a372f3101dc598dcfaa
-    apt:
-        sources:
-          - elasticsearch-1.7
-        packages:
-          - elasticsearch
 services:
   - elasticsearch
   - redis
+addons:
+    code_climate:
+        repo_token: 7c04f55c7ed08e2c694492e9b39cd73e5cc9bedce02d0a372f3101dc598dcfaa
 notifications:
   slack: appscend:L6jJEK0C6jJQkWr5XPMsDjdv
 env:
@@ -19,7 +14,7 @@ env:
   - KAFKA_ADVERTISED_HOST_NAME: 127.0.0.1
   - CODECLIMATE_REPO_TOKEN: 7c04f55c7ed08e2c694492e9b39cd73e5cc9bedce02d0a372f3101dc598dcfaa
 before_install:
-  - sleep 10
+  - curl -O https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-1.7.0.deb && sudo dpkg -i --force-confnew elasticsearch-1.7.0.deb && sudo service elasticsearch restart
   - wget http://www.us.apache.org/dist/kafka/0.8.2.1/kafka_2.10-0.8.2.1.tgz -O kafka.tgz
   - mkdir -p kafka && tar xzf kafka.tgz -C kafka --strip-components 1
   - nohup bash -c "cd kafka && bin/zookeeper-server-start.sh config/zookeeper.properties &"
@@ -35,7 +30,6 @@ before_install:
   - npm install -g forever
   - npm install -g codeclimate-test-reporter
   - sleep 5
-install: true
 before_script:
   - telepat configure elasticsearch
   - bash .travis/start.sh
@@ -44,7 +38,6 @@ before_script:
   - 'echo "script.groovy.sandbox.package_whitelist: groovy.json" | sudo tee -a /etc/elasticsearch/elasticsearch.yml'
   - 'echo "script.groovy.sandbox.class_whitelist: groovy.json.JsonSlurper,groovy.json.*" | sudo tee -a /etc/elasticsearch/elasticsearch.yml'
 after_script:
-  - elasticsearch -v
   - codeclimate-test-reporter < coverage/lcov.info
   - bash .travis/after.sh
 node_js:
