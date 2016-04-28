@@ -3,8 +3,8 @@ cat telepat-worker/aggregation.out
 cat telepat-worker/aggregation.err
 cat telepat-worker/write.out
 cat telepat-worker/write.err
-cat telepat-worker/update_friends.out
-cat telepat-worker/update_friends.err
+cat telepat-worker/transport_manager.out
+cat telepat-worker/transport_manager.err
 cat telepat-worker/android.out
 cat telepat-worker/android.err
 cat telepat-worker/ios.out

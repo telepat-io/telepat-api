@@ -962,12 +962,11 @@ router.post('/update_immediate', function(req, res, next) {
  *
  */
 router.delete('/delete', function(req, res, next) {
-	var id = req.user.id;
 	var timestamp = microtime.now();
 
 	app.messagingClient.send([JSON.stringify({
 		op: 'delete',
-		object: {id: id, model: 'user'},
+		object: {id: req.user.id, model: 'user'},
 		application_id: req._telepat.applicationId,
 		timestamp: timestamp
 	})], 'aggregation', function(err) {

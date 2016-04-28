@@ -21,7 +21,7 @@ before_install:
   - sleep 5
   - kafka/bin/kafka-topics.sh --create --partitions 1 --replication-factor 1 --topic aggregation --zookeeper localhost:2181
   - kafka/bin/kafka-topics.sh --create --partitions 1 --replication-factor 1 --topic write --zookeeper localhost:2181
-  - kafka/bin/kafka-topics.sh --create --partitions 1 --replication-factor 1 --topic update_friends --zookeeper localhost:2181
+  - kafka/bin/kafka-topics.sh --create --partitions 1 --replication-factor 1 --topic transport_manager --zookeeper localhost:2181
   - kafka/bin/kafka-topics.sh --create --partitions 1 --replication-factor 1 --topic android_transport --zookeeper localhost:2181
   - kafka/bin/kafka-topics.sh --create --partitions 1 --replication-factor 1 --topic ios_transport --zookeeper localhost:2181
   - kafka/bin/kafka-topics.sh --create --partitions 1 --replication-factor 1 --topic sockets_transport --zookeeper localhost:2181
