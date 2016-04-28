@@ -44,6 +44,7 @@ before_script:
   - 'echo "script.groovy.sandbox.package_whitelist: groovy.json" | sudo tee -a /etc/elasticsearch/elasticsearch.yml'
   - 'echo "script.groovy.sandbox.class_whitelist: groovy.json.JsonSlurper,groovy.json.*" | sudo tee -a /etc/elasticsearch/elasticsearch.yml'
 after_script:
+  - elasticsearch -v
   - codeclimate-test-reporter < coverage/lcov.info
   - bash .travis/after.sh
 node_js:
