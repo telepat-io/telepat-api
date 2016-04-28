@@ -1,6 +1,6 @@
 {
   "name": "telepat-api",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "scripts": {
     "start": "./bin/www",
     "test": "istanbul cover _mocha -- test/api.js -R spec"
@@ -20,7 +20,7 @@
     "microtime-nodejs": "1.0.0",
     "object-sizeof": "1.0.9",
     "redis": "2.4.2",
-	"telepat-models": "0.3.0",
+	"telepat-models": "0.4.0",
     "twitter": "1.2.5",
     "uuid": "2.0.1"
   },
@@ -50,7 +50,7 @@
   },
   "apidoc": {
     "name": "Telepat API",
-    "version": "0.2.3",
+    "version": "0.4.0",
     "description": "Telepat API used in Telepat distributed data sync platform",
     "title": "Telepat API Documentation",
     "url": "http://localhost:3000"

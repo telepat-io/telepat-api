@@ -1,6 +1,19 @@
+# 0.4.0
+
+* Added support for geolocation sorting
+* Implemented CRUD methods for TelepatIndexedLists
+* Added support for merging an account with Facebook
+* Added `/email` route for clients to send an email
+* Added `/proxy` route for clients to proxy a HTTP(S) request through
+the API
+* Added support for subscribing without subscribing (classic get)
+
 # 0.3.0
 
-* 
+* Added some old routes back for backwards compatibility (admin/user/all
+for example)
+* Endpoints to retrieve and update user metadata
+* User password hash removed from subscribe results
 
 # 0.2.8
 

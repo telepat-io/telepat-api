@@ -31,7 +31,7 @@ var getAllContexts = function (req, res, next) {
  * @apiDescription Get all contexts
  * @apiName AdminGetContexts
  * @apiGroup Admin
- * @apiVersion 0.3.0
+ * @apiVersion 0.4.0
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization
@@ -73,7 +73,7 @@ router.get('/all', getAllContexts);
  * @apiDescription Retrieves a context
  * @apiName AdminGetContext
  * @apiGroup Admin
- * @apiVersion 0.3.0
+ * @apiVersion 0.4.0
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization
@@ -135,7 +135,7 @@ router.use('/add',
  * @apiDescription Creates a new context
  * @apiName AdminCreateContext
  * @apiGroup Admin
- * @apiVersion 0.3.0
+ * @apiVersion 0.4.0
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization
@@ -205,7 +205,7 @@ router.use('/remove',
  * @apiDescription Removes a context and all associated objects
  * @apiName AdminRemoveContext
  * @apiGroup Admin
- * @apiVersion 0.3.0
+ * @apiVersion 0.4.0
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization
@@ -274,7 +274,7 @@ router.use('/update',
  * @apiDescription Updates the context object
  * @apiName AdminUpdateContext
  * @apiGroup Admin
- * @apiVersion 0.3.0
+ * @apiVersion 0.4.0
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization

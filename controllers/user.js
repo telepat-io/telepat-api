@@ -39,7 +39,7 @@ router.use(['/logout', '/me', '/update', '/update_immediate', '/delete', '/metad
  * @apiDescription Logs in the user with a password
  * @apiName UserLoginPassword
  * @apiGroup User
- * @apiVersion 0.3.0
+ * @apiVersion 0.4.0
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
@@ -154,7 +154,7 @@ router.post(['/login-password', '/login_password'], function(req, res, next) {
  * @apiDescription Log in the user through Facebook or Twitter.
  * @apiName UserLogin
  * @apiGroup User
- * @apiVersion 0.3.0
+ * @apiVersion 0.4.0
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
@@ -351,7 +351,7 @@ router.post('/login-:s', function(req, res, next) {
  * immediately.
  * @apiName UserRegister
  * @apiGroup User
- * @apiVersion 0.3.0
+ * @apiVersion 0.4.0
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
@@ -639,7 +639,7 @@ router.get('/confirm', function(req, res, next) {
  * @apiDescription Info about logged user
  * @apiName UserMe
  * @apiGroup User
- * @apiVersion 0.3.0
+ * @apiVersion 0.4.0
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint.
@@ -682,7 +682,7 @@ router.get('/me', function(req, res, next) {
  * @apiDescription Info about an user, based on their ID
  * @apiName UserGet
  * @apiGroup User
- * @apiVersion 0.3.1
+ * @apiVersion 0.4.0
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint.
@@ -724,7 +724,7 @@ router.get('/get', function(req, res, next) {
  * @apiDescription Logs out the user removing the device from his array of devices.
  * @apiName UserLogout
  * @apiGroup User
- * @apiVersion 0.3.0
+ * @apiVersion 0.4.0
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
@@ -776,7 +776,7 @@ router.get('/logout', function(req, res, next) {
  * may not be already expired).
  * @apiName RefreshToken
  * @apiGroup User
- * @apiVersion 0.3.0
+ * @apiVersion 0.4.0
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint.
@@ -829,7 +829,7 @@ router.get('/refresh_token', function(req, res, next) {
  * @apiDescription Updates the user information. This operation is not immediate.
  * @apiName UserUpdate
  * @apiGroup User
- * @apiVersion 0.3.0
+ * @apiVersion 0.4.0
  *
  * @apiParam {Object[]} patches Array of patches that describe the modifications
  *
@@ -947,7 +947,7 @@ router.post('/update_immediate', function(req, res, next) {
  * @apiDescription Deletes a user
  * @apiName UserDelete
  * @apiGroup User
- * @apiVersion 0.3.0
+ * @apiVersion 0.4.0
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
@@ -981,7 +981,7 @@ router.delete('/delete', function(req, res, next) {
  * @apiDescription Requests a password reset for the user, an email is sent to its email address
  * @apiName UserRequestPasswordReset
  * @apiGroup User
- * @apiVersion 0.3.0
+ * @apiVersion 0.4.0
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
@@ -1080,7 +1080,7 @@ router.post('/request_password_reset', function(req, res, next) {
  * @apiDescription Resets the password of the user based on a token
  * @apiName UserPasswordReset
  * @apiGroup User
- * @apiVersion 0.3.0
+ * @apiVersion 0.4.0
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
@@ -1147,7 +1147,7 @@ router.post('/password_reset', function(req, res, next) {
  * @apiDescription Gets user metadata (private info)
  * @apiName UserGetMetadata
  * @apiGroup User
- * @apiVersion 0.3.0
+ * @apiVersion 0.4.0
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>
@@ -1178,7 +1178,7 @@ router.get('/metadata', function(req, res, next) {
  * @apiDescription Updates user metadata
  * @apiName UserUpdateMetadata
  * @apiGroup User
- * @apiVersion 0.3.0
+ * @apiVersion 0.4.0
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint. Should have the format: <i>Bearer $TOKEN</i>

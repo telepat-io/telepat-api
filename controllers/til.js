@@ -7,7 +7,7 @@ var Models = require('telepat-models');
  * @apiDescription Adds a member to a Telepat Indexed List
  * @apiName TilAppend
  * @apiGroup TelepatIndexedLists
- * @apiVersion 0.3.0
+ * @apiVersion 0.4.0
  *
  * @apiHeader {String} Content-type application/json
  *
@@ -56,7 +56,7 @@ router.post('/append', function(req, res, next) {
  * @apiDescription Checks if a list of memebers belongs to this indexed list
  * @apiName TilGet
  * @apiGroup TelepatIndexedLists
- * @apiVersion 0.3.0
+ * @apiVersion 0.4.0
  *
  * @apiHeader {String} Content-type application/json
  *
@@ -106,7 +106,7 @@ router.post('/get', function(req, res, next) {
  * @apiDescription Removes a list completely
  * @apiName TilRemoveList
  * @apiGroup TelepatIndexedLists
- * @apiVersion 0.3.0
+ * @apiVersion 0.4.0
  *
  * @apiHeader {String} Content-type application/json
  *
@@ -145,7 +145,7 @@ router.post('/removeList', function(req, res, next) {
  * @apiDescription Removes a member from a list
  * @apiName TilRemoveMember
  * @apiGroup TelepatIndexedLists
- * @apiVersion 0.3.0
+ * @apiVersion 0.4.0
  *
  * @apiHeader {String} Content-type application/json
  *

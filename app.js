@@ -201,7 +201,7 @@ var linkMiddlewaresAndRoutes = function(callback) {
 	 * @apiDescription Proxies a request to a specified URL
 	 * @apiName Proxy
 	 * @apiGroup Context
-	 * @apiVersion 0.3.0
+	 * @apiVersion 0.4.0
 	 *
 	 * @apiHeader {String} Content-type application/json
 	 * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
@@ -297,7 +297,7 @@ var linkMiddlewaresAndRoutes = function(callback) {
 	 * @apiDescription Sends an email address to multiple recipients
 	 * @apiName Email
 	 * @apiGroup Email
-	 * @apiVersion 0.3.0
+	 * @apiVersion 0.4.0
 	 *
 	 * @apiHeader {String} Content-type application/json
 	 *

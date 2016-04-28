@@ -26,7 +26,7 @@ var contextGetAll = function (req, res, next) {
  * @apiDescription Get all contexts
  * @apiName GetContexts
  * @apiGroup Context
- * @apiVersion 0.3.0
+ * @apiVersion 0.4.0
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
@@ -64,7 +64,7 @@ router.post('/all', contextGetAll);
  * @apiDescription Get all contexts. This is deprecated as it doesn't offer any limit/offset params.
  * @apiName GetContextsDeprecated
  * @apiGroup Context
- * @apiVersion 0.3.0
+ * @apiVersion 0.4.0
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
@@ -93,7 +93,7 @@ router.get('/all', contextGetAll);
  * @apiDescription Retrieves a context
  * @apiName GetContext
  * @apiGroup Context
- * @apiVersion 0.3.0
+ * @apiVersion 0.4.0
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
