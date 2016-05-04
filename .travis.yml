@@ -32,12 +32,13 @@ before_install:
   - sleep 5
 before_script:
   - telepat configure elasticsearch
-  - bash .travis/start.sh
   - 'echo "script.disable_dynamic: false" | sudo tee -a /etc/elasticsearch/elasticsearch.yml'
   - 'echo "script.groovy.sandbox.enable: true" | sudo tee -a /etc/elasticsearch/elasticsearch.yml'
   - 'echo "script.groovy.sandbox.package_whitelist: groovy.json" | sudo tee -a /etc/elasticsearch/elasticsearch.yml'
   - 'echo "script.groovy.sandbox.class_whitelist: groovy.json.JsonSlurper,groovy.json.*" | sudo tee -a /etc/elasticsearch/elasticsearch.yml'
   - sudo service elasticsearch restart
+  - sleep 5
+  - bash .travis/start.sh
   - sleep 5
 after_script:
   - codeclimate-test-reporter < coverage/lcov.info
