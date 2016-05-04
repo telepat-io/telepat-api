@@ -257,7 +257,10 @@ router.delete('/remove', function (req, res, next) {
 				app.messagingClient.send([JSON.stringify({
 					_broadcast: true,
 					deltas: [delta.toObject()]
-				})], 'transport_manager');
+				})], 'transport_manager', function(err){
+					if (err)
+						Models.Application.logger.error('/admin/context/remove: Error sending queue message');
+				});
 
 				res.status(200).json({status: 200, content: 'Context removed'});
 			});
