@@ -631,8 +631,12 @@ router.get('/confirm', function(req, res, next) {
 		if (err)
 			return next(err);
 
-		res.redirect(app.telepatConfig.redirect_url+'?url='+encodeURIComponent(redirectUrl));
-		res.end();
+		if (redirectUrl) {
+			res.redirect(app.telepatConfig.redirect_url+'?url='+encodeURIComponent(redirectUrl));
+			res.end();
+		} else {
+			res.status(200).json({status: 200, content: 'Account confirmed'});
+		}
 	});
 });
 
