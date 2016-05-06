@@ -606,6 +606,7 @@ router.get('/confirm', function(req, res, next) {
 	var hash = req.query.hash;
 	var appId = req.query.app_id;
 	var user = null;
+	var redirectUrl = req.query.redirect_url;
 
 	async.series([
 		function(callback) {
@@ -630,7 +631,8 @@ router.get('/confirm', function(req, res, next) {
 		if (err)
 			return next(err);
 
-		res.status(200).json({status: 200, content: 'Account confirmed'});
+		res.redirect(app.telepatConfig.redirect_url+'?url='+encodeURIComponent(redirectUrl));
+		res.end();
 	});
 });
 
