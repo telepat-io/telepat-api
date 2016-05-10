@@ -159,7 +159,6 @@ var linkMiddlewaresAndRoutes = function(callback) {
 			var body = string instanceof Buffer ? string.toString() : string;
 			send.call(this, body);
 			res.on('finish', function() {
-				var copyBody = JSON.parse(body);
 				var requestLogMessage = req.method +' '+ req.baseUrl+req.url +' '+res.statusCode;
 
 				if (res._header && req._startAt && res._startAt) {
@@ -169,11 +168,14 @@ var linkMiddlewaresAndRoutes = function(callback) {
 					requestLogMessage += ' ' + ms.toFixed(3) + ' ms';
 				}
 
-				if (res.statusCode >= 400)	{
-					requestLogMessage += ' (['+copyBody.code+']: '+copyBody.message+')';
-					if (res.statusCode >= 500 && res._telepatError)
-						requestLogMessage += "\n"+res._telepatError.stack;
-				}
+				try {
+					var copyBody = JSON.parse(body);
+					if (res.statusCode >= 400)	{
+						requestLogMessage += ' (['+copyBody.code+']: '+copyBody.message+')';
+						if (res.statusCode >= 500 && res._telepatError)
+							requestLogMessage += "\n"+res._telepatError.stack;
+					}
+				} catch(e) {}
 
 				requestLogMessage += ' ('+req.ip+')';
 

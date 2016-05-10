@@ -27,9 +27,13 @@ var unless = function(paths, middleware) {
 	};
 };
 
-router.use(unless(['/confirm', '/request_password_reset', '/metadata', '/update_metadata'], security.deviceIdValidation));
-router.use(unless(['/confirm', '/metadata', '/update_metadata'], security.applicationIdValidation));
-router.use(unless(['/confirm', '/metadata', '/update_metadata'], security.apiKeyValidation));
+var isMobileBrowser = function(userAgent) {
+	return userAgent.match(/(iPad|iPhone|iPod|Android|Windows Phone)/g) ? true : false;
+};
+
+router.use(unless(['/confirm', '/request_password_reset', '/metadata', '/update_metadata', '/reset_password_intermediate'], security.deviceIdValidation));
+router.use(unless(['/confirm', '/metadata', '/update_metadata', '/reset_password_intermediate'], security.applicationIdValidation));
+router.use(unless(['/confirm', '/metadata', '/update_metadata', '/reset_password_intermediate'], security.apiKeyValidation));
 
 router.use(['/logout', '/me', '/update', '/update_immediate', '/delete', '/metadata', '/update_metadata'],
 	security.tokenValidation);
@@ -556,8 +560,6 @@ router.post('/register-:s', function(req, res, next) {
 					var url = 'http://'+req.headers.host + '/user/confirm?username='+
 						encodeURIComponent(userProfile.username)+'&hash='+userProfile.confirmationHash+'&app_id='+appId;
 					var message = {
-						html: 'In order to be able to use and log in to the "'+Models.Application.loadedAppModels[appId].name+
-						'" app click this link: <a href="'+url+'">Confirm</a>',
 						subject: 'Account confirmation for "'+Models.Application.loadedAppModels[appId].name+'"',
 						from_email: Models.Application.loadedAppModels[appId].from_email,
 						from_name: Models.Application.loadedAppModels[appId].name,
@@ -566,8 +568,20 @@ router.post('/register-:s', function(req, res, next) {
 								email: userProfile.email,
 								type: 'to'
 							}
-						]
+						],
+						inline_css: true
 					};
+
+					if (Models.Application.loadedAppModels[appId].email_templates &&
+						Models.Application.loadedAppModels[appId].email_templates.confirm_account) {
+
+						message.html = Models.Application.loadedAppModels[appId].email_templates.confirm_account.
+							replace('{CONFIRM_LINK}', url);
+					} else {
+						message.html = 'In order to be able to use and log in to the "'+Models.Application.loadedAppModels[appId].name+
+							'" app click this link: <a href="'+url+'">Confirm</a>';
+					}
+
 					mandrillClient.messages.send({message: message, async: "async"}, function() {}, function(err) {
 						Models.Application.logger.warning('Unable to send confirmation email: ' + err.name + ' - '
 							+ err.message);
@@ -626,7 +640,14 @@ router.get('/confirm', function(req, res, next) {
 		if (err)
 			return next(err);
 
-		res.status(200).json({status: 200, content: 'Account confirmed'});
+		if (Models.Application.loadedAppModels[appId].email_templates &&
+			Models.Application.loadedAppModels[appId].email_templates.after_confirm) {
+			res.status(200);
+			res.set('Content-Type', 'text/html');
+			res.send(Models.Application.loadedAppModels[appId].email_templates.after_confirm);
+		} else {
+			res.status(200).json({status: 200, content: 'Account confirmed'});
+		}
 	});
 });
 
@@ -1042,11 +1063,10 @@ router.post('/request_password_reset', function(req, res, next) {
 
 			link += '?token='+token+'&user_id='+user.id;
 
-			var redirectUrl = app.telepatConfig.redirect_url+'?url='+encodeURIComponent(link);
+			var redirectUrl = 'http://'+req.headers.host+'/user/reset_password_intermediate?url='+encodeURIComponent(link)+
+				'&app_id='+appId;
 
 			var message = {
-				html: 'Password reset request from the "'+Models.Application.loadedAppModels[appId].name+
-				'" app. Click this URL to reset password: <a href="'+redirectUrl+'">Reset</a>',
 				subject: 'Reset account password for "'+username+'"',
 				from_email: Models.Application.loadedAppModels[appId].from_email,
 				from_name: Models.Application.loadedAppModels[appId].name,
@@ -1057,8 +1077,19 @@ router.post('/request_password_reset', function(req, res, next) {
 					}
 				],
 				track_clicks: false,
-				track_opens: false
+				track_opens: false,
+				inline_css: true
 			};
+
+			if (Models.Application.loadedAppModels[appId].email_templates &&
+				Models.Application.loadedAppModels[appId].email_templates.reset_password) {
+				message.html = Models.Application.loadedAppModels[appId].email_templates.reset_password.
+					replace('{CONFIRM_LINK}', redirectUrl);
+			} else {
+				message.html = 'Password reset request from the "'+Models.Application.loadedAppModels[appId].name+
+				'" app. Click this URL to reset password: <a href="'+redirectUrl+'">Reset</a>';
+			}
+
 			mandrillClient.messages.send({message: message, async: "async"}, function() {}, function(err) {
 				Models.Application.logger.warning('Unable to send confirmation email: ' + err.name + ' - '
 					+ err.message);
@@ -1074,6 +1105,26 @@ router.post('/request_password_reset', function(req, res, next) {
 			return next(err);
 		res.status(200).json({status: 200, content: "Password reset email sent"});
 	});
+});
+
+router.get('/reset_password_intermediate', function(req, res, next) {
+	var appId = req.query.app_id;
+
+	if (!Models.Application.loadedAppModels[appId])
+		return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationNotFound, [appId]));
+
+	if (!isMobileBrowser(req.get('User-Agent'))) {
+		if (Models.Application.loadedAppModels[appId].email_templates &&
+			Models.Application.loadedAppModels[appId].email_templates.weblink) {
+
+			res.status(200);
+			res.type('html');
+			res.send(Models.Application.loadedAppModels[appId].email_templates.weblink);
+			res.end();
+		}
+	} else {
+		res.redirect(decodeURIComponent(req.query.url));
+	}
 });
 
 /**
@@ -1139,7 +1190,11 @@ router.post('/password_reset', function(req, res, next) {
 		if (err)
 			return next(err);
 
-		res.status(200).json({status: 200, content: newPassword});
+		if (isMobileBrowser(req.get('User-Agent'))) {
+			res.status(200).json({status: 200, content: newPassword});
+		} else {
+
+		}
 	})
 });
 
