@@ -1190,11 +1190,7 @@ router.post('/password_reset', function(req, res, next) {
 		if (err)
 			return next(err);
 
-		if (isMobileBrowser(req.get('User-Agent'))) {
-			res.status(200).json({status: 200, content: newPassword});
-		} else {
-
-		}
+		res.status(200).json({status: 200, content: newPassword});
 	})
 });
 
