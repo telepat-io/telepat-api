@@ -444,6 +444,7 @@ router.post('/register-:s', function(req, res, next) {
 					userProfile.username = result.email;
 					userProfile.first_name = nameparts[0];
 					userProfile.last_name = nameparts.slice(1);
+					userProfile.picture = 'https://graph.facebook.com/'+result.id+'/picture?type=large';
 
 					callback();
 				});
