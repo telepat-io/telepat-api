@@ -303,7 +303,7 @@ router.post('/login-:s', function(req, res, next) {
 
 					patches.push(Models.Delta.formPatch(userProfile, 'replace', {name: socialProfile.name}));
 					patches.push(Models.Delta.formPatch(userProfile, 'replace', {first_name: nameparts[0]}));
-					patches.push(Models.Delta.formPatch(userProfile, 'replace', {last_name: nameparts.slice(1)}));
+					patches.push(Models.Delta.formPatch(userProfile, 'replace', {last_name: nameparts.slice(1).join(' ')}));
 				}
 				if (userProfile.gender != socialProfile.gender)
 					patches.push(Models.Delta.formPatch(userProfile, 'replace', {gender: socialProfile.gender}));
@@ -443,7 +443,7 @@ router.post('/register-:s', function(req, res, next) {
 					userProfile = result;
 					userProfile.username = result.email;
 					userProfile.first_name = nameparts[0];
-					userProfile.last_name = nameparts.slice(1);
+					userProfile.last_name = nameparts.slice(1).join(' ');
 					userProfile.picture = 'https://graph.facebook.com/'+result.id+'/picture?type=large';
 
 					callback();
