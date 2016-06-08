@@ -299,7 +299,7 @@ router.post('/login-:s', function(req, res, next) {
 
 			if (loginProvider == 'facebook') {
 				if (userProfile.name != socialProfile.name)	{
-					var nameparts = socialProfile.first_name.split(' ');
+					var nameparts = socialProfile.name.split(' ');
 
 					patches.push(Models.Delta.formPatch(userProfile, 'replace', {name: socialProfile.name}));
 					patches.push(Models.Delta.formPatch(userProfile, 'replace', {first_name: nameparts[0]}));
