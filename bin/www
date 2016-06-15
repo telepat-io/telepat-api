@@ -3,29 +3,38 @@
 /**
  * Module dependencies.
  */
-
+var fs = require('fs');
 var app = require('../app');
 var debug = require('debug')('octopus-api:server');
-var http = require('http');
+var transport = process.env.TP_SSL ? require('https') : require('http');
+
+var server = null;
+var port = null;
 
 /**
- * Get port from environment and store in Express.
+ * Create HTTP(S) server.
  */
+if (process.env.TP_SSL) {
+	port = process.env.PORT || 443;
+	var privateKeyFile = process.env.KEY_SSL || require('../config.json').ssl_key_file;
+	var certificateFile = process.env.CERT_SSL || require('../config.json').ssl_cert_file;
 
-var port = normalizePort(process.env.PORT || '3000');
-app.set('port', port);
+	if (!privateKeyFile && !certificateFile) {
+		throw new Error('SSL configuration is missing');
+	}
 
-/**
- * Create HTTP server.
- */
-
-var server = http.createServer(app);
+	server = transport.createServer({key: fs.readFileSync(privateKeyFile), cert: fs.readFileSync(certificateFile)}, app);
+	server.listen(port);
+} else {
+	port = process.env.PORT || 3000;
+	server = transport.createServer(app);
+	server.listen(port);
+}
 
 /**
  * Listen on provided port, on all network interfaces.
  */
-
-server.listen(port);
+app.set('port', port);
 server.on('error', onError);
 server.on('listening', onListening);
 
