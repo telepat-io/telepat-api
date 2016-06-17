@@ -238,12 +238,7 @@ router.post('/login-:s', function(req, res, next) {
 				FB.napi('/me?fields=name,email,id,gender', {access_token: accessToken}, function(err, result) {
 					if (err) return callback(err);
 
-					if (!result.email) {
-						callback(new Models.TelepatError(Models.TelepatError.errors.InsufficientFacebookPermissions,
-							'email address is missing'));
-					}
-
-					username = result.email;
+					username = result.email || result.id;
 					socialProfile = result;
 
 					callback();
@@ -433,15 +428,10 @@ router.post('/register-:s', function(req, res, next) {
 				FB.napi('/me?fields=name,email,id,gender', {access_token: accessToken}, function(err, result) {
 					if (err) return callback(err);
 
-					if (!result.email) {
-						callback(new Models.TelepatError(Models.TelepatError.errors.InsufficientFacebookPermissions,
-							['email address is missing']));
-					}
-
 					var nameparts = result.name.split(' ');
 
 					userProfile = result;
-					userProfile.username = result.email;
+					userProfile.username = result.email || result.id;
 					userProfile.first_name = nameparts[0];
 					userProfile.last_name = nameparts.slice(1).join(' ');
 					userProfile.picture = 'https://graph.facebook.com/'+result.id+'/picture?type=large';
