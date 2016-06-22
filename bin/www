@@ -23,7 +23,7 @@ if (process.env.TP_SSL) {
 		throw new Error('SSL configuration is missing');
 	}
 
-	server = transport.createServer({key: fs.readFileSync(privateKeyFile), cert: fs.readFileSync(certificateFile)}, app);
+	server = transport.createServer({key: fs.readFileSync(__dirname+'/'+privateKeyFile), cert: fs.readFileSync(__dirname+'/'+certificateFile)}, app);
 	server.listen(port);
 } else {
 	port = process.env.PORT || 3000;
