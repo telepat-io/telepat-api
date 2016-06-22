@@ -21,8 +21,6 @@ var tilRoute = require('./controllers/til');
 var dbConnected = false;
 app = express();
 
-app.set('port', process.env.PORT || 3000);
-
 app.disable('x-powered-by');
 app.enable('trust proxy');
 
