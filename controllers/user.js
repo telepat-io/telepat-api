@@ -27,9 +27,9 @@ var unless = function(paths, middleware) {
 	};
 };
 
-router.use(unless(['/confirm', '/request_password_reset', '/metadata', '/update_metadata'], security.deviceIdValidation));
-router.use(unless(['/confirm', '/metadata', '/update_metadata'], security.applicationIdValidation));
-router.use(unless(['/confirm', '/metadata', '/update_metadata'], security.apiKeyValidation));
+router.use(unless(['/refresh_token', '/confirm', '/request_password_reset', '/metadata', '/update_metadata'], security.deviceIdValidation));
+router.use(unless(['/refresh_token', '/confirm', '/metadata', '/update_metadata'], security.applicationIdValidation));
+router.use(unless(['/refresh_token', '/confirm', '/metadata', '/update_metadata'], security.apiKeyValidation));
 
 router.use(['/logout', '/me', '/update', '/update_immediate', '/delete', '/metadata', '/update_metadata'],
 	security.tokenValidation);
@@ -781,9 +781,6 @@ router.get('/logout', function(req, res, next) {
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization The authorization token obtained in the login endpoint.
  * Should have the format: <i>Bearer $TOKEN</i>
- * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
- * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
- * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from device/register)
  *
  * @apiSuccessExample {json} Success Response
  * 	{
