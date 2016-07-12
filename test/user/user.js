@@ -690,25 +690,6 @@ it('5.22 should return an error response to indicate that the token was NOT upda
 		});
 });
 
-it('5.23 should return an error response to indicate that the token was NOT updated because X-BLGREQ-SIGN is missing', function(done) {
-
-	this.timeout(100*DELAY);
-
-	request(url)
-		.get('/user/refresh_token')
-		.set('Content-type','application/json')
-		.set('X-BLGREQ-UDID', deviceIdentification)
-		.set('X-BLGREQ-APPID',appID)
-		.set('Authorization', authValue )
-		.send()
-		.end(function(err, res) {
-
-			res.body.code.should.be.equal('007');
-			res.statusCode.should.be.equal(400);
-			done();
-		});
-});
-
 it('5.24 should return an error response to indicate that the token was NOT updated because Content-type is not application/json', function(done) {
 
 	this.timeout(100*DELAY);
@@ -725,45 +706,6 @@ it('5.24 should return an error response to indicate that the token was NOT upda
 
 			res.body.code.should.be.equal('006');
 			res.statusCode.should.be.equal(415);
-			done();
-		});
-});
-
-it('5.25 should return an error response to indicate that the token was NOT updated because of invalid API key', function(done) {
-
-	this.timeout(100*DELAY);
-
-	request(url)
-		.get('/user/refresh_token')
-		.set('Content-type','application/json')
-		.set('X-BLGREQ-SIGN', appIDsha256 + '66')
-		.set('X-BLGREQ-UDID', deviceIdentification)
-		.set('X-BLGREQ-APPID',appID)
-		.set('Authorization', authValue )
-		.send()
-		.end(function(err, res) {
-
-			res.body.code.should.be.equal('008');
-			res.statusCode.should.be.equal(401);
-			done();
-		});
-});
-
-it('5.26 should return an error response to indicate that the token was NOT updated because of missing UDID', function(done) {
-
-	this.timeout(100*DELAY);
-
-	request(url)
-		.get('/user/refresh_token')
-		.set('Content-type','application/json')
-		.set('X-BLGREQ-SIGN', appIDsha256 )
-		.set('X-BLGREQ-APPID',appID)
-		.set('Authorization', authValue )
-		.send()
-		.end(function(err, res) {
-
-			res.body.code.should.be.equal('009');
-			res.statusCode.should.be.equal(400);
 			done();
 		});
 });
