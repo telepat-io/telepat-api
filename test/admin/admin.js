@@ -761,8 +761,7 @@ describe('1.2.App', function() {
 					.delete('/admin/app/remove')
 					.set('Content-type','application/json')
 					.set('Authorization', authValue )
-					.set('X-BLGREQ-APPID', appID )
-					.send()
+					.send({id: appID})
 					.end(function(err, res) {
 
 						res.statusCode.should.be.equal(200);
@@ -780,8 +779,7 @@ describe('1.2.App', function() {
 			.delete('/admin/app/remove')
 			.set('Content-type','application/json')
 			.set('Authorization', authValue )
-			.set('X-BLGREQ-APPID', Math.round(Math.random()*1000000)+1000 )
-			.send()
+			.send({id: Math.round(Math.random()*1000000)+1000})
 			.end(function(err, res) {
 
 				res.body.code.should.be.equal('011');

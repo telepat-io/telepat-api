@@ -5,7 +5,7 @@ var crypto = require('crypto-js');
 
 var appKey = "3406870085495689e34d878f09faf52c";
 var logLevel = process.env.TP_TST_LOG || 1;
-exports.url = 'http://localhost:3000';
+exports.url = 'http://localhost:'+(process.env.PORT || '3000');
 exports.appKey = appKey;
 exports.appIDsha256 = crypto.SHA256(appKey).toString(crypto.enc.Hex);
 exports.DELAY = 100;

@@ -62,9 +62,7 @@ router.post('/add', function (req, res, next) {
 });
 
 router.use('/remove',
-	security.tokenValidation,
-	security.applicationIdValidation,
-	security.adminAppValidation);
+	security.tokenValidation);
 /**
  * @api {delete} /admin/app/remove RemoveApp
  * @apiDescription Removes an application from the admin.
@@ -76,7 +74,6 @@ router.use('/remove',
  * @apiHeader {String} Authorization
                        The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
- * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  *
  * @apiSuccessExample {json} Success Response
  * 	{
@@ -95,7 +92,19 @@ router.use('/remove',
  *
  */
 router.delete('/remove', function (req, res, next) {
-	var appId = req._telepat.applicationId;
+	var appId = req.body.id;
+
+	if (!appId)
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['id']));
+
+	if (!Models.Application.loadedAppModels[appId]) {
+		return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationNotFound,
+			[appId]));
+	}
+
+	if (Models.Application.loadedAppModels[appId].admins.indexOf(req.user.id) === -1) {
+		return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationForbidden));
+	}
 
 	Models.Application.delete(appId, function (err, res1) {
 		if (err)
@@ -108,9 +117,7 @@ router.delete('/remove', function (req, res, next) {
 });
 
 router.use('/update',
-	security.tokenValidation,
-	security.applicationIdValidation,
-	security.adminAppValidation);
+	security.tokenValidation);
 /**
  * @api {post} /admin/app/update UpdateApp
  * @apiDescription Updates an app
@@ -122,9 +129,6 @@ router.use('/update',
  * @apiHeader {String} Authorization
                        The authorization token obtained in the login endpoint.
                        Should have the format: <i>Bearer $TOKEN</i>
- * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
- *
- * @apiParam {Number} appId ID of the app to update
  *
  * @apiExample {json} Client Request
  * 	{
@@ -154,8 +158,6 @@ router.use('/update',
  *
  */
 router.post('/update', function (req, res, next) {
-	var appId = req._telepat.applicationId;
-
 	if (Object.getOwnPropertyNames(req.body).length === 0) {
 		return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
 	} else if (!Array.isArray(req.body.patches)) {
@@ -165,6 +167,35 @@ router.post('/update', function (req, res, next) {
 		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidFieldValue,
 			['"patches" array is empty']));
 	} else {
+
+		var errors = false;
+		var appId = null;
+
+		req.body.patches.forEach(function(patch) {
+			if (!patch.path || errors)
+				return;
+
+			appId = patch.path.split('/')[1];
+
+			if (!appId)	{
+				errors = true;
+				return next(new Models.TelepatError(Models.TelepatError.errors.InvalidPatch, ['missing ID in path']));
+			}
+
+			if (!Models.Application.loadedAppModels[appId]) {
+				return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationNotFound,
+					[appId]));
+			}
+
+			if (Models.Application.loadedAppModels[appId].admins.indexOf(req.user.id) === -1) {
+				errors = true;
+				return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationForbidden));
+			}
+		});
+
+		if (errors)
+			return;
+
 		Models.Application.update(appId, req.body.patches, function (err, result) {
 			if (err)
 				return next(err);
