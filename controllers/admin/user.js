@@ -61,6 +61,65 @@ router.post('/all', function(req, res, next) {
 	});
 });
 
+router.use('/search',
+	security.tokenValidation,
+	security.applicationIdValidation,
+	security.adminAppValidation);
+
+/**
+ * @api {post} /admin/user/search SearchAppUsers
+ * @apiDescription Search app users by any field
+ * @apiName AdminSearchUsers
+ * @apiGroup Admin
+ * @apiVersion 0.4.0
+ *
+ * @apiHeader {String} Content-type application/json
+ * @apiHeader {String} Authorization
+ The authorization token obtained in the login endpoint.
+ Should have the format: <i>Bearer $TOKEN</i>
+ * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
+ *
+ * @apiParam {Object} fields The fields after which to filter the results. It will search for text that contains the exact string
+ * @apiParam {Number} offset (optional) Starting offset (default: 0)
+ * @apiParam {Number} limit (optional) Number of objects to return (default: depends on API configuration)
+ *
+ * @apiExample {json} Client Request
+ * 	{
+ * 		"fields": {
+ * 			"username": "nit"
+ * 		},
+ * 		"offset": 0,
+ * 		"limit": 64
+ * 	}
+ *
+ * 	@apiSuccessExample {json} Success Response
+ * 	{
+ * 		"status": 200,
+ * 		"content" : [
+ * 			{//user props}, ...
+ * 		]
+ * 	}
+ *
+ * @apiError 404 [011]ApplicationNotFound If the application doesn't exist
+ */
+router.post('/search', function(req, res, next) {
+	var appId = req._telepat.applicationId;
+	var offset = req.body.offset;
+	var limit = req.body.limit;
+	var fields = req.body.fields || {};
+
+	if (!(fields instanceof Object))
+		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidFieldValue, ['"fields" must be an object']));
+
+	Models.User.search(appId, fields, offset, limit, function(err, result) {
+		if (err) {
+			next(err);
+		} else {
+			res.status(200).json({status: 200, content: result});
+		}
+	});
+});
+
 router.use('/update',
 	security.tokenValidation,
 	security.applicationIdValidation,
