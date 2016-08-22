@@ -75,7 +75,10 @@ router.post('/append', function(req, res, next) {
  * 	{
  * 		"status": 200,
  * 		"content": {
- * 			"fid_1": true,
+ * 			"fid_1": {
+ * 				"fid": "fid_1",
+ * 				"option": 1
+ * 			},
  * 			"fid_2": false
  * 		}
  * 	}
@@ -151,20 +154,20 @@ router.post('/removeList', function(req, res, next) {
  *
  * @apiParam {String} listName Name of the list from which to delete the member
  * @apiParam {String} indexedProperty The field for which the list will hold indexed members
- * @apiParam {String} member The member to remove
+ * @apiParam {String} members The member to remove
  *
  * @apiExample {json} Client Request
  * 	{
  * 		"listName": "object_id",
  * 		"indexedProperty": "fid",
- * 		"member": "fid_1"
+ * 		"members": ["fid_1"]
  * 	}
  *
  * 	@apiSuccessExample {json} Success Response
  * 	{
  * 		"status": 200,
  * 		"content": {
- * 			"removed": true
+ * 			"removed": 1
  * 		}
  * 	}
  *
@@ -172,16 +175,16 @@ router.post('/removeList', function(req, res, next) {
 router.post('/removeMember', function(req, res, next) {
 	var listName = req.body.listName;
 	var indexedProperty = req.body.indexedProperty;
-	var member = req.body.member;
+	var members = req.body.members;
 
 	if (!listName || typeof listName != 'string')
 		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['listName, or not a string']));
 	if (!indexedProperty || typeof indexedProperty != 'string')
 		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['indexedProperty, or not a string']));
-	if (!member || typeof member != 'string')
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['member, or not a string']));
+	if (!members || !(members instanceof Array))
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['member, or not an array']));
 
-	Models.TelepatIndexedList.removeMember(listName, indexedProperty, member, function(err, result) {
+	Models.TelepatIndexedList.removeMember(listName, indexedProperty, members, function(err, result) {
 		if (err)
 			return next(err);
 
