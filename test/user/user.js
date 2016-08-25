@@ -146,8 +146,8 @@ it('5.3 should return an error response to indicate that the user has NOT logged
 		.send(clientrequest)
 		.end(function(err, res) {
 
-			res.body.code.should.be.equal('002');
-			res.statusCode.should.be.equal(500);
+			res.statusCode.should.be.equal(400);
+			res.body.code.should.be.equal('040');
 			done();
 		});
 });
