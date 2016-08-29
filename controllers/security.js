@@ -158,8 +158,14 @@ security.objectACL = function (accessControl) {
 
 				if (authToken) {
 					jwt.verify(authToken, security.authSecret, function (err, decoded) {
-						if (err)
-							return next(new Models.TelepatError(Models.TelepatError.errors.MalformedAuthorizationToken, [err.message]));
+						if (err) {
+							if (err.message == 'jwt expired')	{
+								return next(new Models.TelepatError(Models.TelepatError.errors.ExpiredAuthorizationToken));
+							} else if (err.message == 'jwt malformed') {
+								return next(new Models.TelepatError(Models.TelepatError.errors.MalformedAuthorizationToken));
+							}
+							else return next(err);
+						}
 
 						if ((!(acl & ACL_UNAUTHENTICATED)) && (!(acl & ACL_AUTHENTICATED)) &&  (acl & ACL_ADMIN) && (!decoded.isAdmin) )
 							return next(new Models.TelepatError(Models.TelepatError.errors.OperationNotAllowed));
