@@ -27,9 +27,13 @@ var unless = function(paths, middleware) {
 	};
 };
 
-router.use(unless(['/confirm', '/request_password_reset', '/metadata', '/update_metadata'], security.deviceIdValidation));
-router.use(unless(['/confirm', '/metadata', '/update_metadata'], security.applicationIdValidation));
-router.use(unless(['/confirm', '/metadata', '/update_metadata'], security.apiKeyValidation));
+var isMobileBrowser = function(userAgent) {
+	return userAgent.match(/(iPad|iPhone|iPod|Android|Windows Phone)/g) ? true : false;
+};
+
+router.use(unless(['/confirm', '/request_password_reset', '/metadata', '/update_metadata', '/reset_password_intermediate'], security.deviceIdValidation));
+router.use(unless(['/confirm', '/metadata', '/update_metadata', '/reset_password_intermediate'], security.applicationIdValidation));
+router.use(unless(['/confirm', '/metadata', '/update_metadata', '/reset_password_intermediate'], security.apiKeyValidation));
 
 router.use(['/logout', '/me', '/update', '/update_immediate', '/delete', '/metadata', '/update_metadata'],
 	security.tokenValidation);
@@ -235,7 +239,7 @@ router.post('/login-:s', function(req, res, next) {
 		//Retrieve facebook information
 		function(callback) {
 			if (loginProvider == 'facebook') {
-				FB.napi('/me?fields=name,email,id,gender', {access_token: accessToken}, function(err, result) {
+				FB.napi('/me?fields=name,email,id,gender,picture', {access_token: accessToken}, function(err, result) {
 					if (err) return callback(err);
 
 					username = result.email || result.id;
@@ -258,10 +262,15 @@ router.post('/login-:s', function(req, res, next) {
 					if (err)
 						return callback(err);
 
-					username = result.screen_name;
-					socialProfile = {screen_name: result.screen_name};
+					twitterClient.get('users/show', {screen_name: result.screen_name}, function(err1, result1) {
+						if (err1)
+							return callback(err1);
 
-					callback();
+						username = result.screen_name;
+						socialProfile = result1;
+
+						callback();
+					});
 				});
 			}
 		},
@@ -302,6 +311,11 @@ router.post('/login-:s', function(req, res, next) {
 				}
 				if (userProfile.gender != socialProfile.gender)
 					patches.push(Models.Delta.formPatch(userProfile, 'replace', {gender: socialProfile.gender}));
+			} else if (loginProvider == 'twitter') {
+				if (userProfile.name != socialProfile.name)
+					patches.push(Models.Delta.formPatch(userProfile, 'replace', {name: socialProfile.name}));
+				if (userProfile.picture != socialProfile.profile_image_url_https)
+					patches.push(Models.Delta.formPatch(userProfile, 'replace', {picture: socialProfile.picture}));
 			}
 
 			Models.User.update(username, appId, patches, callback);
@@ -425,7 +439,7 @@ router.post('/register-:s', function(req, res, next) {
 	async.waterfall([
 		function(callback) {
 			if (loginProvider == 'facebook') {
-				FB.napi('/me?fields=name,email,id,gender', {access_token: accessToken}, function(err, result) {
+				FB.napi('/me?fields=name,email,id,gender,picture', {access_token: accessToken}, function(err, result) {
 					if (err) return callback(err);
 
 					var nameparts = result.name.split(' ');
@@ -450,11 +464,20 @@ router.post('/register-:s', function(req, res, next) {
 				var twitterClient = new Twitter(options);
 
 				twitterClient.get('account/settings', {}, function(err, result) {
+					if (err)
+						return callback(err);
 
-					userProfile = {};
-					userProfile.username = result.screen_name;
+					twitterClient.get('users/show', {screen_name: result.screen_name}, function(err1, result1) {
+						if (err1)
+							return callback(err1);
 
-					callback();
+						userProfile = {};
+						userProfile.name = result1.screen_name;
+						userProfile.username = result.screen_name;
+						userProfile.picture = result1.profile_image_url_https;
+
+						callback();
+					});
 				});
 			} else {
 				callback();
@@ -531,8 +554,6 @@ router.post('/register-:s', function(req, res, next) {
 					var url = 'http://'+req.headers.host + '/user/confirm?username='+
 						encodeURIComponent(userProfile.username)+'&hash='+userProfile.confirmationHash+'&app_id='+appId;
 					var message = {
-						html: 'In order to be able to use and log in to the "'+Models.Application.loadedAppModels[appId].name+
-						'" app click this link: <a href="'+url+'">Confirm</a>',
 						subject: 'Account confirmation for "'+Models.Application.loadedAppModels[appId].name+'"',
 						from_email: Models.Application.loadedAppModels[appId].from_email,
 						from_name: Models.Application.loadedAppModels[appId].name,
@@ -541,8 +562,20 @@ router.post('/register-:s', function(req, res, next) {
 								email: userProfile.email,
 								type: 'to'
 							}
-						]
+						],
+						inline_css: true
 					};
+
+					if (Models.Application.loadedAppModels[appId].email_templates &&
+						Models.Application.loadedAppModels[appId].email_templates.confirm_account) {
+
+						message.html = Models.Application.loadedAppModels[appId].email_templates.confirm_account.
+							replace('{CONFIRM_LINK}', url);
+					} else {
+						message.html = 'In order to be able to use and log in to the "'+Models.Application.loadedAppModels[appId].name+
+							'" app click this link: <a href="'+url+'">Confirm</a>';
+					}
+
 					mandrillClient.messages.send({message: message, async: "async"}, function() {}, function(err) {
 						Models.Application.logger.warning('Unable to send confirmation email: ' + err.name + ' - '
 							+ err.message);
@@ -601,7 +634,14 @@ router.get('/confirm', function(req, res, next) {
 		if (err)
 			return next(err);
 
-		res.status(200).json({status: 200, content: 'Account confirmed'});
+		if (Models.Application.loadedAppModels[appId].email_templates &&
+			Models.Application.loadedAppModels[appId].email_templates.after_confirm) {
+			res.status(200);
+			res.set('Content-Type', 'text/html');
+			res.send(Models.Application.loadedAppModels[appId].email_templates.after_confirm);
+		} else {
+			res.status(200).json({status: 200, content: 'Account confirmed'});
+		}
 	});
 });
 
@@ -637,6 +677,48 @@ router.get('/confirm', function(req, res, next) {
  */
 router.get('/me', function(req, res, next) {
 	Models.User({id: req.user.id}, req._telepat.applicationId, function(err, result) {
+		if (err && err.status == 404) {
+			return next(new Models.TelepatError(Models.TelepatError.errors.UserNotFound));
+		}
+		else if (err)
+			next(err);
+		else
+			delete result.password;
+			res.status(200).json({status: 200, content: result});
+	});
+});
+
+/**
+ * @api {get} /user/get getUser
+ * @apiDescription Info about an user, based on their ID
+ * @apiName UserGet
+ * @apiGroup User
+ * @apiVersion 0.3.1
+ *
+ * @apiHeader {String} Content-type application/json
+ * @apiHeader {String} Authorization The authorization token obtained in the login endpoint.
+ * Should have the format: <i>Bearer $TOKEN</i>
+ * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
+ * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
+ * @apiHeader {String} X-BLGREQ-UDID Custom header containing the device ID (obtained from device/register)
+ *
+ * @apiParam {String} user_id The ID of the desired user
+ *
+ * 	@apiSuccessExample {json} Success Response
+ * 	{
+ * 		"content": {
+ *			"id": 31,
+ *			"type": "user",
+ * 			"username": "abcd@appscend.com",
+ * 			"devices": [
+ *				"466fa519-acb4-424b-8736-fc6f35d6b6cc"
+ *			]
+ * 		}
+ * 	}
+ *
+ */
+router.get('/get', function(req, res, next) {
+	Models.User({id: req.query.user_id}, req._telepat.applicationId, function(err, result) {
 		if (err && err.status == 404) {
 			return next(new Models.TelepatError(Models.TelepatError.errors.UserNotFound));
 		}
@@ -975,11 +1057,10 @@ router.post('/request_password_reset', function(req, res, next) {
 
 			link += '?token='+token+'&user_id='+user.id;
 
-			var redirectUrl = app.telepatConfig.redirect_url+'?url='+encodeURIComponent(link);
+			var redirectUrl = 'http://'+req.headers.host+'/user/reset_password_intermediate?url='+encodeURIComponent(link)+
+				'&app_id='+appId;
 
 			var message = {
-				html: 'Password reset request from the "'+Models.Application.loadedAppModels[appId].name+
-				'" app. Click this URL to reset password: <a href="'+redirectUrl+'">Reset</a>',
 				subject: 'Reset account password for "'+username+'"',
 				from_email: Models.Application.loadedAppModels[appId].from_email,
 				from_name: Models.Application.loadedAppModels[appId].name,
@@ -990,8 +1071,19 @@ router.post('/request_password_reset', function(req, res, next) {
 					}
 				],
 				track_clicks: false,
-				track_opens: false
+				track_opens: false,
+				inline_css: true
 			};
+
+			if (Models.Application.loadedAppModels[appId].email_templates &&
+				Models.Application.loadedAppModels[appId].email_templates.reset_password) {
+				message.html = Models.Application.loadedAppModels[appId].email_templates.reset_password.
+					replace('{CONFIRM_LINK}', redirectUrl);
+			} else {
+				message.html = 'Password reset request from the "'+Models.Application.loadedAppModels[appId].name+
+				'" app. Click this URL to reset password: <a href="'+redirectUrl+'">Reset</a>';
+			}
+
 			mandrillClient.messages.send({message: message, async: "async"}, function() {}, function(err) {
 				Models.Application.logger.warning('Unable to send confirmation email: ' + err.name + ' - '
 					+ err.message);
@@ -1007,6 +1099,26 @@ router.post('/request_password_reset', function(req, res, next) {
 			return next(err);
 		res.status(200).json({status: 200, content: "Password reset email sent"});
 	});
+});
+
+router.get('/reset_password_intermediate', function(req, res, next) {
+	var appId = req.query.app_id;
+
+	if (!Models.Application.loadedAppModels[appId])
+		return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationNotFound, [appId]));
+
+	if (!isMobileBrowser(req.get('User-Agent'))) {
+		if (Models.Application.loadedAppModels[appId].email_templates &&
+			Models.Application.loadedAppModels[appId].email_templates.weblink) {
+
+			res.status(200);
+			res.type('html');
+			res.send(Models.Application.loadedAppModels[appId].email_templates.weblink);
+			res.end();
+		}
+	} else {
+		res.redirect(decodeURIComponent(req.query.url));
+	}
 });
 
 /**
