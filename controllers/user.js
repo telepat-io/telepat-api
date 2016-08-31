@@ -1304,7 +1304,10 @@ function sendEmail(provider, from, to, subject, content) {
 				Models.Application.logger.warning('Unable to send Sendgrid amail: ' + err.name + ' - '
 					+ err.message);
 			}
-			console.log(JSON.stringify(response, null, 2));
+			else if (response.statusCode >= 400) {
+				var error = JSON.parse(response.body);
+				Models.Application.logger.warning('Unable to send Sendgrid amail: ' + error.errors[0].message);
+			}
 		});
 	}
 }
