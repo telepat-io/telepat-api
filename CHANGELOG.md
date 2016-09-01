@@ -1,3 +1,12 @@
+# 0.4.1
+
+* Added suport for SSL
+* Removed the APPID, SIGN and UDID required headers in /user/refresh_token
+* Removed APP headers from /admin/app/update & remove
+* Added new route: /admin/user/search
+* TelepatIndexedLists.get now returns the object if it's found
+* Bugfix: fixed jwt errors when it's expired or invalid
+
 # 0.4.0
 
 * Added support for geolocation sorting
