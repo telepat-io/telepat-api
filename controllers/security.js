@@ -7,6 +7,7 @@ var bcrypt = require('bcrypt');
 ACL_UNAUTHENTICATED = 1;
 ACL_AUTHENTICATED = 2;
 ACL_ADMIN = 4;
+ACL_AUTHOR = 8;
 
 var security = {};
 
