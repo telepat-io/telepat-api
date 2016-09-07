@@ -585,14 +585,6 @@ router.post('/register-:s', function(req, res, next) {
 				application_id: req._telepat.applicationId,
 				timestamp: timestamp
 			})], 'aggregation', callback);
-		},
-		//add this user to his/her friends array
-		function(callback) {
-			if (fbFriends.length) {
-				app.messagingClient.send([JSON.stringify({fid: userProfile.id, friends: fbFriends})],
-					'update_friends', callback);
-			} else
-				callback();
 		}
 	], function(err) {
 		if (err) return next(err);
