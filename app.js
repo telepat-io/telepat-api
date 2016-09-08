@@ -439,8 +439,20 @@ async.waterfall([
 		/**
 		 * @type {MessagingClient}
 		 */
-		app.messagingClient = new Models[messagingClient](clientConfiguration, 'telepat-api');
-		app.messagingClient.onReady(callback);
+		app.messagingClient = new Models[messagingClient](clientConfiguration, 'telepat-api', 'api');
+		app.messagingClient.onReady(function() {
+
+			app.messagingClient.onMessage(function(message) {
+				var parsedMessage = JSON.parse(message);
+				Models.SystemMessageProcessor.identity = 'api';
+				if (parsedMessage._systemMessage) {
+					Models.Application.logger.debug('Got system message: "'+message+'"');
+					Models.SystemMessageProcessor.process(parsedMessage);
+				}
+			});
+			callback();
+		});
+
 	}
 ], OnServicesConnect);
 

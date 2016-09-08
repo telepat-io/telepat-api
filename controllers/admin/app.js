@@ -55,6 +55,10 @@ router.post('/add', function (req, res, next) {
 		if (err)
 			next(err);
 		else {
+			app.messagingClient.sendSystemMessages('_all', 'update_app', [{appId: res1.id, appObject: res1}], function(err) {
+				if (err)
+					Models.TelepatLogger.error('There was an error trying to send system message: ' + err.message);
+			});
 			Models.Application.loadedAppModels[res1.id] = res1;
 			res.status(200).json({status: 200, content: res1});
 		}
@@ -110,6 +114,11 @@ router.delete('/remove', function (req, res, next) {
 		if (err)
 			next(err);
 		else {
+			app.messagingClient.sendSystemMessages('_all', 'delete_app', [{id: appId}], function(err) {
+				if (err)
+					Models.TelepatLogger.error('There was an error trying to send system message: ' + err.message);
+			});
+
 			delete Models.Application.loadedAppModels[appId];
 			res.status(200).json({status: 200, content: 'App removed'});
 		}
@@ -200,6 +209,11 @@ router.post('/update', function (req, res, next) {
 			if (err)
 				return next(err);
 			else {
+				app.messagingClient.sendSystemMessages('_all', 'update_app', [{appId: result.id, appObject: result}], function(err) {
+					if (err)
+						return Models.TelepatLogger.error('There was an error trying to send system message: ' + err.message);
+				});
+
 				Models.Application.loadedAppModels[appId] = result;
 				res.status(200).json({status: 200, content: 'Updated'});
 			}
