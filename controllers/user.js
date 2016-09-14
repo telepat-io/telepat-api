@@ -144,7 +144,7 @@ router.post(['/login-password', '/login_password'], function(req, res, next) {
 
 		delete userProfile.password;
 
-		var token = jwt.sign({username: username, id: userProfile.id}, security.authSecret, { expiresInMinutes: 60 });
+		var token = security.createToken({username: username, id: userProfile.id});
 		res.status(200).json({status: 200, content: {user: userProfile, token: token }});
 	});
 });
@@ -337,8 +337,7 @@ router.post('/login-:s', function(req, res, next) {
 		if (err)
 			return next(err);
 		else {
-			var token = jwt.sign({username: username, id: userProfile.id}, security.authSecret,
-				{ expiresInMinutes: 60 });
+			var token = security.createToken({username: username, id: userProfile.id});
 			delete userProfile.password;
 			res.json({status: 200, content: {token: token, user: userProfile}});
 		}
@@ -805,7 +804,7 @@ router.get('/refresh_token', function(req, res, next) {
 			return next(new Models.TelepatError(Models.TelepatError.errors.MalformedAuthorizationToken));
 		}
 
-		var newToken = jwt.sign(decoded, security.authSecret, {expiresInMinutes: 60});
+		var newToken = security.createToken(decoded);
 
 		return res.status(200).json({status: 200, content: {token: newToken}});
 	} else {

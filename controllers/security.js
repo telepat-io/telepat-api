@@ -14,7 +14,7 @@ var security = {};
 security.authSecret = '835hoyubg#@$#2wfsda';
 
 security.createToken = function (data) {
-	return jwt.sign(data, this.authSecret, { expiresInMinutes: 60 });
+	return jwt.sign(data, this.authSecret, { expiresIn: 3600 });
 };
 
 security.encryptPassword = function(password, callback) {
