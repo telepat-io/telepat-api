@@ -2,7 +2,9 @@
   "name": "telepat-api",
   "version": "0.4.2",
   "scripts": {
-    "start": "./bin/www",
+    "start": "./bin/startup.sh",
+	"stop": "./bin/stop.sh",
+	"restart": "./bin/restart.sh",
     "test": "istanbul cover _mocha -- test/api.js -R spec"
   },
   "dependencies": {
