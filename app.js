@@ -402,7 +402,20 @@ async.waterfall([
 		if (Models.Application.redisClient)
 			Models.Application.redisClient = null;
 
-		Models.Application.redisClient = redis.createClient(mainConfiguration.redis.port, mainConfiguration.redis.host);
+		var retry_strategy = function(options) {
+			if (options.error && (options.error.code === 'ETIMEDOUT' || options.error.code === 'ECONNREFUSED'))
+				return 1000;
+
+			Models.Application.logger.error('Redis server connection lost "'+mainConfiguration.redis.host+'". Retrying...');
+			// reconnect after
+			return 3000;
+		};
+
+		Models.Application.redisClient = redis.createClient({
+			port: mainConfiguration.redis.port,
+			host: mainConfiguration.redis.host,
+			retry_strategy: retry_strategy
+		});
 		Models.Application.redisClient.on('error', function(err) {
 			Models.Application.logger.error('Failed connecting to Redis "'+mainConfiguration.redis.host+'": '+
 				err.message+'. Retrying...');
@@ -416,7 +429,21 @@ async.waterfall([
 		if (Models.Application.redisCacheClient)
 			Models.Application.redisCacheClient = null;
 
-		Models.Application.redisCacheClient = redis.createClient(mainConfiguration.redisCache.port, mainConfiguration.redisCache.host);
+		var retry_strategy = function(options) {
+			if (options.error && (options.error.code === 'ETIMEDOUT' || options.error.code === 'ECONNREFUSED'))
+				return 1000;
+
+			Models.Application.logger.error('Redis cache server connection lost "'+mainConfiguration.redisCache.host+'". Retrying...');
+
+			// reconnect after
+			return 3000;
+		};
+
+		Models.Application.redisCacheClient = redis.createClient({
+			port: mainConfiguration.redisCache.port,
+			host: mainConfiguration.redisCache.host,
+			retry_strategy: retry_strategy
+		});
 		Models.Application.redisCacheClient.on('error', function(err) {
 			Models.Application.logger.error('Failed connecting to Redis Cache "'+mainConfiguration.redisCache.host+'": '+
 				err.message+'. Retrying...');
