@@ -1,3 +1,9 @@
+# 0.4.3
+
+* Fixed `/user/update` and `/admin/user/update` and their notifications
+* Replace usage of `jwt.sign()` with `security.createToken`
+* Implemented start/stop/restart npm commands
+
 # 0.4.2
 
 * Implemented permissions to access objects based on creator/others (admins are exempt from this)

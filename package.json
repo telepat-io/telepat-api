@@ -1,6 +1,6 @@
 {
   "name": "telepat-api",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "scripts": {
     "start": "./bin/startup.sh",
 	"stop": "./bin/stop.sh",
@@ -23,7 +23,7 @@
     "microtime-nodejs": "1.0.0",
     "object-sizeof": "1.0.9",
     "redis": "2.4.2",
-	"telepat-models": "0.4.2",
+	"telepat-models": "0.4.3",
     "twitter": "1.2.5",
     "uuid": "2.0.1"
   },
