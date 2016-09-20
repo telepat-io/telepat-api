@@ -5,7 +5,8 @@
     "start": "./bin/startup.sh",
 	"stop": "./bin/stop.sh",
 	"restart": "./bin/restart.sh",
-    "test": "istanbul cover _mocha -- test/api.js -R spec"
+    "test": "istanbul cover _mocha -- test/api.js -R spec",
+	"doc": "./bin/documentation.sh"
   },
   "dependencies": {
     "async": "1.5.2",
