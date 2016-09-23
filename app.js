@@ -4,11 +4,10 @@ var http = require('http');
 var https = require('https');
 var urlParser = require('url');
 var mandrill = require('mandrill-api');
+var async = require('async');
+var Models = require('telepat-models');
+var redis = require('redis');
 colors = require('colors');
-
-async = require('async');
-Models = require('telepat-models');
-redis = require('redis');
 
 var security = require('./controllers/security');
 var adminRoute = require('./controllers/admin');
@@ -28,106 +27,9 @@ app.use('/documentation', express.static(__dirname+'/documentation'));
 
 process.title = 'telepat-api';
 
-var envVariables = {
-	TP_MSG_QUE: process.env.TP_MSG_QUE,
-	TP_REDIS_HOST: process.env.TP_REDIS_HOST,
-	TP_REDIS_PORT: process.env.TP_REDIS_PORT,
-	TP_REDISCACHE_HOST: process.env.TP_REDISCACHE_HOST || process.env.TP_REDIS_HOST ,
-	TP_REDISCACHE_PORT: process.env.TP_REDISCACHE_PORT || process.env.TP_REDIS_PORT,
-	TP_MAIN_DB: process.env.TP_MAIN_DB,
-	TP_PW_SALT: process.env.TP_PW_SALT
-};
-
-var validEnvVariables = true;
-
-var mainConfiguration = {
-	main_database: envVariables.TP_MAIN_DB,
-	message_queue: envVariables.TP_MSG_QUE,
-	logger: {
-		type: process.env.TP_LOGGER,
-		settings: {
-			level: process.env.TP_LOG_LEVEL
-		}
-	},
-	redis: {
-		host: envVariables.TP_REDIS_HOST,
-		port: envVariables.TP_REDIS_PORT
-	},
-	redisCache: {
-		host: envVariables.TP_REDISCACHE_HOST,
-		port: envVariables.TP_REDISCACHE_PORT
-	},
-	password_salt: envVariables.TP_PW_SALT,
-	login_providers: {
-		facebook: {
-			client_id: process.env.TP_FB_CLIENT_ID,
-			client_secret: process.env.TP_FB_CLIENT_SECRET
-		},
-		twitter: {
-			consumer_key: process.env.TP_TW_CLIENT_KEY,
-			consumer_secret: process.env.TP_TW_CLIENT_SECRET
-		}
-	}
-};
-
-for(var varName in envVariables) {
-	if (envVariables[varName] === undefined) {
-		console.log('Missing'.yellow+' environment variable "'+varName+'". Trying configuration file.');
-		try {
-			mainConfiguration = require('./config.json');
-		} catch (e) {
-			if (e.code === 'MODULE_NOT_FOUND') {
-				console.log('Fatal error:'.red+' configuration file is missing or not accessible. ' +
-					'Please add a configuration file from the example.');
-				process.exit(1);
-			} else
-				throw e;
-		}
-
-		validEnvVariables = false;
-		break;
-	}
-}
-
-var messagingClient = mainConfiguration.message_queue;
-var mainDatabase = mainConfiguration.main_database;
-
-if (!Models[mainDatabase]) {
-	Models.Application.logger.emergency('Unable to load "'+mainDatabase+'" main database: not found. Aborting...');
-	process.exit(2);
-}
-
-if (validEnvVariables) {
-	//is null just so the adapter constructor will try to check envVariables
-	mainConfiguration[mainDatabase] = null;
-}
-
-app.telepatConfig = mainConfiguration;
-
-if (mainConfiguration.logger) {
-	mainConfiguration.logger.name = 'telepat-api:'+(process.env.PORT || 3000);
-	Models.Application.logger = new Models.TelepatLogger(mainConfiguration.logger);
-} else {
-	Models.Application.logger = new Models.TelepatLogger({
-		type: 'Console',
-		name: 'telepat-api:'+(process.env.PORT || 3000),
-		settings: {level: 'info'}
-	});
-}
-
 app.getFailedRequestMessage = function(req, res, err) {
 	return req.method +' '+ req.baseUrl+req.url +' '+res.statusCode+' ('+err.toString()+')';
 };
-
-Models.Application.datasource = new Models.Datasource();
-Models.Application.datasource.setMainDatabase(new Models[mainDatabase](mainConfiguration[mainDatabase]));
-
-if(mainConfiguration.password_salt === undefined || mainConfiguration.password_salt === ""
-	|| mainConfiguration.password_salt === null) {
-	Models.Application.logger.emergency('Please add salt configuration via TP_PW_SALT or config.json');
-	process.exit(3);
-}
-//app.set('password_salt', mainConfiguration.password_salt);
 
 app.use(function(req, res, next) {
 	if (dbConnected) {
@@ -387,12 +289,49 @@ var OnServicesConnect = function() {
 		loadApplications,
 		linkMiddlewaresAndRoutes,
 		linkErrorHandlingMiddlewares
-	], function() {
+	], function(err) {
+		if (err) {
+			console.log(err);
+
+			return process.exit(1);
+		}
 		dbConnected = true;
 	});
 };
 
 async.waterfall([
+	function(callback) {
+		app.telepatConfig = new Models.ConfigurationManager('./config.spec.json', './config.json');
+		app.telepatConfig.load(function(err) {
+			if (err) return callback(err);
+
+			var testResult = app.telepatConfig.test();
+			callback(testResult !== true ? testResult : undefined);
+		});
+	},
+	function(callback) {
+		if (app.telepatConfig.config.logger) {
+			app.telepatConfig.config.logger.name = 'telepat-api:'+(process.env.PORT || 3000);
+			Models.Application.logger = new Models.TelepatLogger(app.telepatConfig.config.logger);
+		} else {
+			Models.Application.logger = new Models.TelepatLogger({
+				type: 'Console',
+				name: 'telepat-api:'+(process.env.PORT || 3000),
+				settings: {level: 'info'}
+			});
+		}
+		var mainDatabase = app.telepatConfig.config.main_database;
+
+		if (!Models[mainDatabase]) {
+			Models.Application.logger.emergency('Unable to load "' + mainDatabase + '" main database: not found. Aborting...');
+			process.exit(2);
+		}
+
+		Models.Application.datasource = new Models.Datasource();
+		Models.Application.datasource.setMainDatabase(new Models[mainDatabase](app.telepatConfig.config[mainDatabase]));
+
+		callback();
+	},
 	function(callback) {
 		Models.Application.datasource.dataStorage.onReady(function() {
 			callback();
@@ -402,10 +341,12 @@ async.waterfall([
 		if (Models.Application.redisClient)
 			Models.Application.redisClient = null;
 
-		Models.Application.redisClient = redis.createClient(mainConfiguration.redis.port, mainConfiguration.redis.host);
+		var redisConf = app.telepatConfig.config.redis;
+
+		Models.Application.redisClient = redis.createClient(redisConf.port, redisConf.host);
 		Models.Application.redisClient.on('error', function(err) {
-			Models.Application.logger.error('Failed connecting to Redis "'+mainConfiguration.redis.host+'": '+
-				err.message+'. Retrying...');
+			Models.Application.logger.error('Failed connecting to Redis "' + redisConf.host + '": ' +
+				err.message + '. Retrying...');
 		});
 		Models.Application.redisClient.on('ready', function() {
 			Models.Application.logger.info('Client connected to Redis.');
@@ -416,10 +357,12 @@ async.waterfall([
 		if (Models.Application.redisCacheClient)
 			Models.Application.redisCacheClient = null;
 
-		Models.Application.redisCacheClient = redis.createClient(mainConfiguration.redisCache.port, mainConfiguration.redisCache.host);
+		var redisCacheConf = app.telepatConfig.config.redisCache;
+
+		Models.Application.redisCacheClient = redis.createClient(redisCacheConf.port, redisCacheConf.host);
 		Models.Application.redisCacheClient.on('error', function(err) {
-			Models.Application.logger.error('Failed connecting to Redis Cache "'+mainConfiguration.redisCache.host+'": '+
-				err.message+'. Retrying...');
+			Models.Application.logger.error('Failed connecting to Redis Cache "' + redisCacheConf.host + '": ' +
+				err.message + '. Retrying...');
 		});
 		Models.Application.redisCacheClient.on('ready', function() {
 			Models.Application.logger.info('Client connected to Redis Cache.');
@@ -427,7 +370,8 @@ async.waterfall([
 		});
 	},
 	function(callback) {
-		var clientConfiguration = mainConfiguration[messagingClient];
+		var messagingClient = app.telepatConfig.config.message_queue;
+		var clientConfiguration = app.telepatConfig.config[messagingClient];
 
 		if (!Models[messagingClient]) {
 			Models.Application.logger.error('Unable to load "'+messagingClient+'" messaging queue: not found. ' +
