@@ -175,19 +175,15 @@ router.post('/update', function(req, res, next) {
 
 	async.series([
 		function(callback) {
-			var i = 0;
-			async.each(patches, function(patch, c) {
+			async.forEachOf(patches, function(patch, i, c) {
 				if (patches[i].path.split('/')[2] == 'password') {
 					security.encryptPassword(patches[i].value, function(err, hash) {
 						if (err) return c(err);
 						patches[i].value = hash;
-						i++;
 						c();
 					});
-				} else {
-					i++;
+				} else
 					c();
-				}
 			}, callback);
 		},
 		function(callback) {
@@ -201,19 +197,17 @@ router.post('/update', function(req, res, next) {
 			});
 		},
 		function(callback) {
-			async.each(patches, function(patch, c) {
-				app.messagingClient.send([JSON.stringify({
-					op: 'update',
-					patch: patch,
-					applicationId: req._telepat.applicationId,
-					instant: true,
-					timestamp: timestamp
-				})], 'aggregation', function(err) {
-					if (err)
-						Models.Application.logger.warning('Could not send message to aggregation workers: '+err.message);
-				});
-				c();
-			}, callback);
+			app.messagingClient.send([JSON.stringify({
+				op: 'update',
+				patches: patches,
+				application_id: req._telepat.applicationId,
+				instant: true,
+				timestamp: timestamp
+			})], 'aggregation', function(err) {
+				if (err)
+					Models.Application.logger.warning('Could not send message to aggregation workers: '+err.message);
+			});
+			callback();
 		}
 	], function(err) {
 		if (err) return next(err);
@@ -231,7 +225,7 @@ router.use('/delete',
  * @apiDescription Deletes an user from an application
  * @apiName AdminDeleteUser
  * @apiGroup Admin
- * @apiVersion 0.4.0
+ * @apiVersion 0.4.3
  *
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} Authorization
@@ -243,46 +237,44 @@ router.use('/delete',
  *
  * @apiExample {json} Client Request
  * 	{
- * 		"username": "user@example.com"
+ * 		"id": "98404bf3-f810-43a6-b6c2-ee18ac2061fe"
  * 	}
  *
  * 	@apiSuccessExample {json} Success Response
  * 	{
- * 		"status": 200,
+ * 		"status": 202,
  * 		"content" : "User deleted"
  * 	}
  *
- * @apiError 404 [023]UserNotFound If the user doesn't exist.
  */
 router.delete('/delete', function(req, res, next) {
-	if (!req.body.username) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['username']));
+	if (!req.body.id) {
+		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['id']));
 	}
 
 	var appId = req._telepat.applicationId;
-	var username = req.body.username;
+	var id = req.body.id;
 	var user = null;
+	var timestamp = microtime.now();
 
 	async.series([
 		function(callback) {
-			Models.User({username: username}, appId, function(err, result) {
-				if (err) return callback(err);
-				user = result;
-				callback();
+			app.messagingClient.send([JSON.stringify({
+				op: 'delete',
+				object: {id: id, model: 'user'},
+				application_id: appId,
+				timestamp: timestamp
+			})], 'aggregation', function(err) {
+				if (err)
+					Models.Application.logger.warning('Could not send message to aggregation workers: '+err.message);
 			});
-		},
-		function(callback) {
-			Models.User.delete(user.id, appId, function(err) {
-				if (err) return callback(err);
-				callback();
-			});
+			callback();
 		}
 	], function(error) {
-		if (error && error.status == 404)
-			return next(new Models.TelepatError(Models.TelepatError.errors.UserNotFound));
-		else if (error) return next(error);
+		if (error)
+			return next(error);
 		else
-			res.status(200).json({status: 200, content: 'User deleted'});
+			res.status(202).json({status: 202, content: 'User deleted'});
 	});
 });
 

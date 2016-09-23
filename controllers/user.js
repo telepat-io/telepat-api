@@ -144,7 +144,7 @@ router.post(['/login-password', '/login_password'], function(req, res, next) {
 
 		delete userProfile.password;
 
-		var token = jwt.sign({username: username, id: userProfile.id}, security.authSecret, { expiresInMinutes: 60 });
+		var token = security.createToken({username: username, id: userProfile.id});
 		res.status(200).json({status: 200, content: {user: userProfile, token: token }});
 	});
 });
@@ -337,8 +337,7 @@ router.post('/login-:s', function(req, res, next) {
 		if (err)
 			return next(err);
 		else {
-			var token = jwt.sign({username: username, id: userProfile.id}, security.authSecret,
-				{ expiresInMinutes: 60 });
+			var token = security.createToken({username: username, id: userProfile.id});
 			delete userProfile.password;
 			res.json({status: 200, content: {token: token, user: userProfile}});
 		}
@@ -805,7 +804,7 @@ router.get('/refresh_token', function(req, res, next) {
 			return next(new Models.TelepatError(Models.TelepatError.errors.MalformedAuthorizationToken));
 		}
 
-		var newToken = jwt.sign(decoded, security.authSecret, {expiresInMinutes: 60});
+		var newToken = security.createToken(decoded);
 
 		return res.status(200).json({status: 200, content: {token: newToken}});
 	} else {
@@ -882,52 +881,22 @@ router.post('/update', function(req, res, next) {
 				return c(new Models.TelepatError(Models.TelepatError.errors.InvalidPatch,
 					['Invalid ID in one of the patches']));
 			}
-
-			app.messagingClient.send([JSON.stringify({
-				op: 'update',
-				patch: patch,
-				applicationId: req._telepat.applicationId,
-				timestamp: modifiedMicrotime
-			})], 'aggregation', c);
+			c();
 		}, function(err) {
 			if (err) return next(err);
 
-			res.status(202).json({status: 202, content: "User updated"});
-		});
-	});
-});
+			app.messagingClient.send([JSON.stringify({
+				op: 'update',
+				patches: patches,
+				application_id: req._telepat.applicationId,
+				timestamp: modifiedMicrotime
+			})], 'aggregation', function(err) {
+				if (err)
+					return next(err);
 
-router.post('/update_immediate', function(req, res, next) {
-	var user = req.body;
-
-	req.user.type = 'user';
-
-	async.waterfall([
-		function(callback) {
-			if (user.password)
-				security.encryptPassword(user.password, callback);
-			else
-				callback(null, false);
-		},
-		function(hash, callback) {
-			if (hash)
-				user.password = hash;
-
-			var patches = [];
-
-			async.each(Object.keys(user), function(prop, c) {
-				var property = {};
-				property[prop] = user[prop];
-				patches.push(Models.Delta.formPatch(req.user, 'replace', property));
-				c();
-			}, function() {
-				Models.User.update(patches, callback);
+				res.status(202).json({status: 202, content: "User updated"});
 			});
-		}
-	], function(err) {
-		if (err) return next(err);
-
-		res.status(200).json({status: 200, content: "User updated"});
+		});
 	});
 });
 

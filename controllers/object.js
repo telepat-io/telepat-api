@@ -154,8 +154,8 @@ router.post('/subscribe', function(req, res, next) {
 		var appSchema = Models.Application.loadedAppModels[appId].schema;
 
 		if (appSchema[mdl]['read_acl'] & 8) {
-			if ((appSchema[mdl]['write_acl'] & 8) && !req.user.id) {
-				return next(Models.TelepatError(Models.TelepatError.errors.OperationNotAllowed));
+			if ((appSchema[mdl]['write_acl'] & 8) && !req.user) {
+				return next(new Models.TelepatError(Models.TelepatError.errors.OperationNotAllowed));
 			}
 
 			addAuthorFilters(channelObject, appSchema, mdl, req.user.id);
@@ -506,8 +506,8 @@ router.post('/update', function(req, res, next) {
 			if (patch[p].path.split('/')[2] == 'user_id') {
 				return next(Models.TelepatError(Models.TelepatError.errors.InvalidPatch, ['"user_id" cannot be modified"']));
 			}
-			if ((appSchema[objectMdl]['write_acl'] & 8) && !req.user.id) {
-				return next(Models.TelepatError(Models.TelepatError.errors.OperationNotAllowed));
+			if ((appSchema[objectMdl]['write_acl'] & 8) && !req.user) {
+				return next(new Models.TelepatError(Models.TelepatError.errors.OperationNotAllowed));
 			} else if (appSchema[objectMdl]['write_acl'] & 8) {
 				patch[p].user_id = req.user.id;
 			}
@@ -586,8 +586,8 @@ router.delete('/delete', function(req, res, next) {
 	};
 
 	if (!(req.user && req.user.isAdmin)) {
-		if ((appSchema[mdl]['write_acl'] & 8) && !req.user.id) {
-			return next(Models.TelepatError(Models.TelepatError.errors.OperationNotAllowed));
+		if ((appSchema[mdl]['write_acl'] & 8) && !req.user) {
+			return next(new Models.TelepatError(Models.TelepatError.errors.OperationNotAllowed));
 		} else if (appSchema[mdl]['write_acl'] & 8) {
 			obj.user_id = req.user.id;
 		}
