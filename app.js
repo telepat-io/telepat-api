@@ -150,9 +150,8 @@ app.use(function ServerNotAvailable(req, res, next) {
 	}
 });
 
-app.use(function RequestLogging(err, req, res, next) {
+app.use(function RequestLogging(req, res, next) {
 	var send = res.send;
-
 	res.send = function (string) {
 		var body = string instanceof Buffer ? string.toString() : string;
 		send.call(this, body);
@@ -181,7 +180,7 @@ app.use(function RequestLogging(err, req, res, next) {
 			Models.Application.logger.info(requestLogMessage);
 		});
 	};
-	next(err);
+	next();
 });
 
 function NotFoundMiddleware(req, res, next) {

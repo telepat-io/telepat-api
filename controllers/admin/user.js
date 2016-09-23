@@ -175,19 +175,15 @@ router.post('/update', function(req, res, next) {
 
 	async.series([
 		function(callback) {
-			var i = 0;
-			async.each(patches, function(patch, c) {
+			async.forEachOf(patches, function(patch, i, c) {
 				if (patches[i].path.split('/')[2] == 'password') {
 					security.encryptPassword(patches[i].value, function(err, hash) {
 						if (err) return c(err);
 						patches[i].value = hash;
-						i++;
 						c();
 					});
-				} else {
-					i++;
+				} else
 					c();
-				}
 			}, callback);
 		},
 		function(callback) {
