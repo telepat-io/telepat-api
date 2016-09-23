@@ -7,13 +7,14 @@ var bcrypt = require('bcrypt');
 ACL_UNAUTHENTICATED = 1;
 ACL_AUTHENTICATED = 2;
 ACL_ADMIN = 4;
+ACL_AUTHOR = 8;
 
 var security = {};
 
 security.authSecret = '835hoyubg#@$#2wfsda';
 
 security.createToken = function (data) {
-	return jwt.sign(data, this.authSecret, { expiresInMinutes: 60 });
+	return jwt.sign(data, this.authSecret, { expiresIn: 3600 });
 };
 
 security.encryptPassword = function(password, callback) {
@@ -150,7 +151,9 @@ security.objectACL = function (accessControl) {
 		if (!req.headers.authorization && !(acl & ACL_UNAUTHENTICATED))
 			return next(new Models.TelepatError(Models.TelepatError.errors.AuthorizationMissing));
 		else if (req.body.model || (req.body.channel && req.body.channel.model)) {
-			if (!req.headers.authorization && acl & ACL_UNAUTHENTICATED) {
+			if (!req.headers && (acl & ACL_AUTHOR)) {
+				return next(Models.TelepatError(Models.TelepatError.errors.OperationNotAllowed));
+			} else if (!req.headers.authorization && acl & ACL_UNAUTHENTICATED) {
 				next();
 			} else 	if (acl & ACL_AUTHENTICATED || acl & ACL_ADMIN) {
 				var authHeaderParts = req.headers.authorization.split(' ');

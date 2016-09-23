@@ -355,8 +355,6 @@ router.post('/update', function (req, res, next) {
 						timestamp: modifiedMicrotime
 					}, ['blg:'+appId+':context:'+req.body.id]);
 
-					console.log(appId);
-
 					patchesToSend.push(delta);
 					c();
 				}, function() {

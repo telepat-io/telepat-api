@@ -31,18 +31,82 @@ app.getFailedRequestMessage = function(req, res, err) {
 	return req.method +' '+ req.baseUrl+req.url +' '+res.statusCode+' ('+err.toString()+')';
 };
 
-app.use(function(req, res, next) {
-	if (dbConnected) {
-		req._startAt = process.hrtime();
-		res.on('finish', function() {
-			res._startAt = process.hrtime();
-		});
+//used for timing request time
+app.use(function TimeKeeping(req, res, next) {
+	req._startAt = process.hrtime();
+	res.on('finish', function() {
+		res._startAt = process.hrtime();
+	});
 
-		return next();
-	}
-	res.type('application/json');
-	next(new Models.TelepatError(Models.TelepatError.errors.ServerNotAvailable));
+	next();
 });
+
+app.use(bodyParser.json());
+app.use(security.corsValidation);
+app.use(security.contentTypeValidation);
+
+app.use(function ServerNotAvailable(req, res, next) {
+	if (!dbConnected) {
+		next(new Models.TelepatError(Models.TelepatError.errors.ServerNotAvailable));
+	} else {
+		next();
+	}
+});
+
+app.use(function RequestLogging(req, res, next) {
+	var send = res.send;
+	res.send = function (string) {
+		var body = string instanceof Buffer ? string.toString() : string;
+		send.call(this, body);
+		res.on('finish', function() {
+			var requestLogMessage = req.method +' '+ req.baseUrl+req.url +' '+res.statusCode;
+
+			if (res._header && req._startAt && res._startAt) {
+				var ms = (res._startAt[0] - req._startAt[0]) * 1e3
+					+ (res._startAt[1] - req._startAt[1]) * 1e-6;
+
+				requestLogMessage += ' ' + ms.toFixed(3) + ' ms';
+			}
+
+			try {
+				var copyBody = JSON.parse(body);
+
+				if (res.statusCode >= 400)	{
+					requestLogMessage += ' (['+copyBody.code+']: '+copyBody.message+')';
+					if (res.statusCode >= 500 && res._telepatError)
+						requestLogMessage += "\n"+res._telepatError.stack;
+				}
+			} catch (e) {}
+
+			requestLogMessage += ' ('+req.ip+')';
+
+			Models.Application.logger.info(requestLogMessage);
+		});
+	};
+	next();
+});
+
+function NotFoundMiddleware(req, res, next) {
+	next(new Models.TelepatError(Models.TelepatError.errors.NoRouteAvailable));
+}
+
+function FinalRouteMiddleware(err, req, res, next) {
+	var responseBody = {};
+
+	if (!(err instanceof Models.TelepatError)) {
+		err = new Models.TelepatError(Models.TelepatError.errors.ServerFailure, [err.message]);
+	}
+
+	res.status(err.status);
+	responseBody.code = err.code;
+	responseBody.message = err.message;
+	responseBody.status = err.status;
+	res._telepatError = err;
+	res.json(responseBody);
+}
+
+app.use(NotFoundMiddleware);
+app.use(FinalRouteMiddleware);
 
 var loadApplications = function(callback) {
 	Models.Application.loadAllApplications(null, null, function(err) {
@@ -56,43 +120,6 @@ var loadApplications = function(callback) {
 };
 
 var linkMiddlewaresAndRoutes = function(callback) {
-	app.use(bodyParser.json());
-	app.use(function(req, res, next) {
-		var send = res.send;
-
-		res.send = function (string) {
-			var body = string instanceof Buffer ? string.toString() : string;
-			send.call(this, body);
-			res.on('finish', function() {
-				var requestLogMessage = req.method +' '+ req.baseUrl+req.url +' '+res.statusCode;
-
-				if (res._header && req._startAt && res._startAt) {
-					var ms = (res._startAt[0] - req._startAt[0]) * 1e3
-						+ (res._startAt[1] - req._startAt[1]) * 1e-6;
-
-					requestLogMessage += ' ' + ms.toFixed(3) + ' ms';
-				}
-
-				try {
-					var copyBody = JSON.parse(body);
-
-					if (res.statusCode >= 400)	{
-						requestLogMessage += ' (['+copyBody.code+']: '+copyBody.message+')';
-						if (res.statusCode >= 500 && res._telepatError)
-							requestLogMessage += "\n"+res._telepatError.stack;
-					}
-				} catch (e) {}
-
-				requestLogMessage += ' ('+req.ip+')';
-
-				Models.Application.logger.info(requestLogMessage);
-			});
-		};
-		next();
-	});
-	app.use(security.corsValidation);
-	app.use(security.contentTypeValidation);
-
 	app.use('/proxy', security.applicationIdValidation);
 	app.use('/proxy', security.apiKeyValidation);
 
@@ -260,41 +287,23 @@ var linkMiddlewaresAndRoutes = function(callback) {
 	callback();
 };
 
-var linkErrorHandlingMiddlewares = function(callback) {
-	// error handlers
-	// catch 404 and forward to error handler
-	app.use(function(req, res, next) {
-		next(new Models.TelepatError(Models.TelepatError.errors.NoRouteAvailable));
-	});
-
-	app.use(function(err, req, res, next) {
-		var responseBody = {};
-
-		if (!(err instanceof Models.TelepatError)) {
-			err = new Models.TelepatError(Models.TelepatError.errors.ServerFailure, [err.message]);
-		}
-
-		res.status(err.status);
-		responseBody.code = err.code;
-		responseBody.message = err.message;
-		responseBody.status = err.status;
-		res._telepatError = err;
-		res.json(responseBody);
-	});
-	callback();
-};
-
 var OnServicesConnect = function() {
+	//NotFoundMiddleware & FinalRouteMiddleware must always be the last ones so we need to remove & add them AFTER
+	//mounting the other routes
+	app._router.stack.splice(-2);
+
 	async.series([
 		loadApplications,
-		linkMiddlewaresAndRoutes,
-		linkErrorHandlingMiddlewares
+		linkMiddlewaresAndRoutes
 	], function(err) {
 		if (err) {
 			console.log(err);
 
 			return process.exit(1);
 		}
+
+		app.use(NotFoundMiddleware);
+		app.use(FinalRouteMiddleware);
 		dbConnected = true;
 	});
 };
@@ -342,8 +351,20 @@ async.waterfall([
 			Models.Application.redisClient = null;
 
 		var redisConf = app.telepatConfig.config.redis;
+		var retry_strategy = function(options) {
+			if (options.error && (options.error.code === 'ETIMEDOUT' || options.error.code === 'ECONNREFUSED'))
+				return 1000;
 
-		Models.Application.redisClient = redis.createClient(redisConf.port, redisConf.host);
+			Models.Application.logger.error('Redis server connection lost "'+redisConf.host+'". Retrying...');
+			// reconnect after
+			return 3000;
+		};
+
+		Models.Application.redisClient = redis.createClient({
+			port: redisConf.port,
+			host: redisConf.host,
+			retry_strategy: retry_strategy
+		});
 		Models.Application.redisClient.on('error', function(err) {
 			Models.Application.logger.error('Failed connecting to Redis "' + redisConf.host + '": ' +
 				err.message + '. Retrying...');
@@ -358,8 +379,21 @@ async.waterfall([
 			Models.Application.redisCacheClient = null;
 
 		var redisCacheConf = app.telepatConfig.config.redisCache;
+		var retry_strategy = function(options) {
+			if (options.error && (options.error.code === 'ETIMEDOUT' || options.error.code === 'ECONNREFUSED'))
+				return 1000;
 
-		Models.Application.redisCacheClient = redis.createClient(redisCacheConf.port, redisCacheConf.host);
+			Models.Application.logger.error('Redis cache server connection lost "'+redisCacheConf.host+'". Retrying...');
+
+			// reconnect after
+			return 3000;
+		};
+
+		Models.Application.redisCacheClient = redis.createClient({
+			port: redisCacheConf.port,
+			host: redisCacheConf.host,
+			retry_strategy: retry_strategy
+		});
 		Models.Application.redisCacheClient.on('error', function(err) {
 			Models.Application.logger.error('Failed connecting to Redis Cache "' + redisCacheConf.host + '": ' +
 				err.message + '. Retrying...');
@@ -383,8 +417,20 @@ async.waterfall([
 		/**
 		 * @type {MessagingClient}
 		 */
-		app.messagingClient = new Models[messagingClient](clientConfiguration, 'telepat-api');
-		app.messagingClient.onReady(callback);
+		app.messagingClient = new Models[messagingClient](clientConfiguration, 'telepat-api', 'api');
+		app.messagingClient.onReady(function() {
+
+			app.messagingClient.onMessage(function(message) {
+				var parsedMessage = JSON.parse(message);
+				Models.SystemMessageProcessor.identity = 'api';
+				if (parsedMessage._systemMessage) {
+					Models.Application.logger.debug('Got system message: "'+message+'"');
+					Models.SystemMessageProcessor.process(parsedMessage);
+				}
+			});
+			callback();
+		});
+
 	}
 ], OnServicesConnect);
 

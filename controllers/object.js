@@ -3,6 +3,7 @@ var router = express.Router();
 var Models = require('telepat-models');
 var security = require('./security');
 var microtime = require('microtime-nodejs');
+var clone = require('clone');
 
 router.use(security.applicationIdValidation);
 router.use(security.apiKeyValidation);
@@ -147,6 +148,20 @@ router.post('/subscribe', function(req, res, next) {
 			channelObject.setFilter(filters);
 	}
 
+
+	//only valid for application objects
+	if (Models.Channel.builtInModels.indexOf(mdl) === -1 && !(req.user && req.user.isAdmin)) {
+		var appSchema = Models.Application.loadedAppModels[appId].schema;
+
+		if (appSchema[mdl]['read_acl'] & 8) {
+			if ((appSchema[mdl]['write_acl'] & 8) && !req.user) {
+				return next(new Models.TelepatError(Models.TelepatError.errors.OperationNotAllowed));
+			}
+
+			addAuthorFilters(channelObject, appSchema, mdl, req.user.id);
+		}
+	}
+
 	if (!channelObject.isValid()) {
 		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidChannel, [channelObject.errorMessage]));
 	}
@@ -189,6 +204,12 @@ router.post('/subscribe', function(req, res, next) {
 						if (mdl == 'user') {
 							results = results.map(function(userResult) {
 								delete userResult.password;
+
+								if (!(req.user && req.user.isAdmin)) {
+									delete userResult.email;
+									delete userResult.username;
+								}
+
 								return userResult;
 							});
 						}
@@ -199,22 +220,6 @@ router.post('/subscribe', function(req, res, next) {
 				});
 			}
 		}
-		/*,
-		function(results, callback) {
-			app.kafkaProducer.send([{
-				topic: 'track',
-				messages: [JSON.stringify({
-					op: 'sub',
-					object: {device_id: deviceId, user_id: userEmail, channel: channel, filters: filters},
-					applicationId: appId
-				})],
-				attributes: 0
-			}], function(err) {
-				if (err)
-					err.message = "Failed to send message to track worker.";
-				callback(err, results);
-			});
-		}*/
 	], function(err) {
 		if (err)
 			return next(err);
@@ -422,23 +427,7 @@ router.post('/create', function(req, res, next) {
 				}
 				aggCallback(err);
 			});
-		}/*,
-		function(track_callback) {
-			app.kafkaProducer.send([{
-				topic: 'track',
-				messages: [JSON.stringify({
-					op: 'add',
-					object: content,
-					applicationId: appId,
-					isAdmin: isAdmin
-				})],
-				attributes: 0
-			}], function(err) {
-				if (err)
-					err.message = "Failed to send message to track worker.";
-				track_callback(err);
-			});
-		}*/
+		}
 	], function(err, results) {
 		if (err) {
 			return next(err);
@@ -501,14 +490,33 @@ router.post('/update', function(req, res, next) {
 			['"patches" array is empty']));
 	}
 
+	var appSchema = Models.Application.loadedAppModels[appId].schema;
+
+	var obj = {
+		op: 'update',
+		patches: patch,
+		application_id: appId,
+		timestamp: modifiedMicrotime
+	};
+
+	if (!(req.user && req.user.isAdmin)) {
+		for(var p in patch) {
+			var objectMdl = patch[p].path.split('/')[0];
+
+			if (patch[p].path.split('/')[2] == 'user_id') {
+				return next(Models.TelepatError(Models.TelepatError.errors.InvalidPatch, ['"user_id" cannot be modified"']));
+			}
+			if ((appSchema[objectMdl]['write_acl'] & 8) && !req.user) {
+				return next(new Models.TelepatError(Models.TelepatError.errors.OperationNotAllowed));
+			} else if (appSchema[objectMdl]['write_acl'] & 8) {
+				patch[p].user_id = req.user.id;
+			}
+		}
+	}
+
 	async.series([
 		function(aggCallback) {
-			app.messagingClient.send([JSON.stringify({
-				op: 'update',
-				patches: patch,
-				application_id: appId,
-				timestamp: modifiedMicrotime
-			})], 'aggregation', function(err) {
+			app.messagingClient.send([JSON.stringify(obj)], 'aggregation', function(err) {
 				if (err){
 					err = new Models.TelepatError(Models.TelepatError.errors.ServerFailure, [err.message]);
 				}
@@ -565,29 +573,30 @@ router.delete('/delete', function(req, res, next) {
 	if (!id)
 		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['id']));
 
+	var appSchema = Models.Application.loadedAppModels[appId].schema;
+
+	var obj = {
+		op: 'delete',
+		object: {
+			model: mdl,
+			id: id
+		},
+		application_id: appId,
+		timestamp: modifiedMicrotime
+	};
+
+	if (!(req.user && req.user.isAdmin)) {
+		if ((appSchema[mdl]['write_acl'] & 8) && !req.user) {
+			return next(new Models.TelepatError(Models.TelepatError.errors.OperationNotAllowed));
+		} else if (appSchema[mdl]['write_acl'] & 8) {
+			obj.user_id = req.user.id;
+		}
+	}
+
 	async.series([
 		function(aggCallback) {
-			app.messagingClient.send([JSON.stringify({
-				op: 'delete',
-				object: {
-					model: mdl,
-					id: id
-				},
-				application_id: appId,
-				timestamp: modifiedMicrotime
-			})], 'aggregation', aggCallback);
-		}/*,
-		function(track_callback) {
-			app.kafkaProducer.send([{
-				topic: 'track',
-				messages: [JSON.stringify({
-					op: 'delete',
-					object: {op: 'remove', path: mdl+'/'+id},
-					applicationId: appId
-				})],
-				attributes: 0
-			}], track_callback);
-		}*/
+			app.messagingClient.send([JSON.stringify(obj)], 'aggregation', aggCallback);
+		}
 	], function(err) {
 		if (err) return next(err);
 
@@ -615,7 +624,9 @@ router.delete('/delete', function(req, res, next) {
  */
 router.post('/count', function(req, res, next) {
 	var appId = req._telepat.applicationId,
-		channel = req.body.channel;
+		channel = req.body.channel,
+		mdl = channel.model;
+
 	var aggregation = req.body.aggregation;
 
 	var channelObject = new Models.Channel(appId);
@@ -635,6 +646,16 @@ router.post('/count', function(req, res, next) {
 	if (req.body.filters)
 		channelObject.setFilter(req.body.filters);
 
+	var appSchema = Models.Application.loadedAppModels[appId].schema;
+
+	if (appSchema[mdl]['read_acl'] & 8) {
+		if (!req.user.id) {
+			return next(Models.TelepatError(Models.TelepatError.errors.OperationNotAllowed));
+		}
+
+		addAuthorFilters(channelObject, appSchema, mdl, req.user.id);
+	}
+
 	if (!channelObject.isValid()) {
 		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidChannel));
 	}
@@ -645,5 +666,33 @@ router.post('/count', function(req, res, next) {
 		res.status(200).json({status: 200, content: result});
 	});
 });
+
+function addAuthorFilters(channelObject, appSchema, mdl, userId) {
+	if (channelObject.filter) {
+		if (!channelObject.filter.and && !channelObject.filter.or) {
+			channelObject.filter.and = [];
+		}
+
+		var operator = Object.keys(channelObject.filter || {})[0] || null;
+
+		//we need to wrap this in an and in order for the author filter to work correctly
+		if (operator == 'or') {
+			var filterClone = clone(channelObject.filter);
+			channelObject.filter = {and: [filterClone]};
+		}
+	} else {
+		channelObject.filter = {and: []};
+	}
+
+	var idx = channelObject.filter.and.push({or: []}) - 1;
+
+	var authorFields = (appSchema[mdl].author_fields || []).concat(['user_id']);
+
+	authorFields.forEach(function(field) {
+		var isFilter = {is: {}};
+		isFilter.is[field] = userId;
+		channelObject.filter.and[idx].or.push(isFilter);
+	});
+}
 
 module.exports = router;
