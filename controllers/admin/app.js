@@ -6,6 +6,8 @@ var router = express.Router();
 var security = require('../security');
 var Models = require('telepat-models');
 
+var uuid = require('uuid');
+
 router.use('/add', security.tokenValidation);
 /**
  * @api {post} /admin/app/add AppCreate
@@ -49,6 +51,12 @@ router.post('/add', function (req, res, next) {
 
 	if (!newApp.name)
 		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['name']));
+	if(newApp.keys && newApp.keys.length != 0 && !Array.isArray(newApp.keys)) {
+		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidFieldValue,
+			['"keys" is not an array']));
+	} else if (!newApp.keys || newApp.keys.length == 0) {
+		newApp['keys'] = [uuid.v4()];
+	}
 
 	newApp['admins'] = [req.user.id];
 	Models.Application.create(newApp, function (err, res1) {
