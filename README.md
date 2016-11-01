@@ -35,4 +35,4 @@ To run just the tests using mocha (make sure you have installed globally `npm in
 **Notice**: the testing suite automatically starts the API server but **NOT** the telepat workers. You should start them
 before running the tests.
 
-API documentation can be found here: [http://docs.telepat.io/api.html](http://docs.telepat.io/api.html)
+API documentation can be found here: [http://docs.telepat.io/api-docs.html](http://docs.telepat.io/api-docs.html)
