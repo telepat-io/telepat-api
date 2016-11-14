@@ -541,12 +541,13 @@ router.post('/register-:s', function(req, res, next) {
 				delete userProfile.id;
 			}
 
-			if (requiresConfirmation &&
-				loginProvider == 'username' &&
-				Models.Application.loadedAppModels[appId].from_email) {
-
+			if (requiresConfirmation &&	loginProvider == 'username') {
 				if (!app.telepatConfig.mandrill || !app.telepatConfig.mandrill.api_key) {
 					Models.Application.logger.warning('Mandrill API key is missing, user email address will be ' +
+						'automatically confirmed');
+					userProfile.confirmed = true;
+				} else if (!Models.Application.loadedAppModels[appId].from_email) {
+					Models.Application.logger.warning('"from_email" config missing, user email address will be ' +
 						'automatically confirmed');
 					userProfile.confirmed = true;
 				} else {
@@ -556,6 +557,10 @@ router.post('/register-:s', function(req, res, next) {
 					userProfile.confirmationHash = crypto.createHash('md5').update(guid.v4()).digest('hex').toLowerCase();
 					var url = 'http://'+req.headers.host + '/user/confirm?username='+
 						encodeURIComponent(userProfile.username)+'&hash='+userProfile.confirmationHash+'&app_id='+appId;
+
+					if (req.body.callbackUrl)
+						url += '&callbackUrl='+encodeURIComponent(req.body.callbackUrl);
+
 					var message = {
 						html: 'In order to be able to use and log in to the "'+Models.Application.loadedAppModels[appId].name+
 						'" app click this link: <a href="'+url+'">Confirm</a>',
@@ -577,6 +582,8 @@ router.post('/register-:s', function(req, res, next) {
 			}
 
 			userProfile.application_id = req._telepat.applicationId;
+			delete userProfile.access_token;
+			delete userProfile.callbackUrl;
 
 			app.messagingClient.send([JSON.stringify({
 				op: 'create',
@@ -592,10 +599,38 @@ router.post('/register-:s', function(req, res, next) {
 	});
 });
 
+/**
+ * @api {get} /user/confirm ConfirmEmailAddress
+ * @apiDescription Confirms the email address for the user
+ * @apiName ConfirmEmailAddress
+ * @apiGroup User
+ * @apiVersion 0.4.3
+ *
+ * @apiHeader {String} Content-type application/json
+ *
+ * @apiParam {String} username The username
+ * @apiParam {String} hash The confirmation hash
+ * @apiParam {String} app_id The application ID
+ * @apiParam {String} callbackUrl The app deeplink url to redirect the user to
+ *
+ * 	@apiSuccessExample {json} Success Response
+ * 	{
+ * 		"content": {
+ *			"id": 31,
+ *			"type": "user",
+ * 			"username": "abcd@appscend.com",
+ * 			"devices": [
+ *				"466fa519-acb4-424b-8736-fc6f35d6b6cc"
+ *			]
+ * 		}
+ * 	}
+ *
+ */
 router.get('/confirm', function(req, res, next) {
 	var username = req.query.username;
 	var hash = req.query.hash;
 	var appId = req.query.app_id;
+	var callbackUrl = req.query.callbackUrl;
 	var user = null;
 
 	async.series([
@@ -621,7 +656,12 @@ router.get('/confirm', function(req, res, next) {
 		if (err)
 			return next(err);
 
-		res.status(200).json({status: 200, content: 'Account confirmed'});
+		if (callbackUrl) {
+			res.header('Location', callbackUrl);
+			res.status(303).send();
+		} else {
+			res.status(200).json({status: 200, content: 'Account confirmed'});
+		}
 	});
 });
 
@@ -945,9 +985,12 @@ router.delete('/delete', function(req, res, next) {
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
  *
+ * @apiParam {string} link An application deep link to redirect the user when clicking the link in the email sent
+ * @apiParam {string} username The username which password we want to reset
+ *
  * @apiExample {json} Client Request
  * 	{
- * 		"type": "app",
+ * 		"link": "app://callback-url",
  * 		"username": "email@example.com"
  * 	}
  *
@@ -959,26 +1002,14 @@ router.delete('/delete', function(req, res, next) {
  *
  */
 router.post('/request_password_reset', function(req, res, next) {
-	var type = req.body.type; // either 'browser' or 'app'
+	var link = req.body.callbackUrl; // either 'browser' or 'app'
 	var appId = req._telepat.applicationId;
 	var username = req.body.username;
-	var link = null;
 	var token = crypto.createHash('md5').update(guid.v4()).digest('hex').toLowerCase();
 	var user = null;
 
 	if (!app.telepatConfig.mandrill || !app.telepatConfig.mandrill.api_key) {
 		return next(new Models.TelepatError(Models.TelepatError.errors.ServerNotConfigured, ['Mandrill API key']));
-	}
-
-	if (type == 'browser') {
-		link = Models.Application.loadedAppModels[appId].password_reset.browser_link;
-	} else if (type == 'app') {
-		link = Models.Application.loadedAppModels[appId].password_reset.app_link;
-	}
-	else if (type == 'android') {
-		link = Models.Application.loadedAppModels[appId].password_reset.android_app_link;
-	} else {
-		return next(new Models.TelepatError(Models.TelepatError.errors.ClientBadRequest, ['invalid type']));
 	}
 
 	async.series([
@@ -992,7 +1023,7 @@ router.post('/request_password_reset', function(req, res, next) {
 
 				user = result;
 				callback();
-			})
+			});
 		},
 		function(callback) {
 			var mandrillClient = new mandrill.Mandrill(app.telepatConfig.mandrill.api_key);
@@ -1043,6 +1074,10 @@ router.post('/request_password_reset', function(req, res, next) {
  * @apiHeader {String} Content-type application/json
  * @apiHeader {String} X-BLGREQ-APPID Custom header which contains the application ID
  * @apiHeader {String} X-BLGREQ-SIGN Custom header containing the SHA256-ed API key of the application
+ *
+ * @apiParam {String} token The token received from the query params in the app deeplink callback url
+ * @apiParam {String} user_id The user_id received from the query params in the app deeplink callback url
+ * @apiParam {String} password The new password
  *
  * @apiExample {json} Client Request
  * 	{
