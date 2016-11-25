@@ -644,7 +644,6 @@ router.get('/confirm', function(req, res, next) {
 	var username = req.query.username;
 	var hash = req.query.hash;
 	var appId = req.query.app_id;
-	var callbackUrl = req.query.callbackUrl;
 	var user = null;
 
 	async.series([
