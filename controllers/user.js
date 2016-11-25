@@ -582,7 +582,7 @@ router.post('/register-:s', function(req, res, next) {
 						Models.Application.loadedAppModels[appId].email_templates.confirm_account) {
 
 						message.html = Models.Application.loadedAppModels[appId].email_templates.confirm_account.
-							replace('{CONFIRM_LINK}', url);
+							replace(/\{CONFIRM_LINK}/g, url);
 					} else {
 						message.html = 'In order to be able to use and log in to the "'+Models.Application.loadedAppModels[appId].name+
 							'" app click this link: <a href="'+url+'">Confirm</a>';
@@ -1070,7 +1070,7 @@ router.post('/request_password_reset', function(req, res, next) {
 			if (Models.Application.loadedAppModels[appId].email_templates &&
 				Models.Application.loadedAppModels[appId].email_templates.reset_password) {
 				message.html = Models.Application.loadedAppModels[appId].email_templates.reset_password.
-					replace('{CONFIRM_LINK}', redirectUrl);
+					replace(/\{CONFIRM_LINK}/g, redirectUrl);
 			} else {
 				message.html = 'Password reset request from the "'+Models.Application.loadedAppModels[appId].name+
 				'" app. Click this URL to reset password: <a href="'+redirectUrl+'">Reset</a>';
