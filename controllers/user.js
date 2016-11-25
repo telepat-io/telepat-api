@@ -563,7 +563,7 @@ router.post('/register-:s', function(req, res, next) {
 						encodeURIComponent(userProfile.username)+'&hash='+userProfile.confirmationHash+'&app_id='+appId;
 
 					if (req.body.callbackUrl)
-						url += '&callbackUrl='+encodeURIComponent(req.body.callbackUrl);
+						url += '&redirect_url='+encodeURIComponent(req.body.callbackUrl);
 
 					var message = {
 						subject: 'Account confirmation for "'+Models.Application.loadedAppModels[appId].name+'"',
@@ -645,6 +645,7 @@ router.get('/confirm', function(req, res, next) {
 	var hash = req.query.hash;
 	var appId = req.query.app_id;
 	var user = null;
+	var redirectUrl = req.query.redirect_url;
 
 	async.series([
 		function(callback) {
@@ -669,7 +670,10 @@ router.get('/confirm', function(req, res, next) {
 		if (err)
 			return next(err);
 
-		if (Models.Application.loadedAppModels[appId].email_templates &&
+		if (redirectUrl && app.telepatConfig.redirect_url) {
+			res.redirect(app.telepatConfig.redirect_url+'?url='+encodeURIComponent(redirectUrl));
+			res.end();
+		} else if (Models.Application.loadedAppModels[appId].email_templates &&
 			Models.Application.loadedAppModels[appId].email_templates.after_confirm) {
 			res.status(200);
 			res.set('Content-Type', 'text/html');
