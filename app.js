@@ -280,22 +280,6 @@ var linkMiddlewaresAndRoutes = function(callback) {
 		};
 		var request = null;
 
-		var responseCallback = function(response) {
-			//response.setEncoding('utf8');
-			var data = new Buffer('');
-
-			response.on('data', function(payload) {
-				if (payload instanceof Buffer)
-					data = Buffer.concat([data, payload]);
-			});
-
-			response.on('end', function() {
-				res.status(response.statusCode);
-				res.set(response.headers);
-				res.send(data);
-			});
-		};
-
 		if (queryString)
 			requestObject.path += queryString;
 
