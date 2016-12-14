@@ -3,6 +3,7 @@ var router = express.Router();
 var Models = require('telepat-models');
 var uuid = require('uuid');
 var security = require('./security');
+var async = require('async');
 
 router.use(security.applicationIdValidation);
 router.use(security.apiKeyValidation);

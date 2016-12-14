@@ -3,6 +3,7 @@ var crypto = require('crypto');
 var Models = require('telepat-models');
 var expressJwt = require('express-jwt');
 var bcrypt = require('bcrypt');
+var async = require('async');
 
 ACL_UNAUTHENTICATED = 1;
 ACL_AUTHENTICATED = 2;

@@ -5,6 +5,7 @@ var router = express.Router();
 
 var security = require('../security');
 var Models = require('telepat-models');
+var async = require('async');
 
 var uuid = require('uuid');
 
