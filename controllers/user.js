@@ -212,17 +212,17 @@ router.post('/login-:s', function(req, res, next) {
 	if (loginProvider == 'facebook') {
 		if (!req.body.access_token)
 			return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['access_token']));
-		if (!app.telepatConfig.login_providers || !app.telepatConfig.login_providers.facebook)
+		if (!app.telepatConfig.config.login_providers || !app.telepatConfig.config.login_providers.facebook)
 			return next(new Models.TelepatError(Models.TelepatError.errors.ServerNotConfigured,
 				['facebook login provider']));
 		else
-			FB.options(app.telepatConfig.login_providers.facebook);
+			FB.options(app.telepatConfig.config.login_providers.facebook);
 	} else if (loginProvider == 'twitter') {
 		if (!req.body.oauth_token)
 			return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['oauth_token']));
 		if (!req.body.oauth_token_secret)
 			return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['oauth_token_secret']));
-		if (!app.telepatConfig.login_providers || !app.telepatConfig.login_providers.twitter)
+		if (!app.telepatConfig.config.login_providers || !app.telepatConfig.config.login_providers.twitter)
 			return next(new Models.TelepatError(Models.TelepatError.errors.ServerNotConfigured,
 				['twitter login provider']));
 	} else {
@@ -259,8 +259,8 @@ router.post('/login-:s', function(req, res, next) {
 					access_token_secret: req.body.oauth_token_secret
 				};
 
-				options.consumer_key = app.telepatConfig.login_providers.twitter.consumer_key;
-				options.consumer_secret = app.telepatConfig.login_providers.twitter.consumer_secret;
+				options.consumer_key = app.telepatConfig.config.login_providers.twitter.consumer_key;
+				options.consumer_secret = app.telepatConfig.config.login_providers.twitter.consumer_secret;
 
 				var twitterClient = new Twitter(options);
 
@@ -391,7 +391,7 @@ router.post('/register-:s', function(req, res, next) {
 	if (loginProvider == 'facebook') {
 		if (!req.body.access_token)
 			return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['access_token']));
-		if (!app.telepatConfig.login_providers || !app.telepatConfig.login_providers.facebook)
+		if (!app.telepatConfig.config.login_providers || !app.telepatConfig.config.login_providers.facebook)
 			return next(new Models.TelepatError(Models.TelepatError.errors.ServerNotConfigured,
 				['facebook login handler']));
 		else
@@ -401,7 +401,7 @@ router.post('/register-:s', function(req, res, next) {
 			return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['oauth_token']));
 		if (!req.body.oauth_token_secret)
 			return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['oauth_token_secret']));
-		if (!app.telepatConfig.login_providers || !app.telepatConfig.login_providers.twitter)
+		if (!app.telepatConfig.config.login_providers || !app.telepatConfig.config.login_providers.twitter)
 			return next(new Models.TelepatError(Models.TelepatError.errors.ServerNotConfigured,
 				['twitter login provider']));
 	} else if (loginProvider == 'username') {
@@ -452,8 +452,8 @@ router.post('/register-:s', function(req, res, next) {
 					access_token_secret: req.body.oauth_token_secret
 				};
 
-				options.consumer_key = app.telepatConfig.login_providers.twitter.consumer_key;
-				options.consumer_secret = app.telepatConfig.login_providers.twitter.consumer_secret;
+				options.consumer_key = app.telepatConfig.config.login_providers.twitter.consumer_key;
+				options.consumer_secret = app.telepatConfig.config.login_providers.twitter.consumer_secret;
 
 				var twitterClient = new Twitter(options);
 
@@ -533,8 +533,8 @@ router.post('/register-:s', function(req, res, next) {
 			}
 
 			if (requiresConfirmation &&	loginProvider == 'username') {
-				var mandrill = app.telepatConfig.mandrill && app.telepatConfig.mandrill.api_key;
-				var sendgrid = app.telepatConfig.sendgrid && app.telepatConfig.sendgrid.api_key;
+				var mandrill = app.telepatConfig.config.mandrill && app.telepatConfig.config.mandrill.api_key;
+				var sendgrid = app.telepatConfig.config.sendgrid && app.telepatConfig.config.sendgrid.api_key;
 
 				if (!mandrill && !sendgrid) {
 					Models.Application.logger.warning('Mandrill API key is missing, user email address will be ' +
@@ -546,9 +546,9 @@ router.post('/register-:s', function(req, res, next) {
 					userProfile.confirmed = true;
 				} else {
 					var messageContent = '';
-					var emailProvider = app.telepatConfig.mandrill ? 'mandrill' : 'sendgrid';
+					var emailProvider = app.telepatConfig.config.mandrill ? 'mandrill' : 'sendgrid';
 					var apiKey = {};
-					apiKey[emailProvider] = app.telepatConfig[emailProvider].api_key;
+					apiKey[emailProvider] = app.telepatConfig.config[emailProvider].api_key;
 
 					userProfile.confirmed = false;
 					userProfile.confirmationHash = crypto.createHash('md5').update(guid.v4()).digest('hex').toLowerCase();
@@ -665,8 +665,8 @@ router.get('/confirm', function(req, res, next) {
 		if (err)
 			return next(err);
 
-		if (redirectUrl && app.telepatConfig.redirect_url) {
-			res.redirect(app.telepatConfig.redirect_url+'?url='+encodeURIComponent(redirectUrl));
+		if (redirectUrl && app.telepatConfig.config.redirect_url) {
+			res.redirect(app.telepatConfig.config.redirect_url+'?url='+encodeURIComponent(redirectUrl));
 			res.end();
 		} else if (Models.Application.loadedAppModels[appId].email_templates &&
 			Models.Application.loadedAppModels[appId].email_templates.after_confirm) {
@@ -1022,8 +1022,8 @@ router.post('/request_password_reset', function(req, res, next) {
 	var token = crypto.createHash('md5').update(guid.v4()).digest('hex').toLowerCase();
 	var user = null;
 
-	var mandrill = app.telepatConfig.mandrill && app.telepatConfig.mandrill.api_key;
-	var sendgrid = app.telepatConfig.sendgrid && app.telepatConfig.sendgrid.api_key;
+	var mandrill = app.telepatConfig.config.mandrill && app.telepatConfig.config.mandrill.api_key;
+	var sendgrid = app.telepatConfig.config.sendgrid && app.telepatConfig.config.sendgrid.api_key;
 
 	if (!mandrill && !sendgrid) {
 		return next(new Models.TelepatError(Models.TelepatError.errors.ServerNotConfigured, ['mandrill/sendgrid API keys missing']));
@@ -1044,9 +1044,9 @@ router.post('/request_password_reset', function(req, res, next) {
 		},
 		function(callback) {
 			var messageContent = '';
-			var emailProvider = app.telepatConfig.mandrill ? 'mandrill' : 'sendgrid';
+			var emailProvider = app.telepatConfig.config.mandrill ? 'mandrill' : 'sendgrid';
 			var apiKey = {};
-			apiKey[emailProvider] = app.telepatConfig[emailProvider].api_key;
+			apiKey[emailProvider] = app.telepatConfig.config[emailProvider].api_key;
 
 			link += '?token='+token+'&user_id='+user.id;
 

@@ -19,7 +19,7 @@ security.createToken = function (data) {
 };
 
 security.encryptPassword = function(password, callback) {
-	bcrypt.hash(password, app.telepatConfig.password_salt, callback);
+	bcrypt.hash(password, app.telepatConfig.config.password_salt, callback);
 };
 
 security.contentTypeValidation = function(req, res, next) {
