@@ -395,7 +395,7 @@ router.post('/register-:s', function(req, res, next) {
 			return next(new Models.TelepatError(Models.TelepatError.errors.ServerNotConfigured,
 				['facebook login handler']));
 		else
-			FB.options(app.telepatConfig.login_providers.facebook);
+			FB.options(app.telepatConfig.config.login_providers.facebook);
 	} else if (loginProvider == 'twitter') {
 		if (!req.body.oauth_token)
 			return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['oauth_token']));
