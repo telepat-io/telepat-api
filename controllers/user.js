@@ -291,7 +291,9 @@ router.post('/login-:s', function(req, res, next) {
 							}
 							else if (err)
 								callback1(err);
-							else {
+							else if (!result.fid) {
+								callback1();
+							} else {
 								callback1(new Models.TelepatError(Models.TelepatError.errors.UserAlreadyExists));
 							}
 						});
@@ -305,7 +307,7 @@ router.post('/login-:s', function(req, res, next) {
 								patches.push(Models.Delta.formPatch(result, 'replace', {fid: socialProfile.id}));
 								patches.push(Models.Delta.formPatch(result, 'replace', {name: socialProfile.name}));
 
-								Models.User.update(result.username, appId, patches, function(err, modifiedUser) {
+								Models.User.update(patches, function(err, modifiedUser) {
 									if (err) return callback1(err);
 									userProfile = modifiedUser;
 									callback1();
