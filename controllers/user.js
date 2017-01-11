@@ -32,9 +32,9 @@ var isMobileBrowser = function(userAgent) {
 	return userAgent.match(/(iPad|iPhone|iPod|Android|Windows Phone)/g) ? true : false;
 };
 
-router.use(unless(['/refresh_token', '/confirm', '/request_password_reset', '/metadata', '/update_metadata', '/reset_password_intermediate'], security.deviceIdValidation));
-router.use(unless(['/refresh_token', '/confirm', '/metadata', '/update_metadata', '/reset_password_intermediate'], security.applicationIdValidation));
-router.use(unless(['/refresh_token', '/confirm', '/metadata', '/update_metadata', '/reset_password_intermediate'], security.apiKeyValidation));
+router.use(unless(['/refresh_token', '/confirm', '/request_password_reset', '/metadata', '/update_metadata'], security.deviceIdValidation));
+router.use(unless(['/refresh_token', '/confirm', '/metadata', '/update_metadata'], security.applicationIdValidation));
+router.use(unless(['/refresh_token', '/confirm', '/metadata', '/update_metadata'], security.apiKeyValidation));
 
 router.use(['/logout', '/me', '/update', '/update_immediate', '/delete', '/metadata', '/update_metadata'],
 	security.tokenValidation);
