@@ -11,6 +11,7 @@ var userRoute = require('./admin/user');
 
 var security = require('./security');
 var Models = require('telepat-models');
+var async = require('async');
 
 router.use('/', adminRoute);
 router.use('/app', appRoute);

@@ -4,6 +4,7 @@ var Models = require('telepat-models');
 var security = require('./security');
 var microtime = require('microtime-nodejs');
 var clone = require('clone');
+var async = require('async');
 
 router.use(security.applicationIdValidation);
 router.use(security.apiKeyValidation);

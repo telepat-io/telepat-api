@@ -6,6 +6,7 @@ var router = express.Router();
 var security = require('../security');
 var Models = require('telepat-models');
 var microtime = require('microtime-nodejs');
+var async = require('async');
 
 router.use('/',
 	security.tokenValidation,

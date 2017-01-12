@@ -1,0 +1,210 @@
+{
+	"root": [
+		{
+			"name": "main_database",
+			"env_var": "TP_MAIN_DB",
+			"type": "string",
+			"enum": ["ElasticSearch"]
+		},
+		{
+			"name": "message_queue",
+			"env_var": "TP_MSG_QUE",
+			"type": "string",
+			"enum": ["amqp", "kafka", "azure_servicebus"]
+		},
+		{
+			"name": "logger",
+			"type": "object",
+			"optional": true,
+			"root": [
+				{
+					"name": "type",
+					"enum": ["Console"],
+					"type": "string",
+					"env_var": "TP_LOGGER"
+				},
+				{
+					"name": "settings",
+					"type": "object",
+					"root": [
+						{
+							"name": "level",
+							"env_var": "TP_LOG_LEVEL",
+							"enum": ["debug", "info", "notice", "warn", "error", "critical", "alert", "emergency"]
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "ElasticSearch",
+			"type": "object",
+			"required_by": {
+				"main_database": "ElasticSearch"
+			},
+			"root": [
+				{
+					"name": "host",
+					"env_var": "TP_ES_HOST",
+					"type": "string",
+					"exclusive_group": "es_host"
+				},
+				{
+					"name": "hosts",
+					"env_var": "TP_ES_HOSTS",
+					"type": "array",
+					"exclusive_group": "es_host"
+				},
+				{
+					"name": "port",
+					"env_var": "TP_ES_PORT",
+					"type": "int",
+					"optional": true
+				}
+			]
+		},
+		{
+			"name": "redis",
+			"type": "object",
+			"root": [
+				{
+					"name": "host",
+					"env_var": "TP_REDIS_HOST",
+					"type": "string"
+				},
+				{
+					"name": "port",
+					"env_var": "TP_REDIS_PORT",
+					"type": "int"
+				}
+			]
+		},
+		{
+			"name": "redisCache",
+			"type": "object",
+			"root": [
+				{
+					"name": "host",
+					"env_var": "TP_REDISCACHE_HOST",
+					"type": "string"
+				},
+				{
+					"name": "port",
+					"env_var": "TP_REDISCACHE_PORT",
+					"type": "int"
+				}
+			]
+		},
+		{
+			"name": "amqp",
+			"type": "object",
+			"required_by": {
+				"messaging_queue": "amqp"
+			},
+			"root": [
+				{
+					"name": "host",
+					"env_var": "TP_AMQP_HOST",
+					"type": "string"
+				},
+				{
+					"name": "user",
+					"env_var": "TP_AMQP_USER",
+					"type": "string"
+				},
+				{
+					"name": "password",
+					"env_var": "TP_AMQP_PASSWORD",
+					"type": "string"
+				}
+			]
+		},
+		{
+			"name": "kafka",
+			"type": "object",
+			"required_by": {
+				"messaging_queue": "kafka"
+			},
+			"root": [
+				{
+					"name": "host",
+					"env_var": "TP_KFK_HOST",
+					"type": "string"
+				},
+				{
+					"name": "port",
+					"env_var": "TP_KFK_PORT",
+					"type": "int"
+				}
+			]
+		},
+		{
+			"name": "password_salt",
+			"env_var": "TP_PW_SALT",
+			"type": "string"
+		},
+		{
+			"name": "login_providers",
+			"type": "object",
+			"optional": true,
+			"root": [
+				{
+					"name": "facebook",
+					"type": "object",
+					"optional": true,
+					"root": [
+						{
+							"name": "client_id",
+							"type": "string"
+						},
+						{
+							"name": "client_secret",
+							"type": "string"
+						}
+					]
+				},
+				{
+					"name": "twitter",
+					"type": "object",
+					"optional": true,
+					"root": [
+						{
+							"name": "consumer_key",
+							"type": "string"
+						},
+						{
+							"name": "consumer_secret",
+							"type": "string"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "mandrill",
+			"type": "object",
+			"optional": true,
+			"root": [
+				{
+					"name": "api_key",
+					"type": "string"
+				}
+			]
+		},
+		{
+			"name": "redirect_url",
+			"type": "string",
+			"optional": true
+		},
+		{
+			"name": "subscribe_limit",
+			"type": "int",
+			"optional": true
+		},
+		{
+			"name": "get_limit",
+			"type": "int",
+			"optional": true
+		}
+	]
+}

@@ -25,6 +25,7 @@
     "object-sizeof": "1.0.9",
     "redis": "2.6.2",
 	"telepat-models": "0.4.3",
+	"sendgrid": "4.0.2",
     "twitter": "1.2.5",
     "uuid": "2.0.1"
   },
