@@ -243,12 +243,7 @@ router.post('/login-:s', function(req, res, next) {
 				FB.napi('/me?fields=name,email,id,gender,picture', {access_token: accessToken}, function(err, result) {
 					if (err) return callback(err);
 
-					if (!result.email) {
-						callback(new Models.TelepatError(Models.TelepatError.errors.InsufficientFacebookPermissions,
-							['email address is missing']));
-					}
-
-					username = result.email;
+					username = result.email || result.id;
 					socialProfile = result;
 
 					callback();
@@ -474,11 +469,8 @@ router.post('/register-:s', function(req, res, next) {
 		function(callback) {
 			if (loginProvider == 'facebook') {
 				FB.napi('/me?fields=name,email,id,gender,picture', {access_token: accessToken}, function(err, result) {
-					if (err) return callback(err);
-
-					if (!result.email) {
-						callback(new Models.TelepatError(Models.TelepatError.errors.InsufficientFacebookPermissions,
-							['email address is missing']));
+					if (err) {
+						return callback(err);
 					}
 
 					var picture = result.picture.data.url;
@@ -486,7 +478,7 @@ router.post('/register-:s', function(req, res, next) {
 
 					userProfile = result;
 					userProfile.picture = picture;
-					userProfile.username = result.email;
+					userProfile.username = result.email || result.id;
 
 					callback();
 				});
