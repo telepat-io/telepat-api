@@ -169,6 +169,10 @@ router.post('/subscribe', function(req, res, next) {
 
 	var objects = [];
 
+	if (mdl === 'breakingnews') {
+		console.log(Date.now(), '====== (CONTROLLER) DEVICE  ' + req._telepat.device_id + ' SUBSCRIBED TO BREAKINGNEWS', req.body);
+	}
+
 	async.series([
 		//verify if context belongs to app
 		function(callback) {
@@ -294,6 +298,10 @@ router.post('/unsubscribe', function(req, res, next) {
 
 	if (!channelObject.isValid()) {
 		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidChannel, [channelObject.errorMessage]));
+	}
+
+	if (mdl === 'breakingnews') {
+		console.log(Date.now(), '====== (CONTROLLER) DEVICE  ' + req._telepat.device_id + ' UNSUBSCRIBED TO BREAKINGNEWS', req.body);
 	}
 
 	async.series([
@@ -649,7 +657,7 @@ router.post('/count', function(req, res, next) {
 
 	var appSchema = Models.Application.loadedAppModels[appId].schema;
 
-	if (appSchema[mdl]['read_acl'] & 8) {
+	if (mdl !== 'user' && appSchema[mdl]['read_acl'] & 8) {
 		if (!req.user.id) {
 			return next(Models.TelepatError(Models.TelepatError.errors.OperationNotAllowed));
 		}
