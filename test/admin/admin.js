@@ -36,6 +36,7 @@ var authValue2;
 var authValue3;
 
 var userEmail = 'user'+Math.round(Math.random()*1000000)+'@example.com';
+var userEmail2 = 'user'+Math.round(Math.random()*1000000)+'@example.com';
 var userId = null;
 
 describe('1.1.Admin', function() {
@@ -1837,7 +1838,6 @@ describe('1.5.User', function() {
 	before(function(done){
 
 		this.timeout(100*DELAY);
-
 		request(url)
 			.post('/user/register-username')
 			.set('Content-type','application/json')
@@ -1846,7 +1846,6 @@ describe('1.5.User', function() {
 			.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 			.send(clientrequest)
 			.end(function(err, res) {
-
 				setTimeout(done, 20*DELAY);
 			});
 	});
@@ -1967,6 +1966,11 @@ describe('1.5.User', function() {
 	it('1.5.6 should return a success response indicating that a user has been deleted', function(done) {
 
 		this.timeout(100*DELAY);
+		var clientrequest = {
+			email: userEmail2,
+			password: 'pass',
+			username: userEmail2
+		}
 
 		request(url)
 			.post('/user/register-username')
@@ -1976,24 +1980,40 @@ describe('1.5.User', function() {
 			.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 			.send(clientrequest)
 			.end(function(err, res) {
-
+				console.log(err, res.body);
 				setTimeout(function() {
 
 					request(url)
-						.delete('/admin/user/delete')
+						.post('/user/login_password')
 						.set('Content-type','application/json')
 						.set('X-BLGREQ-SIGN', appIDsha256 )
 						.set('X-BLGREQ-APPID', appID )
-						.set('Authorization', authValue )
 						.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 						.send(clientrequest)
 						.end(function(err, res) {
+							console.log(err, res.body, res.statusCode);
+							userID = res.body.content.user.id;
+							console.log(res.body.message);
+							
+							var subclientrequest = {
+								id : userID,
+								username : userEmail2
+							};
 
-							res.statusCode.should.be.equal(200);
-							done();
+							request(url)
+								.delete('/admin/user/delete')
+								.set('X-BLGREQ-SIGN', appIDsha256)
+								.set('X-BLGREQ-APPID',appID)
+								.set('Authorization', authValue)
+								.send(subclientrequest)
+								.end(function(err, res) {
+									console.log(err, res.body);
+									res.statusCode.should.be.equal(202);
+									done();
+								});
 						});
-				}, 20*DELAY);
-			});
+				},20 * DELAY);
+		});
 	});
 
 	it('1.5.8 should return a error response indicating that a user has NOT been deleted because of missing username', function(done) {

@@ -242,7 +242,6 @@ router.post('/login-:s', function(req, res, next) {
 			if (loginProvider == 'facebook') {
 				FB.napi('/me?fields=name,email,id,gender,picture', {access_token: accessToken}, function(err, result) {
 					if (err) return callback(err);
-
 					username = result.email || result.id;
 					socialProfile = result;
 
@@ -364,6 +363,9 @@ router.post('/login-:s', function(req, res, next) {
 		}
 		//final step: send authentification token
 	], function(err) {
+		if(err && err.response.error.message) {
+			return next(new Models.TelepatError(Models.TelepatError.errors.MalformedAuthorizationToken));
+		}
 		if (err)
 			return next(err);
 		else {
@@ -458,7 +460,6 @@ router.post('/register-:s', function(req, res, next) {
 	var deviceId = req._telepat.device_id;
 	var appId = req._telepat.applicationId;
 	var requiresConfirmation = Models.Application.loadedAppModels[appId].email_confirmation;
-
 	if (loginProvider == 'username' && requiresConfirmation && !req.body.email) {
 		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['email']));
 	}
@@ -532,10 +533,10 @@ router.post('/register-:s', function(req, res, next) {
 				return callback(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField,
 					['username']));
 			}
-
 			Models.User({username: userProfile.username}, appId, function(err, result) {
+
 				if (!err) {
-					callback(new Models.TelepatError(Models.TelepatError.errors.UserAlreadyExists));
+					callback(new Models.TelepatError(Models.TelepatError.errors.UserAlreadyExists)); 
 				}
 				else if (err && err.status != 404)
 					callback(err);
@@ -569,6 +570,7 @@ router.post('/register-:s', function(req, res, next) {
 			}
 
 			if (requiresConfirmation &&	loginProvider == 'username') {
+			
 				var mandrill = app.telepatConfig.config.mandrill && app.telepatConfig.config.mandrill.api_key;
 				var sendgrid = app.telepatConfig.config.sendgrid && app.telepatConfig.config.sendgrid.api_key;
 
@@ -629,7 +631,7 @@ router.post('/register-:s', function(req, res, next) {
 			userProfile.application_id = req._telepat.applicationId;
 			delete userProfile.access_token;
 			delete userProfile.callbackUrl;
-
+			console.log(userProfile);
 			app.messagingClient.send([JSON.stringify({
 				op: 'create',
 				object: userProfile,
@@ -638,6 +640,10 @@ router.post('/register-:s', function(req, res, next) {
 			})], 'aggregation', callback);
 		}
 	], function(err) {
+
+		if (err && err.message == 'Invalid OAuth access token.' && loginProvider == 'facebook') {
+			return next(new Models.TelepatError(Models.TelepatError.errors.MalformedAuthorizationToken));
+		}
 		if (err) return next(err);
 
 		res.status(202).json({status: 202, content: 'User created'});
@@ -983,11 +989,17 @@ router.post('/update', function(req, res, next) {
 			})], 'aggregation', function(err) {
 				if (err)
 					return next(err);
-
+			});
+			Models.User.update(patches, function(err){
+				if(err)
+					next(err);
 				res.status(202).json({status: 202, content: "User updated"});
 			});
+			
+			
 		});
 	});
+	
 });
 
 /**
@@ -1019,9 +1031,16 @@ router.delete('/delete', function(req, res, next) {
 		timestamp: timestamp
 	})], 'aggregation', function(err) {
 		if (err) return next(err);
-
+		// Models.User.delete(req.body.id, req._telepat.applicationId, function(err, res2){
+		// 	if (err) {
+		// 		return next(err);
+		// 	} else {
+		// 		res.status(202).json({status: 202, content: "User deleted"});
+		// 	}
+		// });
 		res.status(202).json({status: 202, content: "User deleted"});
 	});
+
 });
 
 /**

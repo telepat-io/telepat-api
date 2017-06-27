@@ -270,6 +270,15 @@ router.delete('/delete', function(req, res, next) {
 			});
 			callback();
 		}
+		// function(callback) {
+		// 	Models.User.delete(req.body.id, appId, function(err, res2){
+		// 		if (err) {
+		// 			return next(err);
+		// 		} else {
+		// 			res.status(202).json({status: 202, content: "User deleted"});
+		// 		}
+		// 	});
+		// }
 	], function(error) {
 		if (error)
 			return next(error);

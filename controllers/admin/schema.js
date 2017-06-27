@@ -5,7 +5,8 @@ var router = express.Router();
 
 var security = require('../security');
 var Models = require('telepat-models');
-
+var microtime = require('microtime-nodejs')
+var async = require('async');
 router.use('/all',
 	security.tokenValidation,
 	security.applicationIdValidation,
@@ -89,13 +90,50 @@ router.post('/update', function(req, res, next) {
 
 	var appId = req._telepat.applicationId;
 	var schema = req.body.schema;
-
 	Models.Application.updateSchema(appId, schema, function(err, result) {
 		if (err){
 			next(err);
 		} else {
-			Models.Application.loadedAppModels[appId].schema = schema;
-			res.status(200).json({status: 200, content: 'Schema updated'});
+			var content = {
+				id : appId,
+				schema: schema
+			}
+			// app.messagingClient.send([JSON.stringify({
+			// 	op: 'update_schema',
+			// 	object: content,
+			// 	application_id: appId,
+			// })], 'aggregation', function(err) {
+			// 	if (err){
+			// 		err = new Models.TelepatError(Models.TelepatError.errors.ServerFailure, [err]);
+			// 	}
+			// 	Models.Application.loadedAppModels[appId].schema = schema;
+			// 	res.status(200).json({status: 200, content: 'Schema updated'});
+			// });
+			var modifiedMicrotime = microtime.now();
+			var obj = {
+				op: 'update_schema',
+				object: content,
+				application_id: appId
+			};
+			async.series([
+				function(aggCallback) {
+					app.messagingClient.send([JSON.stringify(obj)], 'aggregation', function(err) {
+						if (err){
+							err = new Models.TelepatError(Models.TelepatError.errors.ServerFailure, [err.message]);
+						}
+						aggCallback(err);
+					});
+				}
+			], function(err) {
+				if (err) {
+					return next(err);
+				}
+
+				Models.Application.loadedAppModels[appId].schema = schema;
+			 	res.status(200).json({status: 200, content: 'Schema updated'});
+			});
+
+			
 		}
 	});
 });
