@@ -16,6 +16,7 @@ var userID;
 
 var userEmail = "user"+ Math.round(Math.random()*1000000)+1000 +"@example1.com";
 var userEmail2 = "user"+ Math.round(Math.random()*1000000)+1000 +"@example.com";
+var userEmail3 = "user"+ Math.round(Math.random()*1000000)+1000 +"@example.com";
 var adminEmail = 'admin'+Math.round(Math.random()*1000000)+'@example.com';
 var adminPassword = '5f4dcc3b5aa765d61d8327deb882cf99';
 
@@ -222,6 +223,8 @@ it('5.5 should return a success response to indicate that the user has logged in
 						.send(clientrequest)
 						.end(function(err, res) {
 							//console.log(err, res);
+							//clientrequest.username = Math.round(Math.random()*1000000);
+
 							setTimeout(function() {
 
 								request(url)
@@ -435,8 +438,8 @@ it('5.12 should return a success response to indicate that the user was updated'
 		patches : [
 			{
 				op: "replace",
-				path: "user/"+userID+"/name",
-				value: "new value"
+				path: "user/"+userID+"/token",
+				value: "token"
 			}
 		]
 	};
@@ -842,15 +845,290 @@ it('5.31 should return a success response to indicate that the user was deleted'
 		});
 });
 it('5.32 should return an error response to indicate that the user has NOT logged via Twitter because request body is empty', function(done) {
-	done();
+	
+	this.timeout(100 * DELAY);
+	
+	request(url)
+		.post('/user/login-twitter')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256 )
+		.set('X-BLGREQ-APPID', appID )
+		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+		.send()
+		.end(function(err, res) {
+
+			res.body.code.should.be.equal('005');
+			res.statusCode.should.be.equal(400);
+			done();
+		});
+
 
 });
 
 it('5.33 should return an error response to indicate that the user has NOT logged via Twitter because of missing oauth token', function(done) {
-	done();
+	
+	
+	this.timeout(100 * DELAY);
+	
+	var clientrequest = {
+		something_else : "invalid_token"
+	}
+
+	request(url)
+		.post('/user/login-twitter')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256 )
+		.set('X-BLGREQ-APPID', appID )
+		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+		.send(clientrequest)
+		.end(function(err, res) {
+
+			res.body.code.should.be.equal('004');
+			res.statusCode.should.be.equal(400);
+			done();
+		});
+	
 });
 
-it('5.34 should return an error response to indicate that the user has NOT logged via Twitter because of invalid token', function(done) {
-	done();
+it('5.34 should return an error response to indicate that the user has NOT logged via Twitter because of missing oauth token secret', function(done) {
+	
+	
+	this.timeout(100 * DELAY);
+	
+	var clientrequest = {
+		oauth_token : "valid token",
+	}
+
+	request(url)
+		.post('/user/login-twitter')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256 )
+		.set('X-BLGREQ-APPID', appID )
+		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+		.send(clientrequest)
+		.end(function(err, res) {
+
+			res.body.code.should.be.equal('004');
+			res.statusCode.should.be.equal(400);
+			done();
+		});
+	
+});
+
+it('5.35 should return an error response to indicate that the user has NOT logged via Twitter because of wrong creditentials', function(done) {
+	
+	this.timeout(100*DELAY);
+
+	var clientrequest = {
+		oauth_token: "invalidToken",
+		oauth_token_secret: "invalidToken"
+	};
+
+	request(url)
+		.post('/user/login-twitter')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256 )
+		.set('X-BLGREQ-APPID', appID )
+		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+		.send(clientrequest)
+		.end(function(err, res) {
+	
+			res.statusCode.should.be.equal(400);
+			res.body.code.should.be.equal('040');
+			done();
+		});;
 
 });
+
+var clientrequest2 = {
+		username: userEmail3,
+		email: userEmail3,
+		password: "secure_password1337",
+		name: "John Smith"
+};
+
+it('5.36 should return a success response to indicate that the user metadata was updated', function(done) {
+
+	this.timeout(100*DELAY);
+
+
+	request(url)
+		.post('/user/register-username')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256 )
+		.set('X-BLGREQ-APPID', appID )
+		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+		.send(clientrequest2)
+		.end(function(err, res) {
+
+			setTimeout(function() {
+				request(url)
+					.post('/user/login_password')
+					.set('Content-type','application/json')
+					.set('X-BLGREQ-SIGN', appIDsha256 )
+					.set('X-BLGREQ-APPID', appID )
+					.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+					.send(clientrequest2)
+					.end(function(err, res) {
+						token = res.body.content.token;
+						userID = res.body.content.user.id;
+						authValue = 'Bearer ' + token;
+			
+						request(url)
+							.get('/user/metadata')
+							.set('Content-type','application/json')
+							.set('X-BLGREQ-SIGN', appIDsha256 )
+							.set('X-BLGREQ-APPID', appID )
+							.set('Authorization', authValue)
+							.send()
+							.end(function(err, res){
+								
+								var metadataId = res.body.content.id;
+								var subclientrequest = {
+									patches : [
+										{
+											op: "replace",
+											path: "user_metadata/"+metadataId+"/name",
+											value: "Gicu"
+										}
+									],
+								
+								};
+
+								request(url)
+									.post('/user/update_metadata')
+									.set('Content-type','application/json')
+									.set('X-BLGREQ-SIGN', appIDsha256 )
+									.set('X-BLGREQ-APPID', appID )
+									.set('Authorization', authValue)
+									.send(subclientrequest)
+									.end(function(err, res){
+										
+										res.body.status.should.be.equal(200);
+
+										done();
+									});
+									
+							});
+
+						
+					// });
+				});
+			},20*DELAY);
+
+	});
+});
+
+it('5.37 should return an error response to indicate that the user metadata was NOT updated because of missing required field', function(done) {
+
+	this.timeout(100*DELAY);
+
+	request(url)
+		.post('/user/update_metadata')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256 )
+		.set('X-BLGREQ-APPID', appID )
+		.set('Authorization', authValue)
+		.send()
+		.end(function(err, res){
+			console.log(res);		
+			res.body.status.should.be.equal(400);
+			res.body.code.should.be.equal('004');
+			done();
+		});
+									
+});
+ 
+ it('5.38 should return a success response to indicate that a password reset email was sent', function(done) {
+
+	this.timeout(10000*DELAY);
+	var clientrequest = {
+		username: userEmail3,
+		link: "link"
+	}
+	request(url)
+		.post('/user/request_password_reset')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256 )
+		.set('X-BLGREQ-APPID', appID )
+		.send(clientrequest)
+		.end(function(err, res){
+			res.body.status.should.be.equal(200);
+			done();
+		});
+
+});
+ it('5.39 should return an error response to indicate that a password reset email was NOT sent because user not found', function(done) {
+
+	this.timeout(10000*DELAY);
+	var clientrequest = {
+		username: userEmail2,
+		link: "link"
+	}
+	request(url)
+		.post('/user/request_password_reset')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256 )
+		.set('X-BLGREQ-APPID', appID )
+		.send(clientrequest)
+		.end(function(err, res){	
+			res.body.status.should.be.equal(404);
+			res.body.code.should.be.equal('023');
+			done();
+		});
+
+});
+ it('5.40 should return an error response to indicate that a password reset email was NOT sent because user has no email address', function(done) {
+
+	this.timeout(100*DELAY);
+	var clientrequest = {
+		username: userEmail,
+		link: "link"
+	}
+	request(url)
+		.post('/user/request_password_reset')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256 )
+		.set('X-BLGREQ-APPID', appID )
+		.send(clientrequest)
+		.end(function(err, res){	
+			console.log(res.body);
+			res.body.status.should.be.equal(400);
+			res.body.code.should.be.equal('039');
+			done();
+		});
+
+});
+it('5.41 should return a success response to indicate that password was reseted', function(done){
+
+	this.timeout(100*DELAY);
+	
+	request(url)
+		.l
+
+	var clientrequest = {
+		patches : [
+			{
+				op: "replace",
+				path: "user/"+userID+"/name",
+				value: "new value"
+			}
+		]
+	};
+
+	request(url)
+		.post('/user/update')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256 )
+		.set('X-BLGREQ-APPID', appID )
+		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+		.set('Authorization', authValue )
+		.send(clientrequest)
+		.end(function(err, res) {
+
+			res.statusCode.should.be.equal(202);
+			done();
+		});
+});
+
+

@@ -244,7 +244,7 @@ router.post('/login-:s', function(req, res, next) {
 					if (err) return callback(err);
 					username = result.email || result.id;
 					socialProfile = result;
-
+					console.log('first one');
 					callback();
 				});
 			} else if (loginProvider == 'twitter') {
@@ -315,6 +315,7 @@ router.post('/login-:s', function(req, res, next) {
 					}
 				], callback);
 			} else {
+				console.log('here, else branch');
 				Models.User({username: username}, appId, function(err, result) {
 					if (err && err.status == 404) {
 						callback(new Models.TelepatError(Models.TelepatError.errors.UserNotFound));
@@ -363,7 +364,11 @@ router.post('/login-:s', function(req, res, next) {
 		}
 		//final step: send authentification token
 	], function(err) {
-		if(err && err.response.error.message) {
+		console.log(err);
+		if(loginProvider == 'facebook' && err ) {
+			return next(new Models.TelepatError(Models.TelepatError.errors.MalformedAuthorizationToken));
+		}
+		if (err && err[0].code == 89) {
 			return next(new Models.TelepatError(Models.TelepatError.errors.MalformedAuthorizationToken));
 		}
 		if (err)
@@ -640,7 +645,7 @@ router.post('/register-:s', function(req, res, next) {
 			})], 'aggregation', callback);
 		}
 	], function(err) {
-
+		
 		if (err && err.message == 'Invalid OAuth access token.' && loginProvider == 'facebook') {
 			return next(new Models.TelepatError(Models.TelepatError.errors.MalformedAuthorizationToken));
 		}
@@ -1098,6 +1103,7 @@ router.post('/request_password_reset', function(req, res, next) {
 			});
 		},
 		function(callback) {
+			console.log('here');
 			var messageContent = '';
 			var emailProvider = app.telepatConfig.config.mandrill ? 'mandrill' : 'sendgrid';
 			var apiKey = {};
@@ -1116,7 +1122,7 @@ router.post('/request_password_reset', function(req, res, next) {
 				messageContent = 'Password reset request from the "'+Models.Application.loadedAppModels[appId].name+
 				'" app. Click this URL to reset password: <a href="'+redirectUrl+'">Reset</a>';
 			}
-
+			console.log('here x2');
 			sendEmail(apiKey,
 				{
 					email: Models.Application.loadedAppModels[appId].from_email,
