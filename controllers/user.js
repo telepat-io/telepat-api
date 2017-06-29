@@ -364,11 +364,15 @@ router.post('/login-:s', function(req, res, next) {
 		}
 		//final step: send authentification token
 	], function(err) {
-		console.log(err);
-		if(loginProvider == 'facebook' && err ) {
+		//console.log(err);
+		if(err && err.code == '023') {
+			return next(err);
+		}
+
+		if(loginProvider == 'facebook' && err && err.response && err.response.error.code == 190) {
 			return next(new Models.TelepatError(Models.TelepatError.errors.MalformedAuthorizationToken));
 		}
-		if (err && err[0].code == 89) {
+		if (err && err[0] && err[0].code == 89) {
 			return next(new Models.TelepatError(Models.TelepatError.errors.MalformedAuthorizationToken));
 		}
 		if (err)
