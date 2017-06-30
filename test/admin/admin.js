@@ -1980,7 +1980,6 @@ describe('1.5.User', function() {
 			.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 			.send(clientrequest)
 			.end(function(err, res) {
-				console.log(err, res.body);
 				setTimeout(function() {
 
 					request(url)
@@ -1991,9 +1990,7 @@ describe('1.5.User', function() {
 						.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 						.send(clientrequest)
 						.end(function(err, res) {
-							console.log(err, res.body, res.statusCode);
 							userID = res.body.content.user.id;
-							console.log(res.body.message);
 							
 							var subclientrequest = {
 								id : userID,
@@ -2007,7 +2004,6 @@ describe('1.5.User', function() {
 								.set('Authorization', authValue)
 								.send(subclientrequest)
 								.end(function(err, res) {
-									console.log(err, res.body);
 									res.statusCode.should.be.equal(202);
 									done();
 								});

@@ -379,7 +379,6 @@ router.post('/create', function(req, res, next) {
 	var mdl = req.body.model;
 	var context = req.body.context;
 	var appId = req._telepat.applicationId;
-	//console.log(Models.Application.loadedAppModels[appId], Models.Application.loadedAppModels[appId].schema , Models.Application.loadedAppModels[appId].schema[mdl]);
 
 	if (!context)
 		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['context']));

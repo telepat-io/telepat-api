@@ -213,7 +213,6 @@ before(function(done){
 								.set('X-BLGREQ-APPID', appID )
 								.send(clientrequest)
 								.end(function(err, res) {
-									console.log(res.body);
 
 									var clientrequest = {
 										name: "context"
@@ -411,8 +410,7 @@ it('4.4 should return a success response to indicate that object has been create
 			events_id :1
 		}
 	};
-	setTimeout( function() {
-//	console.log('app id is', appID);
+	setTimeout( function() {;
 		request(url)
 			.post('/object/create')
 			.set('X-BLGREQ-SIGN', appIDsha256)
