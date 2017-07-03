@@ -1990,7 +1990,7 @@ describe('1.5.User', function() {
 						.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 						.send(clientrequest)
 						.end(function(err, res) {
-							userID = res.body.content.user.id;
+							var userID = res.body.content.user.id;
 							
 							var subclientrequest = {
 								id : userID,

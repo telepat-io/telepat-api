@@ -40,7 +40,7 @@
 	}
   },
   "mandrill": {
-	"api_key": "5a2270a08cc1e616cc8ee4fc664fc785-us16"
+	"api_key": ""
   },
   "redirect_url": "http://www.example.com/redirect-me"
 }

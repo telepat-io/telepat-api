@@ -146,8 +146,8 @@ it('5.3 should return an error response to indicate that the user has NOT logged
 		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 		.send(clientrequest)
 		.end(function(err, res) {
-			res.statusCode.should.be.equal(400);
-			res.body.code.should.be.equal('040');
+			res.statusCode.should.be.equal(401);
+			res.body.code.should.be.equal('014');
 			done();
 		});
 });
@@ -919,8 +919,8 @@ it('5.35 should return an error response to indicate that the user has NOT logge
 		.send(clientrequest)
 		.end(function(err, res) {
 	
-			res.statusCode.should.be.equal(400);
-			res.body.code.should.be.equal('040');
+			res.statusCode.should.be.equal(401);
+			res.body.code.should.be.equal('014');
 			done();
 		});;
 

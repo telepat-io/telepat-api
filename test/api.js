@@ -42,10 +42,10 @@ describe('API', function () {
 		done();
 	});
 
-	// importTest("1.Admin", './admin/admin');
-	// importTest("2.Context", './context/context');
-	// importTest("3.Device", './device/device');
-	// importTest("4.Object", './object/object');
-	// importTest("5.User", './user/user');
+	importTest("1.Admin", './admin/admin');
+	importTest("2.Context", './context/context');
+	importTest("3.Device", './device/device');
+	importTest("4.Object", './object/object');
+	importTest("5.User", './user/user');
 	importTest("6.Til", './til/til.js');
 });

@@ -367,11 +367,11 @@ router.post('/login-:s', function(req, res, next) {
 		}
 
 		if(loginProvider == 'facebook' && err && err.response && err.response.error.code == 190) {
-			return next(new Models.TelepatError(Models.TelepatError.errors.MalformedAuthorizationToken));
+			return next(new Models.TelepatError(Models.TelepatError.errors.InvalidAuthorization, ['Facebook access token has expired']));
 		}
 		if (err && err[0] && err[0].code == 89) {
-			return next(new Models.TelepatError(Models.TelepatError.errors.MalformedAuthorizationToken));
-		}
+		 	return next(new Models.TelepatError(Models.TelepatError.errors.InvalidAuthorization, ['Twitter access token has expired']));
+	     }
 		if (err)
 			return next(err);
 		else {
@@ -647,7 +647,7 @@ router.post('/register-:s', function(req, res, next) {
 	], function(err) {
 		
 		if (err && err.message == 'Invalid OAuth access token.' && loginProvider == 'facebook') {
-			return next(new Models.TelepatError(Models.TelepatError.errors.MalformedAuthorizationToken));
+			return next(new Models.TelepatError(Models.TelepatError.errors.ServerConfigurationFailure, 'Facebook invalid OAuth access token'));
 		}
 		if (err) return next(err);
 
@@ -995,13 +995,8 @@ router.post('/update', function(req, res, next) {
 				if (err)
 					return next(err);
 			});
-			Models.User.update(patches, function(err){
-				if(err)
-					next(err);
-				res.status(202).json({status: 202, content: "User updated"});
-			});
-			
-			
+
+			res.status(202).json({status: 202, content: "User updated"});
 		});
 	});
 	
@@ -1036,13 +1031,7 @@ router.delete('/delete', function(req, res, next) {
 		timestamp: timestamp
 	})], 'aggregation', function(err) {
 		if (err) return next(err);
-		// Models.User.delete(req.body.id, req._telepat.applicationId, function(err, res2){
-		// 	if (err) {
-		// 		return next(err);
-		// 	} else {
-		// 		res.status(202).json({status: 202, content: "User deleted"});
-		// 	}
-		// });
+
 		res.status(202).json({status: 202, content: "User deleted"});
 	});
 
