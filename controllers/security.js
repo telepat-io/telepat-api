@@ -120,6 +120,32 @@ security.adminAppValidation = function (req, res, next) {
 	next();
 };
 
+function verifyAndSetUser(req, next, acl) {
+	var authHeaderParts = req.headers.authorization.split(' ');
+	var authToken = authHeaderParts[1];
+
+	jwt.verify(authToken, security.authSecret, function (err, decoded) {
+		if (err) {
+			if (err.message == 'jwt expired')	{
+				return next(new Models.TelepatError(Models.TelepatError.errors.ExpiredAuthorizationToken));
+			} else if (err.message == 'jwt malformed') {
+				return next(new Models.TelepatError(Models.TelepatError.errors.MalformedAuthorizationToken));
+			}
+			else return next(err);
+		}
+
+		if (acl) {
+			if ((!(acl & ACL_UNAUTHENTICATED)) && (!(acl & ACL_AUTHENTICATED)) &&  (acl & ACL_ADMIN) && (!decoded.isAdmin) ) {
+				return next(new Models.TelepatError(Models.TelepatError.errors.OperationNotAllowed));
+			}
+		}
+
+		req.user = decoded;
+
+		next();
+	});
+}
+
 security.objectACL = function (accessControl) {
 	return function(req, res, next) {
 		if (!req.body || !Object.getOwnPropertyNames(req.body).length) {
@@ -135,8 +161,11 @@ security.objectACL = function (accessControl) {
 		else
 			return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['model']));
 
-		if (['user', 'context', 'application'].indexOf(mdl) !== -1)
+		if (['context', 'application'].indexOf(mdl) !== -1)
 			return next();
+		else if (mdl === 'user') {
+			return verifyAndSetUser(req, next);
+		}
 
 		if (!Models.Application.loadedAppModels[req._telepat.applicationId].schema) {
 			return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationHasNoSchema));
@@ -156,31 +185,15 @@ security.objectACL = function (accessControl) {
 				return next(Models.TelepatError(Models.TelepatError.errors.OperationNotAllowed));
 			} else if (!req.headers.authorization && acl & ACL_UNAUTHENTICATED) {
 				next();
-			} else 	if (acl & ACL_AUTHENTICATED || acl & ACL_ADMIN) {
+			} else if (acl & ACL_AUTHENTICATED || acl & ACL_ADMIN) {
 				var authHeaderParts = req.headers.authorization.split(' ');
 				var authToken = authHeaderParts[1];
 
-				if (authToken) {
-					jwt.verify(authToken, security.authSecret, function (err, decoded) {
-						if (err) {
-							if (err.message == 'jwt expired')	{
-								return next(new Models.TelepatError(Models.TelepatError.errors.ExpiredAuthorizationToken));
-							} else if (err.message == 'jwt malformed') {
-								return next(new Models.TelepatError(Models.TelepatError.errors.MalformedAuthorizationToken));
-							}
-							else return next(err);
-						}
-
-						if ((!(acl & ACL_UNAUTHENTICATED)) && (!(acl & ACL_AUTHENTICATED)) &&  (acl & ACL_ADMIN) && (!decoded.isAdmin) )
-							return next(new Models.TelepatError(Models.TelepatError.errors.OperationNotAllowed));
-
-						req.user = decoded;
-
-						next();
-					});
-				} else {
+				if (!authToken) {
 					return next(new Models.TelepatError(Models.TelepatError.errors.InvalidAuthorization,
 						['authorization header field is not formed well']));
+				} else {
+					return verifyAndSetUser(req, next, acl);
 				}
 			}
 			else {
