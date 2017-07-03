@@ -1293,21 +1293,23 @@ it('4.36 should return an error response to indicate that a object has NOT been 
 							model: "comments"
 						}
 					};
+					setTimeout(function() {
+						request(url)
+							.post('/object/subscribe')
+							.set('Content-type', 'application/json')
+							.set('X-BLGREQ-SIGN', appIDsha256)
+							.set('X-BLGREQ-UDID', deviceIdentification)
+							.set('X-BLGREQ-APPID', appID2)
+							.set('Authorization', userAuthValue)
+							.send(subclientrequest)
+							.end(function (err, res) {
 
-					request(url)
-						.post('/object/subscribe')
-						.set('Content-type', 'application/json')
-						.set('X-BLGREQ-SIGN', appIDsha256)
-						.set('X-BLGREQ-UDID', deviceIdentification)
-						.set('X-BLGREQ-APPID', appID2)
-						.set('Authorization', userAuthValue)
-						.send(subclientrequest)
-						.end(function (err, res) {
+								res.statusCode.should.be.equal(403);
+								res.body.code.should.be.equal('026');
+								done();
+							});
+					}, 20 * DELAY);
 
-							res.statusCode.should.be.equal(403);
-							res.body.code.should.be.equal('026');
-							done();
-						});
 				});
 		});
 });

@@ -90,53 +90,22 @@ router.post('/update', function(req, res, next) {
 
 	var appId = req._telepat.applicationId;
 	var schema = req.body.schema;
+
 	Models.Application.updateSchema(appId, schema, function(err, result) {
 		if (err){
 			next(err);
 		} else {
-			var content = {
-				id : appId,
-				schema: schema
-			}
-			// app.messagingClient.send([JSON.stringify({
-			// 	op: 'update_schema',
-			// 	object: content,
-			// 	application_id: appId,
-			// })], 'aggregation', function(err) {
-			// 	if (err){
-			// 		err = new Models.TelepatError(Models.TelepatError.errors.ServerFailure, [err]);
-			// 	}
-			// 	Models.Application.loadedAppModels[appId].schema = schema;
-			// 	res.status(200).json({status: 200, content: 'Schema updated'});
-			// });
-			var modifiedMicrotime = microtime.now();
-			var obj = {
-				op: 'update_schema',
-				object: content,
-				application_id: appId
-			};
-			async.series([
-				function(aggCallback) {
-					app.messagingClient.send([JSON.stringify(obj)], 'aggregation', function(err) {
-						if (err){
-							err = new Models.TelepatError(Models.TelepatError.errors.ServerFailure, [err.message]);
-						}
-						aggCallback(err);
-					});
-				}
-			], function(err) {
-				if (err) {
-					return next(err);
-				}
+			Models.Application.loadedAppModels[appId].schema = schema;
+			app.messagingClient.sendSystemMessages('_all', 'update_app', [{appId: appId, appObject: Models.Application.loadedAppModels[appId]}], function(err) {
+					if (err)
+						return Models.TelepatLogger.error('There was an error trying to send system message: ' + err.message);
+				});
 
-				Models.Application.loadedAppModels[appId].schema = schema;
-			 	res.status(200).json({status: 200, content: 'Schema updated'});
-			});
-
-			
+			res.status(200).json({status: 200, content: 'Schema updated'});
 		}
 	});
 });
+
 
 router.use('/remove_model',
 	security.tokenValidation,
