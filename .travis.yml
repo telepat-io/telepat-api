@@ -29,6 +29,11 @@ before_script:
   - 'echo "script.groovy.sandbox.class_whitelist: groovy.json.JsonSlurper,groovy.json.*" | sudo tee -a /etc/elasticsearch/elasticsearch.yml'
   - sudo service elasticsearch restart
   - sleep 5
+  - sudo rabbitmq-plugins enable rabbitmq_management
+  - sudo rabbitmq-plugins enable rabbitmq_federation
+  - sudo rabbitmq-plugins enable rabbitmq_federation_management
+  - sudo service rabbitmq-server restart
+  - sleep 5
   - bash .travis/start.sh
   - sleep 5
 after_script:
