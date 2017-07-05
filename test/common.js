@@ -8,7 +8,7 @@ var logLevel = process.env.TP_TST_LOG || 1;
 exports.url = 'http://localhost:'+(process.env.PORT || '3000');
 exports.appKey = appKey;
 exports.appIDsha256 = crypto.SHA256(appKey).toString(crypto.enc.Hex);
-exports.DELAY = 100;
+exports.DELAY = 1000;
 exports.logLevel = logLevel;
 
 function highjackEnd(request) {
