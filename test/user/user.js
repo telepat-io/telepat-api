@@ -580,29 +580,6 @@ it('5.17 should return a success response to indicate that the user password was
 		});
 });
 
-it('5.18 should return a success response to indicate that the user was updated immediate', function(done) {
-	done()
-	this.timeout(100*DELAY);
-
-	var clientrequest = {
-		name: "new name",
-		password: "new pass"
-	};
-
-	request(url)
-		.post('/user/update_immediate')
-		.set('Content-type','application/json')
-		.set('X-BLGREQ-SIGN', appIDsha256 )
-		.set('X-BLGREQ-APPID', appID )
-		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
-		.set('Authorization', authValue )
-		.send(clientrequest)
-		.end(function(err, res) {
-
-			res.statusCode.should.be.equal(200);
-			done();
-		});
-});
 
 it('5.19 should return a success response to indicate that the token was updated', function(done) {
 

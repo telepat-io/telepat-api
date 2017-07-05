@@ -97,11 +97,13 @@ router.post('/update', function(req, res, next) {
 		} else {
 			Models.Application.loadedAppModels[appId].schema = schema;
 			app.messagingClient.sendSystemMessages('_all', 'update_app', [{appId: appId, appObject: Models.Application.loadedAppModels[appId]}], function(err) {
-					if (err)
-						return Models.TelepatLogger.error('There was an error trying to send system message: ' + err.message);
-				});
+				if (err) {
+					return Models.TelepatLogger.error('There was an error trying to send system message: ' + err.message);
+				}
+				res.status(200).json({status: 200, content: 'Schema updated'});
+			});
 
-			res.status(200).json({status: 200, content: 'Schema updated'});
+
 		}
 	});
 });

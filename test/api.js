@@ -47,5 +47,6 @@ describe('API', function () {
 	importTest("3.Device", './device/device');
 	importTest("4.Object", './object/object');
 	importTest("5.User", './user/user');
-	importTest("6.Til", './til/til.js');
+	importTest("6.Til", './til/til');
+
 });

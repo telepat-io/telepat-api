@@ -683,11 +683,11 @@ router.post('/register-:s', function(req, res, next) {
  *
  */
 router.get('/confirm', function(req, res, next) {
-	var username = req.query.username;
-	var hash = req.query.hash;
-	var appId = req.query.app_id;
+	var username = req.body.username;
+	var hash = req.body.hash;
+	var appId = req.body.app_id;
 	var user = null;
-	var redirectUrl = req.query.redirect_url;
+	var redirectUrl = req.body.redirect_url;
 
 	async.series([
 		function(callback) {
@@ -799,7 +799,7 @@ router.get('/me', function(req, res, next) {
  *
  */
 router.get('/get', function(req, res, next) {
-	Models.User({id: req.query.user_id}, req._telepat.applicationId, function(err, result) {
+	Models.User({id: req.body.user_id}, req._telepat.applicationId, function(err, result) {
 		if (err && err.status == 404) {
 			return next(new Models.TelepatError(Models.TelepatError.errors.UserNotFound));
 		}
@@ -994,9 +994,11 @@ router.post('/update', function(req, res, next) {
 			})], 'aggregation', function(err) {
 				if (err)
 					return next(err);
+					
+				res.status(202).json({status: 202, content: "User updated"});
 			});
 
-			res.status(202).json({status: 202, content: "User updated"});
+
 		});
 	});
 	
