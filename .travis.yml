@@ -1,6 +1,5 @@
 language: node_js
 services:
-  - elasticsearch
   - redis
   - rabbitmq
 addons:
