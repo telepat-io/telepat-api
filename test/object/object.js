@@ -296,7 +296,7 @@ before(function(done){
 				password: "secure_password1337",
 				name: "John Smith"
 			};
-
+		
 			request(url)
 				.post('/user/register-username')
 				.set('Content-type','application/json')
@@ -305,9 +305,9 @@ before(function(done){
 				.set('X-BLGREQ-UDID', deviceIdentification )
 				.send(clientrequest)
 				.end(function(err, res) {
-
+				
 					setTimeout(function () {
-
+						
 						request(url)
 							.post('/user/login_password')
 							.set('Content-type','application/json')
@@ -404,26 +404,27 @@ it('4.4 should return a success response to indicate that object has been create
 	this.timeout(100*DELAY);
 
 	var clientrequest = {
-		model: "comments",
+		model: 'comments',
 		context: contextID,
 		content: {
 			events_id :1
 		}
 	};
+	setTimeout( function() {;
+		request(url)
+			.post('/object/create')
+			.set('X-BLGREQ-SIGN', appIDsha256)
+			.set('X-BLGREQ-UDID', deviceIdentification)
+			.set('X-BLGREQ-APPID',appID)
+			.set('Authorization', userAuthValue )
+			.send(clientrequest)
+			.end(function(err, res) {
 
-	request(url)
-		.post('/object/create')
-		.set('X-BLGREQ-SIGN', appIDsha256)
-		.set('X-BLGREQ-UDID', deviceIdentification)
-		.set('X-BLGREQ-APPID',appID)
-		.set('Authorization', userAuthValue )
-		.send(clientrequest)
-		.end(function(err, res) {
-
-			res.statusCode.should.be.equal(202);
-			res.body.content.should.be.equal("Created");
-			done();
-		});
+				res.statusCode.should.be.equal(202);
+				res.body.content.should.be.equal("Created");
+				done();
+			});
+	}, 20 * DELAY);
 });
 
 it('4.5 should return a success response to indicate that object has NOT been created because of ACL', function(done) {
@@ -1292,21 +1293,23 @@ it('4.36 should return an error response to indicate that a object has NOT been 
 							model: "comments"
 						}
 					};
+					setTimeout(function() {
+						request(url)
+							.post('/object/subscribe')
+							.set('Content-type', 'application/json')
+							.set('X-BLGREQ-SIGN', appIDsha256)
+							.set('X-BLGREQ-UDID', deviceIdentification)
+							.set('X-BLGREQ-APPID', appID2)
+							.set('Authorization', userAuthValue)
+							.send(subclientrequest)
+							.end(function (err, res) {
 
-					request(url)
-						.post('/object/subscribe')
-						.set('Content-type', 'application/json')
-						.set('X-BLGREQ-SIGN', appIDsha256)
-						.set('X-BLGREQ-UDID', deviceIdentification)
-						.set('X-BLGREQ-APPID', appID2)
-						.set('Authorization', userAuthValue)
-						.send(subclientrequest)
-						.end(function (err, res) {
+								res.statusCode.should.be.equal(403);
+								res.body.code.should.be.equal('026');
+								done();
+							});
+					}, 20 * DELAY);
 
-							res.statusCode.should.be.equal(403);
-							res.body.code.should.be.equal('026');
-							done();
-						});
 				});
 		});
 });

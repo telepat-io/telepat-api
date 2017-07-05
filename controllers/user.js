@@ -242,10 +242,8 @@ router.post('/login-:s', function(req, res, next) {
 			if (loginProvider == 'facebook') {
 				FB.napi('/me?fields=name,email,id,gender,picture', {access_token: accessToken}, function(err, result) {
 					if (err) return callback(err);
-
 					username = result.email || result.id;
 					socialProfile = result;
-
 					callback();
 				});
 			} else if (loginProvider == 'twitter') {
@@ -364,6 +362,16 @@ router.post('/login-:s', function(req, res, next) {
 		}
 		//final step: send authentification token
 	], function(err) {
+		if(err && err.code == '023') {
+			return next(err);
+		}
+
+		if(loginProvider == 'facebook' && err && err.response && err.response.error.code == 190) {
+			return next(new Models.TelepatError(Models.TelepatError.errors.InvalidAuthorization, ['Facebook access token has expired']));
+		}
+		if (err && err[0] && err[0].code == 89) {
+		 	return next(new Models.TelepatError(Models.TelepatError.errors.InvalidAuthorization, ['Twitter access token has expired']));
+	     }
 		if (err)
 			return next(err);
 		else {
@@ -458,7 +466,6 @@ router.post('/register-:s', function(req, res, next) {
 	var deviceId = req._telepat.device_id;
 	var appId = req._telepat.applicationId;
 	var requiresConfirmation = Models.Application.loadedAppModels[appId].email_confirmation;
-
 	if (loginProvider == 'username' && requiresConfirmation && !req.body.email) {
 		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['email']));
 	}
@@ -532,10 +539,10 @@ router.post('/register-:s', function(req, res, next) {
 				return callback(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField,
 					['username']));
 			}
-
 			Models.User({username: userProfile.username}, appId, function(err, result) {
+
 				if (!err) {
-					callback(new Models.TelepatError(Models.TelepatError.errors.UserAlreadyExists));
+					callback(new Models.TelepatError(Models.TelepatError.errors.UserAlreadyExists)); 
 				}
 				else if (err && err.status != 404)
 					callback(err);
@@ -569,6 +576,7 @@ router.post('/register-:s', function(req, res, next) {
 			}
 
 			if (requiresConfirmation &&	loginProvider == 'username') {
+			
 				var mandrill = app.telepatConfig.config.mandrill && app.telepatConfig.config.mandrill.api_key;
 				var sendgrid = app.telepatConfig.config.sendgrid && app.telepatConfig.config.sendgrid.api_key;
 
@@ -629,7 +637,6 @@ router.post('/register-:s', function(req, res, next) {
 			userProfile.application_id = req._telepat.applicationId;
 			delete userProfile.access_token;
 			delete userProfile.callbackUrl;
-
 			app.messagingClient.send([JSON.stringify({
 				op: 'create',
 				object: userProfile,
@@ -638,6 +645,10 @@ router.post('/register-:s', function(req, res, next) {
 			})], 'aggregation', callback);
 		}
 	], function(err) {
+		
+		if (err && err.message == 'Invalid OAuth access token.' && loginProvider == 'facebook') {
+			return next(new Models.TelepatError(Models.TelepatError.errors.ServerConfigurationFailure, 'Facebook invalid OAuth access token'));
+		}
 		if (err) return next(err);
 
 		res.status(202).json({status: 202, content: 'User created'});
@@ -672,11 +683,11 @@ router.post('/register-:s', function(req, res, next) {
  *
  */
 router.get('/confirm', function(req, res, next) {
-	var username = req.query.username;
-	var hash = req.query.hash;
-	var appId = req.query.app_id;
+	var username = req.body.username;
+	var hash = req.body.hash;
+	var appId = req.body.app_id;
 	var user = null;
-	var redirectUrl = req.query.redirect_url;
+	var redirectUrl = req.body.redirect_url;
 
 	async.series([
 		function(callback) {
@@ -788,7 +799,7 @@ router.get('/me', function(req, res, next) {
  *
  */
 router.get('/get', function(req, res, next) {
-	Models.User({id: req.query.user_id}, req._telepat.applicationId, function(err, result) {
+	Models.User({id: req.body.user_id}, req._telepat.applicationId, function(err, result) {
 		if (err && err.status == 404) {
 			return next(new Models.TelepatError(Models.TelepatError.errors.UserNotFound));
 		}
@@ -983,11 +994,14 @@ router.post('/update', function(req, res, next) {
 			})], 'aggregation', function(err) {
 				if (err)
 					return next(err);
-
+					
 				res.status(202).json({status: 202, content: "User updated"});
 			});
+
+
 		});
 	});
+	
 });
 
 /**
@@ -1022,6 +1036,7 @@ router.delete('/delete', function(req, res, next) {
 
 		res.status(202).json({status: 202, content: "User deleted"});
 	});
+
 });
 
 /**
@@ -1097,7 +1112,6 @@ router.post('/request_password_reset', function(req, res, next) {
 				messageContent = 'Password reset request from the "'+Models.Application.loadedAppModels[appId].name+
 				'" app. Click this URL to reset password: <a href="'+redirectUrl+'">Reset</a>';
 			}
-
 			sendEmail(apiKey,
 				{
 					email: Models.Application.loadedAppModels[appId].from_email,
