@@ -15,7 +15,7 @@ env:
   - KAFKA_ADVERTISED_HOST_NAME: 127.0.0.1
   - CODECLIMATE_REPO_TOKEN: 7c04f55c7ed08e2c694492e9b39cd73e5cc9bedce02d0a372f3101dc598dcfaa
 before_install:
-  - curl -O https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-1.7.2.deb && sudo dpkg -i --force-confnew elasticsearch-1.7.0.deb && sudo service elasticsearch restart
+  - curl -O https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-1.7.2.deb && sudo dpkg -i --force-confnew elasticsearch-1.7.2.deb && sudo service elasticsearch restart
   - sleep 5
   - npm install -g telepat-cli
   - npm install -g forever
@@ -44,10 +44,3 @@ after_script:
 node_js:
   - "0.10"
   - "0.12"
-curl -XPOST 'localhost:9200/twitter/tweet/?pretty' -H 'Content-Type: application/json' -d'
-{
-    "user" : "kimchy",
-    "post_date" : "2009-11-15T14:12:12",
-    "message" : "trying out Elasticsearch"
-}
-'
