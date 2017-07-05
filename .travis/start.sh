@@ -15,6 +15,12 @@ sed -i 's/hostname/localhost/' config.json
 sed -i 's/10\.0\.0\../localhost/' config.json
 sed -i 's/telepat/guest/' config.json
 sed -i 's/\"password\": \"password\"/\"password\": \"guest\"/' config.json
+sed -i 's/client_id\": \"\"/client_id\": \"302877690161802\"/' config.json
+sed -i 's/client_secret\": \"\"/client_secret\": \"61beaa81f3626984c8b352e3e7270625\"/' config.json
+sed -i 's/consumer_key\": \"\"/consumer_key\": \"YyrrdUTNHdAldxuUUoZkImiIH\"/' config.json
+sed -i 's/consumer_secret\": \"\"/consumer_secret\": \"OVaFe401Zo9Dc2j2ckrIWZCevDti3wB7eyZJD8WHbnw5cmGndE\"/' config.json
+sed -i 's/api_key\": \"\"/api_key\": \"5a2270a08cc1e616cc8ee4fc664fc785-us16\"/' config.json
+
 cp config.json telepat-worker/config.json
 cat config.json
 forever start --append --uid "aggregation" -o telepat-worker/aggregation.out -e telepat-worker/aggregation.err telepat-worker/index.js -t aggregation -i 0
