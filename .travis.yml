@@ -22,6 +22,8 @@ before_install:
   - npm install -g codeclimate-test-reporter
   - sleep 5
 before_script:
+  - telepat set elasticsearch_host localhost
+  - telepat set elasticsearch_port 9200
   - telepat configure elasticsearch
   - 'echo "script.disable_dynamic: false" | sudo tee -a /etc/elasticsearch/elasticsearch.yml'
   - 'echo "script.groovy.sandbox.enable: true" | sudo tee -a /etc/elasticsearch/elasticsearch.yml'
