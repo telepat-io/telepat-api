@@ -1,3 +1,17 @@
+# 0.4.4
+
+* Object ACL middleware should check the jwt token when user model is used
+* Email is not required anymore to make a fb account using the FID instead as a username
+* Added support for sendgrid emails
+* Account confirmation endpoint will redirect the user now to a specified address
+* Implemented email templates for password reset flow and for new user accounts confirmation
+* The endpoints with password reset flow now can accept a callback url from clients which will redirect them to that url in the response
+* Default API key added in case application is created without one. Thanks [dmitriz](https://github.com/dmitriz)
+* Fixed the unit tests
+* BUGFIX: `/admin/user/update` should correctly update a users password
+* BUGFIX: device/register should now create a new device if persistent udid is missing
+* BUGFIX: Fixed 500 error on `/object/count` when model is user
+
 # 0.4.3
 
 * Fixed `/user/update` and `/admin/user/update` and their notifications
