@@ -2,6 +2,7 @@ language: node_js
 services:
   - elasticsearch
   - redis
+  - -rabbitmq
 addons:
     code_climate:
         repo_token: 7c04f55c7ed08e2c694492e9b39cd73e5cc9bedce02d0a372f3101dc598dcfaa
@@ -15,17 +16,7 @@ env:
   - CODECLIMATE_REPO_TOKEN: 7c04f55c7ed08e2c694492e9b39cd73e5cc9bedce02d0a372f3101dc598dcfaa
 before_install:
   - curl -O https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-1.7.0.deb && sudo dpkg -i --force-confnew elasticsearch-1.7.0.deb && sudo service elasticsearch restart
-  - wget http://www.us.apache.org/dist/kafka/0.8.2.1/kafka_2.10-0.8.2.1.tgz -O kafka.tgz
-  - mkdir -p kafka && tar xzf kafka.tgz -C kafka --strip-components 1
-  - nohup bash -c "cd kafka && bin/zookeeper-server-start.sh config/zookeeper.properties &"
-  - nohup bash -c "cd kafka && bin/kafka-server-start.sh config/server.properties &"
   - sleep 5
-  - kafka/bin/kafka-topics.sh --create --partitions 1 --replication-factor 1 --topic aggregation --zookeeper localhost:2181
-  - kafka/bin/kafka-topics.sh --create --partitions 1 --replication-factor 1 --topic write --zookeeper localhost:2181
-  - kafka/bin/kafka-topics.sh --create --partitions 1 --replication-factor 1 --topic transport_manager --zookeeper localhost:2181
-  - kafka/bin/kafka-topics.sh --create --partitions 1 --replication-factor 1 --topic android_transport --zookeeper localhost:2181
-  - kafka/bin/kafka-topics.sh --create --partitions 1 --replication-factor 1 --topic ios_transport --zookeeper localhost:2181
-  - kafka/bin/kafka-topics.sh --create --partitions 1 --replication-factor 1 --topic sockets_transport --zookeeper localhost:2181
   - npm install -g telepat-cli
   - npm install -g forever
   - npm install -g codeclimate-test-reporter
