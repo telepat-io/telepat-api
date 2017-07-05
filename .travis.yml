@@ -22,6 +22,11 @@ before_install:
   - npm install -g codeclimate-test-reporter
   - sleep 5
 before_script:
+  - sudo chown -R elasticsearch:elasticsearch /usr/share/elasticsearch/config/*
+  - chmod o+x /usr
+  - chmod o+x /usr/share
+  - chmod o+x /usr/share/elasticsearch
+  - chmod o+x /usr/share/elasticsearch/config/
   - telepat set elasticsearch_host localhost
   - telepat set elasticsearch_port 9200
   - telepat configure elasticsearch
