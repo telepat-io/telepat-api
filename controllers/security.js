@@ -102,7 +102,9 @@ security.tokenValidation = function(req, res, next) {
 			return next(new Models.TelepatError(Models.TelepatError.errors.ExpiredAuthorizationToken));
 		} else if (err && err.message == 'jwt malformed') {
 			return next(new Models.TelepatError(Models.TelepatError.errors.MalformedAuthorizationToken));
-		} else
+		} else if (err && err.message == 'invalid signature' ) {
+			return next(new Models.TelepatError(Models.TelepatError.errors.MalformedAuthorizationToken));
+		}
 			return next(err);
 	});
 };
@@ -130,7 +132,9 @@ function verifyAndSetUser(req, next, acl) {
 				return next(new Models.TelepatError(Models.TelepatError.errors.ExpiredAuthorizationToken));
 			} else if (err.message == 'jwt malformed') {
 				return next(new Models.TelepatError(Models.TelepatError.errors.MalformedAuthorizationToken));
-			}
+			} else if(err && err.message == 'invalid signature') {
+				return next(new Models.TelepatError(Models.TelepatError.errors.MalformedAuthorizationToken));
+			} 
 			else return next(err);
 		}
 

@@ -5,7 +5,8 @@ var router = express.Router();
 
 var security = require('../security');
 var Models = require('telepat-models');
-
+var microtime = require('microtime-nodejs')
+var async = require('async');
 router.use('/all',
 	security.tokenValidation,
 	security.applicationIdValidation,
@@ -95,10 +96,18 @@ router.post('/update', function(req, res, next) {
 			next(err);
 		} else {
 			Models.Application.loadedAppModels[appId].schema = schema;
-			res.status(200).json({status: 200, content: 'Schema updated'});
+			app.messagingClient.sendSystemMessages('_all', 'update_app', [{appId: appId, appObject: Models.Application.loadedAppModels[appId]}], function(err) {
+				if (err) {
+					return Models.TelepatLogger.error('There was an error trying to send system message: ' + err.message);
+				}
+				res.status(200).json({status: 200, content: 'Schema updated'});
+			});
+
+
 		}
 	});
 });
+
 
 router.use('/remove_model',
 	security.tokenValidation,

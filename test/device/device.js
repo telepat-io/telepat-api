@@ -276,3 +276,7 @@ it('3.8 should return an error response to indicate device NOT successfully regi
 			done();
 		});
 });
+it ('3.9 should return an error response to indicate device was updated even if there is another device same uuid ', function(done) {
+	//113 -> 126
+	done();
+});

@@ -14,8 +14,9 @@ var token;
 var appID;
 var userID;
 
-var userEmail = "user"+ Math.round(Math.random()*1000000)+1000 +"@example.com";
+var userEmail = "user"+ Math.round(Math.random()*1000000)+1000 +"@example1.com";
 var userEmail2 = "user"+ Math.round(Math.random()*1000000)+1000 +"@example.com";
+var userEmail3 = "user"+ Math.round(Math.random()*1000000)+1000 +"@example.com";
 var adminEmail = 'admin'+Math.round(Math.random()*1000000)+'@example.com';
 var adminPassword = '5f4dcc3b5aa765d61d8327deb882cf99';
 
@@ -145,9 +146,8 @@ it('5.3 should return an error response to indicate that the user has NOT logged
 		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 		.send(clientrequest)
 		.end(function(err, res) {
-
-			res.statusCode.should.be.equal(400);
-			res.body.code.should.be.equal('040');
+			res.statusCode.should.be.equal(401);
+			res.body.code.should.be.equal('014');
 			done();
 		});
 });
@@ -161,7 +161,6 @@ it('5.4 should return a success response to indicate that the user has logged in
 		password: "secure_password1337",
 		name: "John Smith"
 	};
-
 	request(url)
 		.post('/user/register-username')
 		.set('Content-type','application/json')
@@ -170,6 +169,7 @@ it('5.4 should return a success response to indicate that the user has logged in
 		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 		.send(clientrequest)
 		.end(function(err, res) {
+		
 			setTimeout(function() {
 				request(url)
 					.post('/user/login_password')
@@ -179,7 +179,6 @@ it('5.4 should return a success response to indicate that the user has logged in
 					.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 					.send(clientrequest)
 					.end(function(err, res) {
-
 						token = res.body.content.token;
 						userID = res.body.content.user.id;
 						authValue = 'Bearer ' + token;
@@ -195,21 +194,21 @@ it('5.5 should return a success response to indicate that the user has logged in
 
 	this.timeout(100*DELAY);
 
+
 	request('https://graph.facebook.com')
 		.get('/oauth/access_token?client_id=1086083914753251&client_secret=40f626ca66e4472e0d11c22f048e9ea8&grant_type=client_credentials')
 		.send()
 		.end(function(err, res) {
-
+			var text = JSON.parse(res.text);
 			request('https://graph.facebook.com')
-				.get('/v1.0/1086083914753251/accounts/test-users?access_token='+res.text.replace('access_token=', ''))
+				.get('/v1.0/1086083914753251/accounts/test-users?access_token='+ text.access_token)
 				.send()
 				.end(function(err, res) {
-
 					var data = JSON.parse(res.text);
 					var clientrequest = {
-						access_token: data.data[0].access_token
-					};
-
+						access_token: data.data[0].access_token,
+						
+					}
 					request(url)
 						.post('/user/register-facebook')
 						.set('Content-type','application/json')
@@ -218,18 +217,20 @@ it('5.5 should return a success response to indicate that the user has logged in
 						.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 						.send(clientrequest)
 						.end(function(err, res) {
-
+							var subclientrequest = {
+								access_token: clientrequest.access_token
+		
+							}
 							setTimeout(function() {
-
 								request(url)
 									.post('/user/login-facebook')
 									.set('Content-type','application/json')
 									.set('X-BLGREQ-SIGN', appIDsha256 )
 									.set('X-BLGREQ-APPID', appID )
 									.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
-									.send(clientrequest)
+									.send(subclientrequest)
 									.end(function(err, res) {
-
+										
 										res.statusCode.should.be.equal(200);
 										done();
 									});
@@ -302,7 +303,6 @@ it('5.7 should return an error response to indicate that the user info was NOT r
 							.set('Authorization', authValue3)
 							.send(subclientrequest)
 							.end(function(err, res) {
-
 								setTimeout(function(){
 
 									request(url)
@@ -432,8 +432,8 @@ it('5.12 should return a success response to indicate that the user was updated'
 		patches : [
 			{
 				op: "replace",
-				path: "user/"+userID+"/name",
-				value: "new value"
+				path: "user/"+userID+"/token",
+				value: "token"
 			}
 		]
 	};
@@ -580,29 +580,6 @@ it('5.17 should return a success response to indicate that the user password was
 		});
 });
 
-it('5.18 should return a success response to indicate that the user was updated immediate', function(done) {
-
-	this.timeout(100*DELAY);
-
-	var clientrequest = {
-		name: "new name",
-		password: "new pass"
-	};
-
-	request(url)
-		.post('/user/update_immediate')
-		.set('Content-type','application/json')
-		.set('X-BLGREQ-SIGN', appIDsha256 )
-		.set('X-BLGREQ-APPID', appID )
-		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
-		.set('Authorization', authValue )
-		.send(clientrequest)
-		.end(function(err, res) {
-
-			res.statusCode.should.be.equal(200);
-			done();
-		});
-});
 
 it('5.19 should return a success response to indicate that the token was updated', function(done) {
 
@@ -728,7 +705,6 @@ it('5.27 should return a success response to indicate that the user logged out',
 			done();
 		});
 });
-
 it('5.28 should return a success response to indicate that the user has registered', function(done) {
 
 	this.timeout(100*DELAY);
@@ -758,7 +734,7 @@ it('5.28 should return a success response to indicate that the user has register
 it('5.29 should return a success response to indicate that the user has NOT registered because user is already registered', function(done) {
 
 	var clientrequest = {
-		username: userEmail,
+		username: userEmail2,
 		password: "secure_password1337",
 		name: "John Smith"
 	};
@@ -771,7 +747,6 @@ it('5.29 should return a success response to indicate that the user has NOT regi
 		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 		.send(clientrequest)
 		.end(function(err, res) {
-
 			res.body.code.should.be.equal('029');
 			res.statusCode.should.be.equal(409);
 			done();
@@ -815,10 +790,9 @@ it('5.31 should return a success response to indicate that the user was deleted'
 		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 		.send(clientrequest)
 		.end(function(err, res) {
-
-			token = res.body.content.token;
-			userID = res.body.content.user.id;
-			authValue = 'Bearer ' + token;
+			var token = res.body.content.token;
+			var userID = res.body.content.user.id;
+			var authValue = 'Bearer ' + token;
 			var subclientrequest = {
 				id : userID,
 				username : userEmail
@@ -838,3 +812,454 @@ it('5.31 should return a success response to indicate that the user was deleted'
 				});
 		});
 });
+it('5.32 should return an error response to indicate that the user has NOT logged via Twitter because request body is empty', function(done) {
+	
+	this.timeout(100 * DELAY);
+	
+	request(url)
+		.post('/user/login-twitter')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256 )
+		.set('X-BLGREQ-APPID', appID )
+		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+		.send()
+		.end(function(err, res) {
+
+			res.body.code.should.be.equal('005');
+			res.statusCode.should.be.equal(400);
+			done();
+		});
+
+
+});
+
+it('5.33 should return an error response to indicate that the user has NOT logged via Twitter because of missing oauth token', function(done) {
+	
+	
+	this.timeout(100 * DELAY);
+	
+	var clientrequest = {
+		something_else : "invalid_token"
+	}
+
+	request(url)
+		.post('/user/login-twitter')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256 )
+		.set('X-BLGREQ-APPID', appID )
+		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+		.send(clientrequest)
+		.end(function(err, res) {
+
+			res.body.code.should.be.equal('004');
+			res.statusCode.should.be.equal(400);
+			done();
+		});
+	
+});
+
+it('5.34 should return an error response to indicate that the user has NOT logged via Twitter because of missing oauth token secret', function(done) {
+	
+	
+	this.timeout(100 * DELAY);
+	
+	var clientrequest = {
+		oauth_token : "valid token",
+	}
+
+	request(url)
+		.post('/user/login-twitter')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256 )
+		.set('X-BLGREQ-APPID', appID )
+		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+		.send(clientrequest)
+		.end(function(err, res) {
+
+			res.body.code.should.be.equal('004');
+			res.statusCode.should.be.equal(400);
+			done();
+		});
+	
+});
+
+it('5.35 should return an error response to indicate that the user has NOT logged via Twitter because of wrong creditentials', function(done) {
+	
+	this.timeout(100*DELAY);
+
+	var clientrequest = {
+		oauth_token: "invalidToken",
+		oauth_token_secret: "invalidToken"
+	};
+
+	request(url)
+		.post('/user/login-twitter')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256 )
+		.set('X-BLGREQ-APPID', appID )
+		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+		.send(clientrequest)
+		.end(function(err, res) {
+	
+			res.statusCode.should.be.equal(401);
+			res.body.code.should.be.equal('014');
+			done();
+		});;
+
+});
+
+var clientrequest2 = {
+		username: userEmail3,
+		email: userEmail3,
+		password: "secure_password1337",
+		name: "John Smith"
+};
+
+it('5.36 should return a success response to indicate that the user metadata was updated', function(done) {
+
+	this.timeout(100*DELAY);
+
+
+	request(url)
+		.post('/user/register-username')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256 )
+		.set('X-BLGREQ-APPID', appID )
+		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+		.send(clientrequest2)
+		.end(function(err, res) {
+
+			setTimeout(function() {
+				request(url)
+					.post('/user/login_password')
+					.set('Content-type','application/json')
+					.set('X-BLGREQ-SIGN', appIDsha256 )
+					.set('X-BLGREQ-APPID', appID )
+					.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+					.send(clientrequest2)
+					.end(function(err, res) {
+						token = res.body.content.token;
+						userID = res.body.content.user.id;
+						authValue = 'Bearer ' + token;
+			
+						request(url)
+							.get('/user/metadata')
+							.set('Content-type','application/json')
+							.set('X-BLGREQ-SIGN', appIDsha256 )
+							.set('X-BLGREQ-APPID', appID )
+							.set('Authorization', authValue)
+							.send()
+							.end(function(err, res){
+								
+								var metadataId = res.body.content.id;
+								var subclientrequest = {
+									patches : [
+										{
+											op: "replace",
+											path: "user_metadata/"+metadataId+"/name",
+											value: "Gicu"
+										}
+									],
+								
+								};
+
+								request(url)
+									.post('/user/update_metadata')
+									.set('Content-type','application/json')
+									.set('X-BLGREQ-SIGN', appIDsha256 )
+									.set('X-BLGREQ-APPID', appID )
+									.set('Authorization', authValue)
+									.send(subclientrequest)
+									.end(function(err, res){
+										
+										res.body.status.should.be.equal(200);
+
+										done();
+									});
+									
+							});
+
+						
+					// });
+				});
+			},20*DELAY);
+
+	});
+});
+
+it('5.37 should return an error response to indicate that the user metadata was NOT updated because of missing required field', function(done) {
+
+	this.timeout(100*DELAY);
+
+	request(url)
+		.post('/user/update_metadata')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256 )
+		.set('X-BLGREQ-APPID', appID )
+		.set('Authorization', authValue)
+		.send()
+		.end(function(err, res){	
+			res.body.status.should.be.equal(400);
+			res.body.code.should.be.equal('004');
+			done();
+		});
+									
+});
+ 
+ it('5.38 should return a success response to indicate that a password reset email was sent', function(done) {
+
+	this.timeout(10000*DELAY);
+	var clientrequest = {
+		username: userEmail3,
+		link: "link"
+	}
+	request(url)
+		.post('/user/request_password_reset')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256 )
+		.set('X-BLGREQ-APPID', appID )
+		.send(clientrequest)
+		.end(function(err, res){
+			res.body.status.should.be.equal(200);
+			done();
+		});
+
+});
+ it('5.39 should return an error response to indicate that a password reset email was NOT sent because user not found', function(done) {
+
+	this.timeout(10000*DELAY);
+	var clientrequest = {
+		username: userEmail2,
+		link: "link"
+	}
+	request(url)
+		.post('/user/request_password_reset')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256 )
+		.set('X-BLGREQ-APPID', appID )
+		.send(clientrequest)
+		.end(function(err, res){	
+			res.body.status.should.be.equal(404);
+			res.body.code.should.be.equal('023');
+			done();
+		});
+
+});
+ it('5.40 should return an error response to indicate that a password reset email was NOT sent because user has no email address', function(done) {
+
+	this.timeout(100*DELAY);
+	var clientrequest = {
+		username: userEmail,
+		link: "link"
+	}
+	request(url)
+		.post('/user/request_password_reset')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256 )
+		.set('X-BLGREQ-APPID', appID )
+		.send(clientrequest)
+		.end(function(err, res){	
+
+			res.body.status.should.be.equal(400);
+			res.body.code.should.be.equal('039');
+			done();
+		});
+
+});
+it('5.41 should return a sucess response to indicate that an user was registered in via Twitter', function(done){
+
+	this.timeout(100*DELAY);
+
+	var clientrequest = {
+		oauth_token: "863538561676652544-LiBPkd2t4R2aF7zUHAQ4DbN28Ras3jP", 
+		oauth_token_secret: "sFZcTBOyn9LoexCig7XEtBI5Ouchx8pZ1DMyAe6jwZGLR" 
+	}
+
+	request(url)
+		.post('/user/register-twitter')	
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256 )
+		.set('X-BLGREQ-APPID', appID )
+		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+		.send(clientrequest)
+		.end(function(err, res) {
+			console.log(res);
+			res.statusCode.should.be.equal(202);
+			done();
+		});
+});
+
+
+it('5.42 should return a success response to indicate that an user was logged in via Twitter', function(done){
+	
+	this.timeout(100*DELAY);
+
+	var clientrequest = {
+		oauth_token: "863538561676652544-LiBPkd2t4R2aF7zUHAQ4DbN28Ras3jP", 
+		oauth_token_secret: "sFZcTBOyn9LoexCig7XEtBI5Ouchx8pZ1DMyAe6jwZGLR" 
+	}
+
+	request(url)
+		.post('/user/login-twitter')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256 )
+		.set('X-BLGREQ-APPID', appID )
+		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+		.send(clientrequest)
+		.end(function(err, res){
+		
+			var twitterToken = res.body.content.token;
+			var clientrequest = {
+				id: res.body.content.user.id
+			}
+			res.statusCode.should.be.equal(200);
+			done();
+
+		});
+
+});
+
+it('5.43 should return a success response to indicate that a password was reseted', function(done) {
+
+	this.timeout(100*DELAY);
+
+
+	var clientrequest = {
+		patches : [
+			{
+				op: "replace",
+				path: "user/"+userID+"/password_reset_token",
+				value: "token"
+			}
+		]
+	};
+	request(url)
+		.post('/user/update')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256 )
+		.set('X-BLGREQ-APPID', appID )
+		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+		.set('Authorization', authValue )
+		.send(clientrequest)
+		.end(function(err, res) {
+
+			var subclientrequest = {
+				token: "token", 
+				user_id: userID,
+				password: "new_password"
+			}
+			setTimeout(function() {
+				request(url)
+					.post('/user/password_reset')
+					.set('Content-type','application/json')
+					.set('X-BLGREQ-SIGN', appIDsha256 )
+					.set('X-BLGREQ-APPID', appID )
+					.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+					.send(subclientrequest)
+					.end(function(err, res) {
+
+						res.statusCode.should.be.equal(200);
+						done();
+					});
+			}, 20*DELAY);
+
+		});
+
+});
+
+it('5.44 should return a success response to indicate that informations about another user where retirved', function(done){
+
+	this.timeout(100*DELAY);
+
+	var clientrequest = {
+		user_id: userID
+	}
+	request(url)
+		.get('/user/get')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256 )
+		.set('X-BLGREQ-APPID', appID )
+		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28')
+		.set('Authorization', authValue)
+		.send(clientrequest)
+		.end(function(err, res){
+			res.statusCode.should.be.equal(200);
+			done();
+		});
+
+});
+
+it('5.45 should return a success response to indicate that informations about another user where NOT retirved because user was not found', function(done){
+
+	this.timeout(100*DELAY);
+
+	var clientrequest = {
+		user_id: userID + '2131'
+	}
+	request(url)
+		.get('/user/get')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256 )
+		.set('X-BLGREQ-APPID', appID )
+		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28')
+		.set('Authorization', authValue)
+		.send(clientrequest)
+		.end(function(err, res){
+		
+			res.statusCode.should.be.equal(404);
+			res.body.code.should.be.equal('023');
+			done();
+		});
+
+});
+
+it('5.46 should return an success response to indicate that an account was confirmed', function(done){
+
+	this.timeout(100*DELAY);
+	console.log('used user id is ', userID);
+	var clientrequest = {
+		patches : [
+			{
+				op: "replace",
+				path: "user/"+userID+"/confirmationHash",
+				value: "hash"
+			},
+			{
+				op: "replace",
+				path: "user/"+userID+"/confirmed" ,
+				value: "false"
+			}
+		]
+	};
+
+	request(url)
+		.post('/user/update')
+		.set('Content-type','application/json')
+		.set('X-BLGREQ-SIGN', appIDsha256 )
+		.set('X-BLGREQ-APPID', appID )
+		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
+		.set('Authorization', authValue )
+		.send(clientrequest)
+		.end(function(err, res) {
+
+			var clientrequest = {
+				hash: "hash",
+				username: userEmail3, 
+				app_id: appID
+			}
+			setTimeout(function() {
+				request(url)
+					.get('/user/confirm')
+					.set('Content-type','application/json')
+					.send(clientrequest)
+					.end(function(err, res) {
+
+						res.statusCode.should.be.equal(200);
+						done();
+					});
+			}, 40*DELAY);
+
+		});
+
+});
+
