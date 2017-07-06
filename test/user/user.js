@@ -1083,7 +1083,6 @@ it('5.41 should return a sucess response to indicate that an user was registered
 		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28' )
 		.send(clientrequest)
 		.end(function(err, res) {
-			console.log(res);
 			res.statusCode.should.be.equal(202);
 			done();
 		});
@@ -1216,7 +1215,6 @@ it('5.45 should return a success response to indicate that informations about an
 it('5.46 should return an success response to indicate that an account was confirmed', function(done){
 
 	this.timeout(100*DELAY);
-	console.log('used user id is ', userID);
 	var clientrequest = {
 		patches : [
 			{

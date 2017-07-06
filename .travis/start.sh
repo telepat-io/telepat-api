@@ -20,9 +20,7 @@ sed -i 's/client_secret\": \"\"/client_secret\": \"61beaa81f3626984c8b352e3e7270
 sed -i 's/consumer_key\": \"\"/consumer_key\": \"YyrrdUTNHdAldxuUUoZkImiIH\"/' config.json
 sed -i 's/consumer_secret\": \"\"/consumer_secret\": \"OVaFe401Zo9Dc2j2ckrIWZCevDti3wB7eyZJD8WHbnw5cmGndE\"/' config.json
 sed -i 's/api_key\": \"\"/api_key\": \"5a2270a08cc1e616cc8ee4fc664fc785-us16\"/' config.json
-
 cp config.json telepat-worker/config.json
-cat config.json
 forever start --append --uid "aggregation" -o telepat-worker/aggregation.out -e telepat-worker/aggregation.err telepat-worker/index.js -t aggregation -i 0
 forever start --append --uid "write" -o telepat-worker/write.out -e telepat-worker/write.err telepat-worker/index.js -t write -i 0
 forever start --append --uid "transport_manager" -o telepat-worker/transport_manager.out -e telepat-worker/transport_manager.err telepat-worker/index.js -t transport_manager -i 0
