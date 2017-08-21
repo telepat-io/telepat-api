@@ -21,17 +21,17 @@ describe('API', function () {
 
 		this.timeout(15000);
 
-		app = require('../app',done);
+		app = require('../app', done);
 		var http = require('http');
 		var port = normalizePort(process.env.PORT || '3000');
 		app.set('port', port);
 		server = http.createServer(app);
 		server.listen(port);
-		server.on('listening', function() {
+		server.on('listening', function () {
 
 
 			setTimeout(done, 3000);
-			
+
 			//done();
 		});
 	});

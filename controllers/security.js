@@ -1,9 +1,9 @@
 var jwt = require('jsonwebtoken');
 var crypto = require('crypto');
-var Models = require('telepat-models');
 var expressJwt = require('express-jwt');
 var bcrypt = require('bcrypt');
 var async = require('async');
+var tlib = require('telepat-models');
 
 ACL_UNAUTHENTICATED = 1;
 ACL_AUTHENTICATED = 2;
@@ -19,22 +19,22 @@ security.createToken = function (data) {
 };
 
 security.encryptPassword = function(password, callback) {
-	bcrypt.hash(password, app.telepatConfig.config.password_salt, callback);
+	bcrypt.hash(password, tlib.config.password_salt, callback);
 };
 
 security.contentTypeValidation = function(req, res, next) {
 	if (req.get('Content-Type') && req.get('Content-Type').substring(0, 16) !== 'application/json')
-		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidContentType));
+		return next(tlib.error(tlib.errors.InvalidContentType));
 	else next();
 };
 
 security.apiKeyValidation = function(req, res, next) {
 	if (req.get('X-BLGREQ-SIGN') === undefined)
-		return next(new Models.TelepatError(Models.TelepatError.errors.ApiKeySignatureMissing));
+		return next(tlib.error(tlib.errors.ApiKeySignatureMissing));
 	else {
 		var clientHash = req.get('X-BLGREQ-SIGN').toLowerCase();
 		var serverHash = null;
-		var apiKeys = Models.Application.loadedAppModels[req.get('X-BLGREQ-APPID')].keys;
+		var apiKeys = tlib.apps[req.get('X-BLGREQ-APPID')].keys;
 
 		async.detect(apiKeys, function(item ,cb) {
 			if (item)
@@ -45,14 +45,14 @@ security.apiKeyValidation = function(req, res, next) {
 				next();
 			}
 			else
-				return next(new Models.TelepatError(Models.TelepatError.errors.InvalidApikey));
+				return next(tlib.error(tlib.errors.InvalidApikey));
 		});
 	}
 };
 
 security.deviceIdValidation = function(req, res, next) {
 	if (req.get('X-BLGREQ-UDID') === undefined)
-		return next(new Models.TelepatError(Models.TelepatError.errors.DeviceIdMissing));
+		return next(tlib.error(tlib.errors.DeviceIdMissing));
 	else {
 		if (req._telepat)
 			req._telepat.device_id = req.get('X-BLGREQ-UDID');
@@ -64,10 +64,10 @@ security.deviceIdValidation = function(req, res, next) {
 
 security.applicationIdValidation = function(req, res, next) {
 	if (!req.get('X-BLGREQ-APPID'))
-		return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationIdMissing));
+		return next(tlib.error(tlib.errors.ApplicationIdMissing));
 	else {
-		if (!Models.Application.loadedAppModels[req.get('X-BLGREQ-APPID')]) {
-			return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationNotFound,
+		if (!tlib.apps[req.get('X-BLGREQ-APPID')]) {
+			return next(tlib.error(tlib.errors.ApplicationNotFound,
 				[req.get('X-BLGREQ-APPID')]));
 		}
 
@@ -75,7 +75,7 @@ security.applicationIdValidation = function(req, res, next) {
 			req._telepat.applicationId = req.get('X-BLGREQ-APPID');
 		else
 			req._telepat = {applicationId: req.get('X-BLGREQ-APPID')};
-
+	
 		next();
 	}
 };
@@ -94,16 +94,19 @@ security.corsValidation = function(req, res, next) {
 };
 
 security.tokenValidation = function(req, res, next) {
-	if (!req.headers.authorization)
-		return next(new Models.TelepatError(Models.TelepatError.errors.AuthorizationMissing));
+	if (!req.headers.authorization) {
+		
+		let x = tlib.error(tlib.errors.AuthorizationMissing);
+		return next(tlib.error(tlib.errors.AuthorizationMissing));
+	}
 
 	return (expressJwt({secret: security.authSecret}))(req, res, function(err) {
 		if (err && err.message == 'jwt expired')	{
-			return next(new Models.TelepatError(Models.TelepatError.errors.ExpiredAuthorizationToken));
+			return next(tlib.error(tlib.errors.ExpiredAuthorizationToken));
 		} else if (err && err.message == 'jwt malformed') {
-			return next(new Models.TelepatError(Models.TelepatError.errors.MalformedAuthorizationToken));
+			return next(tlib.error(tlib.errors.MalformedAuthorizationToken));
 		} else if (err && err.message == 'invalid signature' ) {
-			return next(new Models.TelepatError(Models.TelepatError.errors.MalformedAuthorizationToken));
+			return next(tlib.error(tlib.errors.MalformedAuthorizationToken));
 		}
 			return next(err);
 	});
@@ -115,8 +118,8 @@ security.adminAppValidation = function (req, res, next) {
 	if (!req.user)
 		return next();
 
-	if (Models.Application.loadedAppModels[appId].admins.indexOf(req.user.id) === -1) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationForbidden));
+	if (tlib.apps[appId].admins.indexOf(req.user.id) === -1) {
+		return next(tlib.error(tlib.errors.ApplicationForbidden));
 	}
 
 	next();
@@ -129,18 +132,18 @@ function verifyAndSetUser(req, next, acl) {
 	jwt.verify(authToken, security.authSecret, function (err, decoded) {
 		if (err) {
 			if (err.message == 'jwt expired')	{
-				return next(new Models.TelepatError(Models.TelepatError.errors.ExpiredAuthorizationToken));
+				return next(tlib.error(tlib.errors.ExpiredAuthorizationToken));
 			} else if (err.message == 'jwt malformed') {
-				return next(new Models.TelepatError(Models.TelepatError.errors.MalformedAuthorizationToken));
+				return next(tlib.error(tlib.errors.MalformedAuthorizationToken));
 			} else if(err && err.message == 'invalid signature') {
-				return next(new Models.TelepatError(Models.TelepatError.errors.MalformedAuthorizationToken));
+				return next(tlib.error(tlib.errors.MalformedAuthorizationToken));
 			} 
 			else return next(err);
 		}
 
 		if (acl) {
 			if ((!(acl & ACL_UNAUTHENTICATED)) && (!(acl & ACL_AUTHENTICATED)) &&  (acl & ACL_ADMIN) && (!decoded.isAdmin) ) {
-				return next(new Models.TelepatError(Models.TelepatError.errors.OperationNotAllowed));
+				return next(tlib.error(tlib.errors.OperationNotAllowed));
 			}
 		}
 
@@ -153,7 +156,7 @@ function verifyAndSetUser(req, next, acl) {
 security.objectACL = function (accessControl) {
 	return function(req, res, next) {
 		if (!req.body || !Object.getOwnPropertyNames(req.body).length) {
-			return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
+			return next(tlib.error(tlib.errors.RequestBodyEmpty));
 		}
 
 		var mdl = null;
@@ -163,7 +166,7 @@ security.objectACL = function (accessControl) {
 		else if (req.body.channel && req.body.channel.model)
 			mdl = req.body.channel.model;
 		else
-			return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['model']));
+			return next(tlib.error(tlib.errors.MissingRequiredField, ['model']));
 
 		if (['context', 'application'].indexOf(mdl) !== -1)
 			return next();
@@ -171,22 +174,22 @@ security.objectACL = function (accessControl) {
 			return verifyAndSetUser(req, next);
 		}
 
-		if (!Models.Application.loadedAppModels[req._telepat.applicationId].schema) {
-			return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationHasNoSchema));
+		if (!tlib.apps[req._telepat.applicationId].schema) {
+			return next(tlib.error(tlib.errors.ApplicationHasNoSchema));
 		}
 
-		if (!Models.Application.loadedAppModels[req._telepat.applicationId].schema[mdl]) {
-			return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationSchemaModelNotFound,
+		if (!tlib.apps[req._telepat.applicationId].schema[mdl]) {
+			return next(tlib.error(tlib.errors.ApplicationSchemaModelNotFound,
 				[req._telepat.applicationId, mdl]));
 		}
 
-		var acl = Models.Application.loadedAppModels[req._telepat.applicationId].schema[mdl][accessControl];
+		var acl = tlib.apps[req._telepat.applicationId].schema[mdl][accessControl];
 
 		if (!req.headers.authorization && !(acl & ACL_UNAUTHENTICATED))
-			return next(new Models.TelepatError(Models.TelepatError.errors.AuthorizationMissing));
+			return next(tlib.error(tlib.errors.AuthorizationMissing));
 		else if (req.body.model || (req.body.channel && req.body.channel.model)) {
 			if (!req.headers && (acl & ACL_AUTHOR)) {
-				return next(Models.TelepatError(Models.TelepatError.errors.OperationNotAllowed));
+				return next(tlib.errors(tlib.errors.OperationNotAllowed));
 			} else if (!req.headers.authorization && acl & ACL_UNAUTHENTICATED) {
 				next();
 			} else if (acl & ACL_AUTHENTICATED || acl & ACL_ADMIN) {
@@ -194,17 +197,17 @@ security.objectACL = function (accessControl) {
 				var authToken = authHeaderParts[1];
 
 				if (!authToken) {
-					return next(new Models.TelepatError(Models.TelepatError.errors.InvalidAuthorization,
+					return next(tlib.error(tlib.errors.InvalidAuthorization,
 						['authorization header field is not formed well']));
 				} else {
 					return verifyAndSetUser(req, next, acl);
 				}
 			}
 			else {
-				return next(new Models.TelepatError(Models.TelepatError.errors.OperationNotAllowed));
+				return next(tlib.error(tlib.errors.OperationNotAllowed));
 			}
 		} else {
-			next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['model or channel.model']));
+			next(tlib.error(tlib.errors.MissingRequiredField, ['model or channel.model']));
 		}
 	}
 };

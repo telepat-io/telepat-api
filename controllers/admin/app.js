@@ -4,9 +4,8 @@ var express = require('express');
 var router = express.Router();
 
 var security = require('../security');
-var Models = require('telepat-models');
 var async = require('async');
-
+var tlib = require('telepat-models');
 var uuid = require('uuid');
 
 router.use('/add', security.tokenValidation);
@@ -50,26 +49,30 @@ router.use('/add', security.tokenValidation);
 router.post('/add', function (req, res, next) {
 	var newApp = req.body;
 
-	if (!newApp.name)
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['name']));
-	if(newApp.keys && newApp.keys.length != 0 && !Array.isArray(newApp.keys)) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidFieldValue,
-			['"keys" is not an array']));
+	if (!newApp.name) {
+		return next(tlib.error(tlib.errors.MissingRequiredField, ['name']));
+	}
+	if (newApp.keys && newApp.keys.length != 0 && !Array.isArray(newApp.keys)) {
+		return next(tlib.error(tlib.errors.MissingRequiredField, ['"keys" is not an array']));
 	} else if (!newApp.keys || newApp.keys.length == 0) {
 		newApp['keys'] = [uuid.v4()];
 	}
 
 	newApp['admins'] = [req.user.id];
-	Models.Application.create(newApp, function (err, res1) {
+	tlib.apps.new(newApp, function (err, res1) {
 		if (err)
 			next(err);
 		else {
-			app.messagingClient.sendSystemMessages('_all', 'update_app', [{appId: res1.id, appObject: res1}], function(err) {
+		
+			tlib.services.messagingClient.sendSystemMessages('_all', 'update_app', [{ appId: res1.id, appObject: tlib.apps[res1.id] }], function (err) {
 				if (err)
-					Models.TelepatLogger.error('There was an error trying to send system message: ' + err.message);
+					tlib.services.logger.error('There was an error trying to send system message: ' + err.message);
 			});
-			Models.Application.loadedAppModels[res1.id] = res1;
-			res.status(200).json({status: 200, content: res1});
+			if (!(res1 instanceof tlib.Application)) {
+				res1 = new tlib.Application(res1);
+			}
+			tlib.apps[res1.id] = res1;
+			res.status(200).json({ status: 200, content: res1.properties });
 		}
 	});
 });
@@ -108,28 +111,28 @@ router.delete('/remove', function (req, res, next) {
 	var appId = req.body.id;
 
 	if (!appId)
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['id']));
+		return next(tlib.error(tlib.errors.MissingRequiredFields, ['id']));
 
-	if (!Models.Application.loadedAppModels[appId]) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationNotFound,
+	if (!tlib.apps[appId]) {
+		return next(tlib.error(tlib.errors.ApplicationNotFound,
 			[appId]));
 	}
 
-	if (Models.Application.loadedAppModels[appId].admins.indexOf(req.user.id) === -1) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationForbidden));
+	if (tlib.apps[appId].admins.indexOf(req.user.id) === -1) {
+		return next(tlib.error(tlib.errors.ApplicationForbidden));
 	}
 
-	Models.Application.delete(appId, function (err, res1) {
+	tlib.apps[appId].delete(function (err, res1) {
 		if (err)
 			next(err);
 		else {
-			app.messagingClient.sendSystemMessages('_all', 'delete_app', [{id: appId}], function(err) {
+			tlib.services.messagingClient.sendSystemMessages('_all', 'delete_app', [{ id: appId }], function (err) {
 				if (err)
-					Models.TelepatLogger.error('There was an error trying to send system message: ' + err.message);
+					tlib.services.logger.error('There was an error trying to send system message: ' + err.message);
 			});
 
-			delete Models.Application.loadedAppModels[appId];
-			res.status(200).json({status: 200, content: 'App removed'});
+			delete tlib.apps[appId];
+			res.status(200).json({ status: 200, content: 'App removed' });
 		}
 	});
 });
@@ -177,54 +180,58 @@ router.use('/update',
  */
 router.post('/update', function (req, res, next) {
 	if (Object.getOwnPropertyNames(req.body).length === 0) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
+		return next(tlib.error(tlib.errors.RequestBodyEmpty));
 	} else if (!Array.isArray(req.body.patches)) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidFieldValue,
+		return next(tlib.error(tlib.errors.InvalidFieldValue,
 			['"patches" is not an array']));
 	} else if (req.body.patches.length == 0) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidFieldValue,
+		return next(tlib.error(tlib.errors.InvalidFieldValue,
 			['"patches" array is empty']));
 	} else {
 
 		var errors = false;
 		var appId = null;
 
-		req.body.patches.forEach(function(patch) {
+		req.body.patches.forEach(function (patch) {
 			if (!patch.path || errors)
 				return;
 
 			appId = patch.path.split('/')[1];
 
-			if (!appId)	{
+			if (!appId) {
 				errors = true;
-				return next(new Models.TelepatError(Models.TelepatError.errors.InvalidPatch, ['missing ID in path']));
+				return next(tlib.error(tlib.errors.InvalidPatch, ['missing ID in path']));
 			}
 
-			if (!Models.Application.loadedAppModels[appId]) {
-				return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationNotFound,
+			if (!tlib.apps[appId]) {
+				return next(tlib.error(tlib.errors.ApplicationNotFound,
 					[appId]));
 			}
 
-			if (Models.Application.loadedAppModels[appId].admins.indexOf(req.user.id) === -1) {
+			if (!tlib.apps[appId].admins && tlib.apps[appId].admins.indexOf(req.user.id) === -1) {
 				errors = true;
-				return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationForbidden));
+				return next(tlib.error(tlib.errors.ApplicationForbidden));
 			}
 		});
 
 		if (errors)
 			return;
 
-		Models.Application.update(appId, req.body.patches, function (err, result) {
+		tlib.apps[appId].update(req.body.patches, function (err, result) {
 			if (err)
 				return next(err);
 			else {
-				app.messagingClient.sendSystemMessages('_all', 'update_app', [{appId: result.id, appObject: result}], function(err) {
+				tlib.services.messagingClient.sendSystemMessages('_all', 'update_app', [{ appId: result.id, appObject: result }], function (err) {
 					if (err)
-						return Models.TelepatLogger.error('There was an error trying to send system message: ' + err.message);
+						return tlib.services.logger.error('There was an error trying to send system message: ' + err.message);
 				});
 
-				Models.Application.loadedAppModels[appId] = result;
-				res.status(200).json({status: 200, content: 'Updated'});
+				if (!(result instanceof tlib.Application)) {
+					result = new tlib.Application(result);
+				}
+
+				tlib.apps[appId] = result;
+				res.status(200).json({ status: 200, content: 'Updated' });
 			}
 		});
 	}
@@ -272,34 +279,39 @@ router.use('/authorize',
  * 		"message": "Application with ID $APPID does not exist."
  * 	}
  */
-router.post('/authorize', function(req, res, next) {
+router.post('/authorize', function (req, res, next) {
 	if (Object.getOwnPropertyNames(req.body).length === 0) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
+		return next(tlib.error(tlib.errors.RequestBodyEmpty));
 	} else if (!req.body.email) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['email']));
+		return next(tlib.error(tlib.errors.MissingRequiredField, ['email']));
 	}
 
 	var appId = req._telepat.applicationId;
 	var adminEmail = req.body.email;
 
 	async.waterfall([
-		function(callback) {
-			Models.Admin({email: adminEmail}, callback);
+		function (callback) {
+			tlib.admins.get({ email: adminEmail }, callback);
 		},
-		function(admin, callback) {
-			if (Models.Application.loadedAppModels[appId].admins.indexOf(admin.id) !== -1) {
-				return callback(new Models.TelepatError(Models.TelepatError.errors.AdminAlreadyAuthorized));
+		function (admin, callback) {
+			if (tlib.apps[appId].admins.indexOf(admin.id) !== -1) {
+				return callback(tlib.error(tlib.errors.AdminAlreadyAuthorized));
 			}
 
-			var patches = [Models.Delta.formPatch(Models.Application.loadedAppModels[appId], 'append', {admins: admin.id})];
-			Models.Application.update(appId, patches, callback);
+			var patches = [tlib.delta.formPatch(tlib.apps[appId], 'append', { admins: admin.id })];
+			tlib.apps[appId].update(patches, callback);
 		}
-	], function(err, application) {
+	], function (err, application) {
 		if (err) return next(err);
+		let x = application;
 
-		Models.Application.loadedAppModels[appId] = application;
+		if (!(application instanceof tlib.Application)) {
+			application = new tlib.Application(application);
+		}
 
-		res.status(200).json({status: 200, content: 'Admin added to application'});
+		tlib.apps[appId] = application;
+
+		res.status(200).json({ status: 200, content: 'Admin added to application' });
 	});
 });
 
@@ -348,39 +360,44 @@ router.use('/deauthorize',
  * 	}
  *
  */
-router.post('/deauthorize', function(req, res, next) {
+router.post('/deauthorize', function (req, res, next) {
 	if (Object.getOwnPropertyNames(req.body).length === 0) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
+		return next(tlib.error(tlib.errors.RequestBodyEmpty));
 	} else if (!req.body.email) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['email']));
+		return next(tlib.error(tlib.errors.MissingRequiredField, ['email']));
 	}
 
 	var appId = req._telepat.applicationId;
 	var adminEmail = req.body.email;
 
-	if (adminEmail == req.user.email && Models.Application.loadedAppModels[appId].admins.indexOf(req.user.id) == 0
-		&& Models.Application.loadedAppModels[appId].admins.length == 1) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.AdminDeauthorizeLastAdmin));
+	if (adminEmail == req.user.email && tlib.apps[appId].admins.indexOf(req.user.id) == 0
+		&& tlib.apps[appId].admins.length == 1) {
+		return next(tlib.error(tlib.errors.AdminDeauthorizeLastAdmin));
 	}
 
 	async.waterfall([
-		function(callback) {
-			Models.Admin({email: adminEmail}, callback);
+		function (callback) {
+			tlib.admins.get({ email: adminEmail }, callback);
 		},
-		function(admin, callback) {
-			if (Models.Application.loadedAppModels[appId].admins.indexOf(admin.id) === -1) {
-				return callback(new Models.TelepatError(Models.TelepatError.errors.AdminNotFoundInApplication, [adminEmail]));
+		function (admin, callback) {
+			if (tlib.apps[appId].admins.indexOf(admin.id) === -1) {
+				return callback(tlib.error(tlib.errors.AdminNotFoundInApplication, [adminEmail]));
 			} else {
-				var patches = [Models.Delta.formPatch(Models.Application.loadedAppModels[appId], 'remove', {admins: admin.id})];
-				Models.Application.update(appId, patches, callback);
+				var patches = [tlib.delta.formPatch(tlib.apps[appId], 'remove', { admins: admin.id })];
+				tlib.apps[appId].update(patches, callback);
 			}
 		}
-	], function(err, application) {
+	], function (err, application) {
 		if (err) return next(err);
+		if (!(application instanceof tlib.Application)) {
+			application = new tlib.Application(application);
+		}
 
-		Models.Application.loadedAppModels[appId] = application;
+		tlib.apps[appId] = application;
 
-		res.status(200).json({status: 200, content: 'Admin removed from application'});
+		tlib.apps[appId] = application;
+
+		res.status(200).json({ status: 200, content: 'Admin removed from application' });
 	});
 });
 

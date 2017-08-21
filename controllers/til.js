@@ -1,6 +1,6 @@
 var express = require('express');
 var router = express.Router();
-var Models = require('telepat-models');
+var tlib = require('telepat-models');
 
 /**
  * @api {post} /til/append Append member
@@ -37,13 +37,13 @@ router.post('/append', function(req, res, next) {
 	var memeberObject = req.body.memberObject;
 
 	if (!listName || typeof listName != 'string')
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['listName, or not a string']));
+		return next(tlib.error(tlib.errors.MissingRequiredField, ['listName, or not a string']));
 	if (!indexedProperty || typeof indexedProperty != 'string')
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['indexedProperty, or not a string']));
+		return next(tlib.error(tlib.errors.MissingRequiredField, ['indexedProperty, or not a string']));
 	if (!memeberObject || !(memeberObject instanceof Object))
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['memeberObject, or not an object']));
+		return next(tlib.error(tlib.errors.MissingRequiredField, ['memeberObject, or not an object']));
 
-	Models.TelepatIndexedList.append(listName, indexedProperty, memeberObject, function(err) {
+	tlib.telepatIndexedList.append(listName, indexedProperty, memeberObject, function(err) {
 		if (err)
 			return next(err);
 
@@ -90,13 +90,13 @@ router.post('/get', function(req, res, next) {
 	var members = req.body.members;
 
 	if (!listName || typeof listName != 'string')
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['listName, or not a string']));
+		return next(tlib.error(tlib.errors.MissingRequiredField, ['listName, or not a string']));
 	if (!indexedProperty || typeof indexedProperty != 'string')
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['indexedProperty, or not a string']));
+		return next(tlib.error(tlib.errors.MissingRequiredField, ['indexedProperty, or not a string']));
 	if (!members || !Array.isArray(members))
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['members, or is not an array']));
+		return next(tlib.error(tlib.errors.MissingRequiredField, ['members, or is not an array']));
 
-	Models.TelepatIndexedList.get(listName, indexedProperty, members, function(err, results) {
+	tlib.telepatIndexedList.get(listName, indexedProperty, members, function(err, results) {
 		if (err)
 			return next(err);
 
@@ -133,9 +133,9 @@ router.post('/removeList', function(req, res, next) {
 	var listName = req.body.listName;
 
 	if (!listName || typeof listName != 'string')
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['listName, or not a string']));
+		return next(tlib.error(tlib.errors.MissingRequiredField, ['listName, or not a string']));
 
-	Models.TelepatIndexedList.removeList(listName, function(err, result) {
+	tlib.telepatIndexedList.removeList(listName, function(err, result) {
 		if (err)
 			return next(err);
 
@@ -178,13 +178,13 @@ router.post('/removeMember', function(req, res, next) {
 	var members = req.body.members;
 
 	if (!listName || typeof listName != 'string')
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['listName, or not a string']));
+		return next(tlib.error(tlib.errors.MissingRequiredField, ['listName, or not a string']));
 	if (!indexedProperty || typeof indexedProperty != 'string')
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['indexedProperty, or not a string']));
+		return next(tlib.error(tlib.errors.MissingRequiredField, ['indexedProperty, or not a string']));
 	if (!members || !(members instanceof Array))
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['member, or not an array']));
+		return next(tlib.error(tlib.errors.MissingRequiredField, ['member, or not an array']));
 
-	Models.TelepatIndexedList.removeMember(listName, indexedProperty, members, function(err, result) {
+	tlib.telepatIndexedList.removeMember(listName, indexedProperty, members, function(err, result) {
 		if (err)
 			return next(err);
 

@@ -1,9 +1,9 @@
 var express = require('express');
 var router = express.Router();
-var Models = require('telepat-models');
 var uuid = require('uuid');
 var security = require('./security');
 var async = require('async');
+var tlib = require('telepat-models');
 
 router.use(security.applicationIdValidation);
 router.use(security.apiKeyValidation);
@@ -77,11 +77,11 @@ router.post('/register', function(req, res, next) {
 	if (req._telepat.device_id == 'TP_EMPTY_UDID' || req._telepat.device_id == '') {
 
 		if (Object.getOwnPropertyNames(req.body).length === 0){
-			return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
+			return next(tlib.error(tlib.errors.RequestBodyEmpty));
 		}
 
 		if (!req.body.info) {
-			return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['info']));
+			return next(tlib.error(tlib.errors.MissingRequiredField, ['info']));
 		}
 
 		var udid = req.body.info.udid;
@@ -89,7 +89,7 @@ router.post('/register', function(req, res, next) {
 
 		if (!udid) {
 			req.body.id = uuid.v4();
-			Models.Subscription.addDevice(req.body, function (err, result) {
+			tlib.subscription.addDevice(req.body, function (err, result) {
 				if (!err) {
 					return res.status(200).json({status: 200, content: {identifier: req.body.id}});
 				}
@@ -97,12 +97,12 @@ router.post('/register', function(req, res, next) {
 				next(err);
 			});
 		} else {
-			Models.Subscription.findDeviceByUdid(req._telepat.applicationId, udid, function(err, result) {
+			tlib.subscription.findDeviceByUdid(req._telepat.applicationId, udid, function(err, result) {
 				if (err) return next(err);
 
 				if (!result) {
 					req.body.id = uuid.v4();
-					Models.Subscription.addDevice(req.body, function(err) {
+					tlib.subscription.addDevice(req.body, function(err) {
 						if (!err) {
 							return res.status(200).json({status: 200, content: {identifier: req.body.id}});
 						}
@@ -110,10 +110,10 @@ router.post('/register', function(req, res, next) {
 						next(err);
 					});
 				} else {
-					Models.Subscription.updateDevice(req._telepat.applicationId, result, req.body, function(err) {
+					tlib.subscription.updateDevice(req._telepat.applicationId, result, req.body, function(err) {
 						if (err && err.status == 404) {
 							req.body.id = uuid.v4();
-							Models.Subscription.addDevice(req.body, function (err, result) {
+							tlib.subscription.addDevice(req.body, function (err, result) {
 								if (!err) {
 									return res.status(200).json({status: 200, content: {identifier: req.body.id}});
 								}
@@ -132,14 +132,14 @@ router.post('/register', function(req, res, next) {
 	} else {
 
 		if (Object.getOwnPropertyNames(req.body).length === 0){
-			return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
+			return next(tlib.error(tlib.errors.RequestBodyEmpty));
 		}
 
 		req.body.id = req._telepat.device_id;
 
-		Models.Subscription.updateDevice(req._telepat.applicationId, req._telepat.device_id, req.body, function(err, result) {
+		tlib.subscription.updateDevice(req._telepat.applicationId, req._telepat.device_id, req.body, function(err, result) {
 			if (err && err.status == 404) {
-				return next(new Models.TelepatError(Models.TelepatError.errors.DeviceNotFound, [result]));
+				return next(tlib.error(tlib.errors.DeviceNotFound, [result]));
 			} else if (err)
 				return next(err);
 

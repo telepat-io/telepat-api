@@ -233,6 +233,8 @@ before(function(done){
 												name: "test-app2",
 												keys: [ common.appKey ]
 											};
+											
+
 
 											request(url)
 												.post('/admin/app/add')
@@ -305,7 +307,6 @@ before(function(done){
 				.set('X-BLGREQ-UDID', deviceIdentification )
 				.send(clientrequest)
 				.end(function(err, res) {
-				
 					setTimeout(function () {
 						
 						request(url)
@@ -391,7 +392,6 @@ it('4.3 should return a error response to indicate that a object has NOT been cr
 		.set('Authorization', userAuthValue )
 		.send(subclientrequest)
 		.end(function(err, res) {
-
 			res.body.code.should.be.equal('004');
 			res.body.status.should.be.equal(400);
 			res.statusCode.should.be.equal(400);

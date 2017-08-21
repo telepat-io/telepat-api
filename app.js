@@ -5,8 +5,8 @@ var https = require('https');
 var urlParser = require('url');
 var mandrill = require('mandrill-api');
 var async = require('async');
-var Models = require('telepat-models');
 var redis = require('redis');
+var tlib = require('telepat-models');
 colors = require('colors');
 
 var security = require('./controllers/security');
@@ -16,7 +16,6 @@ var userRoute = require('./controllers/user');
 var contextRoute = require('./controllers/context');
 var deviceRoute = require('./controllers/device');
 var tilRoute = require('./controllers/til');
-
 var dbConnected = false;
 app = express();
 
@@ -47,7 +46,7 @@ app.use(security.contentTypeValidation);
 
 app.use(function ServerNotAvailable(req, res, next) {
 	if (!dbConnected) {
-		next(new Models.TelepatError(Models.TelepatError.errors.ServerNotAvailable));
+		next(tlib.error(tlib.errors.ServerNotAvailable));
 	} else {
 		next();
 	}
@@ -80,21 +79,21 @@ app.use(function RequestLogging(req, res, next) {
 
 			requestLogMessage += ' ('+req.ip+')';
 
-			Models.Application.logger.info(requestLogMessage);
+			tlib.services.logger.info(requestLogMessage);
 		});
 	};
 	next();
 });
 
 function NotFoundMiddleware(req, res, next) {
-	next(new Models.TelepatError(Models.TelepatError.errors.NoRouteAvailable));
+	next(tlib.error(tlib.errors.NoRouteAvailable));
 }
 
 function FinalRouteMiddleware(err, req, res, next) {
 	var responseBody = {};
-
-	if (!(err instanceof Models.TelepatError)) {
-		err = new Models.TelepatError(Models.TelepatError.errors.ServerFailure, [err.message]);
+	//TODO: 
+	 if (!(err instanceof tlib.TelepatError)) {
+	 	err = tlib.error(tlib.errors.ServerFailure, [err.message]);
 	}
 
 	res.status(err.status);
@@ -102,22 +101,13 @@ function FinalRouteMiddleware(err, req, res, next) {
 	responseBody.message = err.message;
 	responseBody.status = err.status;
 	res._telepatError = err;
+
 	res.json(responseBody);
 }
 
 app.use(NotFoundMiddleware);
 app.use(FinalRouteMiddleware);
 
-var loadApplications = function(callback) {
-	Models.Application.loadAllApplications(null, null, function(err) {
-		if (err) {
-			Models.Application.logger.emergency('Fatal error: in retrieving all aplications', err);
-			process.exit(-1);
-		}
-
-		callback();
-	});
-};
 
 var linkMiddlewaresAndRoutes = function(callback) {
 	app.use('/proxy', security.applicationIdValidation);
@@ -164,12 +154,12 @@ var linkMiddlewaresAndRoutes = function(callback) {
 		var requestBody = req.body.body;
 
 		if (['POST', 'GET', 'PUT', 'DELETE'].indexOf(method) === -1)
-			return next(new Models.TelepatError(Models.TelepatError.errors.InvalidFieldValue,
+			return next(tlib.error(tlib.errors.InvalidFieldValue,
 				['method must be one of '+['POST', 'GET', 'PUT', 'DELETE'].join(' ')]));
 		if (!url)
-			return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['url']));
+			return next(tlib.error(tlib.errors.MissingRequiredField, ['url']));
 		if (!headers || typeof headers != 'object')
-			return next(new Models.TelepatError(Models.TelepatError.errors.InvalidFieldValue,
+			return next(tlib.error(tlib.errors.InvalidFieldValue,
 				['headers must be object (or is missing)']));
 
 		var parsedUrl = urlParser.parse(url);
@@ -196,7 +186,7 @@ var linkMiddlewaresAndRoutes = function(callback) {
 			request.write(requestBody.toString());
 
 		request.on('error', function(e) {
-			next(new Models.TelepatError(Models.TelepatError.errors.UnspecifiedError, [e.message]));
+			next(tlib.error(tlib.errors.UnspecifiedError, [e.message]));
 		});
 
 		request.end();
@@ -236,13 +226,13 @@ var linkMiddlewaresAndRoutes = function(callback) {
 			body = req.body.body;
 
 		if (!recipients || !Array.isArray(recipients))
-			return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['recipients']));
+			return next(tlib.error(tlib.errors.MissingRequiredField, ['recipients']));
 		if (!from)
-			return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['from']));
+			return next(tlib.error(tlib.errors.MissingRequiredField, ['from']));
 		if (!body)
-			return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['body']));
+			return next(tlib.error(tlib.errors.MissingRequiredField, ['body']));
 
-		var mandrillClient = new mandrill.Mandrill(app.telepatConfig.mandrill.api_key);
+		var mandrillClient = new mandrill.Mandrill(tlib.mandrill.api_key);
 
 		recipients = recipients.map(function(r) {
 			return {email: r, type: 'to'};
@@ -277,7 +267,6 @@ var OnServicesConnect = function() {
 	app._router.stack.splice(-2);
 
 	async.series([
-		loadApplications,
 		linkMiddlewaresAndRoutes
 	], function(err) {
 		if (err) {
@@ -285,137 +274,14 @@ var OnServicesConnect = function() {
 
 			return process.exit(1);
 		}
-
+		
 		app.use(NotFoundMiddleware);
 		app.use(FinalRouteMiddleware);
 		dbConnected = true;
 	});
 };
 
-async.waterfall([
-	function(callback) {
-		app.telepatConfig = new Models.ConfigurationManager('./config.spec.json', './config.json');
-		app.telepatConfig.load(function(err) {
-			if (err) return callback(err);
+tlib.init(null, 'telepat-api', OnServicesConnect);
 
-			var testResult = app.telepatConfig.test();
-			callback(testResult !== true ? testResult : undefined);
-		});
-	},
-	function(callback) {
-		if (app.telepatConfig.config.logger) {
-			app.telepatConfig.config.logger.name = 'telepat-api:'+(process.env.PORT || 3000);
-			Models.Application.logger = new Models.TelepatLogger(app.telepatConfig.config.logger);
-		} else {
-			Models.Application.logger = new Models.TelepatLogger({
-				type: 'Console',
-				name: 'telepat-api:'+(process.env.PORT || 3000),
-				settings: {level: 'info'}
-			});
-		}
-		var mainDatabase = app.telepatConfig.config.main_database;
-
-		if (!Models[mainDatabase]) {
-			Models.Application.logger.emergency('Unable to load "' + mainDatabase + '" main database: not found. Aborting...');
-			process.exit(2);
-		}
-
-		Models.Application.datasource = new Models.Datasource();
-		Models.Application.datasource.setMainDatabase(new Models[mainDatabase](app.telepatConfig.config[mainDatabase]));
-
-		callback();
-	},
-	function(callback) {
-		Models.Application.datasource.dataStorage.onReady(function() {
-			callback();
-		});
-	},
-	function(callback) {
-		if (Models.Application.redisClient)
-			Models.Application.redisClient = null;
-
-		var redisConf = app.telepatConfig.config.redis;
-		var retry_strategy = function(options) {
-			if (options.error && (options.error.code === 'ETIMEDOUT' || options.error.code === 'ECONNREFUSED'))
-				return 1000;
-
-			Models.Application.logger.error('Redis server connection lost "'+redisConf.host+'". Retrying...');
-			// reconnect after
-			return 3000;
-		};
-
-		Models.Application.redisClient = redis.createClient({
-			port: redisConf.port,
-			host: redisConf.host,
-			retry_strategy: retry_strategy
-		});
-		Models.Application.redisClient.on('error', function(err) {
-			Models.Application.logger.error('Failed connecting to Redis "' + redisConf.host + '": ' +
-				err.message + '. Retrying...');
-		});
-		Models.Application.redisClient.on('ready', function() {
-			Models.Application.logger.info('Client connected to Redis.');
-			callback();
-		});
-	},
-	function(callback) {
-		if (Models.Application.redisCacheClient)
-			Models.Application.redisCacheClient = null;
-
-		var redisCacheConf = app.telepatConfig.config.redisCache;
-		var retry_strategy = function(options) {
-			if (options.error && (options.error.code === 'ETIMEDOUT' || options.error.code === 'ECONNREFUSED'))
-				return 1000;
-
-			Models.Application.logger.error('Redis cache server connection lost "'+redisCacheConf.host+'". Retrying...');
-
-			// reconnect after
-			return 3000;
-		};
-
-		Models.Application.redisCacheClient = redis.createClient({
-			port: redisCacheConf.port,
-			host: redisCacheConf.host,
-			retry_strategy: retry_strategy
-		});
-		Models.Application.redisCacheClient.on('error', function(err) {
-			Models.Application.logger.error('Failed connecting to Redis Cache "' + redisCacheConf.host + '": ' +
-				err.message + '. Retrying...');
-		});
-		Models.Application.redisCacheClient.on('ready', function() {
-			Models.Application.logger.info('Client connected to Redis Cache.');
-			callback();
-		});
-	},
-	function(callback) {
-		var messagingClient = app.telepatConfig.config.message_queue;
-		var clientConfiguration = app.telepatConfig.config[messagingClient];
-
-		if (!Models[messagingClient]) {
-			Models.Application.logger.error('Unable to load "'+messagingClient+'" messaging queue: not found. ' +
-			'Aborting...');
-			process.exit(5);
-		}
-
-		clientConfiguration = clientConfiguration || {broadcast: false};
-		/**
-		 * @type {MessagingClient}
-		 */
-		app.messagingClient = new Models[messagingClient](clientConfiguration, 'telepat-api', 'api');
-		app.messagingClient.onReady(function() {
-
-			app.messagingClient.onMessage(function(message) {
-				var parsedMessage = JSON.parse(message);
-				Models.SystemMessageProcessor.identity = 'api';
-				if (parsedMessage._systemMessage) {
-					Models.Application.logger.debug('Got system message: "'+message+'"');
-					Models.SystemMessageProcessor.process(parsedMessage);
-				}
-			});
-			callback();
-		});
-
-	}
-], OnServicesConnect);
 
 module.exports = app;

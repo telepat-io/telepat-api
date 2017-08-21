@@ -10,9 +10,8 @@ var schemaRoute = require('./admin/schema');
 var userRoute = require('./admin/user');
 
 var security = require('./security');
-var Models = require('telepat-models');
 var async = require('async');
-
+var tlib = require('telepat-models')
 router.use('/', adminRoute);
 router.use('/app', appRoute);
 router.use('/context', contextRoute);
@@ -25,10 +24,7 @@ router.use('/contexts',
 	security.adminAppValidation);
 
 var getContexts = function (req, res, next) {
-	var offset = req.body ? req.body.offset : undefined;
-	var limit = req.body ? req.body.limit : undefined;
-
-	Models.Context.getAll(req._telepat.applicationId, offset, limit, function (err, res1) {
+	tlib.contexts.getAll(req._telepat.applicationId, function (err, res1) {
 		if (err)
 			next(err);
 		else {
@@ -50,13 +46,18 @@ router.use('/schemas',
 
 /** @deprecated: use /admin/schema/all instead **/
 router.get('/schemas', function(req, res, next) {
-	Models.Application.getAppSchema(req._telepat.applicationId, function(err, result) {
-		if (err){
-			next(err);
+
+	var appId = req._telepat.applicationId;
+
+	if (tlib.apps[appId] && tlib.apps[appId].schema) {
+		res.status(200).json({status: 200, content: tlib.apps[appId].schema});
+	} else { 
+		if (!tlib.apps[appId]) {
+			next(tlib.error(tlib.errors.ApplicationNotFound, [appId]));
 		} else {
-			res.status(200).json({status: 200, content: result});
+			next(tlib.error(tlib.errors.ApplicationHasNoSchema));
 		}
-	});
+	}
 });
 
 
@@ -70,7 +71,7 @@ router.post('/users', function(req, res, next) {
 	var offset = req.body.offset;
 	var limit = req.body.limit;
 
-	Models.User.getAll(req._telepat.applicationId, limit, offset, function(err, results) {
+	tlib.users.getAll(req._telepat.applicationId, limit, offset, function(err, results) {
 		if (err) return next(err);
 
 		results.forEach(function(item, index, originalArray) {

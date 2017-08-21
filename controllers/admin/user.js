@@ -5,7 +5,7 @@ var async = require('async');
 var router = express.Router();
 
 var security = require('../security');
-var Models = require('telepat-models');
+var tlib = require('telepat-models');
 var microtime = require('microtime-nodejs');
 
 router.use('/all',
@@ -50,7 +50,7 @@ router.post('/all', function(req, res, next) {
 	var offset = req.body.offset;
 	var limit = req.body.limit;
 
-	Models.User.getAll(appId, offset, limit, function(err, results) {
+	tlib.users.getAll(appId, offset, limit, function(err, results) {
 		if (err) return next(err);
 
 		results.forEach(function(item, index, originalArray) {
@@ -109,9 +109,9 @@ router.post('/search', function(req, res, next) {
 	var fields = req.body.fields || {};
 
 	if (!(fields instanceof Object))
-		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidFieldValue, ['"fields" must be an object']));
+		return next(tlib.error(tlib.errors.InvalidFieldValue, ['"fields" must be an object']));
 
-	Models.User.search(appId, fields, offset, limit, function(err, result) {
+	tlib.users.search(appId, fields, offset, limit, function(err, result) {
 		if (err) {
 			next(err);
 		} else {
@@ -161,12 +161,12 @@ router.use('/update',
  */
 router.post('/update', function(req, res, next) {
 	if (Object.getOwnPropertyNames(req.body).length === 0) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
+		return next(tlib.error(tlib.errors.RequestBodyEmpty));
 	} else if (!Array.isArray(req.body.patches)) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidFieldValue,
+		return next(tlib.error(tlib.errors.InvalidFieldValue,
 			['"patches" is not an array']));
 	} else if (req.body.patches.length == 0) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidFieldValue,
+		return next(tlib.error(tlib.errors.InvalidFieldValue,
 			['"patches" array is empty']));
 	}
 
@@ -187,27 +187,14 @@ router.post('/update', function(req, res, next) {
 			}, callback);
 		},
 		function(callback) {
-			Models.User.update(patches, function(err) {
+			tlib.users.update(patches, function(err) {
 				if (err && err.status == 404) {
-					callback(new Models.TelepatError(Models.TelepatError.errors.UserNotFound));
+					callback(tlib.error(tlib.errors.UserNotFound));
 				} else if (err)
 					return callback(err);
 				else
 					callback();
 			});
-		},
-		function(callback) {
-			app.messagingClient.send([JSON.stringify({
-				op: 'update',
-				patches: patches,
-				application_id: req._telepat.applicationId,
-				instant: true,
-				timestamp: timestamp
-			})], 'aggregation', function(err) {
-				if (err)
-					Models.Application.logger.warning('Could not send message to aggregation workers: '+err.message);
-			});
-			callback();
 		}
 	], function(err) {
 		if (err) return next(err);
@@ -249,7 +236,7 @@ router.use('/delete',
  */
 router.delete('/delete', function(req, res, next) {
 	if (!req.body.id) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['id']));
+		return next(tlib.error(tlib.errors.MissingRequiredField, ['id']));
 	}
 
 	var appId = req._telepat.applicationId;
@@ -259,16 +246,8 @@ router.delete('/delete', function(req, res, next) {
 
 	async.series([
 		function(callback) {
-			app.messagingClient.send([JSON.stringify({
-				op: 'delete',
-				object: {id: id, model: 'user'},
-				application_id: appId,
-				timestamp: timestamp
-			})], 'aggregation', function(err) {
-				if (err)
-					Models.Application.logger.warning('Could not send message to aggregation workers: '+err.message);
-			});
-			callback();
+			console.log("HERE");
+			tlib.users.delete({id: id, application_id: appId}, callback); 
 		}
 	], function(error) {
 		if (error)

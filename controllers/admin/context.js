@@ -4,9 +4,10 @@ var express = require('express');
 var router = express.Router();
 
 var security = require('../security');
-var Models = require('telepat-models');
 var microtime = require('microtime-nodejs');
 var async = require('async');
+
+var tlib = require('telepat-models');
 
 router.use('/',
 	security.tokenValidation,
@@ -18,7 +19,7 @@ var getAllContexts = function (req, res, next) {
 	var offset = req.body ? req.body.offset : undefined;
 	var limit = req.body ? req.body.limit : undefined;
 
-	Models.Context.getAll(appId, offset, limit, function (err, res1) {
+	tlib.contexts.getAll(appId, function (err, res1) {
 		if (err)
 			next(err);
 		else {
@@ -113,12 +114,12 @@ router.get('/all', getAllContexts);
  */
 router.post('/', function (req, res, next) {
 	if (!req.body.id) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['id']));
+		return next(tlib.error(tlib.errors.MissingRequiredField, ['id']));
 	}
 
-	Models.Context(req.body.id, function (err, res1) {
+	tlib.contexts.get(req.body.id, function (err, res1) {
 		if (err && err.status == 404)
-			next(new Models.TelepatError(Models.TelepatError.errors.ContextNotFound));
+			next(tlib.error(tlib.errors.ContextNotFound));
 		else if (err)
 			next(err);
 		else {
@@ -167,32 +168,32 @@ router.use('/add',
  */
 router.post('/add', function (req, res, next) {
 	if (Object.getOwnPropertyNames(req.body).length === 0)
-		return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
-
+		return next(tlib.error(tlib.errors.RequestBodyEmpty));
 	var newContext = req.body;
 	var appId = req._telepat.applicationId;
 	var modifiedMicrotime = microtime.now();
 	newContext['application_id'] = req._telepat.applicationId;
 
-	Models.Context.create(newContext, function (err, res1) {
+	tlib.contexts.new(newContext, function (err, res1) {
+
 		if (err)
 			next(err);
 		else {
-			var delta = new Models.Delta({
+			var delta = new tlib.delta({
 				op: 'create',
 				object: res1,
 				application_id: appId,
 				timestamp: modifiedMicrotime
 			}, ['blg:'+appId+':context:'+res1.id]);
 
-			app.messagingClient.send([JSON.stringify({
+			tlib.services.messagingClient.send([JSON.stringify({
 				deltas: [delta.toObject()],
 				_broadcast: true
 			})], 'transport_manager', function(err) {
 				if (err)
-					Models.Application.logger.warning(app.getFailedRequestMessage(req, res, err));
+					tlib.services.logger.warning(app.getFailedRequestMessage(req, res, err));
 			});
-			res.status(200).json({status: 200, content: res1});
+			res.status(200).json({status: 200, content: res1.properties});
 		}
 	});
 });
@@ -233,34 +234,34 @@ router.use('/remove',
  */
 router.delete('/remove', function (req, res, next) {
 	if (!req.body.id) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['id']));
+		return next(tlib.error(tlib.errors.MissingRequiredField, ['id']));
 	}
 
 	var appId = req._telepat.applicationId;
 	var modifiedMicrotime = microtime.now();
 
-	Models.Context(req.body.id, function(err, context) {
+	tlib.contexts.get(req.body.id, function(err, context) {
 		if (err && err.status == 404)
-			next(new Models.TelepatError(Models.TelepatError.errors.ContextNotFound));
+			next(tlib.error(tlib.errors.ContextNotFound));
 		else if (err)
 			next(err);
 		else {
-			Models.Context.delete(req.body.id, function (err1) {
+			tlib.contexts.delete(req.body.id, function (err1) {
 				if (err1) return next(err1);
 
-				var delta = new Models.Delta({
+				var delta = new tlib.delta({
 					op: 'delete',
 					object: {id: req.body.id, model: 'context'},
 					application_id: appId,
 					timestamp: modifiedMicrotime
 				}, ['blg:'+appId+':context:'+req.body.id]);
 
-				app.messagingClient.send([JSON.stringify({
+				tlib.services.messagingClient.send([JSON.stringify({
 					_broadcast: true,
 					deltas: [delta.toObject()]
 				})], 'transport_manager', function(err){
 					if (err)
-						Models.Application.logger.error('/admin/context/remove: Error sending queue message');
+						tlib.services.logger.error('/admin/context/remove: Error sending queue message');
 				});
 
 				res.status(200).json({status: 200, content: 'Context removed'});
@@ -314,42 +315,42 @@ router.use('/update',
  */
 router.post('/update', function (req, res, next) {
 	if (Object.getOwnPropertyNames(req.body).length === 0) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.RequestBodyEmpty));
+		return next(tlib.error(tlib.errors.RequestBodyEmpty));
 	} else if (!Array.isArray(req.body.patches)) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidFieldValue,
+		return next(tlib.error(tlib.errors.InvalidFieldValue,
 			['"patches" is not an array']));
 	} else if (req.body.patches.length == 0) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidFieldValue,
+		return next(tlib.error(tlib.errors.InvalidFieldValue,
 			['"patches" array is empty']));
 	} else if (!req.body.id) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['id']));
+		return next(tlib.error(tlib.errors.MissingRequiredField, ['id']));
 	} else {
 		var context = null;
 		async.series([
 			function(callback) {
-				Models.Context(req.body.id, function(err, result) {
+				tlib.contexts.get(req.body.id, function(err, result) {
 					if (err) return callback(err);
 					context = result;
 					callback();
 				});
 			},
 			function(callback) {
-				if (Models.Application.loadedAppModels[context.application_id].admins.indexOf(req.user.id) === -1) {
-					callback(new Models.TelepatError(Models.TelepatError.errors.ContextNotAllowed));
+				if (tlib.apps[context.application_id].admins.indexOf(req.user.id) === -1) {
+					callback(tlib.error(tlib.errors.ContextNotAllowed));
 				} else {
-					Models.Context.update(req.body.patches, callback);
+					tlib.contexts.update(req.body.patches, callback);
 				}
 			}
 		], function (err) {
 			if (err && err.status == 404)
-				next(new Models.TelepatError(Models.TelepatError.errors.ContextNotFound));
+				next(tlib.error(tlib.errors.ContextNotFound));
 			else {
 				var modifiedMicrotime = microtime.now();
 				var patchesToSend = [];
 				var appId = req._telepat.applicationId;
 
 				async.each(req.body.patches, function(patch, c) {
-					var delta = new Models.Delta({
+					var delta = new tlib.delta({
 						op: 'update',
 						patch: patch,
 						application_id: appId,
@@ -359,12 +360,12 @@ router.post('/update', function (req, res, next) {
 					patchesToSend.push(delta);
 					c();
 				}, function() {
-					app.messagingClient.send([JSON.stringify({
+					tlib.services.messagingClient.send([JSON.stringify({
 						deltas: patchesToSend,
 						_broadcast: true
 					})], 'transport_manager', function(err) {
 						if (err)
-							Models.Application.logger.warning(app.getFailedRequestMessage(req, res, err));
+							tlib.services.logger.warning(app.getFailedRequestMessage(req, res, err));
 					});
 				});
 				res.status(200).json({status: 200, content: 'Context updated'});

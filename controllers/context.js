@@ -1,19 +1,16 @@
 /* jshint maxlen: 120 */
 var express = require('express');
 var router = express.Router();
-var Models = require('telepat-models');
 var security = require('./security');
 var async = require('async');
-
+var tlib  = require('telepat-models')
 router.use(security.applicationIdValidation);
 router.use(security.apiKeyValidation);
 
 var contextGetAll = function (req, res, next) {
 	var appId = req._telepat.applicationId;
-	var offset = req.body.offset;
-	var limit = req.body.limit;
 
-	Models.Context.getAll(appId, offset, limit, function (err, res1) {
+	tlib.contexts.getAll(appId, (err, res1) => {
 		if (err)
 			next(err);
 		else {
@@ -133,12 +130,12 @@ router.get('/all', contextGetAll);
  */
 router.post('/', function (req, res, next) {
 	if (!req.body.id) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['id']));
+		return next(tlib.error(tlib.errors.MissingRequiredField, ['id']));
 	}
 
-	Models.Context(req.body.id, function (err, res1) {
+	tlib.contexts.get(req.body.id,  (err, res1) => {
 		if (err && err.status == 404){
-			return next(new Models.TelepatError(Models.TelepatError.errors.ContextNotFound));
+			return next(tlib.error(tlib.errors.ContextNotFound));
 		} else if (err)
 			next(err);
 		else {

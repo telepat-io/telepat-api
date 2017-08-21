@@ -4,8 +4,8 @@ var express = require('express');
 var router = express.Router();
 
 var security = require('../security');
-var Models = require('telepat-models');
-var microtime = require('microtime-nodejs')
+var microtime = require('microtime-nodejs');
+var tlib = require('telepat-models');
 var async = require('async');
 router.use('/all',
 	security.tokenValidation,
@@ -47,14 +47,17 @@ router.use('/all',
  */
 router.get('/all', function(req, res, next) {
 	var appId = req._telepat.applicationId;
+	
+	if(!tlib.apps[appId]) {
+		return next(tlib.error(tlib.errors.ApplicationNotFound, [id]));
+	}
 
-	Models.Application.getAppSchema(appId, function(err, result) {
-		if (err){
-			next(err);
-		} else {
-			res.status(200).json({status: 200, content: result});
-		}
-	});
+	if(!tlib.apps[appId].schema) {
+		return next(tlib.error(tlib.errors.ApplcationHasNoSchema));
+	}
+
+	res.status(200).json({status: 200, content: tlib.apps[appId].schema});
+
 });
 
 router.use('/update',
@@ -85,20 +88,20 @@ router.use('/update',
  */
 router.post('/update', function(req, res, next) {
 	if (!req.body.schema) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['schema']));
-	}
+		return next(tlib.error(tlib.errors.MissingRequiredField, ['schema']));
+		}
 
 	var appId = req._telepat.applicationId;
 	var schema = req.body.schema;
 
-	Models.Application.updateSchema(appId, schema, function(err, result) {
+	tlib.apps[appId].updateSchema(schema, (err) => {
 		if (err){
 			next(err);
 		} else {
-			Models.Application.loadedAppModels[appId].schema = schema;
-			app.messagingClient.sendSystemMessages('_all', 'update_app', [{appId: appId, appObject: Models.Application.loadedAppModels[appId]}], function(err) {
+			tlib.apps[appId].schema = schema;
+			tlib.services.messagingClient.sendSystemMessages('_all', 'update_app', [{appId: appId, appObject: tlib.apps[appId]}], (err) => {
 				if (err) {
-					return Models.TelepatLogger.error('There was an error trying to send system message: ' + err.message);
+					return tlib.services.logger.error('There was an error trying to send system message: ' + err.message);
 				}
 				res.status(200).json({status: 200, content: 'Schema updated'});
 			});
@@ -138,17 +141,17 @@ router.use('/remove_model',
  */
 router.delete('/remove_model', function(req, res, next) {
 	if (!req.body.model_name) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['model_name']));
+		return next(tlib.error(tlib.errors.MissingRequiredField, ['model_name']));
 	}
 
 	var appId = req._telepat.applicationId;
 	var modelName = req.body.model_name;
 
-	if (!Models.Application.loadedAppModels[appId].schema[modelName]) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.ApplicationSchemaModelNotFound, [appId, modelName]));
+	if (!tlib.apps[appId].schema[modelName]) {
+		return next(tlib.error(tlib.errors.ApplicationSchemaModelNotFound, [appId, modelName]));
 	}
 
-	Models.Application.deleteModel(appId, modelName, function(err) {
+	tlib.apps[appId].deleteModel(modelName, function(err) {
 		if (err){
 			next(err);
 		} else {

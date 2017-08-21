@@ -1,6 +1,6 @@
 var express = require('express');
 var router = express.Router();
-var Models = require('telepat-models');
+var tlib = require('telepat-models');
 var security = require('./security');
 var microtime = require('microtime-nodejs');
 var clone = require('clone');
@@ -14,14 +14,17 @@ router.use(['/subscribe', '/unsubscribe'], security.objectACL('read_acl'));
 router.use(['/create', '/update', '/delete'], security.objectACL('write_acl'));
 router.use(['/count'], security.objectACL('meta_read_acl'));
 
-var validateContext = function(appId, context, callback) {
-	Models.Application.hasContext(appId, context, function(err, result) {
-		if (err)
+var validateContext = function (appId, context, callback) {
+	tlib.apps[appId].hasContext(context, (err, result) => {
+		if (err && err.code == '034') {
+			callback(tlib.error(tlib.errors.ContextNotFound));
+		} else if (err) {
 			return callback(err);
-		else if (result === false) {
-			callback(new Models.TelepatError(Models.TelepatError.errors.InvalidContext, [context, appId]));
-		} else
+		} else if (result === false) {
+			callback(tlib.error(tlib.errors.InvalidContext, [context, appId]));
+		} else {
 			callback();
+		}
 	});
 };
 
@@ -113,7 +116,7 @@ var validateContext = function(appId, context, callback) {
  * @apiError 400 [027]InvalidChannel When trying to subscribe to an invalid channel
  *
  */
-router.post('/subscribe', function(req, res, next) {
+router.post('/subscribe', function (req, res, next) {
 	var offset = req.body.offset;
 	var limit = req.body.limit;
 	var channel = req.body.channel;
@@ -129,7 +132,7 @@ router.post('/subscribe', function(req, res, next) {
 		deviceId = req._telepat.device_id,
 		appId = req._telepat.applicationId;
 
-	var channelObject = new Models.Channel(appId);
+	var channelObject = new tlib.channel(appId);
 
 	if (id) {
 		channelObject.model(mdl, id);
@@ -151,12 +154,12 @@ router.post('/subscribe', function(req, res, next) {
 
 
 	//only valid for application objects
-	if (Models.Channel.builtInModels.indexOf(mdl) === -1 && !(req.user && req.user.isAdmin)) {
-		var appSchema = Models.Application.loadedAppModels[appId].schema;
+	if (tlib.apps.isBuiltInModel(mdl) && !(req.user && req.user.isAdmin)) {
+		var appSchema = tlib.apps[appId].schema;
 
 		if (appSchema[mdl]['read_acl'] & 8) {
 			if ((appSchema[mdl]['write_acl'] & 8) && !req.user) {
-				return next(new Models.TelepatError(Models.TelepatError.errors.OperationNotAllowed));
+				return next(tlib.error(tlib.errors.OperationNotAllowed));
 			}
 
 			addAuthorFilters(channelObject, appSchema, mdl, req.user.id);
@@ -164,37 +167,37 @@ router.post('/subscribe', function(req, res, next) {
 	}
 
 	if (!channelObject.isValid()) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidChannel, [channelObject.errorMessage]));
+		return next(tlib.error(tlib.errors.InvalidChannel, [channelObject.errorMessage]));
 	}
 
 	var objects = [];
-
 	if (mdl === 'breakingnews') {
 		console.log(Date.now(), '====== (CONTROLLER) DEVICE  ' + req._telepat.device_id + ' SUBSCRIBED TO BREAKINGNEWS', req.body);
 	}
 
 	async.series([
 		//verify if context belongs to app
-		function(callback) {
-			if (context)
+		function (callback) {
+			if (context) {
 				validateContext(appId, context, callback);
+			}
 			else
 				callback();
 		},
-		function(callback) {
+		function (callback) {
 			//only add subscription on initial /subscribe
 			if ((offset && offset > 0) || noSubscribe)
 				return callback();
-			Models.Subscription.add(appId, deviceId, channelObject,  function(err) {
+			tlib.subscription.add(appId, deviceId, channelObject, function (err) {
 				if (err && err.status === 409)
 					return callback();
 
 				callback(err);
 			});
 		},
-		function(callback) {
+		function (callback) {
 			if (id) {
-				Models.Model(id, function(err, results) {
+				tlib.models.get(id, function (err, results) {
 					if (err) return callback(err);
 
 					objects.push(results);
@@ -202,12 +205,12 @@ router.post('/subscribe', function(req, res, next) {
 					callback();
 				});
 			} else {
-				Models.Model.search(channelObject, sort, offset, limit, function(err, results) {
+				tlib.models.search(channelObject, sort, offset, limit, function (err, results) {
 					if (err) return callback(err);
 
-					if (Array.isArray(results))	{
+					if (Array.isArray(results)) {
 						if (mdl == 'user') {
-							results = results.map(function(userResult) {
+							results = results.map(function (userResult) {
 								delete userResult.password;
 
 								if (!(req.user && req.user.isAdmin)) {
@@ -225,11 +228,11 @@ router.post('/subscribe', function(req, res, next) {
 				});
 			}
 		}
-	], function(err) {
+	], function (err) {
 		if (err)
 			return next(err);
 
-		res.status(200).json({status: 200, content: objects});
+		res.status(200).json({ status: 200, content: objects });
 	});
 });
 
@@ -264,19 +267,19 @@ router.post('/subscribe', function(req, res, next) {
  *
  * @apiError 400 [027]InvalidChannel When trying to subscribe to an invalid channel
  */
-router.post('/unsubscribe', function(req, res, next) {
+router.post('/unsubscribe', function (req, res, next) {
 	var channel = req.body.channel;
 
 	var id = channel.id,
-	context = channel.context,
-	mdl = channel.model,
-	parent = channel.parent,// eg: {model: "event", id: 1}
-	user = channel.user,
-	filters = req.body.filters,
-	deviceId = req._telepat.device_id,
-	appId = req._telepat.applicationId;
+		context = channel.context,
+		mdl = channel.model,
+		parent = channel.parent,// eg: {model: "event", id: 1}
+		user = channel.user,
+		filters = req.body.filters,
+		deviceId = req._telepat.device_id,
+		appId = req._telepat.applicationId;
 
-	var channelObject = new Models.Channel(appId);
+	var channelObject = new tlib.channel(appId);
 
 	if (id) {
 		channelObject.model(mdl, id);
@@ -297,7 +300,7 @@ router.post('/unsubscribe', function(req, res, next) {
 	}
 
 	if (!channelObject.isValid()) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidChannel, [channelObject.errorMessage]));
+		return next(tlib.error(tlib.errors.InvalidChannel, [channelObject.errorMessage]));
 	}
 
 	if (mdl === 'breakingnews') {
@@ -306,14 +309,14 @@ router.post('/unsubscribe', function(req, res, next) {
 
 	async.series([
 		//verify if context belongs to app
-		function(callback) {
+		function (callback) {
 			if (context)
 				validateContext(appId, context, callback);
 			else
 				callback();
 		},
-		function(callback) {
-			Models.Subscription.remove(appId, deviceId, channelObject, callback);
+		function (callback) {
+			tlib.subscription.remove(appId, deviceId, channelObject, callback);
 		}/*,
 		function(result, callback) {
 			app.kafkaProducer.send([{
@@ -331,11 +334,11 @@ router.post('/unsubscribe', function(req, res, next) {
 				callback(err, result);
 			});
 		}*/
-	], function(err) {
+	], function (err) {
 		if (err) {
 			return next(err);
 		} else {
-			res.status(200).json({status: 200, content: 'Subscription removed'});
+			res.status(200).json({ status: 200, content: 'Subscription removed' });
 		}
 	});
 });
@@ -373,7 +376,7 @@ router.post('/unsubscribe', function(req, res, next) {
  * 	}
  *
  */
-router.post('/create', function(req, res, next) {
+router.post('/create', function (req, res, next) {
 	var modifiedMicrotime = microtime.now();
 	var content = req.body.content;
 	var mdl = req.body.model;
@@ -381,68 +384,54 @@ router.post('/create', function(req, res, next) {
 	var appId = req._telepat.applicationId;
 
 	if (!context)
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['context']));
+		return next(tlib.error(tlib.errors.MissingRequiredField, ['context']));
 	if (!content)
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['content']));
-
+		return next(tlib.error(tlib.errors.MissingRequiredField, ['content']));
 	if (req.user)
 		content.user_id = req.user.id;
 	content.type = mdl;
 	content.context_id = context;
 	content.application_id = appId;
+	var parentValidation;
 
-	if (Models.Application.loadedAppModels[appId].schema[mdl].belongsTo &&
-				Models.Application.loadedAppModels[appId].schema[mdl].belongsTo.length) {
+	if (tlib.apps[appId].modelSchema(mdl).belongsTo) {
 
-		var parentValidation = false;
-
-		for (var parent in Models.Application.loadedAppModels[appId].schema[mdl].belongsTo) {
-			var parentModel = Models.Application.loadedAppModels[appId].schema[mdl].belongsTo[parent].parentModel;
-
-			if (content[parentModel+'_id']) {
-				parentValidation = true;
-
-				if (Models.Application.loadedAppModels[appId].schema[mdl].belongsTo[0].relationType == 'hasSome' &&
-					content[Models.Application.loadedAppModels[appId].schema[parentModel].hasSome_property+'_index'] === undefined ||
-					content[Models.Application.loadedAppModels[appId].schema[parentModel].hasSome_property+'_index'] === null) {
-					return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField,
-						[Models.Application.loadedAppModels[appId].schema[parentModel].hasSome_property+'_index']));
-				}
-
-				break;
-			}
-		}
-
+		parentValidation = tlib.models.getParentInfo(content);
 		if (!parentValidation)
-			return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['a field with the parent ID is missing']));
+			return next(tlib.error(tlib.errors.MissingRequiredField, ['a field with the parent ID is missing']));
+	}
+	if (parentValidation instanceof tlib.TelepatError) {
+		return next(parentValidation);
+	}
+	if (parentValidation) {
+
+		var hasSomeProperty = tlib.apps[appId].modelSchema(mdl).hasSome(parentValidation.model);
+
+		if (hasSomeProperty && !content[hasSomeProperty])
+			return next(tlib.error(tlib.errors.MissingRequiredField, [hasSomeProperty]));
 
 	}
 
-	var hasSomeProperty = Models.Application.loadedAppModels[appId].schema[mdl].hasSome_property;
-
-	if(hasSomeProperty && !content[hasSomeProperty])
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, [hasSomeProperty]));
-
 	async.series([
-		function(aggCallback) {
-			app.messagingClient.send([JSON.stringify({
+		function (aggCallback) {
+			tlib.services.messagingClient.send([JSON.stringify({
 				op: 'create',
 				object: content,
 				application_id: appId,
 				timestamp: modifiedMicrotime
-			})], 'aggregation', function(err) {
-				if (err){
-					err = new Models.TelepatError(Models.TelepatError.errors.ServerFailure, [err]);
+			})], 'aggregation', function (err) {
+				if (err) {
+					err = tlib.error(tlib.errors.ServerFailure, [err]);
 				}
 				aggCallback(err);
 			});
 		}
-	], function(err, results) {
+	], function (err, results) {
 		if (err) {
 			return next(err);
 		}
 
-		res.status(202).json({status: 202, content: 'Created'});
+		res.status(202).json({ status: 202, content: 'Created' });
 	});
 });
 
@@ -486,20 +475,20 @@ router.post('/create', function(req, res, next) {
  * 		"content": "Created"
  * 	}
  */
-router.post('/update', function(req, res, next) {
+router.post('/update', function (req, res, next) {
 	var modifiedMicrotime = microtime.now();
 	var patch = req.body.patches;
 	var appId = req._telepat.applicationId;
 
 	if (!Array.isArray(req.body.patches)) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidFieldValue,
+		return next(tlib.error(tlib.errors.InvalidFieldValue,
 			['"patches" is not an array']));
 	} else if (req.body.patches.length == 0) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidFieldValue,
+		return next(tlib.error(tlib.errors.InvalidFieldValue,
 			['"patches" array is empty']));
 	}
 
-	var appSchema = Models.Application.loadedAppModels[appId].schema;
+	var appSchema = tlib.apps[appId].schema;
 
 	var obj = {
 		op: 'update',
@@ -509,14 +498,14 @@ router.post('/update', function(req, res, next) {
 	};
 
 	if (!(req.user && req.user.isAdmin)) {
-		for(var p in patch) {
+		for (var p in patch) {
 			var objectMdl = patch[p].path.split('/')[0];
 
 			if (patch[p].path.split('/')[2] == 'user_id') {
-				return next(Models.TelepatError(Models.TelepatError.errors.InvalidPatch, ['"user_id" cannot be modified"']));
+				return next(tlib.error(tlib.errors.InvalidPatch, ['"user_id" cannot be modified"']));
 			}
 			if ((appSchema[objectMdl]['write_acl'] & 8) && !req.user) {
-				return next(new Models.TelepatError(Models.TelepatError.errors.OperationNotAllowed));
+				return next(tlib.error(tlib.errors.OperationNotAllowed));
 			} else if (appSchema[objectMdl]['write_acl'] & 8) {
 				patch[p].user_id = req.user.id;
 			}
@@ -524,20 +513,20 @@ router.post('/update', function(req, res, next) {
 	}
 
 	async.series([
-		function(aggCallback) {
-			app.messagingClient.send([JSON.stringify(obj)], 'aggregation', function(err) {
-				if (err){
-					err = new Models.TelepatError(Models.TelepatError.errors.ServerFailure, [err.message]);
+		function (aggCallback) {
+			tlib.services.messagingClient.send([JSON.stringify(obj)], 'aggregation', function (err) {
+				if (err) {
+					err = tlib.error(tlib.errors.ServerFailure, [err.message]);
 				}
 				aggCallback(err);
 			});
 		}
-	], function(err) {
+	], function (err) {
 		if (err) {
 			return next(err);
 		}
 
-		res.status(202).json({status: 202, content: 'Updated'});
+		res.status(202).json({ status: 202, content: 'Updated' });
 	});
 });
 
@@ -573,16 +562,16 @@ router.post('/update', function(req, res, next) {
  * 	}
  *
  */
-router.delete('/delete', function(req, res, next) {
+router.delete('/delete', function (req, res, next) {
 	var modifiedMicrotime = microtime.now();
 	var id = req.body.id;
 	var mdl = req.body.model;
 	var appId = req._telepat.applicationId;
 
 	if (!id)
-		return next(new Models.TelepatError(Models.TelepatError.errors.MissingRequiredField, ['id']));
+		return next(tlib.error(tlib.errors.MissingRequiredField, ['id']));
 
-	var appSchema = Models.Application.loadedAppModels[appId].schema;
+	var appSchema = tlib.apps[appId].schema;
 
 	var obj = {
 		op: 'delete',
@@ -596,20 +585,20 @@ router.delete('/delete', function(req, res, next) {
 
 	if (!(req.user && req.user.isAdmin)) {
 		if ((appSchema[mdl]['write_acl'] & 8) && !req.user) {
-			return next(new Models.TelepatError(Models.TelepatError.errors.OperationNotAllowed));
+			return next(tlib.error(tlib.errors.OperationNotAllowed));
 		} else if (appSchema[mdl]['write_acl'] & 8) {
 			obj.user_id = req.user.id;
 		}
 	}
 
 	async.series([
-		function(aggCallback) {
-			app.messagingClient.send([JSON.stringify(obj)], 'aggregation', aggCallback);
+		function (aggCallback) {
+			tlib.services.messagingClient.send([JSON.stringify(obj)], 'aggregation', aggCallback);
 		}
-	], function(err) {
+	], function (err) {
 		if (err) return next(err);
 
-		res.status(202).json({status: 202, content: 'Deleted'});
+		res.status(202).json({ status: 202, content: 'Deleted' });
 	});
 });
 
@@ -631,14 +620,14 @@ router.delete('/delete', function(req, res, next) {
  * @apiParam {Object} filters Additional filters to the subscription channel
  *
  */
-router.post('/count', function(req, res, next) {
+router.post('/count', function (req, res, next) {
 	var appId = req._telepat.applicationId,
 		channel = req.body.channel,
 		mdl = channel.model;
 
 	var aggregation = req.body.aggregation;
 
-	var channelObject = new Models.Channel(appId);
+	var channelObject = new tlib.channel(appId);
 
 	if (channel.model)
 		channelObject.model(channel.model);
@@ -655,24 +644,24 @@ router.post('/count', function(req, res, next) {
 	if (req.body.filters)
 		channelObject.setFilter(req.body.filters);
 
-	var appSchema = Models.Application.loadedAppModels[appId].schema;
+	var appSchema = tlib.apps[appId].schema;
 
 	if (mdl !== 'user' && appSchema[mdl]['read_acl'] & 8) {
 		if (!req.user.id) {
-			return next(Models.TelepatError(Models.TelepatError.errors.OperationNotAllowed));
+			return next(tlib.error(tlib.errors.OperationNotAllowed));
 		}
 
 		addAuthorFilters(channelObject, appSchema, mdl, req.user.id);
 	}
 
 	if (!channelObject.isValid()) {
-		return next(new Models.TelepatError(Models.TelepatError.errors.InvalidChannel));
+		return next(tlib.error(tlib.errors.InvalidChannel));
 	}
-
-	Models.Model.modelCountByChannel(channelObject, aggregation, function(err, result) {
+	console.log('here');
+	tlib.models.modelCountByChannel(channelObject, aggregation, function (err, result) {
 		if (err) return next(err);
 
-		res.status(200).json({status: 200, content: result});
+		res.status(200).json({ status: 200, content: result });
 	});
 });
 
@@ -687,18 +676,18 @@ function addAuthorFilters(channelObject, appSchema, mdl, userId) {
 		//we need to wrap this in an and in order for the author filter to work correctly
 		if (operator == 'or') {
 			var filterClone = clone(channelObject.filter);
-			channelObject.filter = {and: [filterClone]};
+			channelObject.filter = { and: [filterClone] };
 		}
 	} else {
-		channelObject.filter = {and: []};
+		channelObject.filter = { and: [] };
 	}
 
-	var idx = channelObject.filter.and.push({or: []}) - 1;
+	var idx = channelObject.filter.and.push({ or: [] }) - 1;
 
 	var authorFields = (appSchema[mdl].author_fields || []).concat(['user_id']);
 
-	authorFields.forEach(function(field) {
-		var isFilter = {is: {}};
+	authorFields.forEach(function (field) {
+		var isFilter = { is: {} };
 		isFilter.is[field] = userId;
 		channelObject.filter.and[idx].or.push(isFilter);
 	});
