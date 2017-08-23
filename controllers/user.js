@@ -118,7 +118,6 @@ router.post(['/login-password', '/login_password'], function (req, res, next) {
 		},
 		function (callback) {
 			var patches = [];
-			console.log('pula2');
 			patches.push(tlib.delta.formPatch(userProfile, 'append', { devices: deviceId }));
 
 			if (userProfile.devices) {
@@ -132,7 +131,6 @@ router.post(['/login-password', '/login_password'], function (req, res, next) {
 			}
 		},
 		function (callback) {
-			console.log('pula3');
 			security.encryptPassword(req.body.password, function (err, hash) {
 				if (err)
 					return callback(err);
@@ -1255,10 +1253,8 @@ router.post('/password_reset', function (req, res, next) {
  */
 router.get('/metadata', function (req, res, next) {
 	var userId = req.user.id;
-	console.log ('here', userId);
 	tlib.users.getMetadata(userId, function (err, result) {
 		if (err) return next(err);
-		console.log(result);
 		res.status(200).json({ status: 200, content: result });
 	});
 });
@@ -1297,15 +1293,13 @@ router.get('/metadata', function (req, res, next) {
  *
  */
 router.post('/update_metadata', function (req, res, next) {
-	console.log("HERE");
 	var userId = req.user.id;
 	var patches = req.body.patches;
-	console.log("HERE");
+
 	if (!Array.isArray(patches) || patches.length == 0) {
 		return next(new tlib.TelepatError(tlib.TelepatError.errors.MissingRequiredField,
 			['patches must be a non-empty array']));
 	}
-	console.log('here');
 	tlib.users.updateMetadata(userId, patches, function (err) {
 		if (err) return next(err);
 
@@ -1332,6 +1326,7 @@ function sendEmail(provider, from, to, subject, content) {
 				}
 			]
 		};
+		
 		mandrillClient.messages.send({ message: message, async: "async" }, function () { }, function (err) {
 			tlib.services.logger.warning('Unable to send Mandrill mail: ' + err.name + ' - '
 				+ err.message);
@@ -1355,6 +1350,7 @@ function sendEmail(provider, from, to, subject, content) {
 			}
 			else if (response.statusCode >= 400) {
 				var error = JSON.parse(response.body);
+				
 				tlib.services.logger.warning('Unable to send Sendgrid amail: ' + error.errors[0].message);
 			}
 		});

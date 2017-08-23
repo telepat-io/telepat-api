@@ -226,6 +226,7 @@ router.post('/update', function (req, res, next) {
 		return next(new tlib.TelepatError(tlib.TelepatError.errors.InvalidFieldValue,['"patches" array is empty']));
 	} else {
 		var i = 0;
+		
 		async.eachSeries(req.body.patches, function(patch, c) {
 			if (req.body.patches[i].path.split('/')[1] != req.user.id) {
 				c(new tlib.TelepatError(tlib.TelepatError.errors.InvalidAdmin));

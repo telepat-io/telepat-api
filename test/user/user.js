@@ -200,6 +200,7 @@ it('5.5 should return a success response to indicate that the user has logged in
 		.send()
 		.end(function (err, res) {
 			var text = JSON.parse(res.text);
+			
 			request('https://graph.facebook.com')
 				.get('/v1.0/1086083914753251/accounts/test-users?access_token=' + text.access_token)
 				.send()
@@ -208,7 +209,8 @@ it('5.5 should return a success response to indicate that the user has logged in
 					var clientrequest = {
 						access_token: data.data[0].access_token,
 
-					}
+					};
+
 					request(url)
 						.post('/user/register-facebook')
 						.set('Content-type', 'application/json')
@@ -747,6 +749,7 @@ it('5.29 should return a success response to indicate that the user has NOT regi
 		.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28')
 		.send(clientrequest)
 		.end(function (err, res) {
+
 			res.body.code.should.be.equal('029');
 			res.statusCode.should.be.equal(409);
 			done();
@@ -1109,6 +1112,7 @@ it('5.42 should return a success response to indicate that an user was logged in
 			var clientrequest = {
 				id: res.body.content.user.id
 			}
+
 			res.statusCode.should.be.equal(200);
 			done();
 

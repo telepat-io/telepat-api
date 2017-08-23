@@ -53,6 +53,7 @@ before(function(done){
 						.set('Authorization', authValue)
 						.send(clientrequest)
 						.end(function(err, res) {
+							
 							appID =  res.body.content.id;
 							done();
 						});

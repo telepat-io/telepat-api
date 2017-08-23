@@ -326,6 +326,7 @@ router.post('/update', function (req, res, next) {
 		return next(new tlib.TelepatError(tlib.TelepatError.errors.MissingRequiredField, ['id']));
 	} else {
 		var context = null;
+		
 		async.series([
 			function (callback) {
 				tlib.contexts.get(req.body.id, function (err, result) {

@@ -54,6 +54,7 @@ app.use(function ServerNotAvailable(req, res, next) {
 
 app.use(function RequestLogging(req, res, next) {
 	var send = res.send;
+	
 	res.send = function (string) {
 		var body = string instanceof Buffer ? string.toString() : string;
 		send.call(this, body);
@@ -91,8 +92,8 @@ function NotFoundMiddleware(req, res, next) {
 
 function FinalRouteMiddleware(err, req, res, next) {
 	var responseBody = {};
-	console.log("err is ", err);
-	 if (!(err instanceof tlib.TelepatError)) {
+
+	if (!(err instanceof tlib.TelepatError)) {
 	 	err = new tlib.TelepatError(tlib.TelepatError.errors.ServerFailure, [err.message]);
 	}
 
@@ -245,6 +246,7 @@ var linkMiddlewaresAndRoutes = function(callback) {
 			from_name: from_name,
 			to: recipients
 		};
+
 		mandrillClient.messages.send({message: message, async: "async"}, function() {
 			res.status(200).json({status: 200, content: "Email sent successfully"});
 		}, function(err) {

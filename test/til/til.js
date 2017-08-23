@@ -8,6 +8,7 @@ var DELAY = common.DELAY;
 it('6.1 should return a success response to indicate that a member was added to list', function(done) {
     
     this.timeout(100*DELAY);
+
     var clientrequest = {
     	listName: "object_id",
  		indexedProperty: "fid",
@@ -87,11 +88,13 @@ it('6.4 should return an error response to indicate that a member was NOT added 
 
 
 it('6.5 should return a success response and a list with members from a specific list', function(done) {
+
     var clientrequest = {
   		"listName": "object_id",
   		"indexedProperty": "fid",
   		"members": ["fid_1", "fid_2", "fid_3"]
     }
+
     request(url)
         .post('/til/get')
 		.set('Content-type', 'application/json')

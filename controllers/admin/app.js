@@ -372,15 +372,16 @@ router.post('/deauthorize', function (req, res, next) {
 				return callback(new tlib.TelepatError(tlib.TelepatError.errors.AdminNotFoundInApplication, [adminEmail]));
 			} else {
 				var patches = [tlib.delta.formPatch(tlib.apps[appId], 'remove', { admins: admin.id })];
+				
 				tlib.apps[appId].update(patches, callback);
 			}
 		}
 	], function (err, application) {
 		if (err) return next(err);
+
 		if (!(application instanceof tlib.Application)) {
 			application = new tlib.Application(application);
 		}
-
 		tlib.apps[appId] = application;
 
 		res.status(200).json({ status: 200, content: 'Admin removed from application' });

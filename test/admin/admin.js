@@ -1843,7 +1843,7 @@ describe('1.2.App', function () {
 				.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28')
 				.send(clientrequest)
 				.end(function (err, res) {
-					console.log(res.body);
+
 					setTimeout(done, 20 * DELAY);
 				});
 		});
@@ -1859,10 +1859,8 @@ describe('1.2.App', function () {
 				.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28')
 				.send(clientrequest)
 				.end(function (err, res) {
-					console.log('user Id is ', userId, res.body.content);
 
 					userId = res.body.content.user.id;
-					console.log('user Id is ', userId);
 					var clientrequest = {
 						patches: [
 							{
@@ -2002,6 +2000,7 @@ describe('1.2.App', function () {
 									.set('Authorization', authValue)
 									.send(subclientrequest)
 									.end(function (err, res) {
+										
 										res.statusCode.should.be.equal(202);
 										done();
 									});

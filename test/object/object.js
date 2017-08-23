@@ -383,6 +383,7 @@ it('4.4 should return a success response to indicate that object has been create
 			events_id :1
 		}
 	};
+	
 	setTimeout( function() {;
 		request(url)
 			.post('/object/create')

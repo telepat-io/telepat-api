@@ -46,7 +46,6 @@ router.use('/schemas',
 
 /** @deprecated: use /admin/schema/all instead **/
 router.get('/schemas', function(req, res, next) {
-
 	var appId = req._telepat.applicationId;
 
 	if (tlib.apps[appId] && tlib.apps[appId].schema) {

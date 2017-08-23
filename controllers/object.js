@@ -367,7 +367,7 @@ router.post('/create', function (req, res, next) {
 
 		return i;
 	}
-	console.log(isEmpty(content));
+
 	if (!context)
 		return next(new tlib.TelepatError(tlib.TelepatError.errors.MissingRequiredField, ['context']));
 	if (!content || isEmpty(content) === 0)
@@ -380,9 +380,8 @@ router.post('/create', function (req, res, next) {
 	var parentValidation;
 
 	let validObject = tlib.models.validateObject(content);
-	console.log('here', validObject);
+
 	if (validObject instanceof tlib.TelepatError) {
-		console.log('here should return error');
 		return next(validObject);
 	}
 
@@ -600,9 +599,8 @@ router.post('/count', function (req, res, next) {
 		mdl = channel.model;
 
 	var aggregation = req.body.aggregation;
-
-	console.log(appId);
 	var channelObject = new tlib.channel(appId);
+
 	if (channel.model)
 		channelObject.model(channel.model);
 
@@ -644,18 +642,17 @@ function addAuthorFilters(channelObject, appSchema, mdl, userId) {
 		if (!channelObject.filter.and && !channelObject.filter.or) {
 			channelObject.filter.and = [];
 		}
-
 		var operator = Object.keys(channelObject.filter || {})[0] || null;
 
 		//we need to wrap this in an and in order for the author filter to work correctly
 		if (operator == 'or') {
 			var filterClone = clone(channelObject.filter);
+			
 			channelObject.filter = { and: [filterClone] };
 		}
 	} else {
 		channelObject.filter = { and: [] };
 	}
-
 	var idx = channelObject.filter.and.push({ or: [] }) - 1;
 
 	var authorFields = (appSchema[mdl].author_fields || []).concat(['user_id']);

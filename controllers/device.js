@@ -130,7 +130,6 @@ router.post('/register', function(req, res, next) {
 			});
 		}
 	} else {
-
 		if (Object.getOwnPropertyNames(req.body).length === 0){
 			return next(new tlib.TelepatError(tlib.TelepatError.errors.RequestBodyEmpty));
 		}
