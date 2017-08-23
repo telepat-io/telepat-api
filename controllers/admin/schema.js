@@ -146,9 +146,10 @@ router.delete('/remove_model', function (req, res, next) {
 
 	var appId = req._telepat.applicationId;
 	var modelName = req.body.model_name;
+	var verified = tlib.apps[appId].modelSchema(modelName).isValidModel();
 
-	if (tlib.apps[appId].modelSchema(modelName).isValidModel() instanceof tlib.TelepatError) {
-		return next(tlib.apps[appId].modelSchema(modelName).isValidModel());
+	if (verified instanceof tlib.TelepatError) {
+		return next(verified);
 	}
 
 	tlib.apps[appId].deleteModel(modelName, function (err) {
