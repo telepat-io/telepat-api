@@ -178,7 +178,7 @@ security.objectACL = function (accessControl) {
 			return next(new tlib.TelepatError(tlib.TelepatError.errors.ApplicationHasNoSchema));
 		}
 
-		if (!tlib.apps[req._telepat.applicationId].schema[mdl]) {
+		if (!tlib.apps[req._telepat.applicationId].modelSchema[mdl]) {
 			return next(new tlib.TelepatError(tlib.TelepatError.errors.ApplicationSchemaModelNotFound,
 				[req._telepat.applicationId, mdl]));
 		}

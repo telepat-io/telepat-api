@@ -1203,6 +1203,7 @@ router.post('/password_reset', function (req, res, next) {
 				if (result.password_reset_token == null ||
 					result.password_reset_token == undefined ||
 					result.password_reset_token != token) {
+
 					return callback(new tlib.TelepatError(tlib.TelepatError.errors.ClientBadRequest,
 						['invalid token']));
 				}
@@ -1253,6 +1254,7 @@ router.post('/password_reset', function (req, res, next) {
  */
 router.get('/metadata', function (req, res, next) {
 	var userId = req.user.id;
+	
 	tlib.users.getMetadata(userId, function (err, result) {
 		if (err) return next(err);
 		res.status(200).json({ status: 200, content: result });
