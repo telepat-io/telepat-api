@@ -77,11 +77,11 @@ router.post('/register', function(req, res, next) {
 	if (req._telepat.device_id == 'TP_EMPTY_UDID' || req._telepat.device_id == '') {
 
 		if (Object.getOwnPropertyNames(req.body).length === 0){
-			return next(tlib.error(tlib.errors.RequestBodyEmpty));
+			return next(new tlib.TelepatError(tlib.TelepatError.errors.RequestBodyEmpty));
 		}
 
 		if (!req.body.info) {
-			return next(tlib.error(tlib.errors.MissingRequiredField, ['info']));
+			return next(new tlib.TelepatError(tlib.TelepatError.errors.MissingRequiredField, ['info']));
 		}
 
 		var udid = req.body.info.udid;
@@ -132,14 +132,14 @@ router.post('/register', function(req, res, next) {
 	} else {
 
 		if (Object.getOwnPropertyNames(req.body).length === 0){
-			return next(tlib.error(tlib.errors.RequestBodyEmpty));
+			return next(new tlib.TelepatError(tlib.TelepatError.errors.RequestBodyEmpty));
 		}
 
 		req.body.id = req._telepat.device_id;
 
 		tlib.subscription.updateDevice(req._telepat.applicationId, req._telepat.device_id, req.body, function(err, result) {
 			if (err && err.status == 404) {
-				return next(tlib.error(tlib.errors.DeviceNotFound, [result]));
+				return next(new tlib.TelepatError(tlib.TelepatError.errors.DeviceNotFound, [result]));
 			} else if (err)
 				return next(err);
 

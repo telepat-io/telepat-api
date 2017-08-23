@@ -82,10 +82,10 @@ router.use(['/logout', '/me', '/update', '/update_immediate', '/delete', '/metad
  */
 router.post(['/login-password', '/login_password'], function (req, res, next) {
 	if (!req.body.username)
-		return next(tlib.error(tlib.errors.MissingRequiredField, ['username']));
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.MissingRequiredField, ['username']));
 
 	if (!req.body.password)
-		return next(tlib.error(tlib.errors.MissingRequiredField, ['password']));
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.MissingRequiredField, ['password']));
 
 	var userProfile = null;
 	var username = req.body.username;
@@ -102,7 +102,7 @@ router.post(['/login-password', '/login_password'], function (req, res, next) {
 
 			tlib.users.get({ username: username }, appId, function (err, result) {
 				if (err && err.status == 404) {
-					callback(tlib.error(tlib.errors.UserNotFound));
+					callback(new tlib.TelepatError(tlib.TelepatError.errors.UserNotFound));
 				}
 				else if (err)
 					callback(err);
@@ -111,13 +111,14 @@ router.post(['/login-password', '/login_password'], function (req, res, next) {
 						userProfile = result;
 						callback();
 					} else {
-						return callback(tlib.error(tlib.errors.UnconfirmedAccount));
+						return callback(new tlib.TelepatError(tlib.TelepatError.errors.UnconfirmedAccount));
 					}
 				}
 			});
 		},
 		function (callback) {
 			var patches = [];
+			console.log('pula2');
 			patches.push(tlib.delta.formPatch(userProfile, 'append', { devices: deviceId }));
 
 			if (userProfile.devices) {
@@ -131,6 +132,7 @@ router.post(['/login-password', '/login_password'], function (req, res, next) {
 			}
 		},
 		function (callback) {
+			console.log('pula3');
 			security.encryptPassword(req.body.password, function (err, hash) {
 				if (err)
 					return callback(err);
@@ -145,7 +147,7 @@ router.post(['/login-password', '/login_password'], function (req, res, next) {
 			return next(err);
 
 		if (hashedPassword != userProfile.password) {
-			return next(tlib.error(tlib.errors.UserBadLogin));
+			return next(new tlib.TelepatError(tlib.TelepatError.errors.UserBadLogin));
 		}
 
 		delete userProfile.password;
@@ -206,28 +208,28 @@ router.post(['/login-password', '/login_password'], function (req, res, next) {
  */
 router.post('/login-:s', function (req, res, next) {
 	if (Object.getOwnPropertyNames(req.body).length === 0)
-		return next(tlib.error(tlib.errors.RequestBodyEmpty));
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.RequestBodyEmpty));
 
 	var loginProvider = req.params.s;
 
 	if (loginProvider == 'facebook') {
 		if (!req.body.access_token)
-			return next(tlib.error(tlib.errors.MissingRequiredField, ['access_token']));
+			return next(new tlib.TelepatError(tlib.TelepatError.errors.MissingRequiredField, ['access_token']));
 		if (!tlib.config.login_providers || !tlib.config.login_providers.facebook)
-			return next(tlib.error(tlib.errors.ServerNotConfigured,
+			return next(new tlib.TelepatError(tlib.TelepatError.errors.ServerNotConfigured,
 				['facebook login provider']));
 		else
 			FB.options(tlib.config.login_providers.facebook);
 	} else if (loginProvider == 'twitter') {
 		if (!req.body.oauth_token)
-			return next(tlib.error(tlib.errors.MissingRequiredField, ['oauth_token']));
+			return next(new tlib.TelepatError(tlib.TelepatError.errors.MissingRequiredField, ['oauth_token']));
 		if (!req.body.oauth_token_secret)
-			return next(tlib.error(tlib.errors.MissingRequiredField, ['oauth_token_secret']));
+			return next(new tlib.TelepatError(tlib.TelepatError.errors.MissingRequiredField, ['oauth_token_secret']));
 		if (!tlib.config.login_providers || !tlib.config.login_providers.twitter)
-			return next(tlib.error(tlib.errors.ServerNotConfigured,
+			return next(new tlib.TelepatError(tlib.TelepatError.errors.ServerNotConfigured,
 				['twitter login provider']));
 	} else {
-		return next(tlib.error(tlib.errors.InvalidLoginProvider, ['facebook, twitter']));
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.InvalidLoginProvider, ['facebook, twitter']));
 	}
 
 	var accessToken = req.body.access_token;
@@ -288,7 +290,7 @@ router.post('/login-:s', function (req, res, next) {
 							else if (!result.fid) {
 								callback1();
 							} else {
-								callback1(tlib.error(tlib.errors.UserAlreadyExists));
+								callback1(new tlib.TelepatError(tlib.TelepatError.errors.UserAlreadyExists));
 							}
 						});
 					},
@@ -309,7 +311,7 @@ router.post('/login-:s', function (req, res, next) {
 							} else if (err && err.status != 404)
 								callback1(err);
 							else {
-								callback1(tlib.error(tlib.errors.UserNotFound));
+								callback1(new tlib.TelepatError(tlib.TelepatError.errors.UserNotFound));
 							}
 						});
 					}
@@ -317,7 +319,7 @@ router.post('/login-:s', function (req, res, next) {
 			} else {
 				tlib.users.get({ username: username }, appId, function (err, result) {
 					if (err && err.status == 404) {
-						callback(tlib.error(tlib.errors.UserNotFound));
+						callback(new tlib.TelepatError(tlib.TelepatError.errors.UserNotFound));
 					}
 					else if (err)
 						callback(err);
@@ -368,10 +370,10 @@ router.post('/login-:s', function (req, res, next) {
 		}
 
 		if (loginProvider == 'facebook' && err && err.response && err.response.error.code == 190) {
-			return next(tlib.error(tlib.errors.InvalidAuthorization, ['Facebook access token has expired']));
+			return next(new tlib.TelepatError(tlib.TelepatError.errors.InvalidAuthorization, ['Facebook access token has expired']));
 		}
 		if (err && err[0] && err[0].code == 89) {
-			return next(tlib.error(tlib.errors.InvalidAuthorization, ['Twitter access token has expired']));
+			return next(new tlib.TelepatError(tlib.TelepatError.errors.InvalidAuthorization, ['Twitter access token has expired']));
 		}
 		if (err)
 			return next(err);
@@ -431,7 +433,7 @@ router.post('/login-:s', function (req, res, next) {
  */
 router.post('/register-:s', function (req, res, next) {
 	if (Object.getOwnPropertyNames(req.body).length === 0) {
-		return next(tlib.error(tlib.errors.RequestBodyEmpty));
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.RequestBodyEmpty));
 	}
 
 	var loginProvider = req.params.s;
@@ -440,25 +442,25 @@ router.post('/register-:s', function (req, res, next) {
 		if (!req.body.access_token)
 			return next(tlib.error(tlib.TelepatError.errors.MissingRequiredField, ['access_token']));
 		if (!tlib.config.login_providers || !tlib.config.login_providers.facebook)
-			return next(tlib.error(tlib.errors.ServerNotConfigured,
+			return next(new tlib.TelepatError(tlib.TelepatError.errors.ServerNotConfigured,
 				['facebook login handler']));
 		else
 			FB.options(tlib.config.login_providers.facebook);
 	} else if (loginProvider == 'twitter') {
 		if (!req.body.oauth_token)
-			return next(tlib.error(tlib.errors.MissingRequiredField, ['oauth_token']));
+			return next(new tlib.TelepatError(tlib.TelepatError.errors.MissingRequiredField, ['oauth_token']));
 		if (!req.body.oauth_token_secret)
-			return next(tlib.error(tlib.errors.MissingRequiredField, ['oauth_token_secret']));
+			return next(new tlib.TelepatError(tlib.TelepatError.errors.MissingRequiredField, ['oauth_token_secret']));
 		if (!tlib.config.login_providers || !tlib.config.login_providers.twitter)
-			return next(tlib.error(tlib.errors.ServerNotConfigured,
+			return next(new tlib.TelepatError(tlib.TelepatError.errors.ServerNotConfigured,
 				['twitter login provider']));
 	} else if (loginProvider == 'username') {
 		if (!req.body.username)
-			return next(tlib.error(tlib.errors.MissingRequiredField, ['username']));
+			return next(new tlib.TelepatError(tlib.TelepatError.errors.MissingRequiredField, ['username']));
 		if (!req.body.password)
-			return next(tlib.error(tlib.errors.MissingRequiredField, ['password']));
+			return next(new tlib.TelepatError(tlib.TelepatError.errors.MissingRequiredField, ['password']));
 	} else {
-		return next(tlib.error(tlib.errors.InvalidLoginProvider, ['facebook, twitter, username']));
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.InvalidLoginProvider, ['facebook, twitter, username']));
 	}
 
 	var userProfile = req.body;
@@ -468,7 +470,7 @@ router.post('/register-:s', function (req, res, next) {
 	var appId = req._telepat.applicationId;
 	var requiresConfirmation = tlib.apps[appId].email_confirmation;
 	if (loginProvider == 'username' && requiresConfirmation && !req.body.email) {
-		return next(tlib.error(tlib.errors.MissingRequiredField, ['email']));
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.MissingRequiredField, ['email']));
 	}
 
 	var timestamp = microtime.now();
@@ -537,12 +539,12 @@ router.post('/register-:s', function (req, res, next) {
 		},
 		function (callback) {
 			if (!userProfile.username) {
-				return callback(tlib.error(tlib.errors.MissingRequiredField,
+				return callback(new tlib.TelepatError(tlib.TelepatError.errors.MissingRequiredField,
 					['username']));
 			}
 			tlib.users.get({ username: userProfile.username }, appId, function (err, result) {
 				if (!err) {
-					callback(tlib.error(tlib.errors.UserAlreadyExists));
+					callback(new tlib.TelepatError(tlib.TelepatError.errors.UserAlreadyExists));
 				}
 				else if (err && err.status != 404)
 					callback(err);
@@ -649,7 +651,7 @@ router.post('/register-:s', function (req, res, next) {
 	], function (err) {
 
 		if (err && err.message == 'Invalid OAuth access token.' && loginProvider == 'facebook') {
-			return next(tlib.error(tlib.errors.ServerConfigurationFailure, 'Facebook invalid OAuth access token'));
+			return next(new tlib.TelepatError(tlib.TelepatError.errors.ServerConfigurationFailure, 'Facebook invalid OAuth access token'));
 		}
 		if (err) return next(err);
 
@@ -703,7 +705,7 @@ router.get('/confirm', function (req, res, next) {;
 		function (callback) {
 
 			if (hash != user.confirmationHash) {
-				return callback(tlib.error(tlib.errors.ClientBadRequest, ['invalid hash']));
+				return callback(new tlib.TelepatError(tlib.TelepatError.errors.ClientBadRequest, ['invalid hash']));
 			}
 
 			var patches = [];
@@ -762,7 +764,7 @@ router.get('/confirm', function (req, res, next) {;
 router.get('/me', function (req, res, next) {
 	tlib.users.get({ id: req.user.id }, req._telepat.applicationId, function (err, result) {
 		if (err && err.status == 404) {
-			return next(tlib.error(tlib.errors.UserNotFound));
+			return next(new tlib.TelepatError(tlib.TelepatError.errors.UserNotFound));
 		}
 		else if (err)
 			next(err);
@@ -804,7 +806,7 @@ router.get('/me', function (req, res, next) {
 router.get('/get', function (req, res, next) {
 	tlib.users.get({ id: req.body.user_id }, req._telepat.applicationId, function (err, result) {
 		if (err && err.status == 404) {
-			return next(tlib.error(tlib.errors.UserNotFound));
+			return next(new tlib.TelepatError(tlib.TelepatError.errors.UserNotFound));
 		}
 		else if (err)
 			next(err);
@@ -893,7 +895,7 @@ router.get('/logout', function (req, res, next) {
  */
 router.get('/refresh_token', function (req, res, next) {
 	if (!req.get('Authorization')) {
-		return next(tlib.error(tlib.errors.AuthorizationMissing));
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.AuthorizationMissing));
 	}
 
 	var authHeader = req.get('Authorization').split(' ');
@@ -901,18 +903,18 @@ router.get('/refresh_token', function (req, res, next) {
 		try {
 			var decoded = jwt.decode(authHeader[1]);
 		} catch (e) {
-			return next(tlib.error(tlib.errors.ClientBadRequest, [e.message]));
+			return next(new tlib.TelepatError(tlib.TelepatError.errors.ClientBadRequest, [e.message]));
 		}
 
 		if (!decoded) {
-			return next(tlib.error(tlib.errors.MalformedAuthorizationToken));
+			return next(new tlib.TelepatError(tlib.TelepatError.errors.MalformedAuthorizationToken));
 		}
 
 		var newToken = security.createToken(decoded);
 
 		return res.status(200).json({ status: 200, content: { token: newToken } });
 	} else {
-		return next(tlib.error(tlib.errors.InvalidAuthorization, ['header invalid']));
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.InvalidAuthorization, ['header invalid']));
 	}
 });
 
@@ -948,12 +950,12 @@ router.get('/refresh_token', function (req, res, next) {
  */
 router.post('/update', function (req, res, next) {
 	if (Object.getOwnPropertyNames(req.body).length === 0) {
-		return next(tlib.error(tlib.errors.RequestBodyEmpty));
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.RequestBodyEmpty));
 	} else if (!Array.isArray(req.body.patches)) {
-		return next(tlib.error(tlib.errors.InvalidFieldValue,
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.InvalidFieldValue,
 			['"patches" is not an array']));
 	} else if (req.body.patches.length == 0) {
-		return next(tlib.error(tlib.errors.InvalidFieldValue,
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.InvalidFieldValue,
 			['"patches" array is empty']));
 	}
 
@@ -982,7 +984,7 @@ router.post('/update', function (req, res, next) {
 			var patchUserId = patch.path.split('/')[1];
 
 			if (patchUserId != id) {
-				return c(tlib.error(tlib.errors.InvalidPatch,
+				return c(new tlib.TelepatError(tlib.TelepatError.errors.InvalidPatch,
 					['Invalid ID in one of the patches']));
 			}
 			c();
@@ -1083,7 +1085,7 @@ router.post('/request_password_reset', function (req, res, next) {
 	var sendgrid = tlib.config.sendgrid && tlib.config.sendgrid.api_key;
 
 	if (!mandrill && !sendgrid) {
-		return next(tlib.error(tlib.errors.ServerNotConfigured, ['mandrill/sendgrid API keys missing']));
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.ServerNotConfigured, ['mandrill/sendgrid API keys missing']));
 	}
 
 	async.series([
@@ -1092,7 +1094,7 @@ router.post('/request_password_reset', function (req, res, next) {
 				if (err) return callback(err);
 
 				if (!result.email)
-					return callback(tlib.error(tlib.errors.ClientBadRequest,
+					return callback(new tlib.TelepatError(tlib.TelepatError.errors.ClientBadRequest,
 						['user has no email address']));
 
 				user = result;
@@ -1144,7 +1146,7 @@ router.get('/reset_password_intermediate', function (req, res, next) {
 	var appId = req.query.app_id;
 
 	if (!tlib.apps[appId])
-		return next(tlib.error(tlib.errors.ApplicationNotFound, [appId]));
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.ApplicationNotFound, [appId]));
 
 	if (!isMobileBrowser(req.get('User-Agent'))) {
 		if (tlib.apps[appId].email_templates &&
@@ -1203,7 +1205,7 @@ router.post('/password_reset', function (req, res, next) {
 				if (result.password_reset_token == null ||
 					result.password_reset_token == undefined ||
 					result.password_reset_token != token) {
-					return callback(tlib.error(tlib.errors.ClientBadRequest,
+					return callback(new tlib.TelepatError(tlib.TelepatError.errors.ClientBadRequest,
 						['invalid token']));
 				}
 
@@ -1300,7 +1302,7 @@ router.post('/update_metadata', function (req, res, next) {
 	var patches = req.body.patches;
 	console.log("HERE");
 	if (!Array.isArray(patches) || patches.length == 0) {
-		return next(tlib.error(tlib.errors.MissingRequiredField,
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.MissingRequiredField,
 			['patches must be a non-empty array']));
 	}
 	console.log('here');

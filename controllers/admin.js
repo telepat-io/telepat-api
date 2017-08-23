@@ -53,9 +53,9 @@ router.get('/schemas', function(req, res, next) {
 		res.status(200).json({status: 200, content: tlib.apps[appId].schema});
 	} else { 
 		if (!tlib.apps[appId]) {
-			next(tlib.error(tlib.errors.ApplicationNotFound, [appId]));
+			next(new tlib.TelepatError(tlib.TelepatError.errors.ApplicationNotFound, [appId]));
 		} else {
-			next(tlib.error(tlib.errors.ApplicationHasNoSchema));
+			next(new tlib.TelepatError(tlib.TelepatError.errors.ApplicationHasNoSchema));
 		}
 	}
 });

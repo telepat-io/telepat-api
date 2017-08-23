@@ -46,7 +46,7 @@ app.use(security.contentTypeValidation);
 
 app.use(function ServerNotAvailable(req, res, next) {
 	if (!dbConnected) {
-		next(tlib.error(tlib.errors.ServerNotAvailable));
+		next(new tlib.TelepatError(tlib.TelepatError.errors.ServerNotAvailable));
 	} else {
 		next();
 	}
@@ -86,14 +86,14 @@ app.use(function RequestLogging(req, res, next) {
 });
 
 function NotFoundMiddleware(req, res, next) {
-	next(tlib.error(tlib.errors.NoRouteAvailable));
+	next(new tlib.TelepatError(tlib.TelepatError.errors.NoRouteAvailable));
 }
 
 function FinalRouteMiddleware(err, req, res, next) {
 	var responseBody = {};
-	//TODO: 
+	console.log("err is ", err);
 	 if (!(err instanceof tlib.TelepatError)) {
-	 	err = tlib.error(tlib.errors.ServerFailure, [err.message]);
+	 	err = new tlib.TelepatError(tlib.TelepatError.errors.ServerFailure, [err.message]);
 	}
 
 	res.status(err.status);
@@ -154,12 +154,12 @@ var linkMiddlewaresAndRoutes = function(callback) {
 		var requestBody = req.body.body;
 
 		if (['POST', 'GET', 'PUT', 'DELETE'].indexOf(method) === -1)
-			return next(tlib.error(tlib.errors.InvalidFieldValue,
+			return next(new tlib.TelepatError(tlib.TelepatError.errors.InvalidFieldValue,
 				['method must be one of '+['POST', 'GET', 'PUT', 'DELETE'].join(' ')]));
 		if (!url)
-			return next(tlib.error(tlib.errors.MissingRequiredField, ['url']));
+			return next(new tlib.TelepatError(tlib.TelepatError.errors.MissingRequiredField, ['url']));
 		if (!headers || typeof headers != 'object')
-			return next(tlib.error(tlib.errors.InvalidFieldValue,
+			return next(new tlib.TelepatError(tlib.TelepatError.errors.InvalidFieldValue,
 				['headers must be object (or is missing)']));
 
 		var parsedUrl = urlParser.parse(url);
@@ -186,7 +186,7 @@ var linkMiddlewaresAndRoutes = function(callback) {
 			request.write(requestBody.toString());
 
 		request.on('error', function(e) {
-			next(tlib.error(tlib.errors.UnspecifiedError, [e.message]));
+			next(new tlib.TelepatError(tlib.TelepatError.errors.UnspecifiedError, [e.message]));
 		});
 
 		request.end();
@@ -226,11 +226,11 @@ var linkMiddlewaresAndRoutes = function(callback) {
 			body = req.body.body;
 
 		if (!recipients || !Array.isArray(recipients))
-			return next(tlib.error(tlib.errors.MissingRequiredField, ['recipients']));
+			return next(new tlib.TelepatError(tlib.TelepatError.errors.MissingRequiredField, ['recipients']));
 		if (!from)
-			return next(tlib.error(tlib.errors.MissingRequiredField, ['from']));
+			return next(new tlib.TelepatError(tlib.TelepatError.errors.MissingRequiredField, ['from']));
 		if (!body)
-			return next(tlib.error(tlib.errors.MissingRequiredField, ['body']));
+			return next(new tlib.TelepatError(tlib.TelepatError.errors.MissingRequiredField, ['body']));
 
 		var mandrillClient = new mandrill.Mandrill(tlib.mandrill.api_key);
 

@@ -371,33 +371,6 @@ it('4.2 should return an error (401) response to indicate that only authenticate
 		});
 });
 
-it('4.3 should return a error response to indicate that a object has NOT been created', function(done) {
-
-	this.timeout(100*DELAY);
-
-	var subclientrequest = {
-		context: contextID,
-		model: "answers",
-		content: {
-			events_id: -1
-		}
-	};
-
-	request(url)
-		.post('/object/create')
-		.set('Content-type','application/json')
-		.set('X-BLGREQ-SIGN', appIDsha256)
-		.set('X-BLGREQ-UDID', deviceIdentification)
-		.set('X-BLGREQ-APPID',appID)
-		.set('Authorization', userAuthValue )
-		.send(subclientrequest)
-		.end(function(err, res) {
-			res.body.code.should.be.equal('004');
-			res.body.status.should.be.equal(400);
-			res.statusCode.should.be.equal(400);
-			done();
-		});
-});
 
 it('4.4 should return a success response to indicate that object has been created', function(done) {
 

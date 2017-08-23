@@ -625,7 +625,7 @@ describe('1.2.App', function () {
 			.send(clientrequest)
 			.end(function (err, res) {
 				var appID = res.body.content.id;
-		
+
 				var clientrequest2 = {
 					patches: [
 						{
@@ -1756,6 +1756,7 @@ describe('1.2.App', function () {
 				});
 		});
 
+
 		it('1.4.8 should return a error response to indicate a model was NOT removed from the application because model name does NOT exist', function (done) {
 
 			this.timeout(100 * DELAY);
@@ -1842,6 +1843,7 @@ describe('1.2.App', function () {
 				.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28')
 				.send(clientrequest)
 				.end(function (err, res) {
+					console.log(res.body);
 					setTimeout(done, 20 * DELAY);
 				});
 		});
@@ -1857,9 +1859,10 @@ describe('1.2.App', function () {
 				.set('X-BLGREQ-UDID', 'd244854a-ce93-4ba3-a1ef-c4041801ce28')
 				.send(clientrequest)
 				.end(function (err, res) {
+					console.log('user Id is ', userId, res.body.content);
 
 					userId = res.body.content.user.id;
-					
+					console.log('user Id is ', userId);
 					var clientrequest = {
 						patches: [
 							{

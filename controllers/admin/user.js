@@ -109,7 +109,7 @@ router.post('/search', function(req, res, next) {
 	var fields = req.body.fields || {};
 
 	if (!(fields instanceof Object))
-		return next(tlib.error(tlib.errors.InvalidFieldValue, ['"fields" must be an object']));
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.InvalidFieldValue, ['"fields" must be an object']));
 
 	tlib.users.search(appId, fields, offset, limit, function(err, result) {
 		if (err) {
@@ -161,12 +161,12 @@ router.use('/update',
  */
 router.post('/update', function(req, res, next) {
 	if (Object.getOwnPropertyNames(req.body).length === 0) {
-		return next(tlib.error(tlib.errors.RequestBodyEmpty));
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.RequestBodyEmpty));
 	} else if (!Array.isArray(req.body.patches)) {
-		return next(tlib.error(tlib.errors.InvalidFieldValue,
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.InvalidFieldValue,
 			['"patches" is not an array']));
 	} else if (req.body.patches.length == 0) {
-		return next(tlib.error(tlib.errors.InvalidFieldValue,
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.InvalidFieldValue,
 			['"patches" array is empty']));
 	}
 
@@ -189,7 +189,7 @@ router.post('/update', function(req, res, next) {
 		function(callback) {
 			tlib.users.update(patches, function(err) {
 				if (err && err.status == 404) {
-					callback(tlib.error(tlib.errors.UserNotFound));
+					callback(new tlib.TelepatError(tlib.TelepatError.errors.UserNotFound));
 				} else if (err)
 					return callback(err);
 				else
@@ -236,7 +236,7 @@ router.use('/delete',
  */
 router.delete('/delete', function(req, res, next) {
 	if (!req.body.id) {
-		return next(tlib.error(tlib.errors.MissingRequiredField, ['id']));
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.MissingRequiredField, ['id']));
 	}
 
 	var appId = req._telepat.applicationId;
@@ -246,7 +246,6 @@ router.delete('/delete', function(req, res, next) {
 
 	async.series([
 		function(callback) {
-			console.log("HERE");
 			tlib.users.delete({id: id, application_id: appId}, callback); 
 		}
 	], function(error) {

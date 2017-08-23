@@ -43,11 +43,11 @@ var async = require('async');
  */
 router.post('/login', function (req, res, next) {
 	if (!req.body.email) {
-		return next(tlib.error(tlib.errors.MissingRequiredField, ['email']));
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.MissingRequiredField, ['email']));
 	}
 
 	if (!req.body.password)
-		return next(tlib.error(tlib.errors.MissingRequiredField, ['password']));
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.MissingRequiredField, ['password']));
 
 	async.waterfall([
 		function(callback) {
@@ -56,7 +56,7 @@ router.post('/login', function (req, res, next) {
 		function(hashedPassword) {
 			tlib.admins.get({email: req.body.email}, function(err, admin) {
 				if (err && err.status == 404) {
-					return next(tlib.error(tlib.errors.AdminBadLogin));
+					return next(new tlib.TelepatError(tlib.TelepatError.errors.AdminBadLogin));
 				} else if (err) {
 					return next(err);
 				}
@@ -73,7 +73,7 @@ router.post('/login', function (req, res, next) {
 								})}
 						});
 				} else {
-					return next(tlib.error(tlib.errors.AdminBadLogin));
+					return next(new tlib.TelepatError(tlib.TelepatError.errors.AdminBadLogin));
 				}
 			});
 		}
@@ -110,10 +110,10 @@ router.post('/login', function (req, res, next) {
  */
 router.post('/add', function (req, res, next) {
 	if (!req.body.email)
-		return next(tlib.error(tlib.errors.MissingRequiredField, ['email']));
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.MissingRequiredField, ['email']));
 
 	if (!req.body.password)
-		return next(tlib.error(tlib.errors.MissingRequiredField, ['password']));
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.MissingRequiredField, ['password']));
 
 	async.waterfall([
 		function(callback) {
@@ -123,7 +123,7 @@ router.post('/add', function (req, res, next) {
 				else if (err)
 					callback(err);
 				else if(result) {
-					callback(tlib.error(tlib.errors.AdminAlreadyExists));
+					callback(new tlib.TelepatError(tlib.TelepatError.errors.AdminAlreadyExists));
 				}
 			});
 		},
@@ -173,7 +173,7 @@ router.use('/me', security.tokenValidation);
 router.get('/me', function (req, res, next) {
 	tlib.admins.get({id: req.user.id}, function(err, result) {
 		if (err && err.status == 404) {
-			return  next(tlib.error(tlib.errors.AdminNotFound));
+			return  next(new tlib.TelepatError(tlib.TelepatError.errors.AdminNotFound));
 		} else if (err)
 			return next(err);
 		else
@@ -219,16 +219,16 @@ router.use('/update', security.tokenValidation);
  */
 router.post('/update', function (req, res, next) {
 	if (Object.getOwnPropertyNames(req.body).length === 0) {
-		return next(tlib.error(tlib.errors.RequestBodyEmpty));
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.RequestBodyEmpty));
 	} else if (!Array.isArray(req.body.patches)) {
-		return next(tlib.error(tlib.errors.InvalidFieldValue,['"patches" is not an array']));
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.InvalidFieldValue,['"patches" is not an array']));
 	} else if (req.body.patches.length == 0) {
-		return next(tlib.error(tlib.errors.InvalidFieldValue,['"patches" array is empty']));
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.InvalidFieldValue,['"patches" array is empty']));
 	} else {
 		var i = 0;
 		async.eachSeries(req.body.patches, function(patch, c) {
 			if (req.body.patches[i].path.split('/')[1] != req.user.id) {
-				c(tlib.error(tlib.errors.InvalidAdmin));
+				c(new tlib.TelepatError(tlib.TelepatError.errors.InvalidAdmin));
 			}
 			else {
 				if (req.body.patches[i].path.split('/')[2] == 'password') {

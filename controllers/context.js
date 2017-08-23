@@ -130,12 +130,12 @@ router.get('/all', contextGetAll);
  */
 router.post('/', function (req, res, next) {
 	if (!req.body.id) {
-		return next(tlib.error(tlib.errors.MissingRequiredField, ['id']));
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.MissingRequiredField, ['id']));
 	}
 
 	tlib.contexts.get(req.body.id,  (err, res1) => {
 		if (err && err.status == 404){
-			return next(tlib.error(tlib.errors.ContextNotFound));
+			return next(new tlib.TelepatError(tlib.TelepatError.errors.ContextNotFound));
 		} else if (err)
 			next(err);
 		else {

@@ -23,7 +23,7 @@ var getAllContexts = function (req, res, next) {
 		if (err)
 			next(err);
 		else {
-			res.status(200).json({status: 200, content: res1});
+			res.status(200).json({ status: 200, content: res1 });
 		}
 	});
 };
@@ -114,16 +114,16 @@ router.get('/all', getAllContexts);
  */
 router.post('/', function (req, res, next) {
 	if (!req.body.id) {
-		return next(tlib.error(tlib.errors.MissingRequiredField, ['id']));
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.MissingRequiredField, ['id']));
 	}
 
 	tlib.contexts.get(req.body.id, function (err, res1) {
 		if (err && err.status == 404)
-			next(tlib.error(tlib.errors.ContextNotFound));
+			next(new tlib.TelepatError(tlib.TelepatError.errors.ContextNotFound));
 		else if (err)
 			next(err);
 		else {
-			res.status(200).json({status: 200, content: res1});
+			res.status(200).json({ status: 200, content: res1 });
 		}
 	});
 });
@@ -168,14 +168,14 @@ router.use('/add',
  */
 router.post('/add', function (req, res, next) {
 	if (Object.getOwnPropertyNames(req.body).length === 0)
-		return next(tlib.error(tlib.errors.RequestBodyEmpty));
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.RequestBodyEmpty));
+
 	var newContext = req.body;
 	var appId = req._telepat.applicationId;
 	var modifiedMicrotime = microtime.now();
+
 	newContext['application_id'] = req._telepat.applicationId;
-
 	tlib.contexts.new(newContext, function (err, res1) {
-
 		if (err)
 			next(err);
 		else {
@@ -184,16 +184,16 @@ router.post('/add', function (req, res, next) {
 				object: res1,
 				application_id: appId,
 				timestamp: modifiedMicrotime
-			}, ['blg:'+appId+':context:'+res1.id]);
+			}, ['blg:' + appId + ':context:' + res1.id]);
 
 			tlib.services.messagingClient.send([JSON.stringify({
 				deltas: [delta.toObject()],
 				_broadcast: true
-			})], 'transport_manager', function(err) {
+			})], 'transport_manager', function (err) {
 				if (err)
 					tlib.services.logger.warning(app.getFailedRequestMessage(req, res, err));
 			});
-			res.status(200).json({status: 200, content: res1.properties});
+			res.status(200).json({ status: 200, content: res1.properties });
 		}
 	});
 });
@@ -234,15 +234,15 @@ router.use('/remove',
  */
 router.delete('/remove', function (req, res, next) {
 	if (!req.body.id) {
-		return next(tlib.error(tlib.errors.MissingRequiredField, ['id']));
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.MissingRequiredField, ['id']));
 	}
 
 	var appId = req._telepat.applicationId;
 	var modifiedMicrotime = microtime.now();
 
-	tlib.contexts.get(req.body.id, function(err, context) {
+	tlib.contexts.get(req.body.id, function (err, context) {
 		if (err && err.status == 404)
-			next(tlib.error(tlib.errors.ContextNotFound));
+			next(new tlib.TelepatError(tlib.TelepatError.errors.ContextNotFound));
 		else if (err)
 			next(err);
 		else {
@@ -251,20 +251,20 @@ router.delete('/remove', function (req, res, next) {
 
 				var delta = new tlib.delta({
 					op: 'delete',
-					object: {id: req.body.id, model: 'context'},
+					object: { id: req.body.id, model: 'context' },
 					application_id: appId,
 					timestamp: modifiedMicrotime
-				}, ['blg:'+appId+':context:'+req.body.id]);
+				}, ['blg:' + appId + ':context:' + req.body.id]);
 
 				tlib.services.messagingClient.send([JSON.stringify({
 					_broadcast: true,
 					deltas: [delta.toObject()]
-				})], 'transport_manager', function(err){
+				})], 'transport_manager', function (err) {
 					if (err)
 						tlib.services.logger.error('/admin/context/remove: Error sending queue message');
 				});
 
-				res.status(200).json({status: 200, content: 'Context removed'});
+				res.status(200).json({ status: 200, content: 'Context removed' });
 			});
 		}
 	});
@@ -315,60 +315,60 @@ router.use('/update',
  */
 router.post('/update', function (req, res, next) {
 	if (Object.getOwnPropertyNames(req.body).length === 0) {
-		return next(tlib.error(tlib.errors.RequestBodyEmpty));
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.RequestBodyEmpty));
 	} else if (!Array.isArray(req.body.patches)) {
-		return next(tlib.error(tlib.errors.InvalidFieldValue,
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.InvalidFieldValue,
 			['"patches" is not an array']));
 	} else if (req.body.patches.length == 0) {
-		return next(tlib.error(tlib.errors.InvalidFieldValue,
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.InvalidFieldValue,
 			['"patches" array is empty']));
 	} else if (!req.body.id) {
-		return next(tlib.error(tlib.errors.MissingRequiredField, ['id']));
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.MissingRequiredField, ['id']));
 	} else {
 		var context = null;
 		async.series([
-			function(callback) {
-				tlib.contexts.get(req.body.id, function(err, result) {
+			function (callback) {
+				tlib.contexts.get(req.body.id, function (err, result) {
 					if (err) return callback(err);
 					context = result;
 					callback();
 				});
 			},
-			function(callback) {
+			function (callback) {
 				if (tlib.apps[context.application_id].admins.indexOf(req.user.id) === -1) {
-					callback(tlib.error(tlib.errors.ContextNotAllowed));
+					callback(new tlib.TelepatError(tlib.TelepatError.errors.ContextNotAllowed));
 				} else {
 					tlib.contexts.update(req.body.patches, callback);
 				}
 			}
 		], function (err) {
 			if (err && err.status == 404)
-				next(tlib.error(tlib.errors.ContextNotFound));
+				next(new tlib.TelepatError(tlib.TelepatError.errors.ContextNotFound));
 			else {
 				var modifiedMicrotime = microtime.now();
 				var patchesToSend = [];
 				var appId = req._telepat.applicationId;
 
-				async.each(req.body.patches, function(patch, c) {
+				async.each(req.body.patches, function (patch, c) {
 					var delta = new tlib.delta({
 						op: 'update',
 						patch: patch,
 						application_id: appId,
 						timestamp: modifiedMicrotime
-					}, ['blg:'+appId+':context:'+req.body.id]);
+					}, ['blg:' + appId + ':context:' + req.body.id]);
 
 					patchesToSend.push(delta);
 					c();
-				}, function() {
+				}, function () {
 					tlib.services.messagingClient.send([JSON.stringify({
 						deltas: patchesToSend,
 						_broadcast: true
-					})], 'transport_manager', function(err) {
+					})], 'transport_manager', function (err) {
 						if (err)
 							tlib.services.logger.warning(app.getFailedRequestMessage(req, res, err));
 					});
 				});
-				res.status(200).json({status: 200, content: 'Context updated'});
+				res.status(200).json({ status: 200, content: 'Context updated' });
 			}
 		});
 	}

@@ -49,11 +49,11 @@ router.get('/all', function(req, res, next) {
 	var appId = req._telepat.applicationId;
 	
 	if(!tlib.apps[appId]) {
-		return next(tlib.error(tlib.errors.ApplicationNotFound, [id]));
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.ApplicationNotFound, [id]));
 	}
 
 	if(!tlib.apps[appId].schema) {
-		return next(tlib.error(tlib.errors.ApplcationHasNoSchema));
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.ApplcationHasNoSchema));
 	}
 
 	res.status(200).json({status: 200, content: tlib.apps[appId].schema});
@@ -88,7 +88,7 @@ router.use('/update',
  */
 router.post('/update', function(req, res, next) {
 	if (!req.body.schema) {
-		return next(tlib.error(tlib.errors.MissingRequiredField, ['schema']));
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.MissingRequiredField, ['schema']));
 		}
 
 	var appId = req._telepat.applicationId;
@@ -141,14 +141,14 @@ router.use('/remove_model',
  */
 router.delete('/remove_model', function(req, res, next) {
 	if (!req.body.model_name) {
-		return next(tlib.error(tlib.errors.MissingRequiredField, ['model_name']));
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.MissingRequiredField, ['model_name']));
 	}
 
 	var appId = req._telepat.applicationId;
 	var modelName = req.body.model_name;
-
+	console.log(tlib.apps[appId]);
 	if (!tlib.apps[appId].schema[modelName]) {
-		return next(tlib.error(tlib.errors.ApplicationSchemaModelNotFound, [appId, modelName]));
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.ApplicationSchemaModelNotFound, [appId, modelName]));
 	}
 
 	tlib.apps[appId].deleteModel(modelName, function(err) {

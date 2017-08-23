@@ -50,11 +50,9 @@ router.post('/add', function (req, res, next) {
 	var newApp = req.body;
 
 	if (!newApp.name) {
-		return next(tlib.error(tlib.errors.MissingRequiredField, ['name']));
-	}
-	if (newApp.keys && newApp.keys.length != 0 && !Array.isArray(newApp.keys)) {
-		return next(tlib.error(tlib.errors.MissingRequiredField, ['"keys" is not an array']));
-	} else if (!newApp.keys || newApp.keys.length == 0) {
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.MissingRequiredField, ['name']));
+	} 
+	if (!newApp.keys || newApp.keys.length == 0) {
 		newApp['keys'] = [uuid.v4()];
 	}
 
@@ -68,10 +66,7 @@ router.post('/add', function (req, res, next) {
 				if (err)
 					tlib.services.logger.error('There was an error trying to send system message: ' + err.message);
 			});
-			if (!(res1 instanceof tlib.Application)) {
-				res1 = new tlib.Application(res1);
-			}
-			tlib.apps[res1.id] = res1;
+			
 			res.status(200).json({ status: 200, content: res1.properties });
 		}
 	});
@@ -111,15 +106,15 @@ router.delete('/remove', function (req, res, next) {
 	var appId = req.body.id;
 
 	if (!appId)
-		return next(tlib.error(tlib.errors.MissingRequiredFields, ['id']));
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.MissingRequiredFields, ['id']));
 
 	if (!tlib.apps[appId]) {
-		return next(tlib.error(tlib.errors.ApplicationNotFound,
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.ApplicationNotFound,
 			[appId]));
 	}
 
 	if (tlib.apps[appId].admins.indexOf(req.user.id) === -1) {
-		return next(tlib.error(tlib.errors.ApplicationForbidden));
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.ApplicationForbidden));
 	}
 
 	tlib.apps[appId].delete(function (err, res1) {
@@ -131,7 +126,6 @@ router.delete('/remove', function (req, res, next) {
 					tlib.services.logger.error('There was an error trying to send system message: ' + err.message);
 			});
 
-			delete tlib.apps[appId];
 			res.status(200).json({ status: 200, content: 'App removed' });
 		}
 	});
@@ -180,12 +174,12 @@ router.use('/update',
  */
 router.post('/update', function (req, res, next) {
 	if (Object.getOwnPropertyNames(req.body).length === 0) {
-		return next(tlib.error(tlib.errors.RequestBodyEmpty));
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.RequestBodyEmpty));
 	} else if (!Array.isArray(req.body.patches)) {
-		return next(tlib.error(tlib.errors.InvalidFieldValue,
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.InvalidFieldValue,
 			['"patches" is not an array']));
 	} else if (req.body.patches.length == 0) {
-		return next(tlib.error(tlib.errors.InvalidFieldValue,
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.InvalidFieldValue,
 			['"patches" array is empty']));
 	} else {
 
@@ -200,17 +194,17 @@ router.post('/update', function (req, res, next) {
 
 			if (!appId) {
 				errors = true;
-				return next(tlib.error(tlib.errors.InvalidPatch, ['missing ID in path']));
+				return next(new tlib.TelepatError(tlib.TelepatError.errors.InvalidPatch, ['missing ID in path']));
 			}
 
 			if (!tlib.apps[appId]) {
-				return next(tlib.error(tlib.errors.ApplicationNotFound,
+				return next(new tlib.TelepatError(tlib.TelepatError.errors.ApplicationNotFound,
 					[appId]));
 			}
 
 			if (!tlib.apps[appId].admins && tlib.apps[appId].admins.indexOf(req.user.id) === -1) {
 				errors = true;
-				return next(tlib.error(tlib.errors.ApplicationForbidden));
+				return next(new tlib.TelepatError(tlib.TelepatError.errors.ApplicationForbidden));
 			}
 		});
 
@@ -226,11 +220,6 @@ router.post('/update', function (req, res, next) {
 						return tlib.services.logger.error('There was an error trying to send system message: ' + err.message);
 				});
 
-				if (!(result instanceof tlib.Application)) {
-					result = new tlib.Application(result);
-				}
-
-				tlib.apps[appId] = result;
 				res.status(200).json({ status: 200, content: 'Updated' });
 			}
 		});
@@ -281,9 +270,9 @@ router.use('/authorize',
  */
 router.post('/authorize', function (req, res, next) {
 	if (Object.getOwnPropertyNames(req.body).length === 0) {
-		return next(tlib.error(tlib.errors.RequestBodyEmpty));
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.RequestBodyEmpty));
 	} else if (!req.body.email) {
-		return next(tlib.error(tlib.errors.MissingRequiredField, ['email']));
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.MissingRequiredField, ['email']));
 	}
 
 	var appId = req._telepat.applicationId;
@@ -295,7 +284,7 @@ router.post('/authorize', function (req, res, next) {
 		},
 		function (admin, callback) {
 			if (tlib.apps[appId].admins.indexOf(admin.id) !== -1) {
-				return callback(tlib.error(tlib.errors.AdminAlreadyAuthorized));
+				return callback(new tlib.TelepatError(tlib.TelepatError.errors.AdminAlreadyAuthorized));
 			}
 
 			var patches = [tlib.delta.formPatch(tlib.apps[appId], 'append', { admins: admin.id })];
@@ -303,7 +292,6 @@ router.post('/authorize', function (req, res, next) {
 		}
 	], function (err, application) {
 		if (err) return next(err);
-		let x = application;
 
 		if (!(application instanceof tlib.Application)) {
 			application = new tlib.Application(application);
@@ -362,9 +350,9 @@ router.use('/deauthorize',
  */
 router.post('/deauthorize', function (req, res, next) {
 	if (Object.getOwnPropertyNames(req.body).length === 0) {
-		return next(tlib.error(tlib.errors.RequestBodyEmpty));
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.RequestBodyEmpty));
 	} else if (!req.body.email) {
-		return next(tlib.error(tlib.errors.MissingRequiredField, ['email']));
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.MissingRequiredField, ['email']));
 	}
 
 	var appId = req._telepat.applicationId;
@@ -372,7 +360,7 @@ router.post('/deauthorize', function (req, res, next) {
 
 	if (adminEmail == req.user.email && tlib.apps[appId].admins.indexOf(req.user.id) == 0
 		&& tlib.apps[appId].admins.length == 1) {
-		return next(tlib.error(tlib.errors.AdminDeauthorizeLastAdmin));
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.AdminDeauthorizeLastAdmin));
 	}
 
 	async.waterfall([
@@ -381,7 +369,7 @@ router.post('/deauthorize', function (req, res, next) {
 		},
 		function (admin, callback) {
 			if (tlib.apps[appId].admins.indexOf(admin.id) === -1) {
-				return callback(tlib.error(tlib.errors.AdminNotFoundInApplication, [adminEmail]));
+				return callback(new tlib.TelepatError(tlib.TelepatError.errors.AdminNotFoundInApplication, [adminEmail]));
 			} else {
 				var patches = [tlib.delta.formPatch(tlib.apps[appId], 'remove', { admins: admin.id })];
 				tlib.apps[appId].update(patches, callback);
@@ -392,8 +380,6 @@ router.post('/deauthorize', function (req, res, next) {
 		if (!(application instanceof tlib.Application)) {
 			application = new tlib.Application(application);
 		}
-
-		tlib.apps[appId] = application;
 
 		tlib.apps[appId] = application;
 

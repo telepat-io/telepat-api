@@ -17,11 +17,11 @@ router.use(['/count'], security.objectACL('meta_read_acl'));
 var validateContext = function (appId, context, callback) {
 	tlib.apps[appId].hasContext(context, (err, result) => {
 		if (err && err.code == '034') {
-			callback(tlib.error(tlib.errors.ContextNotFound));
+			callback(new tlib.TelepatError(tlib.TelepatError.errors.ContextNotFound));
 		} else if (err) {
 			return callback(err);
 		} else if (result === false) {
-			callback(tlib.error(tlib.errors.InvalidContext, [context, appId]));
+			callback(new tlib.TelepatError(tlib.TelepatError.errors.InvalidContext, [context, appId]));
 		} else {
 			callback();
 		}
@@ -159,7 +159,7 @@ router.post('/subscribe', function (req, res, next) {
 
 		if (appSchema[mdl]['read_acl'] & 8) {
 			if ((appSchema[mdl]['write_acl'] & 8) && !req.user) {
-				return next(tlib.error(tlib.errors.OperationNotAllowed));
+				return next(new tlib.TelepatError(tlib.TelepatError.errors.OperationNotAllowed));
 			}
 
 			addAuthorFilters(channelObject, appSchema, mdl, req.user.id);
@@ -167,13 +167,10 @@ router.post('/subscribe', function (req, res, next) {
 	}
 
 	if (!channelObject.isValid()) {
-		return next(tlib.error(tlib.errors.InvalidChannel, [channelObject.errorMessage]));
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.InvalidChannel, [channelObject.errorMessage]));
 	}
 
 	var objects = [];
-	if (mdl === 'breakingnews') {
-		console.log(Date.now(), '====== (CONTROLLER) DEVICE  ' + req._telepat.device_id + ' SUBSCRIBED TO BREAKINGNEWS', req.body);
-	}
 
 	async.series([
 		//verify if context belongs to app
@@ -300,11 +297,7 @@ router.post('/unsubscribe', function (req, res, next) {
 	}
 
 	if (!channelObject.isValid()) {
-		return next(tlib.error(tlib.errors.InvalidChannel, [channelObject.errorMessage]));
-	}
-
-	if (mdl === 'breakingnews') {
-		console.log(Date.now(), '====== (CONTROLLER) DEVICE  ' + req._telepat.device_id + ' UNSUBSCRIBED TO BREAKINGNEWS', req.body);
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.InvalidChannel, [channelObject.errorMessage]));
 	}
 
 	async.series([
@@ -317,23 +310,7 @@ router.post('/unsubscribe', function (req, res, next) {
 		},
 		function (callback) {
 			tlib.subscription.remove(appId, deviceId, channelObject, callback);
-		}/*,
-		function(result, callback) {
-			app.kafkaProducer.send([{
-				topic: 'track',
-				messages: [JSON.stringify({
-					op: 'unsub',
-					object: {device_id: deviceId, channel: channel, filters: filters},
-					applicationId: appId
-				})],
-				attributes: 0
-			}], function(err, data) {
-				if (err)
-					err.message = "Failed to send message to track worker.";
-
-				callback(err, result);
-			});
-		}*/
+		}
 	], function (err) {
 		if (err) {
 			return next(err);
@@ -382,11 +359,19 @@ router.post('/create', function (req, res, next) {
 	var mdl = req.body.model;
 	var context = req.body.context;
 	var appId = req._telepat.applicationId;
+	function isEmpty(obj) {
+		var i = 0;
+		for (var key in obj) {
+			++i;
+		}
 
+		return i;
+	}
+	console.log(isEmpty(content));
 	if (!context)
-		return next(tlib.error(tlib.errors.MissingRequiredField, ['context']));
-	if (!content)
-		return next(tlib.error(tlib.errors.MissingRequiredField, ['content']));
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.MissingRequiredField, ['context']));
+	if (!content || isEmpty(content) === 0)
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.MissingRequiredField, ['content']));
 	if (req.user)
 		content.user_id = req.user.id;
 	content.type = mdl;
@@ -394,22 +379,11 @@ router.post('/create', function (req, res, next) {
 	content.application_id = appId;
 	var parentValidation;
 
-	if (tlib.apps[appId].modelSchema(mdl).belongsTo) {
-
-		parentValidation = tlib.models.getParentInfo(content);
-		if (!parentValidation)
-			return next(tlib.error(tlib.errors.MissingRequiredField, ['a field with the parent ID is missing']));
-	}
-	if (parentValidation instanceof tlib.TelepatError) {
-		return next(parentValidation);
-	}
-	if (parentValidation) {
-
-		var hasSomeProperty = tlib.apps[appId].modelSchema(mdl).hasSome(parentValidation.model);
-
-		if (hasSomeProperty && !content[hasSomeProperty])
-			return next(tlib.error(tlib.errors.MissingRequiredField, [hasSomeProperty]));
-
+	let validObject = tlib.models.validateObject(content);
+	console.log('here', validObject);
+	if (validObject instanceof tlib.TelepatError) {
+		console.log('here should return error');
+		return next(validObject);
 	}
 
 	async.series([
@@ -421,7 +395,7 @@ router.post('/create', function (req, res, next) {
 				timestamp: modifiedMicrotime
 			})], 'aggregation', function (err) {
 				if (err) {
-					err = tlib.error(tlib.errors.ServerFailure, [err]);
+					err = new tlib.TelepatError(tlib.TelepatError.errors.ServerFailure, [err]);
 				}
 				aggCallback(err);
 			});
@@ -481,10 +455,10 @@ router.post('/update', function (req, res, next) {
 	var appId = req._telepat.applicationId;
 
 	if (!Array.isArray(req.body.patches)) {
-		return next(tlib.error(tlib.errors.InvalidFieldValue,
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.InvalidFieldValue,
 			['"patches" is not an array']));
 	} else if (req.body.patches.length == 0) {
-		return next(tlib.error(tlib.errors.InvalidFieldValue,
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.InvalidFieldValue,
 			['"patches" array is empty']));
 	}
 
@@ -502,10 +476,10 @@ router.post('/update', function (req, res, next) {
 			var objectMdl = patch[p].path.split('/')[0];
 
 			if (patch[p].path.split('/')[2] == 'user_id') {
-				return next(tlib.error(tlib.errors.InvalidPatch, ['"user_id" cannot be modified"']));
+				return next(new tlib.TelepatError(tlib.TelepatError.errors.InvalidPatch, ['"user_id" cannot be modified"']));
 			}
 			if ((appSchema[objectMdl]['write_acl'] & 8) && !req.user) {
-				return next(tlib.error(tlib.errors.OperationNotAllowed));
+				return next(new tlib.TelepatError(tlib.TelepatError.errors.OperationNotAllowed));
 			} else if (appSchema[objectMdl]['write_acl'] & 8) {
 				patch[p].user_id = req.user.id;
 			}
@@ -516,7 +490,7 @@ router.post('/update', function (req, res, next) {
 		function (aggCallback) {
 			tlib.services.messagingClient.send([JSON.stringify(obj)], 'aggregation', function (err) {
 				if (err) {
-					err = tlib.error(tlib.errors.ServerFailure, [err.message]);
+					err = new tlib.TelepatError(tlib.TelepatError.errors.ServerFailure, [err.message]);
 				}
 				aggCallback(err);
 			});
@@ -569,7 +543,7 @@ router.delete('/delete', function (req, res, next) {
 	var appId = req._telepat.applicationId;
 
 	if (!id)
-		return next(tlib.error(tlib.errors.MissingRequiredField, ['id']));
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.MissingRequiredField, ['id']));
 
 	var appSchema = tlib.apps[appId].schema;
 
@@ -585,7 +559,7 @@ router.delete('/delete', function (req, res, next) {
 
 	if (!(req.user && req.user.isAdmin)) {
 		if ((appSchema[mdl]['write_acl'] & 8) && !req.user) {
-			return next(tlib.error(tlib.errors.OperationNotAllowed));
+			return next(new tlib.TelepatError(tlib.TelepatError.errors.OperationNotAllowed));
 		} else if (appSchema[mdl]['write_acl'] & 8) {
 			obj.user_id = req.user.id;
 		}
@@ -627,8 +601,8 @@ router.post('/count', function (req, res, next) {
 
 	var aggregation = req.body.aggregation;
 
+	console.log(appId);
 	var channelObject = new tlib.channel(appId);
-
 	if (channel.model)
 		channelObject.model(channel.model);
 
@@ -648,16 +622,16 @@ router.post('/count', function (req, res, next) {
 
 	if (mdl !== 'user' && appSchema[mdl]['read_acl'] & 8) {
 		if (!req.user.id) {
-			return next(tlib.error(tlib.errors.OperationNotAllowed));
+			return next(new tlib.TelepatError(tlib.TelepatError.errors.OperationNotAllowed));
 		}
 
 		addAuthorFilters(channelObject, appSchema, mdl, req.user.id);
 	}
 
 	if (!channelObject.isValid()) {
-		return next(tlib.error(tlib.errors.InvalidChannel));
+		return next(new tlib.TelepatError(tlib.TelepatError.errors.InvalidChannel));
 	}
-	console.log('here');
+
 	tlib.models.modelCountByChannel(channelObject, aggregation, function (err, result) {
 		if (err) return next(err);
 
