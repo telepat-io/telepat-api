@@ -377,8 +377,8 @@ router.post('/create', function (req, res, next) {
 	content.type = mdl;
 	content.context_id = context;
 	content.application_id = appId;
-	var parentValidation;
 
+	var parentValidation;
 	let validObject = tlib.models.validateObject(content);
 
 	if (validObject instanceof tlib.TelepatError) {

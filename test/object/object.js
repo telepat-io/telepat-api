@@ -583,32 +583,6 @@ it('4.11 should return an error response to indicate that object has NOT been cr
 		});
 });
 
-it('4.12 should return an error response to indicate that object has NOT been created because of invalid parent', function(done) {
-
-	this.timeout(100*DELAY);
-
-	var clientrequest = {
-		context: contextID,
-		model: "comments",
-		content: {
-			event_id: 1
-		}
-	};
-
-	request(url)
-		.post('/object/create')
-		.set('X-BLGREQ-SIGN', appIDsha256)
-		.set('X-BLGREQ-UDID', deviceIdentification)
-		.set('X-BLGREQ-APPID',appID)
-		.set('Authorization', userAuthValue )
-		.send(clientrequest)
-		.end(function(err, res) {
-
-			res.body.code.should.be.equal('004');
-			res.statusCode.should.be.equal(400);
-			done();
-		});
-});
 
 it('4.13 should return an error response to indicate that object has NOT been created because of model does not exist', function(done) {
 

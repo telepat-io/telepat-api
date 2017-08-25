@@ -178,7 +178,7 @@ security.objectACL = function (accessControl) {
 			return next(new tlib.TelepatError(tlib.TelepatError.errors.ApplicationHasNoSchema));
 		}
 
-		let verified = tlib.apps[req._telepat.applicationId].modelSchema(md).isValidModel();
+		let verified = tlib.apps[req._telepat.applicationId].modelSchema(mdl).isValidModel();
 		
 		if (verified instanceof tlib.TelepatError) {
 			return next(verified);

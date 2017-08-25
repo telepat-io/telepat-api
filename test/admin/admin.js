@@ -1861,6 +1861,7 @@ describe('1.2.App', function () {
 				.end(function (err, res) {
 
 					userId = res.body.content.user.id;
+
 					var clientrequest = {
 						patches: [
 							{
